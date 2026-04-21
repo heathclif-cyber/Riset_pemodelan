@@ -1,11 +1,19 @@
 """
-core/features.py — Feature Engineering & Labeling
+core/features.py — Feature Engineering & Labeling  (v2)
 Gabungan dari feature_engineer.py dan fix_synthetic_oi.py
 
 Fungsi utama:
-  engineer_features()     — hitung semua 58 fitur dari cleaned parquet
-  compute_synthetic_oi()  — hitung Synthetic OI dari CVD (fix_synthetic_oi)
-  triple_barrier_labeling() — Triple Barrier label: LONG/SHORT/FLAT
+  engineer_features()        — hitung semua 65 fitur dari cleaned parquet
+  add_swing_features()       — ★ BARU: 7 fitur swing + regime
+  structural_label_filter()  — ★ BARU: override LONG/SHORT → FLAT berdasarkan konteks H4
+  compute_synthetic_oi()     — hitung Synthetic OI dari CVD
+  triple_barrier_labeling()  — Triple Barrier label: LONG/SHORT/FLAT
+
+Perubahan v2 vs v1:
+  + 4 swing structure features  : dist_swing_high, dist_swing_low, price_in_range, swing_momentum
+  + 3 market regime features    : h4_trend, trend_strength, vol_regime
+  + structural_label_filter()   : LONG di downtrend H4 → FLAT, SHORT di uptrend H4 → FLAT
+  Total fitur: 58 → 65
 """
 
 import numpy as np
@@ -79,12 +87,10 @@ def calc_ema(close: pd.Series, span: int) -> pd.Series:
 # ─── CVD ─────────────────────────────────────────────────────────────────────
 
 def calc_cvd(df: pd.DataFrame) -> pd.Series:
-    """CVD dari taker_buy_volume. Fallback ke sign-of-close proxy."""
     buy_col  = _col(df, "taker_buy_volume", "taker_ratio_takerBuyVol",
                     "m15_taker_buy_base_asset_volume")
     sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol",
                     "m15_taker_sell_base_asset_volume")
-
     if buy_col and sell_col:
         delta = df[buy_col].fillna(0) - df[sell_col].fillna(0)
     else:
@@ -92,7 +98,6 @@ def calc_cvd(df: pd.DataFrame) -> pd.Series:
         volume = df.get("volume", df.get("m15_volume", pd.Series(np.nan, index=df.index)))
         sign   = np.sign(close.diff().fillna(0))
         delta  = sign * volume.fillna(0)
-
     return delta.cumsum()
 
 
@@ -326,27 +331,122 @@ def compute_synthetic_oi(
     cvd_window: int = 96,
     norm_window: int = 672,
 ) -> pd.Series:
-    """
-    Hitung Synthetic OI dari CVD dan Volume.
-    cvd_ma = cvd.rolling(96).mean()
-    vol_ma = volume.rolling(96).mean()
-    raw    = cvd_ma + vol_ma * 2
-    norm   = raw / raw.rolling(672).mean()
-    """
     cvd_col = _col(df, "cvd")
     vol_col = _col(df, "volume")
     if cvd_col is None or vol_col is None:
         raise KeyError("Kolom 'cvd' atau 'volume' tidak ditemukan.")
-
     cvd    = df[cvd_col].astype(float)
     volume = df[vol_col].astype(float)
-
     cvd_ma       = cvd.rolling(cvd_window,  min_periods=1).mean()
     vol_ma       = volume.rolling(cvd_window, min_periods=1).mean()
     raw          = cvd_ma + vol_ma * 2
     norm_denom   = raw.rolling(norm_window, min_periods=1).mean().replace(0, np.nan)
     synthetic_oi = (raw / norm_denom).ffill().fillna(1.0)
     return synthetic_oi
+
+
+# ─── ★ BARU: Swing Structure & Regime Features ───────────────────────────────
+
+def add_swing_features(
+    feat: dict,
+    high: pd.Series,
+    low: pd.Series,
+    close: pd.Series,
+    volume: pd.Series,
+    atr_m15: pd.Series,
+    ema_7_h4: pd.Series,
+    ema_21_h4: pd.Series,
+    ema_50_h4: pd.Series,
+    atr_h4: pd.Series,
+    rolling_bars: int = 96,
+) -> None:
+    """
+    Tambahkan 7 fitur baru ke dict `feat` (in-place):
+
+    Swing structure (4):
+      dist_swing_high  — jarak ke rolling high 24h, ATR-normalized (negatif = di bawah high)
+      dist_swing_low   — jarak ke rolling low 24h, ATR-normalized (positif = di atas low)
+      price_in_range   — posisi harga dalam 24h range [0=bottom, 1=top]
+      swing_momentum   — perubahan price_in_range selama 4 bar terakhir
+
+    Market regime (3):
+      h4_trend         — arah trend H4: +1 (up), -1 (down), 0 (sideways)
+      trend_strength   — (ema_7_h4 - ema_50_h4) / atr_h4, ATR-normalized
+      vol_regime       — volume relatif terhadap rata-rata 96 bar
+    """
+    atr_safe   = atr_m15.replace(0, np.nan)
+    atr_h4_safe = atr_h4.replace(0, np.nan)
+
+    # ── Swing structure ───────────────────────────────────────────────────────
+    roll_high = high.rolling(rolling_bars, min_periods=10).max()
+    roll_low  = low.rolling(rolling_bars,  min_periods=10).min()
+    rng       = (roll_high - roll_low).replace(0, np.nan)
+
+    feat["dist_swing_high"] = (close - roll_high) / atr_safe        # ≤ 0 jika di bawah high
+    feat["dist_swing_low"]  = (close - roll_low)  / atr_safe        # ≥ 0 jika di atas low
+    feat["price_in_range"]  = (close - roll_low)  / rng             # [0, 1]
+    feat["swing_momentum"]  = feat["price_in_range"] - feat["price_in_range"].shift(4)
+
+    # ── Market regime ─────────────────────────────────────────────────────────
+    feat["h4_trend"] = np.where(
+        ema_7_h4 > ema_21_h4, 1,
+        np.where(ema_7_h4 < ema_21_h4, -1, 0)
+    )
+    feat["h4_trend"] = pd.Series(feat["h4_trend"], index=close.index)
+
+    feat["trend_strength"] = (ema_7_h4 - ema_50_h4) / atr_h4_safe
+
+    vol_ma = volume.rolling(rolling_bars, min_periods=10).mean().replace(0, np.nan)
+    feat["vol_regime"] = volume / vol_ma
+
+
+# ─── ★ BARU: Structural Label Filter ─────────────────────────────────────────
+
+def structural_label_filter(
+    labels: pd.Series,
+    feat_df: pd.DataFrame,
+    long_max_price_in_range:  float = 0.4,
+    short_min_price_in_range: float = 0.6,
+) -> pd.Series:
+    """
+    Override label LONG/SHORT → FLAT jika konteks struktural H4 tidak mendukung.
+
+    Aturan:
+      LONG  di H4 downtrend DAN price_in_range > long_max_price_in_range  → FLAT
+        (tidak dekat swing low, bukan genuine bottom)
+      SHORT di H4 uptrend   DAN price_in_range < short_min_price_in_range → FLAT
+        (tidak dekat swing high, bukan genuine top)
+
+    Tidak menyentuh label FLAT yang sudah ada.
+    """
+    labels = labels.copy()
+
+    h4_trend       = feat_df["h4_trend"]
+    price_in_range = feat_df["price_in_range"]
+
+    # LONG di downtrend H4 + price tidak di zona bottom
+    mask_long_override = (
+        (labels == "LONG") &
+        (h4_trend == -1) &
+        (price_in_range > long_max_price_in_range)
+    )
+    # SHORT di uptrend H4 + price tidak di zona top
+    mask_short_override = (
+        (labels == "SHORT") &
+        (h4_trend == 1) &
+        (price_in_range < short_min_price_in_range)
+    )
+
+    n_long_ovr  = mask_long_override.sum()
+    n_short_ovr = mask_short_override.sum()
+
+    labels[mask_long_override]  = "FLAT"
+    labels[mask_short_override] = "FLAT"
+
+    logger.info(
+        f"Structural filter: {n_long_ovr} LONG → FLAT, {n_short_ovr} SHORT → FLAT"
+    )
+    return labels
 
 
 # ─── Triple Barrier Labeling ─────────────────────────────────────────────────
@@ -396,21 +496,24 @@ def engineer_features(
     vp_bins: int   = 50,
     swing_lookback: int = 5,
     fvg_min_gap: float  = 0.5,
-    add_label: bool     = True,
+    swing_rolling_bars: int = 96,
+    long_max_price_in_range: float  = 0.4,
+    short_min_price_in_range: float = 0.6,
+    add_label: bool = True,
 ) -> pd.DataFrame:
     """
-    Hitung semua 58 fitur dari cleaned DataFrame.
-    Input: cleaned parquet yang sudah memiliki kolom M15 OHLCV
-    Output: DataFrame dengan 58 fitur + label (jika add_label=True)
+    Hitung semua 65 fitur dari cleaned DataFrame.
+    Input:  cleaned parquet yang sudah memiliki kolom M15 + H4 OHLCV
+    Output: DataFrame dengan 65 fitur + label v2 (jika add_label=True)
 
-    CATATAN: OB_price TIDAK di-include (sudah di-drop berdasarkan EDA).
+    v2 vs v1:
+      + 7 fitur baru (swing structure + regime)
+      + structural_label_filter() setelah triple_barrier_labeling()
     """
     df = ensure_utc_index(df)
 
     # ── Extract base OHLCV (M15) ──────────────────────────────────────────────
     o, h, l, c, v = _get_ohlcv(df, "m15")
-
-    # Fallback: coba kolom tanpa prefix
     if c.isna().all():
         o = df.get("open",   pd.Series(np.nan, index=df.index))
         h = df.get("high",   pd.Series(np.nan, index=df.index))
@@ -422,11 +525,12 @@ def engineer_features(
     atr14    = calc_atr(h, l, c, 14)
     atr_safe = atr14.replace(0, np.nan)
 
-    # ── ATR H4 ────────────────────────────────────────────────────────────────
+    # ── H4 OHLCV & ATR ────────────────────────────────────────────────────────
     h4_h = df.get("4h_high",  h)
     h4_l = df.get("4h_low",   l)
     h4_c = df.get("4h_close", c)
-    atr_h4 = calc_atr(h4_h, h4_l, h4_c, 14)
+    atr_h4_raw = calc_atr(h4_h, h4_l, h4_c, 14)
+    atr_h4     = atr_h4_raw.reindex(atr_h4_raw.index.union(df.index)).ffill().reindex(df.index)
 
     feat: dict[str, pd.Series] = {}
 
@@ -456,20 +560,17 @@ def engineer_features(
     feat["FVG_up"]   = fvg_up
     feat["FVG_down"] = fvg_down
 
-    # ── CATATAN: OB_price TIDAK di-include (di-drop berdasarkan EDA) ──────────
-
     # ── Liquidity & SFP ───────────────────────────────────────────────────────
     buy_liq, sell_liq, sfp = calc_liquidity_levels(h, l, c, atr14, swing_lookback)
     feat["Buy_Liq"]   = buy_liq
     feat["Sell_Liq"]  = sell_liq
     feat["SFP_sweep"] = sfp
 
-    # ── Open Interest (Synthetic dari CVD) ────────────────────────────────────
+    # ── Open Interest ─────────────────────────────────────────────────────────
     oi_col = _col(df, "open_interest")
     if oi_col and not df[oi_col].isna().all():
         feat["open_interest"] = df[oi_col]
     else:
-        # Hitung synthetic OI dari CVD
         temp_df = pd.DataFrame({"cvd": feat["cvd"], "volume": v})
         feat["open_interest"] = compute_synthetic_oi(temp_df)
 
@@ -481,11 +582,13 @@ def engineer_features(
     for span in (7, 21, 50, 200):
         feat[f"ema_{span}_m15"] = (calc_ema(c, span) - c) / atr_safe
 
-    # ── EMA H4 (ATR-normalized) ───────────────────────────────────────────────
+    # ── EMA H4 (ATR-normalized) — simpan raw EMA untuk add_swing_features ─────
+    ema_h4 = {}
     for span in (7, 21, 50, 200):
-        ema    = calc_ema(h4_c, span)
-        ema_m15 = ema.reindex(ema.index.union(df.index)).ffill().reindex(df.index)
-        feat[f"ema_{span}_h4"] = (ema_m15 - c) / atr_safe
+        raw     = calc_ema(h4_c, span)
+        aligned = raw.reindex(raw.index.union(df.index)).ffill().reindex(df.index)
+        ema_h4[span] = aligned
+        feat[f"ema_{span}_h4"] = (aligned - c) / atr_safe
 
     # ── RSI & StochRSI ────────────────────────────────────────────────────────
     feat["rsi_6"] = calc_rsi(c, 6)
@@ -493,7 +596,7 @@ def engineer_features(
 
     # ── ATR ───────────────────────────────────────────────────────────────────
     feat["atr_14_m15"] = atr14
-    feat["atr_14_h4"]  = atr_h4.reindex(atr_h4.index.union(df.index)).ffill().reindex(df.index)
+    feat["atr_14_h4"]  = atr_h4
 
     # ── Key Levels ────────────────────────────────────────────────────────────
     feat.update(calc_prev_day_week_levels(h, l, c, atr14))
@@ -525,36 +628,60 @@ def engineer_features(
     feat.update(calc_cyclic_time(df.index))
     feat["time_to_funding_norm"] = calc_time_to_funding(df.index)
 
-    # ── Partial NaN features (dari API yang tidak reliable) ───────────────────
-    ls_col     = _col(df, "long_short_ratio")
-    la_col     = _col(df, "long_account_pct", "longAccount")
-    sa_col     = _col(df, "short_account_pct", "shortAccount")
-    tr_col     = _col(df, "taker_buy_sell_ratio", "taker_ratio")
-    feat["long_short_ratio"]   = df[ls_col] if ls_col else pd.Series(np.nan, index=df.index)
-    feat["long_account_pct"]   = df[la_col] if la_col else pd.Series(np.nan, index=df.index)
-    feat["short_account_pct"]  = df[sa_col] if sa_col else pd.Series(np.nan, index=df.index)
+    # ── Partial NaN features ──────────────────────────────────────────────────
+    ls_col = _col(df, "long_short_ratio")
+    la_col = _col(df, "long_account_pct", "longAccount")
+    sa_col = _col(df, "short_account_pct", "shortAccount")
+    tr_col = _col(df, "taker_buy_sell_ratio", "taker_ratio")
+    feat["long_short_ratio"]     = df[ls_col] if ls_col else pd.Series(np.nan, index=df.index)
+    feat["long_account_pct"]     = df[la_col] if la_col else pd.Series(np.nan, index=df.index)
+    feat["short_account_pct"]    = df[sa_col] if sa_col else pd.Series(np.nan, index=df.index)
     feat["taker_buy_sell_ratio"] = df[tr_col] if tr_col else pd.Series(np.nan, index=df.index)
 
     # ── Symbol encoding ───────────────────────────────────────────────────────
     feat["symbol"] = symbol_id
 
+    # ── ★ BARU: Swing Structure & Regime Features (65 fitur total) ───────────
+    add_swing_features(
+        feat       = feat,
+        high       = h,
+        low        = l,
+        close      = c,
+        volume     = v,
+        atr_m15    = atr14,
+        ema_7_h4   = ema_h4[7],
+        ema_21_h4  = ema_h4[21],
+        ema_50_h4  = ema_h4[50],
+        atr_h4     = atr_h4,
+        rolling_bars = swing_rolling_bars,
+    )
+
     # ── Build DataFrame ───────────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)
     feat_df = ensure_utc_index(feat_df)
 
-    # ── Triple Barrier Labeling ───────────────────────────────────────────────
+    # ── Triple Barrier Labeling + Structural Filter ───────────────────────────
     if add_label:
         logger.info(
-            f"[{symbol}] Triple Barrier labeling "
+            f"[{symbol}] Triple Barrier labeling v2 "
             f"(TP={tp_mult}×ATR, SL={sl_mult}×ATR, max={max_hold} bars)..."
         )
-        feat_df["label"] = triple_barrier_labeling(c, atr14, tp_mult, sl_mult, max_hold)
+        raw_labels = triple_barrier_labeling(c, atr14, tp_mult, sl_mult, max_hold)
+
+        # ★ Structural context filter
+        feat_df["label"] = structural_label_filter(
+            labels                    = raw_labels,
+            feat_df                   = feat_df,
+            long_max_price_in_range   = long_max_price_in_range,
+            short_min_price_in_range  = short_min_price_in_range,
+        )
+
         label_counts = feat_df["label"].value_counts().to_dict()
-        logger.info(f"[{symbol}] Label distribution: {label_counts}")
+        logger.info(f"[{symbol}] Label distribution v2: {label_counts}")
 
     nan_pct = feat_df.isnull().mean().mean()
     logger.info(
-        f"[{symbol}] Features: {len(feat_df):,} rows × {len(feat_df.columns)} cols "
+        f"[{symbol}] Features v2: {len(feat_df):,} rows × {len(feat_df.columns)} cols "
         f"| NaN: {nan_pct:.1%}"
     )
     return feat_df

@@ -30,9 +30,11 @@ sys.path.insert(0, str(ROOT))
 
 from config import (
     TRAINING_COINS, LABEL_DIR, MODEL_DIR, REPORT_DIR,
-    LABEL_MAP, NUM_CLASSES,
+    LABEL_MAP, NUM_CLASSES, MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE,
+    TP_ATR_MULT, SL_ATR_MULT, CONFIDENCE_THRESHOLD_ENTRY,
 )
-from core.utils import setup_logger
+from core.utils import setup_logger, update_model_metrics
+from core.evaluator import full_trading_report
 
 logger = setup_logger("07_evaluate")
 
@@ -43,7 +45,7 @@ TOP_N         = 20
 
 
 def load_data(symbol: str) -> pd.DataFrame:
-    path = LABEL_DIR / f"{symbol}_features.parquet"
+    path = LABEL_DIR / f"{symbol}_features_v2.parquet"
     df   = pd.read_parquet(path)
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index, utc=True)
@@ -75,8 +77,14 @@ def run_shap(run_id: str):
     model = joblib.load(model_path)
     logger.info(f"Model loaded: {model_path}")
 
+    # ★ v2: prioritas baca dari feature_cols_v2.json
+    feat_cols_v2_path = MODEL_DIR / "feature_cols_v2.json"
     feat_cols = None
-    if cv_path.exists():
+    if feat_cols_v2_path.exists():
+        with open(feat_cols_v2_path) as f:
+            feat_cols = json.load(f)
+        logger.info(f"Feature cols v2 loaded: {len(feat_cols)} fitur")
+    elif cv_path.exists():
         with open(cv_path) as f:
             feat_cols = json.load(f).get("feature_cols")
 
@@ -135,6 +143,49 @@ def run_shap(run_id: str):
         json.dump({"symbol": SAMPLE_SYMBOL, "n": len(X_sample),
                    "n_features": len(feat_cols), "ranking": ranking_list}, f, indent=2)
     logger.info(f"SHAP ranking → {ranking_path}")
+
+    # ★ v2: Trading metrics + PnL simulation
+    logger.info("Menghitung trading metrics v2...")
+    y_actual = df["label"].map(LABEL_MAP).values
+    lgbm_model = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    y_pred  = lgbm_model.predict(X)
+    atr_arr = df["atr_14_m15"].ffill().fillna(0).values if "atr_14_m15" in df.columns else np.ones(len(df))
+    close_arr = df["close"].ffill().fillna(1).values    if "close"      in df.columns else np.ones(len(df))
+
+    trading_report = full_trading_report(
+        y_pred     = y_pred,
+        y_actual   = y_actual,
+        atr        = atr_arr,
+        close      = close_arr,
+        index      = df.index,
+        modal      = MODAL_PER_TRADE,
+        leverages  = LEVERAGE_SIM,
+        fee_per_side = FEE_PER_SIDE,
+        tp_mult    = TP_ATR_MULT,
+        sl_mult    = SL_ATR_MULT,
+        symbol     = SAMPLE_SYMBOL,
+    )
+
+    # Simpan trading report ke run dir
+    trading_path = run_dir / "trading_metrics.json"
+    with open(trading_path, "w") as f:
+        json.dump(trading_report, f, indent=2, default=str)
+    logger.info(f"Trading metrics → {trading_path}")
+
+    # Update model registry
+    update_model_metrics(
+        "ensemble_v2",
+        f1_macro    = float(imp_df["mean_abs_shap"].mean()),  # placeholder sampai 08_backtest
+        winrate     = trading_report["winrate"],
+        trade_per_month = trading_report["trade_per_month"],
+        pnl_lev3x   = trading_report.get("pnl_lev3x"),
+        pnl_lev5x   = trading_report.get("pnl_lev5x"),
+        max_drawdown = trading_report.get("max_drawdown_lev3x"),
+        max_consecutive_loss = trading_report["max_consecutive_loss"],
+        trained_date = datetime.now().strftime("%Y-%m-%d"),
+        status       = "active",
+    )
+    logger.info("Model registry updated.")
 
     # Bar plot
     set_style()

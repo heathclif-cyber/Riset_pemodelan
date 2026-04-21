@@ -47,7 +47,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins: list[str]) -> pd.DataFrame:
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features.parquet"
+        path = LABEL_DIR / f"{sym}_features_v2.parquet"
         if not path.exists():
             logger.warning(f"File tidak ditemukan, skip: {path}")
             continue
@@ -178,10 +178,16 @@ def main():
     # Simpan model
     model_path = run_dir / "lgbm.pkl"
     joblib.dump(best_model, model_path)
-    # Juga update symlink ke models/ root untuk inference
+    # Juga update ke models/ root untuk inference
     root_model = MODEL_DIR / "lgbm_baseline.pkl"
     joblib.dump(best_model, root_model)
     logger.info(f"Best model (fold {best_fold}, F1={best_f1:.4f}) → {model_path}")
+
+    # ★ v2: simpan feature_cols_v2.json untuk konsistensi inference
+    feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
+    with open(feat_cols_path, "w") as f:
+        json.dump(feat_cols, f, indent=2)
+    logger.info(f"Feature cols v2 ({len(feat_cols)}) → {feat_cols_path}")
 
     f1s  = [m["f1_macro"] for m in all_metrics]
     accs = [m["accuracy"] for m in all_metrics]

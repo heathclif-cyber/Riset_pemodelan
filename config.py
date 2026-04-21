@@ -83,6 +83,11 @@ OB_LOOKBACK = 30
 # Swing High/Low detection
 SWING_LOOKBACK = 5   # bar di kiri dan kanan
 
+# Swing features v2
+SWING_ROLLING_BARS       = 96   # 24 jam dalam bar M15
+LONG_MAX_PRICE_IN_RANGE  = 0.4  # LONG hanya valid jika price di bawah 40% range
+SHORT_MIN_PRICE_IN_RANGE = 0.6  # SHORT hanya valid jika price di atas 60% range
+
 # Synthetic OI (dari CVD)
 SYNTHETIC_OI_CVD_WINDOW  = 96    # 24 jam rolling mean
 SYNTHETIC_OI_NORM_WINDOW = 672   # 1 minggu normalisasi
@@ -133,7 +138,7 @@ COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
 FEAR_GREED_URL     = "https://api.alternative.me/fng/"
 SLEEP_COINGECKO    = 2.0   # detik antar request CoinGecko (rate limit)
 
-# ─── 58 Feature Columns (urutan wajib, TANPA OB_price) ───────────────────────
+# ─── 65 Feature Columns v2 (urutan wajib, TANPA OB_price) ───────────────────
 FEATURE_COLS = [
     "open", "high", "low", "close", "volume",
     "volume_delta", "cvd", "buy_volume", "sell_volume",
@@ -156,4 +161,8 @@ FEATURE_COLS = [
     "long_short_ratio", "long_account_pct", "short_account_pct",
     "taker_buy_sell_ratio",
     "symbol",
+    # ★ v2: swing structure
+    "dist_swing_high", "dist_swing_low", "price_in_range", "swing_momentum",
+    # ★ v2: market regime
+    "h4_trend", "trend_strength", "vol_regime",
 ]

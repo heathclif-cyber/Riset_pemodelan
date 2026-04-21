@@ -54,7 +54,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins: list[str]) -> pd.DataFrame:
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features.parquet"
+        path = LABEL_DIR / f"{sym}_features_v2.parquet"
         if not path.exists():
             logger.warning(f"Skip {sym}: file tidak ada")
             continue
@@ -262,6 +262,13 @@ def main():
     save_lstm(best_model, MODEL_DIR / "lstm_best.pt")
     joblib.dump(best_scaler, MODEL_DIR / "lstm_scaler.pkl")
     logger.info(f"Best model fold {best_fold} F1={best_f1:.4f} → {lstm_path}")
+
+    # ★ v2: simpan feature_cols_v2.json (konsisten dengan 04_train_lgbm)
+    feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
+    if not feat_cols_path.exists():
+        with open(feat_cols_path, "w") as f:
+            json.dump(feat_cols, f, indent=2)
+        logger.info(f"Feature cols v2 ({len(feat_cols)}) → {feat_cols_path}")
 
     f1s = [m["f1_macro"] for m in all_metrics]
     cv_summary = {

@@ -4,12 +4,11 @@ Dipakai bersama oleh pipeline/05_train_lstm.py, pipeline/06_ensemble.py,
 dan Swing_Trade9.6/ml/ml_signal.py
 
 PENTING: Arsitektur TradingLSTM TIDAK BOLEH diubah tanpa retraining.
-         n_features=58, hidden_size=128, num_layers=2, dropout=0.3
+         n_features=65, hidden_size=128, num_layers=2, dropout=0.3
 """
 
-import json
+import pickle
 from pathlib import Path
-from typing import Optional
 
 import torch
 import torch.nn as nn
@@ -23,17 +22,11 @@ class TradingLSTM(nn.Module):
 
     Input  : (batch, seq_len, n_features)
     Output : (batch, num_classes) — raw logits
-
-    State dict keys:
-      lstm.weight_ih_l0, lstm.weight_hh_l0, lstm.bias_ih_l0, lstm.bias_hh_l0
-      lstm.weight_ih_l1, lstm.weight_hh_l1, lstm.bias_ih_l1, lstm.bias_hh_l1
-      norm.weight, norm.bias
-      fc.weight, fc.bias
     """
 
     def __init__(
         self,
-        n_features:  int   = 58,
+        n_features:  int   = 65,
         hidden_size: int   = 128,
         num_layers:  int   = 2,
         dropout:     float = 0.3,
@@ -53,14 +46,13 @@ class TradingLSTM(nn.Module):
         self.fc      = nn.Linear(hidden_size, num_classes)
 
     def forward(self, x: torch.Tensor) -> torch.Tensor:
-        out, _  = self.lstm(x)
-        last    = out[:, -1, :]
-        last    = self.norm(last)
-        last    = self.dropout(last)
+        out, _ = self.lstm(x)
+        last   = self.norm(out[:, -1, :])
+        last   = self.dropout(last)
         return self.fc(last)
 
 
-# ─── Load / Save ─────────────────────────────────────────────────────────────
+# ─── Load / Save LSTM ────────────────────────────────────────────────────────
 
 def save_lstm(model: TradingLSTM, path: Path) -> None:
     """Simpan state dict saja (bukan full checkpoint)."""
@@ -70,7 +62,7 @@ def save_lstm(model: TradingLSTM, path: Path) -> None:
 
 def load_lstm(
     path: Path,
-    n_features:  int   = 58,
+    n_features:  int   = 65,
     hidden_size: int   = 128,
     num_layers:  int   = 2,
     dropout:     float = 0.3,
@@ -85,35 +77,63 @@ def load_lstm(
     return model
 
 
-# ─── Model Registry ──────────────────────────────────────────────────────────
+# ─── Probability Calibrator ──────────────────────────────────────────────────
 
-DEFAULT_REGISTRY = {
-    "active": "ensemble_v1",
-    "models": {
-        "ensemble_v1": {
-            "type":       "ensemble",
-            "lgbm_path":  "lgbm_baseline.pkl",
-            "lstm_path":  "lstm_best.pt",
-            "scaler_path":"lstm_scaler.pkl",
-            "meta_path":  "ensemble_meta.pkl",
-            "n_features": 58,
-            "lstm_hidden": 128,
-            "lstm_layers": 2,
-            "description": "LightGBM + LSTM stacking ensemble",
-            "f1_macro":   0.5249,
-        }
-    }
-}
+class ProbabilityCalibrator:
+    """
+    Kalibrasi probabilitas post-hoc untuk output ensemble.
+    Difit pada validation set setelah ensemble selesai ditraining.
 
+    Method "isotonic" (default) lebih fleksibel untuk distribusi
+    non-Gaussian seperti trading signals. "platt" = Logistic Regression.
 
-def save_registry(registry: dict, path: Path) -> None:
-    path.parent.mkdir(parents=True, exist_ok=True)
-    with open(path, "w") as f:
-        json.dump(registry, f, indent=2)
+    Usage:
+        cal = ProbabilityCalibrator()
+        cal.fit(proba_val, y_val)        # proba: (n, 3), y: (n,) int
+        cal_proba = cal.transform(proba) # output: (n, 3), setiap baris sum=1
+        cal.save(path)
+        cal = ProbabilityCalibrator.load(path)
+    """
 
+    def __init__(self, method: str = "isotonic"):
+        self.method      = method
+        self.calibrators = {}  # {class_idx: fitted_estimator}
 
-def load_registry(path: Path) -> dict:
-    if not path.exists():
-        return DEFAULT_REGISTRY
-    with open(path) as f:
-        return json.load(f)
+    def fit(self, proba: "np.ndarray", y: "np.ndarray") -> None:
+        import numpy as np
+        from sklearn.isotonic import IsotonicRegression
+        from sklearn.linear_model import LogisticRegression
+
+        for c in range(proba.shape[1]):
+            y_bin = (y == c).astype(int)
+            if self.method == "isotonic":
+                est = IsotonicRegression(out_of_bounds="clip")
+                est.fit(proba[:, c], y_bin)
+            else:
+                est = LogisticRegression(C=1.0)
+                est.fit(proba[:, c].reshape(-1, 1), y_bin)
+            self.calibrators[c] = est
+
+    def transform(self, proba: "np.ndarray") -> "np.ndarray":
+        import numpy as np
+
+        cal = np.zeros_like(proba)
+        for c, est in self.calibrators.items():
+            if self.method == "isotonic":
+                cal[:, c] = est.predict(proba[:, c])
+            else:
+                cal[:, c] = est.predict_proba(proba[:, c].reshape(-1, 1))[:, 1]
+
+        row_sum = cal.sum(axis=1, keepdims=True)
+        row_sum = np.where(row_sum == 0, 1, row_sum)
+        return cal / row_sum
+
+    def save(self, path: Path) -> None:
+        path.parent.mkdir(parents=True, exist_ok=True)
+        with open(path, "wb") as f:
+            pickle.dump(self, f)
+
+    @staticmethod
+    def load(path: Path) -> "ProbabilityCalibrator":
+        with open(path, "rb") as f:
+            return pickle.load(f)

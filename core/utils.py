@@ -2,6 +2,7 @@
 core/utils.py — Helper functions yang dipakai di seluruh pipeline
 """
 
+import json
 import logging
 import time
 from datetime import datetime, timezone
@@ -253,3 +254,69 @@ def print_summary(symbol: str, val_results: list, logger: logging.Logger = None)
         logger.info(msg)
     else:
         print(msg)
+
+# ─── Model Registry Helpers ──────────────────────────────────────────────────
+
+def load_model_registry(registry_path: Path = None) -> dict:
+    """Load model registry dari JSON file."""
+    if registry_path is None:
+        registry_path = Path("models/model_registry.json")
+    
+    if not registry_path.exists():
+        raise FileNotFoundError(
+            f"Model registry tidak ditemukan di {registry_path}. "
+            f"Pastikan file ini ada atau jalankan training pipeline terlebih dahulu."
+        )
+    
+    with open(registry_path) as f:
+        return json.load(f)
+
+
+def save_model_registry(registry: dict, registry_path: Path = None) -> None:
+    """Simpan model registry ke JSON file."""
+    if registry_path is None:
+        registry_path = Path("models/model_registry.json")
+    
+    registry_path.parent.mkdir(parents=True, exist_ok=True)
+    with open(registry_path, "w") as f:
+        json.dump(registry, f, indent=2)
+
+
+def update_model_metrics(
+    model_name: str,
+    registry_path: Path = None,
+    **metrics,
+) -> None:
+    """
+    Update metrics untuk model di registry.
+    
+    Args:
+        model_name: Nama model (key di registry["models"])
+        registry_path: Path ke model_registry.json (optional)
+        **metrics: f1_macro, winrate, pnl_lev3x, status, dst
+    
+    Example:
+        update_model_metrics(
+            "ensemble_v2",
+            f1_macro=0.58,
+            winrate=0.61,
+            status="active"
+        )
+    """
+    registry = load_model_registry(registry_path)
+    
+    if model_name not in registry["models"]:
+        raise KeyError(f"Model '{model_name}' tidak ditemukan di registry.")
+    
+    for key, value in metrics.items():
+        if value is not None:
+            registry["models"][model_name][key] = value
+    
+    save_model_registry(registry, registry_path)
+
+
+def get_active_model_config(registry_path: Path = None) -> dict:
+    """Ambil config model yang sedang aktif."""
+    registry = load_model_registry(registry_path)
+    active_name = registry["active"]
+    return registry["models"][active_name]

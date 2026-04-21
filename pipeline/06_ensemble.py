@@ -35,7 +35,7 @@ from config import (
     LABEL_MAP, LABEL_MAP_INV, NUM_CLASSES,
     LSTM_SEQ_LEN, LSTM_HIDDEN, LSTM_LAYERS, LSTM_DROPOUT,
 )
-from core.models import TradingLSTM, load_lstm
+from core.models import TradingLSTM, load_lstm, ProbabilityCalibrator
 from core.utils import setup_logger
 from pipeline.p05_utils import SequenceDataset  # reuse dari 05
 
@@ -47,7 +47,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins):
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features.parquet"
+        path = LABEL_DIR / f"{sym}_features_v2.parquet"
         if not path.exists():
             continue
         df = pd.read_parquet(path)
@@ -174,10 +174,21 @@ def main():
     meta_learner.fit(meta_X, meta_y)
     logger.info("Meta-learner Logistic Regression trained.")
 
-    # Simpan
+    # Simpan meta-learner
     meta_path = run_dir / "ensemble_meta.pkl"
     joblib.dump(meta_learner, meta_path)
     joblib.dump(meta_learner, MODEL_DIR / "ensemble_meta.pkl")
+
+    # ★ v2: fit dan simpan probability calibrator
+    logger.info("Fitting ProbabilityCalibrator pada OOF predictions...")
+    calibrator = ProbabilityCalibrator(method="isotonic")
+    oof_meta_proba = meta_learner.predict_proba(meta_X)
+    calibrator.fit(oof_meta_proba, meta_y)
+
+    cal_path = run_dir / "calibrator.pkl"
+    calibrator.save(cal_path)
+    calibrator.save(MODEL_DIR / "calibrator.pkl")
+    logger.info(f"Calibrator → {cal_path}")
 
     f1s = [m["f1_macro"] for m in all_metrics]
     cv_summary = {

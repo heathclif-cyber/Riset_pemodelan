@@ -30,7 +30,8 @@ from config import (
 )
 from core.binance_client import BinanceClient
 from core.fetchers import fetch_coin, fetch_all_macro
-from core.utils import setup_logger, load_progress, save_progress, RAW_DIR
+from core.utils import setup_logger, load_progress, save_progress
+from config import RAW_DIR
 
 logger = setup_logger("01_fetch")
 

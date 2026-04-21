@@ -1,5 +1,5 @@
 """
-pipeline/03_engineer.py — Fase 3: Feature Engineering + Triple Barrier Labeling
+pipeline/03_engineer.py — Fase 3: Feature Engineering + Triple Barrier Labeling v2
 
 Jalankan:
   python pipeline/03_engineer.py                 # training coins
@@ -21,6 +21,8 @@ from config import (
     TP_ATR_MULT, SL_ATR_MULT, MAX_HOLDING_BARS,
     VP_WINDOW, VP_BINS, SWING_LOOKBACK,
     FVG_MIN_GAP_ATR, FEATURE_COLS,
+    SWING_ROLLING_BARS,
+    LONG_MAX_PRICE_IN_RANGE, SHORT_MIN_PRICE_IN_RANGE,
 )
 from core.utils import setup_logger, load_df, save_df
 
@@ -28,7 +30,7 @@ logger = setup_logger("03_engineer")
 
 
 def validate_features(df, symbol: str) -> bool:
-    """Pastikan 58 kolom output sama persis dengan FEATURE_COLS + label."""
+    """Pastikan 65 kolom output sama persis dengan FEATURE_COLS + label."""
     expected = set(FEATURE_COLS) | {"label"}
     actual   = set(df.columns)
     missing  = expected - actual
@@ -48,7 +50,7 @@ def engineer_symbol(symbol: str) -> bool:
     """Feature engineering satu koin. Return True jika berhasil."""
     from core.features import engineer_features
 
-    logger.info(f"[{symbol}] Starting feature engineering...")
+    logger.info(f"[{symbol}] Starting feature engineering v2...")
 
     clean_path = PROC_DIR / f"{symbol}_clean.parquet"
     df = load_df(clean_path, logger)
@@ -62,17 +64,20 @@ def engineer_symbol(symbol: str) -> bool:
 
     try:
         feat_df = engineer_features(
-            df           = df,
-            symbol       = symbol,
-            symbol_id    = symbol_id,
-            tp_mult      = TP_ATR_MULT,
-            sl_mult      = SL_ATR_MULT,
-            max_hold     = MAX_HOLDING_BARS,
-            vp_window    = VP_WINDOW,
-            vp_bins      = VP_BINS,
-            swing_lookback = SWING_LOOKBACK,
-            fvg_min_gap  = FVG_MIN_GAP_ATR,
-            add_label    = True,
+            df                       = df,
+            symbol                   = symbol,
+            symbol_id                = symbol_id,
+            tp_mult                  = TP_ATR_MULT,
+            sl_mult                  = SL_ATR_MULT,
+            max_hold                 = MAX_HOLDING_BARS,
+            vp_window                = VP_WINDOW,
+            vp_bins                  = VP_BINS,
+            swing_lookback           = SWING_LOOKBACK,
+            fvg_min_gap              = FVG_MIN_GAP_ATR,
+            swing_rolling_bars       = SWING_ROLLING_BARS,
+            long_max_price_in_range  = LONG_MAX_PRICE_IN_RANGE,
+            short_min_price_in_range = SHORT_MIN_PRICE_IN_RANGE,
+            add_label                = True,
         )
     except Exception as e:
         logger.exception(f"[{symbol}] Feature engineering error: {e}")
@@ -93,14 +98,15 @@ def engineer_symbol(symbol: str) -> bool:
     validate_features(feat_df, symbol)
 
     # Print ringkasan
-    nan_pct = feat_df.isnull().mean().mean()
+    nan_pct    = feat_df.isnull().mean().mean()
     label_dist = feat_df["label"].value_counts().to_dict() if "label" in feat_df.columns else {}
     logger.info(
         f"[{symbol}] Rows={len(feat_df):,} | Cols={len(feat_df.columns)} | "
         f"NaN={nan_pct:.1%} | Labels={label_dist}"
     )
 
-    out_path = LABEL_DIR / f"{symbol}_features.parquet"
+    # ★ v2: output ke _features_v2.parquet
+    out_path = LABEL_DIR / f"{symbol}_features_v2.parquet"
     LABEL_DIR.mkdir(parents=True, exist_ok=True)
     if save_df(feat_df, out_path, logger):
         logger.info(f"[{symbol}] Saved → {out_path}")
@@ -109,12 +115,12 @@ def engineer_symbol(symbol: str) -> bool:
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Feature Engineering Pipeline")
+    parser = argparse.ArgumentParser(description="Feature Engineering Pipeline v2")
     group  = parser.add_mutually_exclusive_group()
     group.add_argument("--training", action="store_true")
-    group.add_argument("--new",  action="store_true")
-    group.add_argument("--all",  action="store_true")
-    group.add_argument("--coins", nargs="+", metavar="SYMBOL")
+    group.add_argument("--new",      action="store_true")
+    group.add_argument("--all",      action="store_true")
+    group.add_argument("--coins",    nargs="+", metavar="SYMBOL")
     return parser.parse_args()
 
 
@@ -129,7 +135,7 @@ def main():
     else:
         coins = TRAINING_COINS
 
-    logger.info(f"Feature engineering untuk: {coins}")
+    logger.info(f"Feature engineering v2 untuk: {coins}")
     success, failed = [], []
 
     for symbol in coins:
@@ -142,7 +148,7 @@ def main():
 
     sep = "=" * 55
     print(f"\n{sep}")
-    print(f"  FEATURE ENGINEERING SELESAI")
+    print(f"  FEATURE ENGINEERING v2 SELESAI")
     print(f"{sep}")
     print(f"  Berhasil : {len(success)} — {success}")
     print(f"  Gagal    : {len(failed)}  — {failed}")
