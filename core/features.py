@@ -23,6 +23,7 @@ import numpy as np
 import pandas as pd
 
 from core.utils import setup_logger, ensure_utc_index
+from config import SYNTHETIC_OI_CVD_WINDOW, SYNTHETIC_OI_NORM_WINDOW
 
 logger = setup_logger("features")
 
@@ -964,8 +965,8 @@ def engineer_features(
         temp_df = pd.DataFrame({"cvd": feat["cvd"], "volume": v}, index=df.index)
         feat["open_interest"] = compute_synthetic_oi(
             temp_df,
-            cvd_window  = 24,    # 24 bar H1 = 24 jam
-            norm_window = 168,   # 168 bar H1 = 1 minggu
+            cvd_window  = SYNTHETIC_OI_CVD_WINDOW,
+            norm_window = SYNTHETIC_OI_NORM_WINDOW,
         )
 
     # ── 12. Funding Rate ──────────────────────────────────────────────────────
