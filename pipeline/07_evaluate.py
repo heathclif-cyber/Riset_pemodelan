@@ -45,7 +45,7 @@ TOP_N         = 20
 
 
 def load_data(symbol: str) -> pd.DataFrame:
-    path = LABEL_DIR / f"{symbol}_features_v2.parquet"
+    path = LABEL_DIR / f"{symbol}_features_v3.parquet"
     df   = pd.read_parquet(path)
     if not isinstance(df.index, pd.DatetimeIndex):
         df.index = pd.to_datetime(df.index, utc=True)
@@ -149,7 +149,8 @@ def run_shap(run_id: str):
     y_actual = df["label"].map(LABEL_MAP).values
     lgbm_model = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
     y_pred  = lgbm_model.predict(X)
-    atr_arr = df["atr_14_m15"].ffill().fillna(0).values if "atr_14_m15" in df.columns else np.ones(len(df))
+    atr_arr = df["atr_14_h1"].ffill().fillna(0).values if "atr_14_h1" in df.columns \
+          else np.ones(len(df))
     close_arr = df["close"].ffill().fillna(1).values    if "close"      in df.columns else np.ones(len(df))
 
     trading_report = full_trading_report(

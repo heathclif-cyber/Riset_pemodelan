@@ -428,7 +428,7 @@ def fetch_coin(
     Synthetic OI dihitung di pipeline/03_engineer.py dari CVD.
     """
     if intervals is None:
-        intervals = ["15m", "1h", "4h", "1d"]
+        intervals = ["1h", "4h", "1d"]
 
     logger.info(f"\n{'═'*55}")
     logger.info(f"  FETCHING: {symbol}")

@@ -149,3 +149,10 @@ FEATURE_COLS_V3 = [
     "rsi_h4", "rsi_divergence",
     "wyckoff_phase", "spring_upthrust",
 ]
+
+# ─── Trading Simulation Parameters ───────────────────────────────────────────
+MODAL_PER_TRADE          = 1000.0
+LEVERAGE_SIM             = [3.0, 5.0]
+FEE_PER_SIDE             = 0.0004
+CONFIDENCE_THRESHOLD_ENTRY = 0.60
+MIN_HOLD_BARS            = 4     # bar H1 = 4 jam minimum hold

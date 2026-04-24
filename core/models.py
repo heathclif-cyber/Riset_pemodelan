@@ -13,6 +13,7 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
+from config import FEATURE_COLS_V3
 
 # ─── TradingLSTM ─────────────────────────────────────────────────────────────
 
@@ -26,7 +27,7 @@ class TradingLSTM(nn.Module):
 
     def __init__(
         self,
-        n_features:  int   = 65,
+        n_features:  int   = len(FEATURE_COLS_V3),
         hidden_size: int   = 128,
         num_layers:  int   = 2,
         dropout:     float = 0.3,
@@ -62,7 +63,7 @@ def save_lstm(model: TradingLSTM, path: Path) -> None:
 
 def load_lstm(
     path: Path,
-    n_features:  int   = 65,
+    n_features:  int   = len(FEATURE_COLS_V3),
     hidden_size: int   = 128,
     num_layers:  int   = 2,
     dropout:     float = 0.3,

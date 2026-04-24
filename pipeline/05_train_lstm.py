@@ -54,7 +54,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins: list[str]) -> pd.DataFrame:
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features_v2.parquet"
+        path = LABEL_DIR / f"{sym}_features_v3.parquet"
         if not path.exists():
             logger.warning(f"Skip {sym}: file tidak ada")
             continue

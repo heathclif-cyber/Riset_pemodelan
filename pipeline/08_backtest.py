@@ -58,7 +58,7 @@ NON_FEATURE_COLS = {"label"}
 # ─── Data Loading ─────────────────────────────────────────────────────────────
 
 def load_symbol(symbol: str, feat_cols: list[str]) -> tuple[pd.DataFrame, np.ndarray] | None:
-    path = LABEL_DIR / f"{symbol}_features_v2.parquet"
+    path = LABEL_DIR / f"{symbol}_features_v3.parquet"
     if not path.exists():
         logger.warning(f"[{symbol}] File tidak ditemukan: {path}")
         return None
@@ -186,7 +186,7 @@ def backtest_symbol(
 
     df_valid  = df.iloc[valid_idx]
     y_valid   = y[valid_idx]
-    atr_arr   = df_valid["atr_14_m15"].values if "atr_14_m15" in df_valid.columns else np.ones(len(df_valid))
+    atr_arr   = df_valid["atr_14_h1"].values if "atr_14_h1" in df_valid.columns else np.ones(len(df_valid))
     close_arr = df_valid["close"].values       if "close"      in df_valid.columns else np.ones(len(df_valid))
 
     report = full_trading_report(
@@ -256,7 +256,7 @@ def generate_inference_config(
             "confidence_half_size":       CONFIDENCE_HALF,
             "min_hold_bars":              MIN_HOLD_BARS,
             "max_hold_bars":              MAX_HOLDING_BARS,
-            "timeframe":                  "15m",
+            "timeframe":                  "1h",
             "seq_len":                    LSTM_SEQ_LEN,
             "label_map":                  LABEL_MAP,
             "label_map_inv":              {str(v): k for k, v in LABEL_MAP.items()},

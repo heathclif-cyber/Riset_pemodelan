@@ -47,7 +47,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins):
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features_v2.parquet"
+        path = LABEL_DIR / f"{sym}_features_v3.parquet"
         if not path.exists():
             continue
         df = pd.read_parquet(path)
