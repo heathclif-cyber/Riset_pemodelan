@@ -30,8 +30,9 @@ from core.utils import setup_logger, ensure_utc_index
 
 logger = setup_logger("02_clean")
 
-INTERVALS      = ["15m", "1h", "4h", "1d"]
-INTERVAL_FREQ  = {"15m": "15min", "1h": "1h", "4h": "4h", "1d": "1D"}
+# ── H1 Base Timeframe Update (M15 dihapus dari pipeline) ──
+INTERVALS      = ["1h", "4h", "1d"]
+INTERVAL_FREQ  = {"1h": "1h", "4h": "4h", "1d": "1D"}
 LEAKAGE_WORDS  = ("future", "_fwd", "next_", "lead_", "label",
                   "barrier", "exit_time", "pnl", "ret_fwd")
 
@@ -86,9 +87,9 @@ def fix_ohlc(df: pd.DataFrame) -> pd.DataFrame:
     return df
 
 
-def ffill_macro(macro_df: pd.DataFrame, m15_index: pd.DatetimeIndex) -> pd.DataFrame:
-    combined = macro_df.reindex(macro_df.index.union(m15_index)).sort_index().ffill()
-    return combined.reindex(m15_index)
+def ffill_macro(macro_df: pd.DataFrame, base_index: pd.DatetimeIndex) -> pd.DataFrame:
+    combined = macro_df.reindex(macro_df.index.union(base_index)).sort_index().ffill()
+    return combined.reindex(base_index)
 
 
 def audit_leakage(df: pd.DataFrame) -> list[str]:
@@ -128,11 +129,10 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
         logger.info(f"[{symbol}] {tf}: {len(df):,} rows, {len(gaps)} gaps")
 
     # ── Load auxiliary data ───────────────────────────────────────────────────
+    # taker_ratio dan long_short_ratio di-drop karena tidak tersedia di H1
     aux_sources = {
         "open_interest":    RAW_DIR / "open_interest"    / f"{symbol}_1h.parquet",
         "funding_rate":     RAW_DIR / "funding_rate"     / f"{symbol}_8h.parquet",
-        "taker_ratio":      RAW_DIR / "taker_ratio"      / f"{symbol}_15m.parquet",
-        "long_short_ratio": RAW_DIR / "long_short_ratio" / f"{symbol}_15m.parquet",
     }
     aux = {}
     for name, path in aux_sources.items():
@@ -160,34 +160,34 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
             "rows": len(df) if df is not None else 0,
         }
 
-    # ── Build M15 master frame ────────────────────────────────────────────────
-    base_m15 = klines.get("15m")
-    if base_m15 is None:
-        logger.error(f"[{symbol}] Tidak ada M15 klines — skip.")
+    # ── Build H1 master frame ─────────────────────────────────────────────────
+    base_h1 = klines.get("1h")
+    if base_h1 is None:
+        logger.error(f"[{symbol}] Tidak ada H1 klines — skip.")
         report["output"] = "skipped"
         return report
 
-    master = base_m15.copy()
-    master.columns = [f"m15_{c}" for c in master.columns]
+    master = base_h1.copy()
+    master.columns = [f"1h_{c}" for c in master.columns]
 
-    # Join H1, H4, D1 dengan ffill ke M15 grid
-    for tf in ("1h", "4h", "1d"):
+    # Join H4, D1 dengan ffill ke H1 grid
+    for tf in ("4h", "1d"):
         df_tf = klines.get(tf)
         if df_tf is None:
             continue
         df_tf = df_tf.rename(columns={c: f"{tf}_{c}" for c in df_tf.columns})
-        df_tf_m15 = df_tf.reindex(df_tf.index.union(master.index)).sort_index().ffill()
-        master = master.join(df_tf_m15.reindex(master.index), how="left")
+        df_tf_h1 = df_tf.reindex(df_tf.index.union(master.index)).sort_index().ffill()
+        master = master.join(df_tf_h1.reindex(master.index), how="left")
 
-    # Join auxiliary dengan ffill
+    # Join auxiliary dengan ffill ke H1 grid
     for name, df_aux in aux.items():
         if df_aux is None:
             continue
         df_aux = df_aux.rename(columns={c: f"{name}_{c}" for c in df_aux.columns})
-        df_aux_m15 = df_aux.reindex(df_aux.index.union(master.index)).sort_index().ffill()
-        master = master.join(df_aux_m15.reindex(master.index), how="left")
+        df_aux_h1 = df_aux.reindex(df_aux.index.union(master.index)).sort_index().ffill()
+        master = master.join(df_aux_h1.reindex(master.index), how="left")
 
-    # Forward-fill macro ke M15 grid
+    # Forward-fill macro ke H1 grid
     for name, df_macro in macro.items():
         if df_macro is None:
             continue

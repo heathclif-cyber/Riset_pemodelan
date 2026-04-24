@@ -21,40 +21,35 @@ TRAINING_COINS = [
     "SOLUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
 ]
 
-# Koin baru untuk generalisasi (15 koin tambahan)
+# Koin baru untuk generalisasi (13 koin setelah revisi)
 NEW_COINS = [
-    "TONUSDT", "ADAUSDT", "TRXUSDT", "SHIBUSDT", "AVAXUSDT",
+    "TONUSDT", "ADAUSDT", "TRXUSDT", "1000SHIBUSDT", "AVAXUSDT",
     "LINKUSDT", "DOTUSDT", "SUIUSDT", "POLUSDT", "NEARUSDT",
-    "PEPEUSDT", "TAOUSDT", "APTOSUSDT", "ARBUSDT", "WLFIUSDT",
+    "1000PEPEUSDT", "TAOUSDT", "ARBUSDT",
 ]
 
-# Semua 20 koin
+# Semua 18 koin
 ALL_COINS = TRAINING_COINS + NEW_COINS
 
 # Symbol → integer mapping (digunakan sebagai fitur 'symbol')
 SYMBOL_MAP = {coin: i for i, coin in enumerate(ALL_COINS)}
 
 # ─── Periode Data ─────────────────────────────────────────────────────────────
-# Periode training (5 koin awal)
 TRAIN_START = datetime(2022, 1, 1, tzinfo=timezone.utc)
 TRAIN_END   = datetime(2025, 4, 1, tzinfo=timezone.utc)
-
-# Periode koin baru (lebih pendek, mulai Apr 2023)
 NEW_COINS_START = datetime(2023, 4, 1, tzinfo=timezone.utc)
 NEW_COINS_END   = datetime(2025, 4, 1, tzinfo=timezone.utc)
 
-# Alias untuk kompatibilitas
 START_DATE = TRAIN_START
 END_DATE   = TRAIN_END
 
 # ─── Binance API ─────────────────────────────────────────────────────────────
 BINANCE_BASE_URL    = "https://fapi.binance.com"
-SLEEP_BETWEEN_REQUESTS = 0.12   # detik antar request
-SLEEP_ON_RATE_LIMIT    = 60.0   # detik saat kena rate limit
+SLEEP_BETWEEN_REQUESTS = 0.12   
+SLEEP_ON_RATE_LIMIT    = 60.0   
 MAX_RETRIES            = 3
-RETRY_BACKOFF_BASE     = 2.0    # exponential backoff base
+RETRY_BACKOFF_BASE     = 2.0    
 
-# Fetch limits per request
 KLINE_LIMIT        = 1500
 OI_LIMIT           = 500
 FUNDING_LIMIT      = 1000
@@ -62,41 +57,37 @@ TAKER_RATIO_LIMIT  = 500
 LONG_SHORT_LIMIT   = 500
 
 # ─── Timeframes ───────────────────────────────────────────────────────────────
-KLINE_INTERVALS = ["15m", "1h", "4h", "1d"]
+KLINE_INTERVALS = ["1h", "4h", "1d"]  # Base adalah H1
 
 # ─── Feature Engineering ──────────────────────────────────────────────────────
-# Triple Barrier Labeling
-TP_ATR_MULT      = 2.0   # take-profit = entry + TP_ATR_MULT × ATR
-SL_ATR_MULT      = 1.0   # stop-loss   = entry - SL_ATR_MULT × ATR
-MAX_HOLDING_BARS = 48    # maksimum holding = 48 bar M15 = 12 jam
+TP_ATR_MULT      = 2.0   
+SL_ATR_MULT      = 1.0   
+MAX_HOLDING_BARS = 48    # bar H1 = 48 jam
 
-# Volume Profile
-VP_WINDOW = 96    # 24 jam dalam bar M15
-VP_BINS   = 50    # jumlah price bins
+# ── Swing-Based Labeling v3 (Base H1) ────────────────────────────────────────
+SWING_LABEL_MAX_HOLD  = 48     # bar H1 = 48 jam
+SWING_LABEL_MIN_RR    = 1.5    
+SWING_LABEL_MIN_TP    = 1.5    
+SWING_LABEL_MAX_SL    = 3.0    
+SWING_H4_LOOKBACK     = 3      
+SWING_ROLLING_BARS    = 24     # 24 jam rolling swing
 
-# FVG (Fair Value Gap)
-FVG_MIN_GAP_ATR = 0.5   # minimum gap dalam satuan ATR
-
-# Order Block (CATATAN: OB_price di-drop dari feature set setelah EDA)
+# Volume Profile & FVG
+VP_WINDOW = 24    
+VP_BINS   = 50    
+FVG_MIN_GAP_ATR = 0.5   
 OB_LOOKBACK = 30
+SWING_LOOKBACK = 5   
 
-# Swing High/Low detection
-SWING_LOOKBACK = 5   # bar di kiri dan kanan
+# Synthetic OI (H1 Adjusted)
+SYNTHETIC_OI_CVD_WINDOW  = 24    
+SYNTHETIC_OI_NORM_WINDOW = 168   
 
-# Swing features v2
-SWING_ROLLING_BARS       = 96   # 24 jam dalam bar M15
-LONG_MAX_PRICE_IN_RANGE  = 0.4  # LONG hanya valid jika price di bawah 40% range
-SHORT_MIN_PRICE_IN_RANGE = 0.6  # SHORT hanya valid jika price di atas 60% range
-
-# Synthetic OI (dari CVD)
-SYNTHETIC_OI_CVD_WINDOW  = 96    # 24 jam rolling mean
-SYNTHETIC_OI_NORM_WINDOW = 672   # 1 minggu normalisasi
-
-# ─── Training ─────────────────────────────────────────────────────────────────
+# ─── Training & Purging ───────────────────────────────────────────────────────
 N_FOLDS        = 8
-PURGE_GAP_BARS = 5   # bar M15 yang di-purge antara train dan test
+PURGE_GAP_BARS = 5   
 
-# LightGBM
+# LightGBM Params
 LGBM_PARAMS = {
     "objective":         "multiclass",
     "num_class":         3,
@@ -113,7 +104,7 @@ LGBM_PARAMS = {
 }
 LGBM_EARLY_STOPPING = 50
 
-# LSTM
+# LSTM Params
 LSTM_SEQ_LEN    = 32
 LSTM_HIDDEN     = 128
 LSTM_LAYERS     = 2
@@ -123,46 +114,38 @@ LSTM_PATIENCE   = 5
 LSTM_BATCH_SIZE = 512
 LSTM_LR         = 0.001
 
-# Label encoding
 LABEL_MAP     = {"SHORT": 0, "FLAT": 1, "LONG": 2}
 LABEL_MAP_INV = {v: k for k, v in LABEL_MAP.items()}
 NUM_CLASSES   = 3
 
 # ─── ML Signal Thresholds ─────────────────────────────────────────────────────
-CONFIDENCE_FULL = 0.75   # >= FULL SIZE entry
-CONFIDENCE_HALF = 0.60   # >= HALF SIZE entry
-# < CONFIDENCE_HALF → SKIP
+CONFIDENCE_FULL = 0.75   
+CONFIDENCE_HALF = 0.60   
 
-# ─── Macro Data ───────────────────────────────────────────────────────────────
-COINGECKO_BASE_URL = "https://api.coingecko.com/api/v3"
-FEAR_GREED_URL     = "https://api.alternative.me/fng/"
-SLEEP_COINGECKO    = 2.0   # detik antar request CoinGecko (rate limit)
-
-# ─── 65 Feature Columns v2 (urutan wajib, TANPA OB_price) ───────────────────
-FEATURE_COLS = [
+# ─── Feature Columns v3 (H1 Base - 71 fitur) ──────────────────────────────────
+FEATURE_COLS_V3 = [
     "open", "high", "low", "close", "volume",
     "volume_delta", "cvd", "buy_volume", "sell_volume",
     "MSB_BOS", "CHoCH", "bars_since_BOS",
-    "FVG_up", "FVG_down",
-    "Buy_Liq", "Sell_Liq", "SFP_sweep",
+    "FVG_up", "FVG_down", "Buy_Liq", "Sell_Liq", "SFP_sweep",
     "open_interest", "funding_rate",
-    "ema_7_m15", "ema_21_m15", "ema_50_m15", "ema_200_m15",
+    "ema_7_h1", "ema_21_h1", "ema_50_h1", "ema_200_h1",
     "ema_7_h4", "ema_21_h4", "ema_50_h4", "ema_200_h4",
     "rsi_6", "stochrsi_k", "stochrsi_d",
-    "atr_14_m15", "atr_14_h4",
-    "PDH", "PDL", "PWH", "PWL",
-    "Fib_618", "Fib_786",
+    "atr_14_h1", "atr_14_h4",
+    "PDH", "PDL", "PWH", "PWL", "Fib_618", "Fib_786",
     "POC", "VAH", "VAL",
     "btc_dominance", "fear_greed", "market_session",
-    "log_ret_1", "log_ret_5", "log_ret_20",
-    "vol_ratio_20",
+    "log_ret_1", "log_ret_5", "log_ret_20", "vol_ratio_20",
     "hour_sin", "hour_cos", "dow_sin", "dow_cos",
     "time_to_funding_norm",
-    "long_short_ratio", "long_account_pct", "short_account_pct",
-    "taker_buy_sell_ratio",
+    "long_short_ratio",
     "symbol",
-    # ★ v2: swing structure
     "dist_swing_high", "dist_swing_low", "price_in_range", "swing_momentum",
-    # ★ v2: market regime
     "h4_trend", "trend_strength", "vol_regime",
+    "cvd_div_h4", "cvd_slope_h4",
+    "vol_efficiency", "absorption_z",
+    "funding_price_div",
+    "rsi_h4", "rsi_divergence",
+    "wyckoff_phase", "spring_upthrust",
 ]

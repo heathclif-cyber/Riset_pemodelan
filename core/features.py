@@ -1,19 +1,11 @@
 """
-core/features.py — Feature Engineering & Labeling  (v2)
+core/features.py — Feature Engineering & Labeling
 Gabungan dari feature_engineer.py dan fix_synthetic_oi.py
 
 Fungsi utama:
-  engineer_features()        — hitung semua 65 fitur dari cleaned parquet
-  add_swing_features()       — ★ BARU: 7 fitur swing + regime
-  structural_label_filter()  — ★ BARU: override LONG/SHORT → FLAT berdasarkan konteks H4
-  compute_synthetic_oi()     — hitung Synthetic OI dari CVD
-  triple_barrier_labeling()  — Triple Barrier label: LONG/SHORT/FLAT
-
-Perubahan v2 vs v1:
-  + 4 swing structure features  : dist_swing_high, dist_swing_low, price_in_range, swing_momentum
-  + 3 market regime features    : h4_trend, trend_strength, vol_regime
-  + structural_label_filter()   : LONG di downtrend H4 → FLAT, SHORT di uptrend H4 → FLAT
-  Total fitur: 58 → 65
+  engineer_features()       — hitung semua 58+ fitur dari cleaned parquet
+  compute_synthetic_oi()    — hitung Synthetic OI dari CVD (fix_synthetic_oi)
+  swing_based_labeling()    — Labeling v3 berbasis H4 Swing Points
 """
 
 import numpy as np
@@ -33,7 +25,6 @@ def _col(df: pd.DataFrame, *candidates: str) -> str | None:
             return lower_map[cand.lower()]
     return None
 
-
 def _get_ohlcv(df: pd.DataFrame, prefix: str = "m15"):
     def col(name):
         full = f"{prefix}_{name}"
@@ -41,7 +32,7 @@ def _get_ohlcv(df: pd.DataFrame, prefix: str = "m15"):
     return col("open"), col("high"), col("low"), col("close"), col("volume")
 
 
-# ─── ATR ─────────────────────────────────────────────────────────────────────
+# ─── ATR & RSI ───────────────────────────────────────────────────────────────
 
 def calc_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14) -> pd.Series:
     prev_close = close.shift(1)
@@ -52,9 +43,6 @@ def calc_atr(high: pd.Series, low: pd.Series, close: pd.Series, period: int = 14
     ], axis=1).max(axis=1)
     return tr.ewm(span=period, min_periods=period, adjust=False).mean()
 
-
-# ─── RSI ─────────────────────────────────────────────────────────────────────
-
 def calc_rsi(close: pd.Series, period: int = 6) -> pd.Series:
     delta    = close.diff()
     gain     = delta.clip(lower=0)
@@ -63,9 +51,6 @@ def calc_rsi(close: pd.Series, period: int = 6) -> pd.Series:
     avg_loss = loss.ewm(span=period, min_periods=period, adjust=False).mean()
     rs = avg_gain / avg_loss.replace(0, np.nan)
     return 100 - (100 / (1 + rs))
-
-
-# ─── StochRSI ────────────────────────────────────────────────────────────────
 
 def calc_stochrsi(close: pd.Series, rsi_period: int = 14, stoch_period: int = 14,
                   k_period: int = 3, d_period: int = 3) -> tuple[pd.Series, pd.Series]:
@@ -77,20 +62,15 @@ def calc_stochrsi(close: pd.Series, rsi_period: int = 14, stoch_period: int = 14
     d = k.rolling(d_period, min_periods=1).mean()
     return k, d
 
-
-# ─── EMA ─────────────────────────────────────────────────────────────────────
-
 def calc_ema(close: pd.Series, span: int) -> pd.Series:
     return close.ewm(span=span, adjust=False).mean()
 
 
-# ─── CVD ─────────────────────────────────────────────────────────────────────
+# ─── CVD & Volume ────────────────────────────────────────────────────────────
 
 def calc_cvd(df: pd.DataFrame) -> pd.Series:
-    buy_col  = _col(df, "taker_buy_volume", "taker_ratio_takerBuyVol",
-                    "m15_taker_buy_base_asset_volume")
-    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol",
-                    "m15_taker_sell_base_asset_volume")
+    buy_col  = _col(df, "taker_buy_volume", "taker_ratio_takerBuyVol", "m15_taker_buy_base_asset_volume")
+    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol", "m15_taker_sell_base_asset_volume")
     if buy_col and sell_col:
         delta = df[buy_col].fillna(0) - df[sell_col].fillna(0)
     else:
@@ -100,23 +80,15 @@ def calc_cvd(df: pd.DataFrame) -> pd.Series:
         delta  = sign * volume.fillna(0)
     return delta.cumsum()
 
-
-# ─── Volume Delta ─────────────────────────────────────────────────────────────
-
 def calc_volume_delta(df: pd.DataFrame) -> pd.Series:
-    buy_col  = _col(df, "taker_buy_volume", "taker_ratio_takerBuyVol",
-                    "m15_taker_buy_base_asset_volume")
-    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol",
-                    "m15_taker_sell_base_asset_volume")
+    buy_col  = _col(df, "taker_buy_volume", "taker_ratio_takerBuyVol", "m15_taker_buy_base_asset_volume")
+    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol", "m15_taker_sell_base_asset_volume")
     if buy_col and sell_col:
         return (df[buy_col] - df[sell_col]).fillna(0)
     close  = df.get("close", df.get("m15_close", pd.Series(np.nan, index=df.index)))
     volume = df.get("volume", df.get("m15_volume", pd.Series(np.nan, index=df.index)))
     sign   = np.sign(close.diff().fillna(0))
     return sign * volume.fillna(0)
-
-
-# ─── Volume Profile ───────────────────────────────────────────────────────────
 
 def calc_volume_profile(
     high: pd.Series, low: pd.Series, close: pd.Series, volume: pd.Series,
@@ -179,7 +151,7 @@ def calc_volume_profile(
     )
 
 
-# ─── Swing High / Low ────────────────────────────────────────────────────────
+# ─── Market Structure & Liquidity ────────────────────────────────────────────
 
 def detect_swing_highs_lows(
     high: pd.Series, low: pd.Series, lookback: int = 5,
@@ -194,9 +166,6 @@ def detect_swing_highs_lows(
             sl.iloc[i] = True
     return sh, sl
 
-
-# ─── Liquidity & SFP ─────────────────────────────────────────────────────────
-
 def calc_liquidity_levels(
     high: pd.Series, low: pd.Series, close: pd.Series,
     atr: pd.Series, lookback: int = 5,
@@ -209,9 +178,6 @@ def calc_liquidity_levels(
     sfp_sweep = ((low < swing_lo) & (close > swing_lo) |
                  (high > swing_hi) & (close < swing_hi)).astype(int)
     return buy_liq, sell_liq, sfp_sweep
-
-
-# ─── Market Structure ────────────────────────────────────────────────────────
 
 def calc_market_structure(
     high: pd.Series, low: pd.Series, close: pd.Series, lookback: int = 5,
@@ -228,9 +194,6 @@ def calc_market_structure(
     bars_since  = cum.groupby(cum).cumcount()
     bars_since  = bars_since.where(cum > 0, other=999)
     return bos, choch, bars_since
-
-
-# ─── FVG ─────────────────────────────────────────────────────────────────────
 
 def calc_fvg(
     high: pd.Series, low: pd.Series, atr: pd.Series, min_gap_atr: float = 0.5,
@@ -249,9 +212,6 @@ def calc_fvg(
         if gap_down > min_gap_atr * atr_val:
             fvg_down.iloc[i] = gap_down / atr_val
     return fvg_up, fvg_down
-
-
-# ─── PDH / PDL / PWH / PWL ───────────────────────────────────────────────────
 
 def calc_prev_day_week_levels(
     high: pd.Series, low: pd.Series, close: pd.Series, atr: pd.Series,
@@ -274,9 +234,6 @@ def calc_prev_day_week_levels(
         "PWL": (shift_ffill(weekly_low)  - close) / atr_safe,
     }
 
-
-# ─── Fibonacci ───────────────────────────────────────────────────────────────
-
 def calc_fib_levels(
     high: pd.Series, low: pd.Series, close: pd.Series,
     atr: pd.Series, window: int = 96,
@@ -290,9 +247,6 @@ def calc_fib_levels(
         "Fib_786": (roll_high - 0.786 * rng - close) / atr_safe,
     }
 
-
-# ─── Market Session ──────────────────────────────────────────────────────────
-
 def calc_market_session(index: pd.DatetimeIndex) -> pd.Series:
     hour    = index.hour
     session = np.zeros(len(index), dtype=np.int8)
@@ -300,9 +254,6 @@ def calc_market_session(index: pd.DatetimeIndex) -> pd.Series:
     session[(hour >= 7)  & (hour < 15)] = 2
     session[(hour >= 13) & (hour < 21)] = 3
     return pd.Series(session, index=index, name="market_session")
-
-
-# ─── Cyclic Time ─────────────────────────────────────────────────────────────
 
 def calc_cyclic_time(index: pd.DatetimeIndex) -> dict[str, pd.Series]:
     hour = index.hour + index.minute / 60
@@ -314,17 +265,11 @@ def calc_cyclic_time(index: pd.DatetimeIndex) -> dict[str, pd.Series]:
         "dow_cos":  np.cos(2 * np.pi * dow  /  7),
     }
 
-
-# ─── Funding Countdown ────────────────────────────────────────────────────────
-
 def calc_time_to_funding(index: pd.DatetimeIndex) -> pd.Series:
     minutes_in_day  = index.hour * 60 + index.minute
     next_settlement = np.ceil(minutes_in_day / 480) * 480
     mins_remaining  = (next_settlement - minutes_in_day) % 480
     return pd.Series(mins_remaining / 480.0, index=index, name="time_to_funding_norm")
-
-
-# ─── Synthetic OI ────────────────────────────────────────────────────────────
 
 def compute_synthetic_oi(
     df: pd.DataFrame,
@@ -335,8 +280,10 @@ def compute_synthetic_oi(
     vol_col = _col(df, "volume")
     if cvd_col is None or vol_col is None:
         raise KeyError("Kolom 'cvd' atau 'volume' tidak ditemukan.")
+
     cvd    = df[cvd_col].astype(float)
     volume = df[vol_col].astype(float)
+
     cvd_ma       = cvd.rolling(cvd_window,  min_periods=1).mean()
     vol_ma       = volume.rolling(cvd_window, min_periods=1).mean()
     raw          = cvd_ma + vol_ma * 2
@@ -345,142 +292,299 @@ def compute_synthetic_oi(
     return synthetic_oi
 
 
-# ─── ★ BARU: Swing Structure & Regime Features ───────────────────────────────
+# ─── H4 Alignment Tools ──────────────────────────────────────────────────────
 
-def add_swing_features(
-    feat: dict,
-    high: pd.Series,
-    low: pd.Series,
-    close: pd.Series,
-    volume: pd.Series,
-    atr_m15: pd.Series,
-    ema_7_h4: pd.Series,
-    ema_21_h4: pd.Series,
-    ema_50_h4: pd.Series,
-    atr_h4: pd.Series,
-    rolling_bars: int = 96,
-) -> None:
-    """
-    Tambahkan 7 fitur baru ke dict `feat` (in-place):
+def calc_rsi_h4(h4_close: pd.Series, close_m15: pd.Series, period: int = 14) -> pd.Series:
+    """RSI dihitung dari H4 close, di-align ke index M15."""
+    rsi_h4 = calc_rsi(h4_close, period)
+    return rsi_h4.reindex(rsi_h4.index.union(close_m15.index)).ffill().reindex(close_m15.index)
 
-    Swing structure (4):
-      dist_swing_high  — jarak ke rolling high 24h, ATR-normalized (negatif = di bawah high)
-      dist_swing_low   — jarak ke rolling low 24h, ATR-normalized (positif = di atas low)
-      price_in_range   — posisi harga dalam 24h range [0=bottom, 1=top]
-      swing_momentum   — perubahan price_in_range selama 4 bar terakhir
+def detect_h4_swing_points(
+    h4_high:    pd.Series,
+    h4_low:     pd.Series,
+    lookback:   int = 3,
+) -> tuple[pd.Series, pd.Series]:
+    n  = len(h4_high)
+    sh = pd.Series(np.nan, index=h4_high.index, dtype=float)
+    sl = pd.Series(np.nan, index=h4_low.index,  dtype=float)
 
-    Market regime (3):
-      h4_trend         — arah trend H4: +1 (up), -1 (down), 0 (sideways)
-      trend_strength   — (ema_7_h4 - ema_50_h4) / atr_h4, ATR-normalized
-      vol_regime       — volume relatif terhadap rata-rata 96 bar
-    """
-    atr_safe   = atr_m15.replace(0, np.nan)
-    atr_h4_safe = atr_h4.replace(0, np.nan)
+    for i in range(lookback, n - lookback):
+        window_h = h4_high.iloc[i - lookback: i + lookback + 1]
+        window_l = h4_low.iloc[i  - lookback: i + lookback + 1]
+        if h4_high.iloc[i] == window_h.max():
+            sh.iloc[i] = h4_high.iloc[i]
+        if h4_low.iloc[i] == window_l.min():
+            sl.iloc[i] = h4_low.iloc[i]
 
-    # ── Swing structure ───────────────────────────────────────────────────────
-    roll_high = high.rolling(rolling_bars, min_periods=10).max()
-    roll_low  = low.rolling(rolling_bars,  min_periods=10).min()
-    rng       = (roll_high - roll_low).replace(0, np.nan)
+    return sh, sl
 
-    feat["dist_swing_high"] = (close - roll_high) / atr_safe        # ≤ 0 jika di bawah high
-    feat["dist_swing_low"]  = (close - roll_low)  / atr_safe        # ≥ 0 jika di atas low
-    feat["price_in_range"]  = (close - roll_low)  / rng             # [0, 1]
-    feat["swing_momentum"]  = feat["price_in_range"] - feat["price_in_range"].shift(4)
+def get_nearest_swing_levels(
+    h4_swing_highs: pd.Series,
+    h4_swing_lows:  pd.Series,
+    m15_index:      pd.DatetimeIndex,
+) -> tuple[pd.Series, pd.Series]:
+    sh_filled = h4_swing_highs.ffill()
+    sl_filled = h4_swing_lows.ffill()
+    sh_m15 = sh_filled.reindex(sh_filled.index.union(m15_index)).ffill().reindex(m15_index)
+    sl_m15 = sl_filled.reindex(sl_filled.index.union(m15_index)).ffill().reindex(m15_index)
+    return sh_m15, sl_m15
 
-    # ── Market regime ─────────────────────────────────────────────────────────
-    feat["h4_trend"] = np.where(
-        ema_7_h4 > ema_21_h4, 1,
-        np.where(ema_7_h4 < ema_21_h4, -1, 0)
+
+# ─── ★ BARU v3: Smart Money & Divergence Features ────────────────────────────
+
+def calc_cvd_divergence(
+    close:     pd.Series,
+    cvd:       pd.Series,
+    h4_close:  pd.Series,
+    h4_cvd:    pd.Series,
+    m15_index: pd.DatetimeIndex,
+    window:    int = 5,
+) -> tuple[pd.Series, pd.Series]:
+    """CVD Divergence — proxy akumulasi/distribusi smart money."""
+    price_chg = h4_close.diff(window)
+    cvd_chg   = h4_cvd.diff(window)
+
+    div_raw = np.where(
+        (price_chg > 0) & (cvd_chg < 0), -1.0,   # distribusi
+        np.where(
+            (price_chg < 0) & (cvd_chg > 0), 1.0,  # akumulasi
+            0.0
+        )
     )
-    feat["h4_trend"] = pd.Series(feat["h4_trend"], index=close.index)
+    cvd_div_h4_raw = pd.Series(div_raw, index=h4_close.index)
+    cvd_slope_raw = h4_cvd.diff(window) / (h4_cvd.abs().rolling(window).mean() + 1e-10)
 
-    feat["trend_strength"] = (ema_7_h4 - ema_50_h4) / atr_h4_safe
+    cvd_div_h4  = cvd_div_h4_raw.reindex(cvd_div_h4_raw.index.union(m15_index)).ffill().reindex(m15_index)
+    cvd_slope_h4 = cvd_slope_raw.reindex(cvd_slope_raw.index.union(m15_index)).ffill().reindex(m15_index)
 
-    vol_ma = volume.rolling(rolling_bars, min_periods=10).mean().replace(0, np.nan)
-    feat["vol_regime"] = volume / vol_ma
+    return cvd_div_h4, cvd_slope_h4
 
 
-# ─── ★ BARU: Structural Label Filter ─────────────────────────────────────────
+def calc_volume_absorption(
+    high:    pd.Series,
+    low:     pd.Series,
+    volume:  pd.Series,
+    atr:     pd.Series,
+    window:  int = 20,
+) -> tuple[pd.Series, pd.Series]:
+    """Volume Absorption — smart money menyerap order di level kunci."""
+    candle_range  = (high - low).replace(0, np.nan)
+    atr_safe      = atr.replace(0, np.nan)
+
+    vol_efficiency = volume / (candle_range / atr_safe)
+    vol_eff_mean   = vol_efficiency.rolling(window, min_periods=5).mean()
+    vol_eff_std    = vol_efficiency.rolling(window, min_periods=5).std().replace(0, np.nan)
+    absorption_z   = (vol_efficiency - vol_eff_mean) / vol_eff_std
+
+    return vol_efficiency.fillna(0), absorption_z.fillna(0)
+
+
+def calc_funding_price_divergence(
+    close:        pd.Series,
+    funding_rate: pd.Series,
+    window:       int = 8,
+) -> pd.Series:
+    """Funding-Price Divergence — proxy distribusi/akumulasi via market positioning."""
+    funding_ffill = funding_rate.ffill().fillna(0)
+    price_ret     = close.pct_change(window).fillna(0)
+
+    fr_mean = funding_ffill.rolling(window * 3, min_periods=window).mean()
+    fr_std  = funding_ffill.rolling(window * 3, min_periods=window).std().replace(0, np.nan)
+    fr_z    = (funding_ffill - fr_mean) / fr_std
+
+    divergence = -np.sign(fr_z) * np.sign(price_ret).replace(0, np.nan).ffill().fillna(0)
+    divergence = divergence * fr_z.abs()
+
+    return divergence.fillna(0)
+
+
+def calc_wyckoff_phase(
+    price_in_range: pd.Series,
+    vol_regime:     pd.Series,
+    h4_trend:       pd.Series,
+    cvd_slope_h4:   pd.Series,
+    window:         int = 10,
+) -> tuple[pd.Series, pd.Series]:
+    """Wyckoff Phase Proxy — identifikasi fase siklus pasar."""
+    phase = np.zeros(len(price_in_range), dtype=int)
+
+    trend_up   = (h4_trend == 1).values
+    trend_down = (h4_trend == -1).values
+    price_high = (price_in_range > 0.65).values
+    price_low  = (price_in_range < 0.35).values
+    vol_high   = (vol_regime > 1.3).values
+    cvd_pos    = (cvd_slope_h4 > 0).values
+    cvd_neg    = (cvd_slope_h4 < 0).values
+
+    phase[trend_up   & cvd_pos] = 0
+    phase[price_high & vol_high & cvd_neg] = 1
+    phase[trend_down & cvd_neg] = 2
+    phase[price_low  & vol_high & cvd_pos] = 3
+
+    phase_s = pd.Series(phase, index=price_in_range.index)
+
+    price_in_range_shift = price_in_range.shift(1)
+    spring    = (price_in_range < 0.05) & (price_in_range_shift > 0.10)
+    upthrust  = (price_in_range > 0.95) & (price_in_range_shift < 0.90)
+    spring_upthrust = (spring | upthrust).astype(int)
+
+    return phase_s, spring_upthrust
+
+
+def calc_rsi_divergence(
+    close:   pd.Series,
+    rsi_h4:  pd.Series,
+    window:  int = 5,
+) -> pd.Series:
+    """RSI Divergence (Hidden & Regular) — konfirmasi arah trend."""
+    price_chg = close.diff(window)
+    rsi_chg   = rsi_h4.diff(window)
+
+    div = np.where(
+        (price_chg > 0) & (rsi_chg < 0), -1.0,
+        np.where(
+            (price_chg < 0) & (rsi_chg > 0),  1.0,
+            np.where(
+                (price_chg > 0) & (rsi_chg > 0), 0.5,
+                np.where(
+                    (price_chg < 0) & (rsi_chg < 0), -0.5,
+                    0.0
+                )
+            )
+        )
+    )
+    return pd.Series(div, index=close.index).fillna(0)
+
+
+# ─── ★ BARU v3: Swing-Based Labeling ─────────────────────────────────────────
+
+def swing_based_labeling(
+    close:          pd.Series,
+    high:           pd.Series,
+    low:            pd.Series,
+    atr_m15:        pd.Series,
+    h4_swing_highs: pd.Series,
+    h4_swing_lows:  pd.Series,
+    max_hold:       int   = 192,
+    min_rr:         float = 1.5,
+    min_tp_atr:     float = 1.5,
+    max_sl_atr:     float = 3.0,
+) -> pd.Series:
+    """Labeling berbasis swing high/low H4 — untuk swing trade sesungguhnya."""
+    n      = len(close)
+    labels = np.full(n, "FLAT", dtype=object)
+
+    c_arr  = close.values
+    h_arr  = high.values
+    l_arr  = low.values
+    a_arr  = atr_m15.values
+    sh_arr = h4_swing_highs.values
+    sl_arr = h4_swing_lows.values
+
+    for i in range(n - 1):
+        price = c_arr[i]
+        atr_i = a_arr[i]
+
+        if np.isnan(price) or np.isnan(atr_i) or atr_i == 0:
+            continue
+
+        swing_hi = sh_arr[i]
+        swing_lo = sl_arr[i]
+
+        if np.isnan(swing_hi) or np.isnan(swing_lo):
+            continue
+
+        # Setup LONG
+        tp_long = swing_hi
+        sl_long = swing_lo
+        tp_dist_long = tp_long - price
+        sl_dist_long = price   - sl_long
+
+        long_valid = (
+            tp_dist_long > 0 and
+            sl_dist_long > 0 and
+            tp_dist_long >= min_tp_atr * atr_i and
+            sl_dist_long <= max_sl_atr * atr_i and
+            (tp_dist_long / sl_dist_long >= min_rr)
+        )
+
+        # Setup SHORT
+        tp_short = swing_lo
+        sl_short = swing_hi
+        tp_dist_short = price    - tp_short
+        sl_dist_short = sl_short - price
+
+        short_valid = (
+            tp_dist_short > 0 and
+            sl_dist_short > 0 and
+            tp_dist_short >= min_tp_atr * atr_i and
+            sl_dist_short <= max_sl_atr * atr_i and
+            (tp_dist_short / sl_dist_short >= min_rr)
+        )
+
+        if not long_valid and not short_valid:
+            continue
+
+        # Scan kedepan
+        end = min(i + max_hold, n)
+        outcome_long  = "FLAT"
+        outcome_short = "FLAT"
+
+        for j in range(i + 1, end):
+            if np.isnan(h_arr[j]) or np.isnan(l_arr[j]):
+                continue
+
+            if long_valid and outcome_long == "FLAT":
+                if h_arr[j] >= tp_long:
+                    outcome_long = "LONG"
+                elif l_arr[j] <= sl_long:
+                    outcome_long = "MISS"
+
+            if short_valid and outcome_short == "FLAT":
+                if l_arr[j] <= tp_short:
+                    outcome_short = "SHORT"
+                elif h_arr[j] >= sl_short:
+                    outcome_short = "MISS"
+
+            if (not long_valid  or outcome_long  != "FLAT") and \
+               (not short_valid or outcome_short != "FLAT"):
+                break
+
+        # Assign label
+        if long_valid and short_valid:
+            rr_long  = tp_dist_long  / sl_dist_long  if sl_dist_long  > 0 else 0
+            rr_short = tp_dist_short / sl_dist_short if sl_dist_short > 0 else 0
+
+            if outcome_long == "LONG" and outcome_short != "SHORT":
+                labels[i] = "LONG"
+            elif outcome_short == "SHORT" and outcome_long != "LONG":
+                labels[i] = "SHORT"
+            elif outcome_long == "LONG" and outcome_short == "SHORT":
+                labels[i] = "LONG" if rr_long >= rr_short else "SHORT"
+        elif long_valid:
+            labels[i] = "LONG" if outcome_long == "LONG" else "FLAT"
+        elif short_valid:
+            labels[i] = "SHORT" if outcome_short == "SHORT" else "FLAT"
+
+    tail = min(max_hold // 4, n)
+    labels[-tail:] = "FLAT"
+
+    return pd.Series(labels, index=close.index, name="label")
+
 
 def structural_label_filter(
     labels: pd.Series,
     feat_df: pd.DataFrame,
-    long_max_price_in_range:  float = 0.4,
-    short_min_price_in_range: float = 0.6,
+    long_max_price_in_range: float = 0.8,
+    short_min_price_in_range: float = 0.2,
 ) -> pd.Series:
-    """
-    Override label LONG/SHORT → FLAT jika konteks struktural H4 tidak mendukung.
-
-    Aturan:
-      LONG  di H4 downtrend DAN price_in_range > long_max_price_in_range  → FLAT
-        (tidak dekat swing low, bukan genuine bottom)
-      SHORT di H4 uptrend   DAN price_in_range < short_min_price_in_range → FLAT
-        (tidak dekat swing high, bukan genuine top)
-
-    Tidak menyentuh label FLAT yang sudah ada.
-    """
-    labels = labels.copy()
-
-    h4_trend       = feat_df["h4_trend"]
-    price_in_range = feat_df["price_in_range"]
-
-    # LONG di downtrend H4 + price tidak di zona bottom
-    mask_long_override = (
-        (labels == "LONG") &
-        (h4_trend == -1) &
-        (price_in_range > long_max_price_in_range)
-    )
-    # SHORT di uptrend H4 + price tidak di zona top
-    mask_short_override = (
-        (labels == "SHORT") &
-        (h4_trend == 1) &
-        (price_in_range < short_min_price_in_range)
-    )
-
-    n_long_ovr  = mask_long_override.sum()
-    n_short_ovr = mask_short_override.sum()
-
-    labels[mask_long_override]  = "FLAT"
-    labels[mask_short_override] = "FLAT"
-
-    logger.info(
-        f"Structural filter: {n_long_ovr} LONG → FLAT, {n_short_ovr} SHORT → FLAT"
-    )
-    return labels
-
-
-# ─── Triple Barrier Labeling ─────────────────────────────────────────────────
-
-def triple_barrier_labeling(
-    close: pd.Series,
-    atr: pd.Series,
-    tp_mult: float = 2.0,
-    sl_mult: float = 1.0,
-    max_hold: int  = 48,
-) -> pd.Series:
-    n      = len(close)
-    labels = np.full(n, "FLAT", dtype=object)
-    c_arr  = close.values
-    a_arr  = atr.values
-
-    for i in range(n):
-        atr_i = a_arr[i]
-        if np.isnan(atr_i) or atr_i == 0 or np.isnan(c_arr[i]):
-            continue
-        upper = c_arr[i] + tp_mult * atr_i
-        lower = c_arr[i] - sl_mult * atr_i
-        end   = min(i + max_hold, n)
-        for j in range(i + 1, end):
-            if np.isnan(c_arr[j]):
-                continue
-            if c_arr[j] >= upper:
-                labels[i] = "LONG"; break
-            if c_arr[j] <= lower:
-                labels[i] = "SHORT"; break
-        if n - i < max_hold // 4:
-            labels[i] = "FLAT"
-
-    return pd.Series(labels, index=close.index, name="label")
+    """Filter label LONG jika harga sudah terlalu di pucuk, SHORT jika terlalu di bawah."""
+    filtered = labels.copy()
+    if "price_in_range" in feat_df.columns:
+        pir = feat_df["price_in_range"]
+        filtered[(labels == "LONG") & (pir > long_max_price_in_range)] = "FLAT"
+        filtered[(labels == "SHORT") & (pir < short_min_price_in_range)] = "FLAT"
+    return filtered
 
 
 # ─── Main Feature Engineering Function ───────────────────────────────────────
@@ -489,31 +593,31 @@ def engineer_features(
     df: pd.DataFrame,
     symbol: str,
     symbol_id: int,
-    tp_mult: float = 2.0,
-    sl_mult: float = 1.0,
-    max_hold: int  = 48,
+    tp_mult: float = 2.0,       # Tetap ada untuk backward compatibility
+    sl_mult: float = 1.0,       # Tetap ada untuk backward compatibility
+    max_hold: int  = 192,       # Diupdate ke 192 (48 jam) untuk swing v3
     vp_window: int = 96,
     vp_bins: int   = 50,
     swing_lookback: int = 5,
     fvg_min_gap: float  = 0.5,
-    swing_rolling_bars: int = 96,
-    long_max_price_in_range: float  = 0.4,
-    short_min_price_in_range: float = 0.6,
-    add_label: bool = True,
+    add_label: bool     = True,
+    # ★ Parameter baru v3:
+    min_rr: float = 1.5,
+    min_tp_atr: float = 1.5,
+    max_sl_atr: float = 3.0,
+    long_max_price_in_range: float = 0.8,
+    short_min_price_in_range: float = 0.2,
 ) -> pd.DataFrame:
     """
-    Hitung semua 65 fitur dari cleaned DataFrame.
-    Input:  cleaned parquet yang sudah memiliki kolom M15 + H4 OHLCV
-    Output: DataFrame dengan 65 fitur + label v2 (jika add_label=True)
-
-    v2 vs v1:
-      + 7 fitur baru (swing structure + regime)
-      + structural_label_filter() setelah triple_barrier_labeling()
+    Hitung semua 58+ fitur dari cleaned DataFrame + H4 Swing Labeling.
+    Input: cleaned parquet yang sudah memiliki kolom M15 OHLCV
+    Output: DataFrame dengan fitur + label
     """
     df = ensure_utc_index(df)
 
     # ── Extract base OHLCV (M15) ──────────────────────────────────────────────
     o, h, l, c, v = _get_ohlcv(df, "m15")
+
     if c.isna().all():
         o = df.get("open",   pd.Series(np.nan, index=df.index))
         h = df.get("high",   pd.Series(np.nan, index=df.index))
@@ -521,20 +625,17 @@ def engineer_features(
         c = df.get("close",  pd.Series(np.nan, index=df.index))
         v = df.get("volume", pd.Series(np.nan, index=df.index))
 
-    # ── ATR M15 ───────────────────────────────────────────────────────────────
+    # ── ATR M15 & H4 ──────────────────────────────────────────────────────────
     atr14    = calc_atr(h, l, c, 14)
     atr_safe = atr14.replace(0, np.nan)
 
-    # ── H4 OHLCV & ATR ────────────────────────────────────────────────────────
     h4_h = df.get("4h_high",  h)
     h4_l = df.get("4h_low",   l)
     h4_c = df.get("4h_close", c)
-    atr_h4_raw = calc_atr(h4_h, h4_l, h4_c, 14)
-    atr_h4     = atr_h4_raw.reindex(atr_h4_raw.index.union(df.index)).ffill().reindex(df.index)
+    atr_h4 = calc_atr(h4_h, h4_l, h4_c, 14)
 
     feat: dict[str, pd.Series] = {}
 
-    # ── OHLCV ─────────────────────────────────────────────────────────────────
     feat["open"] = o; feat["high"] = h; feat["low"] = l
     feat["close"] = c; feat["volume"] = v
 
@@ -542,31 +643,40 @@ def engineer_features(
     feat["volume_delta"] = calc_volume_delta(df)
     feat["cvd"]          = calc_cvd(df)
 
-    buy_col  = _col(df, "taker_buy_volume",  "taker_ratio_takerBuyVol",
-                    "m15_taker_buy_base_asset_volume")
-    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol",
-                    "m15_taker_sell_base_asset_volume")
+    # ── ★ BARU v3: H4 CVD (untuk smart money features) ───────────────────────
+    cvd_m15_series = feat["cvd"] if isinstance(feat["cvd"], pd.Series) else pd.Series(feat["cvd"], index=df.index)
+    h4_cvd_raw = cvd_m15_series.resample("4h").last()
+
+    # ── ★ BARU v3: Swing Highs/Lows H4 (untuk labeling) ──────────────────────
+    h4_sh_raw, h4_sl_raw = detect_h4_swing_points(h4_h, h4_l, lookback=3)
+
+    h4_swing_highs_m15, h4_swing_lows_m15 = get_nearest_swing_levels(
+        h4_swing_highs = h4_sh_raw,
+        h4_swing_lows  = h4_sl_raw,
+        m15_index      = df.index,
+    )
+
+    buy_col  = _col(df, "taker_buy_volume",  "taker_ratio_takerBuyVol", "m15_taker_buy_base_asset_volume")
+    sell_col = _col(df, "taker_sell_volume", "taker_ratio_takerSellVol", "m15_taker_sell_base_asset_volume")
     feat["buy_volume"]  = df[buy_col]  if buy_col  else (v * 0.5)
     feat["sell_volume"] = df[sell_col] if sell_col else (v * 0.5)
 
-    # ── Market Structure ──────────────────────────────────────────────────────
+    # ── Market Structure & Liquidity ──────────────────────────────────────────
     bos, choch, bars_since = calc_market_structure(h, l, c, swing_lookback)
     feat["MSB_BOS"]        = bos
     feat["CHoCH"]          = choch
     feat["bars_since_BOS"] = bars_since
 
-    # ── FVG ───────────────────────────────────────────────────────────────────
     fvg_up, fvg_down = calc_fvg(h, l, atr14, fvg_min_gap)
     feat["FVG_up"]   = fvg_up
     feat["FVG_down"] = fvg_down
 
-    # ── Liquidity & SFP ───────────────────────────────────────────────────────
     buy_liq, sell_liq, sfp = calc_liquidity_levels(h, l, c, atr14, swing_lookback)
     feat["Buy_Liq"]   = buy_liq
     feat["Sell_Liq"]  = sell_liq
     feat["SFP_sweep"] = sfp
 
-    # ── Open Interest ─────────────────────────────────────────────────────────
+    # ── Synthetic OI & Funding ────────────────────────────────────────────────
     oi_col = _col(df, "open_interest")
     if oi_col and not df[oi_col].isna().all():
         feat["open_interest"] = df[oi_col]
@@ -574,41 +684,33 @@ def engineer_features(
         temp_df = pd.DataFrame({"cvd": feat["cvd"], "volume": v})
         feat["open_interest"] = compute_synthetic_oi(temp_df)
 
-    # ── Funding Rate ──────────────────────────────────────────────────────────
     fr_col = _col(df, "funding_rate_fundingRate", "funding_rate")
     feat["funding_rate"] = df[fr_col] if fr_col else pd.Series(np.nan, index=df.index)
 
-    # ── EMA M15 (ATR-normalized) ──────────────────────────────────────────────
+    # ── EMAs ──────────────────────────────────────────────────────────────────
     for span in (7, 21, 50, 200):
         feat[f"ema_{span}_m15"] = (calc_ema(c, span) - c) / atr_safe
 
-    # ── EMA H4 (ATR-normalized) — simpan raw EMA untuk add_swing_features ─────
-    ema_h4 = {}
     for span in (7, 21, 50, 200):
-        raw     = calc_ema(h4_c, span)
-        aligned = raw.reindex(raw.index.union(df.index)).ffill().reindex(df.index)
-        ema_h4[span] = aligned
-        feat[f"ema_{span}_h4"] = (aligned - c) / atr_safe
+        ema    = calc_ema(h4_c, span)
+        ema_m15 = ema.reindex(ema.index.union(df.index)).ffill().reindex(df.index)
+        feat[f"ema_{span}_h4"] = (ema_m15 - c) / atr_safe
 
     # ── RSI & StochRSI ────────────────────────────────────────────────────────
     feat["rsi_6"] = calc_rsi(c, 6)
     feat["stochrsi_k"], feat["stochrsi_d"] = calc_stochrsi(c)
-
-    # ── ATR ───────────────────────────────────────────────────────────────────
     feat["atr_14_m15"] = atr14
-    feat["atr_14_h4"]  = atr_h4
+    feat["atr_14_h4"]  = atr_h4.reindex(atr_h4.index.union(df.index)).ffill().reindex(df.index)
 
-    # ── Key Levels ────────────────────────────────────────────────────────────
+    # ── Utilities ─────────────────────────────────────────────────────────────
     feat.update(calc_prev_day_week_levels(h, l, c, atr14))
     feat.update(calc_fib_levels(h, l, c, atr14))
 
-    # ── Volume Profile ────────────────────────────────────────────────────────
     poc, vah, val = calc_volume_profile(h, l, c, v, vp_window, vp_bins)
     feat["POC"] = (poc - c) / atr_safe
     feat["VAH"] = (vah - c) / atr_safe
     feat["VAL"] = (val - c) / atr_safe
 
-    # ── Macro ─────────────────────────────────────────────────────────────────
     btc_col = _col(df, "macro_btc_dominance", "btc_dominance_pct", "btc_dominance")
     feat["btc_dominance"] = df[btc_col] if btc_col else pd.Series(np.nan, index=df.index)
 
@@ -617,7 +719,6 @@ def engineer_features(
 
     feat["market_session"] = calc_market_session(df.index)
 
-    # ── Derived ───────────────────────────────────────────────────────────────
     feat["log_ret_1"]  = np.log(c / c.shift(1))
     feat["log_ret_5"]  = np.log(c / c.shift(5))
     feat["log_ret_20"] = np.log(c / c.shift(20))
@@ -629,59 +730,101 @@ def engineer_features(
     feat["time_to_funding_norm"] = calc_time_to_funding(df.index)
 
     # ── Partial NaN features ──────────────────────────────────────────────────
-    ls_col = _col(df, "long_short_ratio")
-    la_col = _col(df, "long_account_pct", "longAccount")
-    sa_col = _col(df, "short_account_pct", "shortAccount")
-    tr_col = _col(df, "taker_buy_sell_ratio", "taker_ratio")
-    feat["long_short_ratio"]     = df[ls_col] if ls_col else pd.Series(np.nan, index=df.index)
-    feat["long_account_pct"]     = df[la_col] if la_col else pd.Series(np.nan, index=df.index)
-    feat["short_account_pct"]    = df[sa_col] if sa_col else pd.Series(np.nan, index=df.index)
+    ls_col     = _col(df, "long_short_ratio")
+    la_col     = _col(df, "long_account_pct", "longAccount")
+    sa_col     = _col(df, "short_account_pct", "shortAccount")
+    tr_col     = _col(df, "taker_buy_sell_ratio", "taker_ratio")
+    feat["long_short_ratio"]   = df[ls_col] if ls_col else pd.Series(np.nan, index=df.index)
+    feat["long_account_pct"]   = df[la_col] if la_col else pd.Series(np.nan, index=df.index)
+    feat["short_account_pct"]  = df[sa_col] if sa_col else pd.Series(np.nan, index=df.index)
     feat["taker_buy_sell_ratio"] = df[tr_col] if tr_col else pd.Series(np.nan, index=df.index)
+
+
+    # ── ★ BARU v3: Eksekusi Smart Money Features (Inline Replacement) ─────────
+    cvd_div, cvd_slope = calc_cvd_divergence(
+        close     = c,
+        cvd       = feat["cvd"],
+        h4_close  = h4_c,
+        h4_cvd    = h4_cvd_raw,
+        m15_index = df.index,
+        window    = 5,
+    )
+    feat["cvd_div_h4"]   = cvd_div
+    feat["cvd_slope_h4"] = cvd_slope
+
+    vol_eff, absorption_z = calc_volume_absorption(h, l, v, atr14)
+    feat["vol_efficiency"] = vol_eff
+    feat["absorption_z"]   = absorption_z
+
+    feat["funding_price_div"] = calc_funding_price_divergence(c, feat["funding_rate"])
+
+    rsi_h4_series = calc_rsi_h4(h4_c, c, period=14)
+    feat["rsi_h4"] = rsi_h4_series
+    feat["rsi_divergence"] = calc_rsi_divergence(c, rsi_h4_series, window=5)
+
+    # Kalkulasi fallback untuk Wyckoff jika belum ada di data sebelumnya
+    roll_min = l.rolling(96, min_periods=10).min()
+    roll_max = h.rolling(96, min_periods=10).max()
+    feat["price_in_range"] = (c - roll_min) / (roll_max - roll_min).replace(0, np.nan)
+    
+    vol_ma_96 = v.rolling(96, min_periods=10).mean()
+    feat["vol_regime"] = v / vol_ma_96.replace(0, np.nan)
+    
+    # Tren proxy menggunakan EMA
+    ema_7_h4_raw  = calc_ema(h4_c, 7).reindex(df.index).ffill()
+    ema_21_h4_raw = calc_ema(h4_c, 21).reindex(df.index).ffill()
+    feat["h4_trend"] = np.sign(ema_7_h4_raw - ema_21_h4_raw)
+
+    phase, spring_ut = calc_wyckoff_phase(
+        price_in_range = feat["price_in_range"].fillna(0.5),
+        vol_regime     = feat["vol_regime"].fillna(1.0),
+        h4_trend       = feat["h4_trend"].fillna(0),
+        cvd_slope_h4   = feat["cvd_slope_h4"].fillna(0),
+    )
+    feat["wyckoff_phase"]    = phase
+    feat["spring_upthrust"]  = spring_ut
 
     # ── Symbol encoding ───────────────────────────────────────────────────────
     feat["symbol"] = symbol_id
-
-    # ── ★ BARU: Swing Structure & Regime Features (65 fitur total) ───────────
-    add_swing_features(
-        feat       = feat,
-        high       = h,
-        low        = l,
-        close      = c,
-        volume     = v,
-        atr_m15    = atr14,
-        ema_7_h4   = ema_h4[7],
-        ema_21_h4  = ema_h4[21],
-        ema_50_h4  = ema_h4[50],
-        atr_h4     = atr_h4,
-        rolling_bars = swing_rolling_bars,
-    )
 
     # ── Build DataFrame ───────────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)
     feat_df = ensure_utc_index(feat_df)
 
-    # ── Triple Barrier Labeling + Structural Filter ───────────────────────────
+    # ── ★ BARU v3: Swing-Based Labeling ──────────────────────────────────────
     if add_label:
         logger.info(
-            f"[{symbol}] Triple Barrier labeling v2 "
-            f"(TP={tp_mult}×ATR, SL={sl_mult}×ATR, max={max_hold} bars)..."
+            f"[{symbol}] Swing-Based labeling v3 "
+            f"(max_hold={max_hold} bar M15, min_rr={min_rr}, "
+            f"min_tp={min_tp_atr}×ATR, max_sl={max_sl_atr}×ATR)..."
         )
-        raw_labels = triple_barrier_labeling(c, atr14, tp_mult, sl_mult, max_hold)
+        raw_labels = swing_based_labeling(
+            close          = c,
+            high           = h,
+            low            = l,
+            atr_m15        = atr14,
+            h4_swing_highs = h4_swing_highs_m15,
+            h4_swing_lows  = h4_swing_lows_m15,
+            max_hold       = max_hold,
+            min_rr         = min_rr,
+            min_tp_atr     = min_tp_atr,
+            max_sl_atr     = max_sl_atr,
+        )
 
-        # ★ Structural context filter
         feat_df["label"] = structural_label_filter(
-            labels                    = raw_labels,
-            feat_df                   = feat_df,
-            long_max_price_in_range   = long_max_price_in_range,
-            short_min_price_in_range  = short_min_price_in_range,
+            labels                   = raw_labels,
+            feat_df                  = feat_df,
+            long_max_price_in_range  = long_max_price_in_range,
+            short_min_price_in_range = short_min_price_in_range,
         )
 
         label_counts = feat_df["label"].value_counts().to_dict()
-        logger.info(f"[{symbol}] Label distribution v2: {label_counts}")
+        logger.info(f"[{symbol}] Label distribution v3: {label_counts}")
 
     nan_pct = feat_df.isnull().mean().mean()
     logger.info(
-        f"[{symbol}] Features v2: {len(feat_df):,} rows × {len(feat_df.columns)} cols "
+        f"[{symbol}] Features: {len(feat_df):,} rows × {len(feat_df.columns)} cols "
         f"| NaN: {nan_pct:.1%}"
     )
+    
     return feat_df

@@ -1,6 +1,6 @@
 """
 pipeline/04_train_lgbm.py — Fase 4: LightGBM Baseline Training
-Purged Walk-Forward Cross-Validation (8 fold, purge gap 5 bar)
+Walk-Forward Validation (TimeSeriesSplit) + Balanced Class Weights
 
 Jalankan:
   python pipeline/04_train_lgbm.py               # training coins (default)
@@ -22,6 +22,8 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
+from sklearn.model_selection import TimeSeriesSplit
+from sklearn.utils.class_weight import compute_sample_weight
 
 warnings.filterwarnings("ignore")
 
@@ -47,7 +49,7 @@ NON_FEATURE_COLS = {"label"}
 def load_symbols(coins: list[str]) -> pd.DataFrame:
     frames = []
     for sym in coins:
-        path = LABEL_DIR / f"{sym}_features_v2.parquet"
+        path = LABEL_DIR / f"{sym}_features.parquet"
         if not path.exists():
             logger.warning(f"File tidak ditemukan, skip: {path}")
             continue
@@ -67,22 +69,13 @@ def load_symbols(coins: list[str]) -> pd.DataFrame:
     return combined
 
 
-def encode_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
+def encode_labels(df: pd.DataFrame) -> tuple[pd.DataFrame, pd.Series]:
     mask = df["label"].isin(LABEL_MAP)
     if (~mask).sum():
         logger.warning(f"Drop {(~mask).sum():,} baris label tidak dikenal.")
         df = df[mask].copy()
-    y = df["label"].map(LABEL_MAP).values.astype(np.int32)
+    y = df["label"].map(LABEL_MAP).astype(np.int32)
     return df, y
-
-
-def compute_sample_weights(y: np.ndarray) -> np.ndarray:
-    counts = np.bincount(y, minlength=NUM_CLASSES)
-    counts = np.where(counts == 0, 1, counts)
-    cw = len(y) / (NUM_CLASSES * counts)
-    for idx, name in LABEL_MAP_INV.items():
-        logger.info(f"  '{name}': count={counts[idx]:,}, weight={cw[idx]:.4f}")
-    return cw[y].astype(np.float32)
 
 
 def get_feature_cols(df: pd.DataFrame) -> list[str]:
@@ -91,57 +84,68 @@ def get_feature_cols(df: pd.DataFrame) -> list[str]:
 
 # ─── Walk-Forward CV ─────────────────────────────────────────────────────────
 
-def build_purged_folds(n: int) -> list[tuple[np.ndarray, np.ndarray]]:
-    splits = np.array_split(np.arange(n), N_FOLDS + 1)
-    folds  = []
-    for k in range(1, N_FOLDS + 1):
-        train_raw = np.concatenate(splits[:k])
-        test_idx  = splits[k]
-        train_idx = train_raw[:-PURGE_GAP_BARS] if len(train_raw) > PURGE_GAP_BARS else train_raw
-        folds.append((train_idx, test_idx))
-    return folds
+def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int = 4, gap_bars: int = 24):
+    """
+    Walk-forward validation — fold selalu maju, tidak pernah mundur.
+    Setiap fold: train pada semua data sebelum titik split, test pada setelah.
+    """
+    logger.info(f"Starting Walk-Forward CV (n_splits={n_splits}, gap={gap_bars} bars)...")
+    
+    # TimeSeriesSplit untuk walk-forward, gap diisi buffer untuk hindari leakage fitur rolling
+    tscv = TimeSeriesSplit(n_splits=n_splits, gap=gap_bars)
 
+    results = []
+    for fold, (train_idx, val_idx) in enumerate(tscv.split(X), 1):
+        X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
+        y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
-def train_fold(X_tr, y_tr, sw_tr, X_val, y_val, fold_num, feat_cols):
-    logger.info(f"[Fold {fold_num}] Train={len(X_tr):,} | Val={len(X_val):,}")
-    model = lgb.LGBMClassifier(**LGBM_PARAMS)
-    model.fit(
-        X_tr[feat_cols], y_tr,
-        sample_weight = sw_tr,
-        eval_set      = [(X_val[feat_cols], y_val)],
-        callbacks     = [
-            lgb.early_stopping(stopping_rounds=LGBM_EARLY_STOPPING, verbose=False),
-            lgb.log_evaluation(period=-1),
-        ],
-    )
-    y_pred   = model.predict(X_val[feat_cols])
-    f1_macro = float(f1_score(y_val, y_pred, average="macro", zero_division=0))
-    f1_per   = f1_score(y_val, y_pred, average=None, zero_division=0, labels=[0, 1, 2])
-    metrics  = {
-        "fold": fold_num,
-        "n_train": len(X_tr), "n_val": len(X_val),
-        "best_iteration": model.best_iteration_,
-        "accuracy":    round(float(accuracy_score(y_val, y_pred)), 4),
-        "f1_macro":    round(f1_macro, 4),
-        "f1_weighted": round(float(f1_score(y_val, y_pred, average="weighted", zero_division=0)), 4),
-        "f1_SHORT": round(float(f1_per[0]), 4),
-        "f1_FLAT":  round(float(f1_per[1]), 4),
-        "f1_LONG":  round(float(f1_per[2]), 4),
-        "confusion_matrix": confusion_matrix(y_val, y_pred, labels=[0, 1, 2]).tolist(),
-    }
-    logger.info(
-        f"[Fold {fold_num}] Acc={metrics['accuracy']:.4f} | "
-        f"F1-macro={f1_macro:.4f} | LONG={f1_per[2]:.4f} "
-        f"SHORT={f1_per[0]:.4f} FLAT={f1_per[1]:.4f}"
-    )
-    return model, metrics
+        # Class weight balanced untuk atasi FLAT underperform
+        sample_w = compute_sample_weight("balanced", y_tr)
+
+        model = lgb.LGBMClassifier(**params)
+        model.fit(
+            X_tr, y_tr,
+            sample_weight   = sample_w,
+            eval_set        = [(X_val, y_val)],
+            callbacks       = [
+                lgb.early_stopping(LGBM_EARLY_STOPPING, verbose=False), 
+                lgb.log_evaluation(period=-1)
+            ],
+        )
+
+        y_pred   = model.predict(X_val)
+        f1_macro = float(f1_score(y_val, y_pred, average="macro", zero_division=0))
+        f1_per   = f1_score(y_val, y_pred, average=None, zero_division=0, labels=[0, 1, 2])
+        acc      = float(accuracy_score(y_val, y_pred))
+
+        metrics = {
+            "fold": fold,
+            "n_train": len(X_tr), "n_val": len(X_val),
+            "best_iteration": model.best_iteration_,
+            "accuracy":    round(acc, 4),
+            "f1_macro":    round(f1_macro, 4),
+            "f1_weighted": round(float(f1_score(y_val, y_pred, average="weighted", zero_division=0)), 4),
+            "f1_SHORT": round(float(f1_per[0]), 4),
+            "f1_FLAT":  round(float(f1_per[1]), 4),
+            "f1_LONG":  round(float(f1_per[2]), 4),
+            "confusion_matrix": confusion_matrix(y_val, y_pred, labels=[0, 1, 2]).tolist(),
+        }
+
+        logger.info(
+            f"  Fold {fold}: F1-macro = {f1_macro:.4f} | Acc={acc:.4f} | "
+            f"LONG={f1_per[2]:.4f} SHORT={f1_per[0]:.4f} FLAT={f1_per[1]:.4f} | val_size={len(y_val):,}"
+        )
+        
+        results.append({"metrics": metrics, "model": model})
+
+    return results
 
 
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("--all", action="store_true", help="Pakai semua 20 koin")
+    parser.add_argument("--all", action="store_true", help="Pakai semua 18 koin (All Coins)")
     parser.add_argument("--run-id", default=None, help="Custom run ID (default: tanggal)")
     return parser.parse_args()
 
@@ -157,23 +161,24 @@ def main():
 
     df = load_symbols(coins)
     df, y = encode_labels(df)
-    sw    = compute_sample_weights(y)
+    
     feat_cols = get_feature_cols(df)
+    df_X = df[feat_cols]
+    
     logger.info(f"Features: {len(feat_cols)} | Samples: {len(df):,}")
 
-    folds        = build_purged_folds(len(df))
-    all_metrics  = []
+    # Gap=24 (24 jam) karena Base Timeframe adalah H1
+    cv_results = walk_forward_cv(df_X, y, LGBM_PARAMS, n_splits=N_FOLDS, gap_bars=24)
+    
     best_model, best_f1, best_fold = None, -1.0, -1
+    all_metrics = []
 
-    for fold_num, (tr_pos, te_pos) in enumerate(folds, 1):
-        model, metrics = train_fold(
-            df.iloc[tr_pos], y[tr_pos], sw[tr_pos],
-            df.iloc[te_pos], y[te_pos],
-            fold_num, feat_cols,
-        )
+    for res in cv_results:
+        metrics = res["metrics"]
+        model = res["model"]
         all_metrics.append(metrics)
         if metrics["f1_macro"] > best_f1:
-            best_f1, best_model, best_fold = metrics["f1_macro"], model, fold_num
+            best_f1, best_model, best_fold = metrics["f1_macro"], model, metrics["fold"]
 
     # Simpan model
     model_path = run_dir / "lgbm.pkl"
@@ -193,7 +198,7 @@ def main():
     accs = [m["accuracy"] for m in all_metrics]
     cv_summary = {
         "run_id": run_id, "coins": coins,
-        "n_folds": N_FOLDS, "purge_gap_bars": PURGE_GAP_BARS,
+        "n_folds": N_FOLDS, "gap_bars": 24,
         "best_fold": best_fold, "best_f1_macro": round(best_f1, 4),
         "mean_f1_macro": round(float(np.mean(f1s)), 4),
         "std_f1_macro":  round(float(np.std(f1s)), 4),
