@@ -1,19 +1,14 @@
 """
-core/evaluator.py — Trading Metrics & PnL Simulation v2
+core/evaluator.py — Trading Metrics & PnL Simulation v3
 Dipakai oleh pipeline/07_evaluate.py dan pipeline/08_backtest.py
 
 Fungsi utama:
-  simulate_trades()       — simulasi trade nyata dari price array (TP/SL dari harga)
+  simulate_trades()       — simulasi trade dari fixed ATR multiple (legacy v2)
+  simulate_trades_swing() — simulasi trade dari H4 Swing Points (BARU v3)
   calc_drawdown()         — max drawdown dari equity curve
   calc_consecutive_loss() — streak loss terpanjang
   calc_trade_per_month()  — rata-rata trade per bulan
-  full_trading_report()   — jalankan semua metrics sekaligus, return dict
-
-PENTING — perbedaan v1 vs v2:
-  v1: winrate dihitung dari y_pred == y_actual (label matching) → INFLATED
-  v2: winrate dihitung dari simulasi TP/SL nyata dari close price array → REALISTIS
-      Setiap trade di-simulasi: masuk di close[i], cek apakah close[i+1..i+max_hold]
-      hit TP atau SL duluan. Tidak menggunakan label sama sekali.
+  full_trading_report()   — metrik PnL lengkap
 """
 
 import numpy as np
@@ -25,7 +20,7 @@ from core.utils import setup_logger
 logger = setup_logger("evaluator")
 
 
-# ─── Simulasi Trade dari Price (Realistis) ────────────────────────────────────
+# ─── Simulasi Trade (ATR Fixed Multiple - Legacy v2) ─────────────────────────
 
 def simulate_trades(
     y_pred:       np.ndarray,
@@ -39,43 +34,6 @@ def simulate_trades(
     max_hold:     int   = 48,
     min_hold:     int   = 4,
 ) -> dict:
-    """
-    Simulasi trade nyata — masuk di close[i], cek TP/SL dari bar berikutnya.
-
-    Mekanisme:
-      1. Setiap bar yang diprediksi LONG/SHORT → masuk trade di close[i]
-      2. Scan bar i+1 sampai i+max_hold:
-         - LONG : cek apakah high >= TP dulu, atau low <= SL dulu
-         - SHORT: cek apakah low <= TP dulu, atau high >= SL dulu
-      3. Kalau tidak hit sampai max_hold → keluar di close[i+max_hold] (time exit)
-      4. min_hold: setelah entry, minimal tunggu N bar sebelum entry baru
-         (mencegah overtrading / signal spam)
-
-    Args:
-        y_pred       : prediksi model (int: 0=SHORT, 1=FLAT, 2=LONG)
-        close        : array close price
-        atr          : array ATR M15
-        modal        : modal per trade USD (tetap, tidak compounding)
-        leverage     : leverage
-        fee_per_side : fee per sisi (0.0004 = 0.04%)
-        tp_mult      : TP = entry ± tp_mult × ATR
-        sl_mult      : SL = entry ∓ sl_mult × ATR
-        max_hold     : maksimum bar hold sebelum time exit (default 48 = 12 jam)
-        min_hold     : minimum bar antara dua trade (default 4 = 1 jam)
-
-    Returns dict:
-        equity_curve    : list float, kumulatif PnL per bar (panjang = len(y_pred))
-        pnl_per_trade   : list float, PnL tiap trade yang dieksekusi
-        trade_log       : list dict, detail tiap trade
-        total_pnl       : float
-        total_trades    : int
-        wins            : int
-        losses          : int
-        time_exits      : int (keluar karena max_hold, bukan TP/SL)
-        total_fee_paid  : float
-        winrate         : float
-        win_by_class    : dict
-    """
     y_pred = np.asarray(y_pred, dtype=np.int32)
     close  = np.asarray(close,  dtype=np.float64)
     atr    = np.asarray(atr,    dtype=np.float64)
@@ -89,13 +47,11 @@ def simulate_trades(
     wins = losses = time_exits = 0
     win_long = win_short = loss_long = loss_short = 0
 
-    last_exit_bar = -1  # untuk min_hold filter
+    last_exit_bar = -1
 
     i = 0
     while i < n:
         pred = y_pred[i]
-
-        # Skip FLAT atau terlalu dekat dengan trade sebelumnya
         if pred == 1 or (i - last_exit_bar) < min_hold:
             equity_curve[i] = cumulative
             i += 1
@@ -109,7 +65,6 @@ def simulate_trades(
             i += 1
             continue
 
-        # Hitung level TP dan SL
         if pred == 2:  # LONG
             tp_price = entry_price + tp_mult * atr_i
             sl_price = entry_price - sl_mult * atr_i
@@ -118,8 +73,6 @@ def simulate_trades(
             sl_price = entry_price + sl_mult * atr_i
 
         fee = 2 * fee_per_side * modal
-
-        # Scan bar ke depan untuk cek TP/SL
         outcome   = "time_exit"
         exit_bar  = min(i + max_hold, n - 1)
         exit_price = close[exit_bar]
@@ -128,22 +81,16 @@ def simulate_trades(
             if np.isnan(close[j]):
                 continue
 
-            # Gunakan high/low yang diestimasikan dari close + ATR
-            # Karena backtest hanya punya close, estimasi:
-            # high[j] ≈ close[j] + 0.5 * atr[j]
-            # low[j]  ≈ close[j] - 0.5 * atr[j]
             est_high = close[j] + 0.5 * (atr[j] if not np.isnan(atr[j]) else atr_i)
             est_low  = close[j] - 0.5 * (atr[j] if not np.isnan(atr[j]) else atr_i)
 
             if pred == 2:  # LONG
                 if est_high >= tp_price and est_low <= sl_price:
-                    # Ambiguous — lihat close untuk tiebreak
                     outcome  = "win" if close[j] >= entry_price else "loss"
                 elif est_high >= tp_price:
                     outcome = "win"
                 elif est_low <= sl_price:
                     outcome = "loss"
-
             else:  # SHORT
                 if est_low <= tp_price and est_high >= sl_price:
                     outcome = "win" if close[j] <= entry_price else "loss"
@@ -157,7 +104,6 @@ def simulate_trades(
                 exit_price = close[j]
                 break
 
-        # Hitung PnL
         tp_pct = (tp_mult * atr_i) / entry_price
         sl_pct = (sl_mult * atr_i) / entry_price
 
@@ -172,7 +118,6 @@ def simulate_trades(
             if pred == 2: loss_long  += 1
             else:         loss_short += 1
         else:  # time_exit
-            # Keluar di close[exit_bar], hitung actual return
             if pred == 2:
                 actual_ret = (exit_price - entry_price) / entry_price
             else:
@@ -202,14 +147,12 @@ def simulate_trades(
             "pnl":         round(float(trade_pnl), 4),
         })
 
-        # Update equity curve untuk semua bar sampai exit
         for k in range(i, min(exit_bar + 1, n)):
             equity_curve[k] = cumulative
 
         last_exit_bar = exit_bar
-        i = exit_bar + 1  # lanjut dari bar setelah exit
+        i = exit_bar + 1
 
-    # Fill sisa equity curve
     if n > 0:
         last_val = equity_curve[last_exit_bar] if last_exit_bar >= 0 else 0.0
         for k in range(last_exit_bar + 1, n):
@@ -240,6 +183,194 @@ def simulate_trades(
     }
 
 
+# ─── ★ BARU v3: Simulasi Trade (Dinamis dari H4 Swing Points) ────────────────
+
+def simulate_trades_swing(
+    y_pred:          np.ndarray,
+    close:           np.ndarray,
+    high:            np.ndarray,
+    low:             np.ndarray,
+    atr:             np.ndarray,
+    h4_swing_highs:  np.ndarray,   # swing high H4, aligned ke base tf
+    h4_swing_lows:   np.ndarray,   # swing low  H4, aligned ke base tf
+    modal:           float = 1000.0,
+    leverage:        float = 3.0,
+    fee_per_side:    float = 0.0004,
+    min_rr:          float = 1.5,
+    min_tp_atr:      float = 1.5,
+    max_sl_atr:      float = 3.0,
+    max_hold:        int   = 48,
+) -> dict:
+    """
+    Simulasi trade dengan TP/SL dinamis berbasis swing high/low H4.
+
+    Berbeda dari simulate_trades() yang pakai fixed ATR multiple:
+    - TP = swing high H4 terdekat di atas (LONG) / swing low H4 di bawah (SHORT)
+    - SL = swing low  H4 terdekat di bawah (LONG) / swing high H4 di atas (SHORT)
+    - Skip trade jika R:R < min_rr (capital preservation)
+    """
+    n          = len(close)
+    trades     = []
+    equity     = modal
+    equity_curve = [equity]
+
+    LONG, SHORT, FLAT = 2, 0, 1   # sesuai LABEL_MAP
+
+    for i in range(n - 1):
+        sig = y_pred[i]
+        if sig == FLAT:
+            equity_curve.append(equity)
+            continue
+
+        price  = close[i]
+        atr_i  = atr[i]
+        sh_i   = h4_swing_highs[i]
+        sl_i   = h4_swing_lows[i]
+
+        if np.isnan(price) or np.isnan(atr_i) or atr_i == 0:
+            equity_curve.append(equity)
+            continue
+
+        # ── Tentukan TP/SL dinamis ────────────────────────────────────────────
+        if sig == LONG:
+            if np.isnan(sh_i) or np.isnan(sl_i):
+                equity_curve.append(equity)
+                continue
+            tp_price = sh_i
+            sl_price = sl_i
+            tp_dist  = tp_price - price
+            sl_dist  = price    - sl_price
+        else:  # SHORT
+            if np.isnan(sh_i) or np.isnan(sl_i):
+                equity_curve.append(equity)
+                continue
+            tp_price = sl_i
+            sl_price = sh_i
+            tp_dist  = price    - tp_price
+            sl_dist  = sl_price - price
+
+        # Validasi R:R
+        if tp_dist <= 0 or sl_dist <= 0:
+            equity_curve.append(equity)
+            continue
+        if tp_dist < min_tp_atr * atr_i:
+            equity_curve.append(equity)
+            continue
+        if sl_dist > max_sl_atr * atr_i:
+            equity_curve.append(equity)
+            continue
+        rr = tp_dist / sl_dist
+        if rr < min_rr:
+            equity_curve.append(equity)
+            continue
+
+        # ── Scan ke depan ─────────────────────────────────────────────────────
+        outcome = "TIMEOUT"
+        exit_price = price
+
+        end = min(i + max_hold, n)
+        for j in range(i + 1, end):
+            if np.isnan(high[j]) or np.isnan(low[j]):
+                continue
+            if sig == LONG:
+                if high[j] >= tp_price:
+                    outcome    = "WIN";  exit_price = tp_price; break
+                if low[j]  <= sl_price:
+                    outcome    = "LOSS"; exit_price = sl_price; break
+            else:
+                if low[j]  <= tp_price:
+                    outcome    = "WIN";  exit_price = tp_price; break
+                if high[j] >= sl_price:
+                    outcome    = "LOSS"; exit_price = sl_price; break
+
+        # ── Hitung PnL ────────────────────────────────────────────────────────
+        pct_move = (exit_price - price) / price
+        if sig == SHORT:
+            pct_move = -pct_move
+
+        gross_pnl  = modal * leverage * pct_move
+        fee_total  = modal * leverage * fee_per_side * 2
+        net_pnl    = gross_pnl - fee_total
+
+        equity    += net_pnl
+        equity_curve.append(equity)
+
+        trades.append({
+            "bar_in":    i,
+            "bar_out":   j if outcome != "TIMEOUT" else end,
+            "direction": "LONG" if sig == LONG else "SHORT",
+            "entry":     price,
+            "exit":      exit_price,
+            "tp":        tp_price,
+            "sl":        sl_price,
+            "rr":        round(rr, 2),
+            "outcome":   outcome,
+            "net_pnl":   round(net_pnl, 4),
+            "equity":    round(equity, 4),
+        })
+
+    # ── Summary & Compatibility Mapping ───────────────────────────────────────
+    if not trades:
+        return {
+            "error": "no_trades", "total_trades": 0, "winrate": 0.0,
+            "total_pnl": 0.0, "max_drawdown": 0.0, "max_drawdown_pct": 0.0,
+            "equity_curve": equity_curve, "pnl_per_trade": [],
+            "wins": 0, "losses": 0, "time_exits": 0,
+            "win_by_class": {"LONG": 0.0, "SHORT": 0.0}
+        }
+
+    wins   = [t for t in trades if t["outcome"] == "WIN"]
+    losses = [t for t in trades if t["outcome"] == "LOSS"]
+    time_e = [t for t in trades if t["outcome"] == "TIMEOUT"]
+
+    winrate    = len(wins) / len(trades) if trades else 0.0
+    avg_win    = np.mean([t["net_pnl"] for t in wins])   if wins   else 0.0
+    avg_loss   = np.mean([t["net_pnl"] for t in losses]) if losses else 0.0
+    
+    profit_factor = 0.0
+    sum_loss = abs(sum(t["net_pnl"] for t in losses))
+    if sum_loss > 0:
+        profit_factor = abs(sum(t["net_pnl"] for t in wins)) / sum_loss
+
+    equity_arr   = np.array([e for e in equity_curve if not np.isnan(e)])
+    peak         = np.maximum.accumulate(equity_arr)
+    drawdown     = (equity_arr - peak) / (peak + 1e-10)
+    max_drawdown = float(drawdown.min())
+
+    # Map class winrate
+    lw = len([t for t in wins if t["direction"] == "LONG"])
+    lt = len([t for t in trades if t["direction"] == "LONG"])
+    sw = len([t for t in wins if t["direction"] == "SHORT"])
+    st = len([t for t in trades if t["direction"] == "SHORT"])
+
+    total_net_pnl = sum(t["net_pnl"] for t in trades)
+
+    return {
+        "total_trades":   len(trades),
+        "winrate":        round(winrate, 4),
+        "avg_win":        round(avg_win, 4),
+        "avg_loss":       round(avg_loss, 4),
+        "profit_factor":  round(profit_factor, 4),
+        "net_pnl_total":  round(total_net_pnl, 4),
+        "max_drawdown":   round(max_drawdown, 4),
+        "avg_rr":         round(np.mean([t["rr"] for t in trades]), 4),
+        "trades":         trades,
+        
+        # Compatibility keys untuk full_trading_report dan pipeline
+        "equity_curve":   [e - modal for e in equity_curve], # convert equity ke PnL cumulative
+        "pnl_per_trade":  [t["net_pnl"] for t in trades],
+        "trade_log":      trades,
+        "total_pnl":      round(total_net_pnl, 4),
+        "wins":           len(wins),
+        "losses":         len(losses),
+        "time_exits":     len(time_e),
+        "win_by_class": {
+            "LONG":  round(lw / lt, 4) if lt > 0 else 0.0,
+            "SHORT": round(sw / st, 4) if st > 0 else 0.0,
+        }
+    }
+
+
 # ─── Drawdown ────────────────────────────────────────────────────────────────
 
 def calc_drawdown(equity_curve: list, modal_per_trade: float = 1000.0) -> dict:
@@ -250,8 +381,6 @@ def calc_drawdown(equity_curve: list, modal_per_trade: float = 1000.0) -> dict:
     peak = np.maximum.accumulate(eq)
     dd   = peak - eq
 
-    # Normalisasi terhadap modal per trade, bukan peak equity
-    # DD 1.5 = pernah rugi 1.5x modal dalam satu streak
     dd_pct = dd / (modal_per_trade + 1e-9)
 
     return {
@@ -291,7 +420,7 @@ def calc_trade_per_month(total_trades: int, index: pd.DatetimeIndex) -> float:
 
 def full_trading_report(
     y_pred:       np.ndarray,
-    y_actual:     np.ndarray,      # dipertahankan untuk kompatibilitas, tidak dipakai
+    y_actual:     np.ndarray,
     atr:          np.ndarray,
     close:        np.ndarray,
     index:        pd.DatetimeIndex,
@@ -303,67 +432,77 @@ def full_trading_report(
     max_hold:     int   = 48,
     min_hold:     int   = 4,
     symbol:       Optional[str] = None,
+    # Parameters for Swing V3 Option:
+    high:         Optional[np.ndarray] = None,
+    low:          Optional[np.ndarray] = None,
+    h4_swing_highs: Optional[np.ndarray] = None,
+    h4_swing_lows:  Optional[np.ndarray] = None,
+    min_rr:       float = 1.5,
+    min_tp_atr:   float = 1.5,
+    max_sl_atr:   float = 3.0,
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
-
-    y_actual dipertahankan di signature untuk backward compat dengan
-    07_evaluate.py dan 08_backtest.py — tapi tidak dipakai di v2.
-    Simulasi sepenuhnya berbasis price (close + ATR).
+    Mendukung legacy fixed ATR (v2) dan dynamic H4 Swing (v3).
     """
     label_prefix = f"[{symbol}] " if symbol else ""
+    use_swing = h4_swing_highs is not None and h4_swing_lows is not None and high is not None
+
+    def run_sim(lev):
+        if use_swing:
+            return simulate_trades_swing(
+                y_pred=y_pred, close=close, high=high, low=low, atr=atr,
+                h4_swing_highs=h4_swing_highs, h4_swing_lows=h4_swing_lows,
+                modal=modal, leverage=lev, fee_per_side=fee_per_side,
+                min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
+                max_hold=max_hold
+            )
+        else:
+            return simulate_trades(
+                y_pred=y_pred, close=close, atr=atr,
+                modal=modal, leverage=lev, fee_per_side=fee_per_side,
+                tp_mult=tp_mult, sl_mult=sl_mult,
+                max_hold=max_hold, min_hold=min_hold,
+            )
 
     # Base simulation (leverage pertama) untuk winrate dan consecutive loss
-    base = simulate_trades(
-        y_pred, close, atr,
-        modal=modal, leverage=leverages[0],
-        fee_per_side=fee_per_side,
-        tp_mult=tp_mult, sl_mult=sl_mult,
-        max_hold=max_hold, min_hold=min_hold,
-    )
+    base = run_sim(leverages[0])
 
-    tpm        = calc_trade_per_month(base["total_trades"], index)
-    max_consec = calc_consecutive_loss(base["pnl_per_trade"])
+    tpm        = calc_trade_per_month(base.get("total_trades", 0), index)
+    max_consec = calc_consecutive_loss(base.get("pnl_per_trade", []))
 
     logger.info(
-        f"{label_prefix}Winrate: {base['winrate']:.2%} "
-        f"({base['wins']}W / {base['losses']}L / {base['total_trades']} trades "
-        f"| time_exit={base['time_exits']})"
+        f"{label_prefix}Winrate: {base.get('winrate', 0):.2%} "
+        f"({base.get('wins', 0)}W / {base.get('losses', 0)}L / {base.get('total_trades', 0)} trades "
+        f"| time_exit={base.get('time_exits', 0)})"
     )
 
     report = {
         "symbol":               symbol,
-        "winrate":              base["winrate"],
-        "total_trades":         base["total_trades"],
-        "wins":                 base["wins"],
-        "losses":               base["losses"],
-        "time_exits":           base["time_exits"],
-        "win_by_class":         base["win_by_class"],
+        "winrate":              base.get("winrate", 0),
+        "total_trades":         base.get("total_trades", 0),
+        "wins":                 base.get("wins", 0),
+        "losses":               base.get("losses", 0),
+        "time_exits":           base.get("time_exits", 0),
+        "win_by_class":         base.get("win_by_class", {}),
         "trade_per_month":      tpm,
         "max_consecutive_loss": max_consec,
     }
 
     # PnL & Drawdown per leverage
     for lev in leverages:
-        sim = simulate_trades(
-            y_pred, close, atr,
-            modal=modal, leverage=lev,
-            fee_per_side=fee_per_side,
-            tp_mult=tp_mult, sl_mult=sl_mult,
-            max_hold=max_hold, min_hold=min_hold,
-        )
-        dd  = calc_drawdown(sim["equity_curve"], modal_per_trade=modal)
+        sim = run_sim(lev)
+        dd  = calc_drawdown(sim.get("equity_curve", []), modal_per_trade=modal)
         key = f"lev{int(lev)}x"
 
-        report[f"pnl_{key}"]          = sim["total_pnl"]
-        report[f"max_drawdown_{key}"] = dd["max_drawdown_pct"]
-        report[f"total_fee_{key}"]    = sim["total_fee_paid"]
+        report[f"pnl_{key}"]          = sim.get("total_pnl", 0)
+        report[f"max_drawdown_{key}"] = dd.get("max_drawdown_pct", 0)
+        report[f"total_fee_{key}"]    = sim.get("total_fee_paid", 0) # Fallback 0 for swing
 
         logger.info(
             f"{label_prefix}Lev {lev}x → "
-            f"PnL: ${sim['total_pnl']:+.2f} | "
-            f"DD: {dd['max_drawdown_pct']:.2%} | "
-            f"Fee: ${sim['total_fee_paid']:.2f}"
+            f"PnL: ${sim.get('total_pnl', 0):+.2f} | "
+            f"DD: {dd.get('max_drawdown_pct', 0):.2%}"
         )
 
     return report

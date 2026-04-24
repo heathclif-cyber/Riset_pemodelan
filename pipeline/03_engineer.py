@@ -1,126 +1,136 @@
 """
-pipeline/03_engineer.py — Fase 3: Feature Engineering + Triple Barrier Labeling v2
+pipeline/03_engineer.py — Fase 3: Feature Engineering & Labeling
 
 Jalankan:
-  python pipeline/03_engineer.py                 # training coins
-  python pipeline/03_engineer.py --new           # new coins
-  python pipeline/03_engineer.py --all           # semua 20 koin
-  python pipeline/03_engineer.py --coins SOLUSDT
+  python pipeline/03_engineer.py                    # engineer training coins
+  python pipeline/03_engineer.py --new              # engineer new coins
+  python pipeline/03_engineer.py --all              # engineer semua koin
+  python pipeline/03_engineer.py --coins SOLUSDT    # koin spesifik
 """
 
 import argparse
+import json
 import sys
+import traceback
 from pathlib import Path
+from typing import Any
+
+import pandas as pd
+import pyarrow as pa
+import pyarrow.parquet as pq
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 from config import (
-    TRAINING_COINS, NEW_COINS, ALL_COINS,
-    SYMBOL_MAP, PROC_DIR, LABEL_DIR,
-    TP_ATR_MULT, SL_ATR_MULT, MAX_HOLDING_BARS,
-    VP_WINDOW, VP_BINS, SWING_LOOKBACK,
-    FVG_MIN_GAP_ATR, FEATURE_COLS,
-    SWING_ROLLING_BARS,
-    LONG_MAX_PRICE_IN_RANGE, SHORT_MIN_PRICE_IN_RANGE,
+    TRAINING_COINS, NEW_COINS, ALL_COINS, SYMBOL_MAP,
+    PROC_DIR, LABEL_DIR, REPORT_DIR,
+    SWING_LABEL_MAX_HOLD, SWING_LABEL_MIN_RR,
+    SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
+    FEATURE_COLS_V3,
+    VP_WINDOW, VP_BINS, SWING_LOOKBACK, FVG_MIN_GAP_ATR,
+    SWING_ROLLING_BARS
 )
-from core.utils import setup_logger, load_df, save_df
+from core.utils import setup_logger, ensure_utc_index
+from core.features import engineer_features
 
 logger = setup_logger("03_engineer")
 
-
-def validate_features(df, symbol: str) -> bool:
-    """Pastikan 65 kolom output sama persis dengan FEATURE_COLS + label."""
-    expected = set(FEATURE_COLS) | {"label"}
-    actual   = set(df.columns)
-    missing  = expected - actual
-    extra    = actual - expected - {"label"}
-
-    if missing:
-        logger.warning(f"[{symbol}] Kolom MISSING: {missing}")
-    if extra:
-        logger.warning(f"[{symbol}] Kolom EXTRA (akan di-drop): {extra}")
-    if "OB_price" in actual:
-        logger.error(f"[{symbol}] OB_price TIDAK BOLEH ada di output!")
-        return False
-    return len(missing) == 0
+# Filter thresholds (disesuaikan jika belum ada di config)
+LONG_MAX_PRICE_IN_RANGE = 0.8
+SHORT_MIN_PRICE_IN_RANGE = 0.2
 
 
-def engineer_symbol(symbol: str) -> bool:
-    """Feature engineering satu koin. Return True jika berhasil."""
-    from core.features import engineer_features
+def validate_features(df: pd.DataFrame) -> list[str]:
+    """Memastikan semua fitur V3 ada di DataFrame."""
+    missing = [col for col in FEATURE_COLS_V3 if col not in df.columns]
+    return missing
 
-    logger.info(f"[{symbol}] Starting feature engineering v2...")
 
-    clean_path = PROC_DIR / f"{symbol}_clean.parquet"
-    df = load_df(clean_path, logger)
-    if df is None:
-        logger.error(f"[{symbol}] Clean parquet tidak ditemukan: {clean_path}")
-        return False
+def _save(df: pd.DataFrame, path: Path) -> None:
+    path.parent.mkdir(parents=True, exist_ok=True)
+    table = pa.Table.from_pandas(df, preserve_index=True)
+    pq.write_table(table, str(path), compression="snappy")
+
+
+def engineer_symbol(symbol: str) -> dict[str, Any]:
+    report = {"symbol": symbol}
+    in_path = PROC_DIR / f"{symbol}_clean.parquet"
+    
+    if not in_path.exists():
+        logger.error(f"[{symbol}] File clean tidak ditemukan: {in_path}")
+        report["status"] = "missing_input"
+        return report
+
+    logger.info(f"[{symbol}] Starting feature engineering v3...")
+    df = pd.read_parquet(in_path)
+    df = ensure_utc_index(df)
 
     symbol_id = SYMBOL_MAP.get(symbol, -1)
-    if symbol_id == -1:
-        logger.warning(f"[{symbol}] Tidak ada di SYMBOL_MAP — pakai -1")
 
     try:
+        # ★ Panggilan fungsi dengan parameter V3 (Base H1)
         feat_df = engineer_features(
             df                       = df,
             symbol                   = symbol,
             symbol_id                = symbol_id,
-            tp_mult                  = TP_ATR_MULT,
-            sl_mult                  = SL_ATR_MULT,
-            max_hold                 = MAX_HOLDING_BARS,
+            max_hold                 = SWING_LABEL_MAX_HOLD,   # ★ BARU
+            min_rr                   = SWING_LABEL_MIN_RR,     # ★ BARU
+            min_tp_atr               = SWING_LABEL_MIN_TP,     # ★ BARU
+            max_sl_atr               = SWING_LABEL_MAX_SL,     # ★ BARU
             vp_window                = VP_WINDOW,
             vp_bins                  = VP_BINS,
             swing_lookback           = SWING_LOOKBACK,
             fvg_min_gap              = FVG_MIN_GAP_ATR,
-            swing_rolling_bars       = SWING_ROLLING_BARS,
             long_max_price_in_range  = LONG_MAX_PRICE_IN_RANGE,
             short_min_price_in_range = SHORT_MIN_PRICE_IN_RANGE,
             add_label                = True,
         )
+        
+        # Validasi menggunakan FEATURE_COLS_V3
+        missing_cols = validate_features(feat_df)
+        if missing_cols:
+            logger.warning(f"[{symbol}] Ada {len(missing_cols)} fitur V3 yang hilang: {missing_cols}")
+            report["missing_features"] = missing_cols
+
+        # Amankan kolom-kolom V3 yang valid + kolom label
+        cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + ["label"]
+        feat_df = feat_df[cols_to_keep]
+
+        # Buang NaN baris awal akibat rolling windows
+        initial_len = len(feat_df)
+        feat_df = feat_df.dropna(subset=[c for c in FEATURE_COLS_V3 if c in feat_df.columns])
+        dropped = initial_len - len(feat_df)
+
+        # Output ke _features_v3.parquet
+        out_path = LABEL_DIR / f"{symbol}_features_v3.parquet"
+        _save(feat_df, out_path)
+
+        report.update({
+            "status": "success",
+            "rows_output": len(feat_df),
+            "rows_dropped_nan": dropped,
+            "columns": len(feat_df.columns),
+            "output_file": str(out_path)
+        })
+        logger.info(f"[{symbol}] Saved {len(feat_df)} rows to {out_path.name}")
+
     except Exception as e:
-        logger.exception(f"[{symbol}] Feature engineering error: {e}")
-        return False
+        logger.error(f"[{symbol}] Error during engineering: {e}")
+        logger.error(traceback.format_exc())
+        report["status"] = "error"
+        report["error"] = str(e)
 
-    # Drop OB_price jika masih ada
-    if "OB_price" in feat_df.columns:
-        feat_df = feat_df.drop(columns=["OB_price"])
-        logger.info(f"[{symbol}] OB_price di-drop.")
-
-    # Reorder kolom sesuai FEATURE_COLS + label
-    ordered_cols = [c for c in FEATURE_COLS if c in feat_df.columns]
-    if "label" in feat_df.columns:
-        ordered_cols += ["label"]
-    feat_df = feat_df[ordered_cols]
-
-    # Validasi
-    validate_features(feat_df, symbol)
-
-    # Print ringkasan
-    nan_pct    = feat_df.isnull().mean().mean()
-    label_dist = feat_df["label"].value_counts().to_dict() if "label" in feat_df.columns else {}
-    logger.info(
-        f"[{symbol}] Rows={len(feat_df):,} | Cols={len(feat_df.columns)} | "
-        f"NaN={nan_pct:.1%} | Labels={label_dist}"
-    )
-
-    # ★ v2: output ke _features_v2.parquet
-    out_path = LABEL_DIR / f"{symbol}_features_v2.parquet"
-    LABEL_DIR.mkdir(parents=True, exist_ok=True)
-    if save_df(feat_df, out_path, logger):
-        logger.info(f"[{symbol}] Saved → {out_path}")
-        return True
-    return False
+    return report
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Feature Engineering Pipeline v2")
+    parser = argparse.ArgumentParser(description="Feature Engineering Pipeline")
     group  = parser.add_mutually_exclusive_group()
     group.add_argument("--training", action="store_true")
-    group.add_argument("--new",      action="store_true")
-    group.add_argument("--all",      action="store_true")
-    group.add_argument("--coins",    nargs="+", metavar="SYMBOL")
+    group.add_argument("--new",  action="store_true")
+    group.add_argument("--all",  action="store_true")
+    group.add_argument("--coins", nargs="+", metavar="SYMBOL")
     return parser.parse_args()
 
 
@@ -135,24 +145,17 @@ def main():
     else:
         coins = TRAINING_COINS
 
-    logger.info(f"Feature engineering v2 untuk: {coins}")
-    success, failed = [], []
+    LABEL_DIR.mkdir(parents=True, exist_ok=True)
+    REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
+    full_report = {"symbols": {}}
     for symbol in coins:
-        try:
-            ok = engineer_symbol(symbol)
-            (success if ok else failed).append(symbol)
-        except Exception as e:
-            logger.exception(f"[{symbol}] Error: {e}")
-            failed.append(symbol)
+        full_report["symbols"][symbol] = engineer_symbol(symbol)
 
-    sep = "=" * 55
-    print(f"\n{sep}")
-    print(f"  FEATURE ENGINEERING v2 SELESAI")
-    print(f"{sep}")
-    print(f"  Berhasil : {len(success)} — {success}")
-    print(f"  Gagal    : {len(failed)}  — {failed}")
-    print(f"{sep}\n")
+    report_path = REPORT_DIR / "engineering_v3_report.json"
+    with open(report_path, "w", encoding="utf-8") as f:
+        json.dump(full_report, f, indent=2, default=str)
+    logger.info(f"Report saved → {report_path}")
 
 
 if __name__ == "__main__":
