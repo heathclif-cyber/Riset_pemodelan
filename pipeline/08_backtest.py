@@ -53,7 +53,7 @@ from pipeline.p05_utils import SequenceDataset
 
 logger = setup_logger("08_backtest")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-NON_FEATURE_COLS = {"label"}
+NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
 
 # ─── Data Loading ─────────────────────────────────────────────────────────────

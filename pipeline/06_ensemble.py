@@ -41,7 +41,7 @@ from pipeline.p05_utils import SequenceDataset  # reuse dari 05
 
 logger = setup_logger("06_ensemble")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
-NON_FEATURE_COLS = {"label"}
+NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
 
 def load_symbols(coins):
