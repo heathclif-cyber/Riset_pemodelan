@@ -1153,4 +1153,8 @@ def engineer_features(
         f"| NaN: {nan_pct:.1%}"
     )
 
+    # Simpan untuk evaluasi/backtest (TIDAK masuk FEATURE_COLS_V3)
+    feat_df["h4_swing_high"] = h4_swing_highs
+    feat_df["h4_swing_low"]  = h4_swing_lows
+
     return feat_df

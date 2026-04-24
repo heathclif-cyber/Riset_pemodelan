@@ -32,6 +32,7 @@ from config import (
     TRAINING_COINS, LABEL_DIR, MODEL_DIR, REPORT_DIR,
     LABEL_MAP, NUM_CLASSES, MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE,
     TP_ATR_MULT, SL_ATR_MULT, CONFIDENCE_THRESHOLD_ENTRY,
+    SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL, MAX_HOLDING_BARS,
 )
 from core.utils import setup_logger, update_model_metrics
 from core.evaluator import full_trading_report
@@ -152,19 +153,29 @@ def run_shap(run_id: str):
     atr_arr = df["atr_14_h1"].ffill().fillna(0).values if "atr_14_h1" in df.columns \
           else np.ones(len(df))
     close_arr = df["close"].ffill().fillna(1).values    if "close"      in df.columns else np.ones(len(df))
+    h4_sh_arr = df["h4_swing_high"].values if "h4_swing_high" in df.columns else None
+    h4_sl_arr = df["h4_swing_low"].values  if "h4_swing_low"  in df.columns else None
+    high_arr  = df["high"].values if "high" in df.columns else close_arr
+    low_arr   = df["low"].values if "low" in df.columns else close_arr
 
     trading_report = full_trading_report(
-        y_pred     = y_pred,
-        y_actual   = y_actual,
-        atr        = atr_arr,
-        close      = close_arr,
-        index      = df.index,
-        modal      = MODAL_PER_TRADE,
-        leverages  = LEVERAGE_SIM,
-        fee_per_side = FEE_PER_SIDE,
-        tp_mult    = TP_ATR_MULT,
-        sl_mult    = SL_ATR_MULT,
-        symbol     = SAMPLE_SYMBOL,
+        y_pred          = y_pred,
+        y_actual        = y_actual,
+        atr             = atr_arr,
+        close           = close_arr,
+        high            = high_arr,
+        low             = low_arr,
+        h4_swing_highs  = h4_sh_arr,
+        h4_swing_lows   = h4_sl_arr,
+        index           = df.index,
+        modal           = MODAL_PER_TRADE,
+        leverages       = LEVERAGE_SIM,
+        fee_per_side    = FEE_PER_SIDE,
+        min_rr          = SWING_LABEL_MIN_RR,
+        min_tp_atr      = SWING_LABEL_MIN_TP,
+        max_sl_atr      = SWING_LABEL_MAX_SL,
+        max_hold        = MAX_HOLDING_BARS,
+        symbol          = SAMPLE_SYMBOL,
     )
 
     # Simpan trading report ke run dir

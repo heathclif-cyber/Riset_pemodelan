@@ -93,8 +93,9 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
             logger.warning(f"[{symbol}] Ada {len(missing_cols)} fitur V3 yang hilang: {missing_cols}")
             report["missing_features"] = missing_cols
 
-        # Amankan kolom-kolom V3 yang valid + kolom label
-        cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + ["label"]
+        # Amankan kolom-kolom V3 yang valid + kolom label + swing levels
+        cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + \
+                       ["label", "h4_swing_high", "h4_swing_low"]
         feat_df = feat_df[cols_to_keep]
 
         # Buang NaN baris awal akibat rolling windows

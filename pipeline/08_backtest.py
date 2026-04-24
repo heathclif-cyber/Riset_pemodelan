@@ -44,6 +44,7 @@ from config import (
     TP_ATR_MULT, SL_ATR_MULT, MAX_HOLDING_BARS,
     CONFIDENCE_THRESHOLD_ENTRY, CONFIDENCE_FULL, CONFIDENCE_HALF,
     MIN_HOLD_BARS,
+    SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
 )
 from core.models import load_lstm, ProbabilityCalibrator
 from core.evaluator import full_trading_report
@@ -188,20 +189,29 @@ def backtest_symbol(
     y_valid   = y[valid_idx]
     atr_arr   = df_valid["atr_14_h1"].values if "atr_14_h1" in df_valid.columns else np.ones(len(df_valid))
     close_arr = df_valid["close"].values       if "close"      in df_valid.columns else np.ones(len(df_valid))
+    h4_sh_arr = df_valid["h4_swing_high"].values if "h4_swing_high" in df_valid.columns else None
+    h4_sl_arr = df_valid["h4_swing_low"].values  if "h4_swing_low"  in df_valid.columns else None
+    high_arr  = df_valid["high"].values if "high" in df_valid.columns else close_arr
+    low_arr   = df_valid["low"].values if "low" in df_valid.columns else close_arr
 
     report = full_trading_report(
-        y_pred       = y_pred_filtered,
-        y_actual     = y_valid,
-        atr          = atr_arr,
-        close        = close_arr,
-        index        = df_valid.index,
-        modal        = MODAL_PER_TRADE,
-        leverages    = LEVERAGE_SIM,
-        fee_per_side = FEE_PER_SIDE,
-        tp_mult      = TP_ATR_MULT,
-        sl_mult      = SL_ATR_MULT,
-        min_hold     = MIN_HOLD_BARS,
-        symbol       = symbol,
+        y_pred          = y_pred_filtered,
+        y_actual        = y_valid,
+        atr             = atr_arr,
+        close           = close_arr,
+        high            = high_arr,
+        low             = low_arr,
+        h4_swing_highs  = h4_sh_arr,
+        h4_swing_lows   = h4_sl_arr,
+        index           = df_valid.index,
+        modal           = MODAL_PER_TRADE,
+        leverages       = LEVERAGE_SIM,
+        fee_per_side    = FEE_PER_SIDE,
+        min_rr          = SWING_LABEL_MIN_RR,
+        min_tp_atr      = SWING_LABEL_MIN_TP,
+        max_sl_atr      = SWING_LABEL_MAX_SL,
+        max_hold        = MAX_HOLDING_BARS,
+        symbol          = symbol,
     )
 
     report["n_filtered_by_confidence"] = n_filtered
