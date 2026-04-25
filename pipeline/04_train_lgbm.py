@@ -191,6 +191,13 @@ def main():
 
     f1s  = [m["f1_macro"] for m in all_metrics]
     accs = [m["accuracy"] for m in all_metrics]
+    
+    # ★ v2: simpan feature_cols_v2.json (selalu overwrite)
+    feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
+    with open(feat_cols_path, "w") as f:
+        json.dump(feat_cols, f, indent=2)
+    logger.info(f"Feature cols v2 ({len(feat_cols)}) → {feat_cols_path}")
+
     cv_summary = {
         "run_id": run_id, "coins": coins,
         "n_folds": N_FOLDS, "gap_bars": 24,

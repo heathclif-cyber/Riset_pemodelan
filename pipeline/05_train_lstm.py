@@ -263,12 +263,11 @@ def main():
     joblib.dump(best_scaler, MODEL_DIR / "lstm_scaler.pkl")
     logger.info(f"Best model fold {best_fold} F1={best_f1:.4f} → {lstm_path}")
 
-    # ★ v2: simpan feature_cols_v2.json (konsisten dengan 04_train_lgbm)
+    # ★ v2: simpan feature_cols_v2.json (selalu overwrite)
     feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
-    if not feat_cols_path.exists():
-        with open(feat_cols_path, "w") as f:
-            json.dump(feat_cols, f, indent=2)
-        logger.info(f"Feature cols v2 ({len(feat_cols)}) → {feat_cols_path}")
+    with open(feat_cols_path, "w") as f:
+        json.dump(feat_cols, f, indent=2)
+    logger.info(f"Feature cols v2 ({len(feat_cols)}) → {feat_cols_path}")
 
     f1s = [m["f1_macro"] for m in all_metrics]
     cv_summary = {

@@ -214,7 +214,7 @@ def _fetch_btc_dom_proxy(start: datetime, end: datetime) -> Optional[pd.DataFram
     while current < end_ms:
         try:
             resp = session.get(
-                "https://fapi.binance.com/fapi/v1/klines",
+                "https://data-api.binance.vision/api/v3/klines",
                 params={"symbol": "BTCUSDT", "interval": "1d",
                         "startTime": current, "limit": 1000},
                 timeout=30,

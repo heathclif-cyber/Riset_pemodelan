@@ -45,6 +45,10 @@ from config import (
     CONFIDENCE_THRESHOLD_ENTRY, CONFIDENCE_FULL, CONFIDENCE_HALF,
     MIN_HOLD_BARS,
     SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
+    VP_WINDOW, VP_BINS, FVG_MIN_GAP_ATR, SWING_LOOKBACK,
+    SIGNAL_FLIP_CONF_MIN, FLIP_CONFIRM_BARS, FLIP_COOLDOWN_SECS, SAME_DIR_COOLDOWN_HOURS,
+    VCB_ENABLED, VCB_ATR_MULTIPLIER, VCB_LOOKBACK_BARS,
+    MONITOR_POLL_INTERVAL_SECS,
 )
 from core.models import load_lstm, ProbabilityCalibrator
 from core.evaluator import full_trading_report
@@ -270,6 +274,35 @@ def generate_inference_config(
             "seq_len":                    LSTM_SEQ_LEN,
             "label_map":                  LABEL_MAP,
             "label_map_inv":              {str(v): k for k, v in LABEL_MAP.items()},
+        },
+
+        # ── Parameter Feature Engineering ─────────────────────────────────────
+        "feature_engineering": {
+            "vp_window":       VP_WINDOW,
+            "vp_bins":         VP_BINS,
+            "fvg_min_gap_atr": FVG_MIN_GAP_ATR,
+            "swing_lookback":  SWING_LOOKBACK,
+        },
+
+        # ── Parameter Signal Stability ────────────────────────────────────────
+        "signal_stability": {
+            "flip_conf_min":           SIGNAL_FLIP_CONF_MIN,
+            "flip_confirm_bars":       FLIP_CONFIRM_BARS,
+            "flip_cooldown_secs":      FLIP_COOLDOWN_SECS,
+            "same_dir_cooldown_hours": SAME_DIR_COOLDOWN_HOURS,
+        },
+
+        # ── Parameter Circuit Breaker ─────────────────────────────────────────
+        "volatility_circuit_breaker": {
+            "enabled":        VCB_ENABLED,
+            "atr_multiplier": VCB_ATR_MULTIPLIER,
+            "lookback_bars":  VCB_LOOKBACK_BARS,
+        },
+
+        # ── Parameter Monitoring ──────────────────────────────────────────────
+        "monitor": {
+            "pairs":              ALL_COINS,
+            "poll_interval_secs": MONITOR_POLL_INTERVAL_SECS,
         },
 
         # ── Parameter Labeling ────────────────────────────────────────────────

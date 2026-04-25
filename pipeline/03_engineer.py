@@ -100,7 +100,9 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
 
         # Buang NaN baris awal akibat rolling windows
         initial_len = len(feat_df)
-        feat_df = feat_df.dropna(subset=[c for c in FEATURE_COLS_V3 if c in feat_df.columns])
+        CRITICAL_COLS = ["open", "high", "low", "close", "volume", "atr_14_h1", "rsi_6", "label"]
+        critical_present = [c for c in CRITICAL_COLS if c in feat_df.columns]
+        feat_df = feat_df.dropna(subset=critical_present)
         dropped = initial_len - len(feat_df)
 
         # Output ke _features_v3.parquet

@@ -168,7 +168,7 @@ def main():
     meta_y = y[valid_idx]
 
     meta_learner = LogisticRegression(
-        max_iter=1000, C=1.0, multi_class="multinomial",
+        max_iter=1000, C=1.0,
         solver="lbfgs", random_state=42,
     )
     meta_learner.fit(meta_X, meta_y)

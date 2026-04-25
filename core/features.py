@@ -4,7 +4,7 @@ Base Timeframe: H1 (bukan M15)
 Konteks Swing: H4 (swing high/low, trend, divergence)
 
 Fungsi utama:
-  engineer_features()          — hitung semua 71 fitur dari cleaned parquet (H1 base)
+  engineer_features()          — hitung semua 83 fitur dari cleaned parquet (H1 base)
   swing_based_labeling()       — labeling v3 berbasis H4 swing high/low
   structural_label_filter()    — filter label berdasarkan posisi harga dalam range
   compute_synthetic_oi()       — synthetic OI dari CVD (H1-adjusted windows)
@@ -631,6 +631,188 @@ def calc_wyckoff_phase(
     return phase_s, spring_upthrust
 
 
+# ═══════════════════════════════════════════════════════════════════════════════
+# SMART MONEY FEATURES v4 (BARU)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def calc_ofi_features(
+    taker_buy_vol: pd.Series,
+    taker_sell_vol: pd.Series,
+    window_z: int = 48,
+    window_h4: str = "4h",
+) -> dict[str, pd.Series]:
+    """
+    Order Flow Imbalance (OFI) — jejak smart money di order flow.
+
+    ofi_raw         : OFI per bar (buy - sell taker volume)
+    ofi_acceleration: percepatan akumulasi/distribusi (diff 3 bar)
+    ofi_z_score     : OFI relatif terhadap rata-rata 48 jam
+    ofi_h4_delta    : perubahan OFI agregat per H4
+    """
+    ofi_raw = (taker_buy_vol - taker_sell_vol).fillna(0)
+
+    ofi_acceleration = ofi_raw.diff(3).fillna(0)
+
+    ofi_mean = ofi_raw.rolling(window_z, min_periods=10).mean()
+    ofi_std  = ofi_raw.rolling(window_z, min_periods=10).std().replace(0, np.nan)
+    ofi_z_score = ((ofi_raw - ofi_mean) / ofi_std).fillna(0)
+
+    ofi_h4_sum   = ofi_raw.resample(window_h4).sum()
+    ofi_h4_delta = ofi_h4_sum.diff()
+    ofi_h4_delta = ofi_h4_delta.reindex(
+        ofi_h4_delta.index.union(ofi_raw.index)
+    ).ffill().reindex(ofi_raw.index).fillna(0)
+
+    return {
+        "ofi_raw":          ofi_raw,
+        "ofi_acceleration": ofi_acceleration,
+        "ofi_z_score":      ofi_z_score,
+        "ofi_h4_delta":     ofi_h4_delta,
+    }
+
+
+def calc_vwdp(
+    open_: pd.Series,
+    high:  pd.Series,
+    low:   pd.Series,
+    close: pd.Series,
+    ofi_raw: pd.Series,
+    window: int = 24,
+) -> dict[str, pd.Series]:
+    """
+    Volume-Weighted Directional Pressure (VWDP).
+    Mengukur tekanan directional disesuaikan rejection (wick).
+
+    vwdp            : OFI × (1 - wick_ratio), proxy iceberg order detection
+    vwdp_smooth     : rolling mean VWDP untuk trend tekanan
+    """
+    candle_range = (high - low).replace(0, np.nan)
+    body         = (close - open_).abs()
+    wick_ratio   = ((candle_range - body) / candle_range).fillna(0).clip(0, 1)
+
+    vwdp        = (ofi_raw * (1 - wick_ratio)).fillna(0)
+    vwdp_smooth = vwdp.rolling(window, min_periods=5).mean().fillna(0)
+
+    return {
+        "vwdp":        vwdp,
+        "vwdp_smooth": vwdp_smooth,
+    }
+
+
+def calc_cvd_hidden_divergence(
+    close: pd.Series,
+    cvd:   pd.Series,
+    window: int = 8,
+    price_threshold: float = 0.02,
+    cvd_threshold:   float = 0.1,
+) -> dict[str, pd.Series]:
+    """
+    CVD Hidden Divergence — deteksi akumulasi/distribusi tersembunyi.
+
+    hidden_bull_div : +1 jika harga LL tapi CVD tidak (akumulasi tersembunyi)
+    hidden_bear_div : -1 jika harga HH tapi CVD tidak (distribusi tersembunyi)
+    cvd_momentum    : rate of change CVD dinormalisasi
+    """
+    price_momentum = close.pct_change(window).fillna(0)
+    cvd_ma         = cvd.abs().rolling(window, min_periods=3).mean().replace(0, np.nan)
+    cvd_momentum   = (cvd.diff(window) / cvd_ma).fillna(0)
+
+    hidden_bull = ((price_momentum < -price_threshold) &
+                   (cvd_momentum > cvd_threshold)).astype(float)
+    hidden_bear = ((price_momentum >  price_threshold) &
+                   (cvd_momentum < -cvd_threshold)).astype(float) * -1
+
+    hidden_divergence = hidden_bull + hidden_bear
+
+    return {
+        "hidden_divergence": hidden_divergence,
+        "cvd_momentum_adv":  cvd_momentum,
+    }
+
+
+def calc_absorption_at_swing(
+    close:          pd.Series,
+    absorption_z:   pd.Series,
+    h4_swing_highs: pd.Series,
+    h4_swing_lows:  pd.Series,
+    atr:            pd.Series,
+    proximity_atr:  float = 0.5,
+) -> pd.Series:
+    """
+    Absorption Detection di dekat Swing Level.
+    Tinggi = smart money menyerap order di level struktural kunci.
+
+    absorption_at_swing: absorption_z × proximity_factor
+    Positif kuat = akumulasi di support (swing low)
+    Negatif kuat = distribusi di resistance (swing high)
+    """
+    atr_safe = atr.replace(0, np.nan)
+
+    near_swing_high = (
+        (h4_swing_highs - close).abs() / atr_safe
+    ).fillna(999) < proximity_atr
+
+    near_swing_low = (
+        (close - h4_swing_lows).abs() / atr_safe
+    ).fillna(999) < proximity_atr
+
+    # Di dekat swing high = potensi distribusi → negatif
+    # Di dekat swing low  = potensi akumulasi  → positif
+    proximity_signal = (
+        near_swing_low.astype(float) - near_swing_high.astype(float)
+    )
+
+    absorption_at_swing = (absorption_z * proximity_signal).fillna(0)
+    return absorption_at_swing
+
+
+def calc_vsa_features(
+    open_:  pd.Series,
+    high:   pd.Series,
+    low:    pd.Series,
+    close:  pd.Series,
+    volume: pd.Series,
+    window_ultra: int = 48,
+    window_avg:   int = 24,
+) -> dict[str, pd.Series]:
+    """
+    Volume Spread Analysis (VSA) — effort vs result.
+
+    spread_to_volume : (high-low) / volume. Rendah = banyak volume, sedikit gerak = absorption
+    ultra_high_vol   : 1 jika volume > percentile 95 dalam 48 bar
+    no_demand        : spread rendah + close > open (upbar tapi volume lemah = SM tidak mendukung)
+    no_supply        : spread rendah + close < open (downbar tapi volume lemah = SM tidak menjual)
+    effort_vs_result : divergence antara volume effort dan price result
+    """
+    candle_range     = (high - low).replace(0, np.nan)
+    vol_safe         = volume.replace(0, np.nan)
+    spread_to_volume = (candle_range / vol_safe).fillna(0)
+
+    ultra_high_vol = (
+        volume > volume.rolling(window_ultra, min_periods=10).quantile(0.95)
+    ).astype(int)
+
+    avg_spread = spread_to_volume.rolling(window_avg, min_periods=5).mean()
+    low_spread = spread_to_volume < (avg_spread * 0.5)
+
+    no_demand = (low_spread & (close > open_)).astype(int)
+    no_supply = (low_spread & (close < open_)).astype(int)
+
+    # Effort vs Result: volume tinggi tapi return kecil = absorption
+    abs_return   = (close - open_).abs() / candle_range.fillna(1)
+    vol_z        = (volume - volume.rolling(window_avg, min_periods=5).mean()) / \
+                   volume.rolling(window_avg, min_periods=5).std().replace(0, np.nan)
+    effort_vs_result = (vol_z * (1 - abs_return)).fillna(0)
+
+    return {
+        "spread_to_volume":  spread_to_volume.fillna(0),
+        "ultra_high_vol":    ultra_high_vol,
+        "no_demand":         no_demand,
+        "no_supply":         no_supply,
+        "effort_vs_result":  effort_vs_result,
+    }
+
+
 def calc_rsi_divergence(
     close:    pd.Series,
     rsi_h4:   pd.Series,
@@ -867,7 +1049,7 @@ def engineer_features(
     sl_mult: float = 1.0,
 ) -> pd.DataFrame:
     """
-    Hitung semua 71 fitur v3 dari cleaned DataFrame (H1 base).
+    Hitung semua 83 fitur v3 dari cleaned DataFrame (H1 base).
 
     Input:
         df — output dari 02_clean.py dengan kolom prefixed:
@@ -876,7 +1058,7 @@ def engineer_features(
              "funding_rate_*", "macro_*" (optional)
 
     Output:
-        DataFrame dengan 71 fitur + label (jika add_label=True)
+        DataFrame dengan 83 fitur + label (jika add_label=True)
     """
     df = ensure_utc_index(df)
 
@@ -1107,11 +1289,67 @@ def engineer_features(
     feat["wyckoff_phase"]   = wyckoff_phase
     feat["spring_upthrust"] = spring_upthrust
 
-    # ── 28. Build DataFrame ───────────────────────────────────────────────────
+    # ── 28. Smart Money Features v4 (BARU) ───────────────────────────────────
+
+    # Ambil taker volume
+    buy_vol_series  = feat.get("buy_volume",  v * 0.5)
+    sell_vol_series = feat.get("sell_volume", v * 0.5)
+
+    # OFI Features
+    ofi_feats = calc_ofi_features(
+        taker_buy_vol  = buy_vol_series,
+        taker_sell_vol = sell_vol_series,
+        window_z       = 48,
+        window_h4      = "4h",
+    )
+    feat.update(ofi_feats)
+
+    # VWDP
+    vwdp_feats = calc_vwdp(
+        open_   = o,
+        high    = h,
+        low     = l,
+        close   = c,
+        ofi_raw = ofi_feats["ofi_raw"],
+        window  = 24,
+    )
+    feat.update(vwdp_feats)
+
+    # CVD Hidden Divergence
+    cvd_div_feats = calc_cvd_hidden_divergence(
+        close  = c,
+        cvd    = feat["cvd"],
+        window = 8,
+    )
+    feat.update(cvd_div_feats)
+
+    # Absorption at Swing
+    feat["absorption_at_swing"] = calc_absorption_at_swing(
+        close          = c,
+        absorption_z   = feat["absorption_z"],
+        h4_swing_highs = h4_swing_highs,
+        h4_swing_lows  = h4_swing_lows,
+        atr            = atr_h1,
+        proximity_atr  = 0.5,
+    )
+
+    # VSA Features
+    vsa_feats = calc_vsa_features(
+        open_  = o,
+        high   = h,
+        low    = l,
+        close  = c,
+        volume = v,
+        window_ultra = 48,
+        window_avg   = 24,
+    )
+    feat.update(vsa_feats)
+
+    # ── 29. Build DataFrame ───────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)
     feat_df = ensure_utc_index(feat_df)
 
-    # ── 29. Labeling (Swing-Based v3) ─────────────────────────────────────────
+    # ── 30. Labeling (Swing-Based v3) ─────────────────────────────────────────
     if add_label:
         logger.info(
             f"[{symbol}] Swing-Based labeling v3 "

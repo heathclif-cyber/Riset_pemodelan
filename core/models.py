@@ -4,7 +4,7 @@ Dipakai bersama oleh pipeline/05_train_lstm.py, pipeline/06_ensemble.py,
 dan Swing_Trade9.6/ml/ml_signal.py
 
 PENTING: Arsitektur TradingLSTM TIDAK BOLEH diubah tanpa retraining.
-         n_features=65, hidden_size=128, num_layers=2, dropout=0.3
+         n_features=85 (dinamis sesuai len(FEATURE_COLS_V3)), hidden_size=128, num_layers=2, dropout=0.3
 """
 
 import pickle
