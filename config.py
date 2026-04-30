@@ -184,7 +184,6 @@ FEATURE_COLS_V3 = [
 
     # Market regime (v2)
     "h4_trend", "trend_strength", "vol_regime",
-
     # Smart money v3
     "cvd_div_h4", "cvd_slope_h4",
     "vol_efficiency", "absorption_z",
