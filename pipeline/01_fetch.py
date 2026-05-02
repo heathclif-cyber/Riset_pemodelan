@@ -23,7 +23,6 @@ sys.path.insert(0, str(ROOT))
 from config import (
     TRAINING_COINS, NEW_COINS, ALL_COINS,
     TRAIN_START, TRAIN_END,
-    NEW_COINS_START, NEW_COINS_END,
     KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT,
     BINANCE_BASE_URL, SLEEP_BETWEEN_REQUESTS,
     SLEEP_ON_RATE_LIMIT, MAX_RETRIES, RETRY_BACKOFF_BASE,
@@ -54,36 +53,46 @@ def parse_args():
     return parser.parse_args()
 
 
+def _build_coin_schedule(args) -> tuple[list[tuple], str]:
+    """
+    Kembalikan (coin_schedule, label).
+    coin_schedule = [(symbol, start, end), ...]
+
+    Semua koin menggunakan periode yang sama: TRAIN_START → TRAIN_END.
+    Koin yang listing setelah 2020 (SUI, TON, PEPE, TAO, ARB) akan otomatis
+    mendapat data lebih pendek sesuai tanggal listing mereka di Binance —
+    fetch tidak error, hanya menghasilkan lebih sedikit baris.
+    """
+    if args.new:
+        coins = NEW_COINS
+        label = f"NEW COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+    elif args.all:
+        coins = ALL_COINS
+        label = f"ALL COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+    elif args.coins:
+        coins = [c.upper() for c in args.coins]
+        label = f"CUSTOM: {coins}"
+    else:
+        coins = TRAINING_COINS
+        label = f"TRAINING COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+
+    schedule = [(sym, TRAIN_START, TRAIN_END) for sym in coins]
+    return schedule, label
+
+
 def main():
     args = parse_args()
 
-    # ── Tentukan koin dan periode ─────────────────────────────────────────────
-    if args.new:
-        coins = NEW_COINS
-        start = NEW_COINS_START
-        end   = NEW_COINS_END
-        label = "NEW COINS (Apr 2023 → Apr 2025)"
-    elif args.all:
-        coins = ALL_COINS
-        start = NEW_COINS_START   # gunakan periode yang lebih pendek untuk semua
-        end   = NEW_COINS_END
-        label = "ALL COINS (Apr 2023 → Apr 2025)"
-    elif args.coins:
-        coins = [c.upper() for c in args.coins]
-        start = NEW_COINS_START
-        end   = NEW_COINS_END
-        label = f"CUSTOM: {coins}"
-    else:
-        # Default: training coins dengan periode penuh
-        coins = TRAINING_COINS
-        start = TRAIN_START
-        end   = TRAIN_END
-        label = "TRAINING COINS (Jan 2022 → Apr 2025)"
+    coin_schedule, label = _build_coin_schedule(args)
+
+    # Macro mencakup rentang terluas dari semua koin
+    macro_start = min(s for _, s, _ in coin_schedule)
+    macro_end   = max(e for _, _, e in coin_schedule)
 
     logger.info("=" * 60)
     logger.info(f"  FETCH DATA: {label}")
-    logger.info(f"  Koin: {coins}")
-    logger.info(f"  Periode: {start.date()} → {end.date()}")
+    logger.info(f"  Koin    : {[sym for sym, _, _ in coin_schedule]}")
+    logger.info(f"  Macro   : {macro_start.date()} → {macro_end.date()}")
     logger.info("=" * 60)
 
     # ── Load/reset progress ────────────────────────────────────────────────────
@@ -108,17 +117,17 @@ def main():
         sys.exit(1)
     logger.info("Koneksi Binance OK.")
 
-    # ── Fetch macro data (sekali saja) ────────────────────────────────────────
+    # ── Fetch macro data (satu kali, rentang terluas) ─────────────────────────
     logger.info("\n--- FETCH MACRO DATA ---")
-    fetch_all_macro(start, end, progress=progress)
+    fetch_all_macro(macro_start, macro_end, progress=progress)
     save_progress(progress, PROGRESS_FILE)
 
-    # ── Fetch per koin ────────────────────────────────────────────────────────
+    # ── Fetch per koin (tiap koin bisa punya periode berbeda) ─────────────────
     success = []
     failed  = []
 
-    for i, symbol in enumerate(coins, 1):
-        logger.info(f"\n[{i}/{len(coins)}] Fetching {symbol}...")
+    for i, (symbol, start, end) in enumerate(coin_schedule, 1):
+        logger.info(f"\n[{i}/{len(coin_schedule)}] Fetching {symbol} ({start.date()} → {end.date()})...")
         try:
             results = fetch_coin(
                 client   = client,

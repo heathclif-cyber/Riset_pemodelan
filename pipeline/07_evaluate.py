@@ -190,9 +190,10 @@ def run_shap(run_id: str):
         f1_macro    = float(imp_df["mean_abs_shap"].mean()),  # placeholder sampai 08_backtest
         winrate     = trading_report["winrate"],
         trade_per_month = trading_report["trade_per_month"],
-        pnl_lev3x   = trading_report.get("pnl_lev3x"),
-        pnl_lev5x   = trading_report.get("pnl_lev5x"),
-        max_drawdown = trading_report.get("max_drawdown_lev3x"),
+        pnl_lev5x    = trading_report.get("pnl_lev5x"),
+        max_drawdown = trading_report.get("max_drawdown_lev5x"),
+        sharpe_ratio = trading_report.get("sharpe_ratio"),
+        profit_factor = trading_report.get("profit_factor"),
         max_consecutive_loss = trading_report["max_consecutive_loss"],
         trained_date = datetime.now().strftime("%Y-%m-%d"),
         status       = "active",

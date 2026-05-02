@@ -26,13 +26,13 @@ def simulate_trades(
     y_pred:       np.ndarray,
     close:        np.ndarray,
     atr:          np.ndarray,
-    modal:        float = 1000.0,
-    leverage:     float = 3.0,
+    modal:        float = 100.0,
+    leverage:     float = 5.0,
     fee_per_side: float = 0.0004,
     tp_mult:      float = 2.0,
     sl_mult:      float = 1.0,
-    max_hold:     int   = 48,
-    min_hold:     int   = 4,
+    max_hold:     int   = 24,
+    min_hold:     int   = 2,
 ) -> dict:
     y_pred = np.asarray(y_pred, dtype=np.int32)
     close  = np.asarray(close,  dtype=np.float64)
@@ -193,13 +193,13 @@ def simulate_trades_swing(
     atr:             np.ndarray,
     h4_swing_highs:  np.ndarray,   # swing high H4, aligned ke base tf
     h4_swing_lows:   np.ndarray,   # swing low  H4, aligned ke base tf
-    modal:           float = 1000.0,
-    leverage:        float = 3.0,
+    modal:           float = 100.0,
+    leverage:        float = 5.0,
     fee_per_side:    float = 0.0004,
-    min_rr:          float = 1.5,
-    min_tp_atr:      float = 1.5,
+    min_rr:          float = 1.2,
+    min_tp_atr:      float = 1.2,
     max_sl_atr:      float = 3.0,
-    max_hold:        int   = 48,
+    max_hold:        int   = 24,
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis berbasis swing high/low H4.
@@ -416,6 +416,55 @@ def calc_trade_per_month(total_trades: int, index: pd.DatetimeIndex) -> float:
     return round(total_trades / n_months, 2)
 
 
+# ─── Risk-Adjusted Metrics ───────────────────────────────────────────────────
+
+def calc_risk_metrics(
+    pnl_per_trade:   list,
+    modal:           float,
+    index:           pd.DatetimeIndex,
+    max_drawdown_pct: float,
+    rfr:             float = 0.0,
+) -> dict:
+    """Hitung Sharpe, Sortino, Calmar, dan Profit Factor dari trade list."""
+    if len(pnl_per_trade) < 2:
+        return {
+            "sharpe_ratio":  0.0,
+            "sortino_ratio": 0.0,
+            "calmar_ratio":  0.0,
+            "profit_factor": 0.0,
+        }
+
+    returns = np.array(pnl_per_trade, dtype=np.float64) / (modal + 1e-9)
+
+    n_years = max((index[-1] - index[0]).days / 365.25, 1 / 52)
+    trades_per_year = len(returns) / n_years
+    ann_factor = np.sqrt(trades_per_year)
+
+    rfr_per_trade = rfr / max(trades_per_year, 1)
+    excess = returns - rfr_per_trade
+
+    std_r = np.std(returns, ddof=1)
+    sharpe = float(np.mean(excess) / std_r * ann_factor) if std_r > 0 else 0.0
+
+    downside = excess[excess < 0]
+    std_down = np.std(downside, ddof=1) if len(downside) > 1 else 0.0
+    sortino  = float(np.mean(excess) / std_down * ann_factor) if std_down > 0 else 0.0
+
+    ann_return = float(np.mean(returns)) * trades_per_year
+    calmar = (ann_return / abs(max_drawdown_pct)) if abs(max_drawdown_pct) > 1e-9 else 0.0
+
+    wins_sum = sum(p for p in pnl_per_trade if p > 0)
+    loss_sum = abs(sum(p for p in pnl_per_trade if p < 0))
+    profit_factor = (wins_sum / loss_sum) if loss_sum > 0 else 0.0
+
+    return {
+        "sharpe_ratio":  round(sharpe, 4),
+        "sortino_ratio": round(sortino, 4),
+        "calmar_ratio":  round(calmar, 4),
+        "profit_factor": round(profit_factor, 4),
+    }
+
+
 # ─── Full Report ─────────────────────────────────────────────────────────────
 
 def full_trading_report(
@@ -424,21 +473,21 @@ def full_trading_report(
     atr:          np.ndarray,
     close:        np.ndarray,
     index:        pd.DatetimeIndex,
-    modal:        float = 1000.0,
-    leverages:    list  = [3.0, 5.0],
+    modal:        float = 100.0,
+    leverages:    list  = [5.0],
     fee_per_side: float = 0.0004,
     tp_mult:      float = 2.0,
     sl_mult:      float = 1.0,
-    max_hold:     int   = 48,
-    min_hold:     int   = 4,
+    max_hold:     int   = 24,
+    min_hold:     int   = 2,
     symbol:       Optional[str] = None,
     # Parameters for Swing V3 Option:
     high:         Optional[np.ndarray] = None,
     low:          Optional[np.ndarray] = None,
     h4_swing_highs: Optional[np.ndarray] = None,
     h4_swing_lows:  Optional[np.ndarray] = None,
-    min_rr:       float = 1.5,
-    min_tp_atr:   float = 1.5,
+    min_rr:       float = 1.2,
+    min_tp_atr:   float = 1.2,
     max_sl_atr:   float = 3.0,
 ) -> dict:
     """
@@ -471,10 +520,23 @@ def full_trading_report(
     tpm        = calc_trade_per_month(base.get("total_trades", 0), index)
     max_consec = calc_consecutive_loss(base.get("pnl_per_trade", []))
 
+    # Drawdown base untuk Calmar Ratio
+    base_dd  = calc_drawdown(base.get("equity_curve", []), modal_per_trade=modal)
+    base_ddp = base_dd.get("max_drawdown_pct", 0)
+
+    risk = calc_risk_metrics(
+        pnl_per_trade    = base.get("pnl_per_trade", []),
+        modal            = modal,
+        index            = index,
+        max_drawdown_pct = base_ddp,
+    )
+
     logger.info(
         f"{label_prefix}Winrate: {base.get('winrate', 0):.2%} "
         f"({base.get('wins', 0)}W / {base.get('losses', 0)}L / {base.get('total_trades', 0)} trades "
-        f"| time_exit={base.get('time_exits', 0)})"
+        f"| time_exit={base.get('time_exits', 0)}) "
+        f"| Sharpe={risk['sharpe_ratio']:.2f} Sortino={risk['sortino_ratio']:.2f} "
+        f"Calmar={risk['calmar_ratio']:.2f} PF={risk['profit_factor']:.2f}"
     )
 
     report = {
@@ -487,6 +549,11 @@ def full_trading_report(
         "win_by_class":         base.get("win_by_class", {}),
         "trade_per_month":      tpm,
         "max_consecutive_loss": max_consec,
+        # Risk-adjusted metrics
+        "sharpe_ratio":         risk["sharpe_ratio"],
+        "sortino_ratio":        risk["sortino_ratio"],
+        "calmar_ratio":         risk["calmar_ratio"],
+        "profit_factor":        risk["profit_factor"],
     }
 
     # PnL & Drawdown per leverage
@@ -497,7 +564,7 @@ def full_trading_report(
 
         report[f"pnl_{key}"]          = sim.get("total_pnl", 0)
         report[f"max_drawdown_{key}"] = dd.get("max_drawdown_pct", 0)
-        report[f"total_fee_{key}"]    = sim.get("total_fee_paid", 0) # Fallback 0 for swing
+        report[f"total_fee_{key}"]    = sim.get("total_fee_paid", 0)
 
         logger.info(
             f"{label_prefix}Lev {lev}x → "

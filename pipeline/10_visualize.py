@@ -217,8 +217,8 @@ def build_trades_df(
         "profit_factor":      sim.get("profit_factor", 0),
         "avg_rr":             sim.get("avg_rr", 0),
         "equity_curve":       sim.get("equity_curve", [0]),
-        "pnl_lev3x":          sim.get("total_pnl", 0),
-        "max_drawdown_lev3x": abs(sim.get("max_drawdown", 0)),
+        "pnl_lev5x":          sim.get("total_pnl", 0),
+        "max_drawdown_lev5x": abs(sim.get("max_drawdown", 0)),
     }
     
     return result, trades_df
@@ -468,8 +468,8 @@ def process_symbol(
     print(f"  Total trades   : {result.get('total_trades', 0)}")
     print(f"  Profit Factor  : {result.get('profit_factor', 0):.2f}")
     print(f"  Avg R:R        : {result.get('avg_rr', 0):.2f}")
-    print(f"  Max DD Lev3x   : {result.get('max_drawdown_lev3x', 0):.2%}")
-    print(f"  PnL Lev3x      : ${result.get('pnl_lev3x', 0):+,.2f}")
+    print(f"  Max DD Lev5x   : {result.get('max_drawdown_lev5x', 0):.2%}")
+    print(f"  PnL Lev5x      : ${result.get('pnl_lev5x', 0):+,.2f}")
     print(f"{'='*50}\n")
 
 

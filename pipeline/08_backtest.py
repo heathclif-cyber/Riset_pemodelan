@@ -657,10 +657,10 @@ def generate_inference_config(
     recommended, acceptable, caution = [], [], []
     for sym, r in results.items():
         wr  = r.get("winrate", 0)
-        dd3 = r.get("max_drawdown_lev3x", 1)
-        if wr >= 0.63 and dd3 <= 0.20:
+        dd5 = r.get("max_drawdown_lev5x", 1)
+        if wr >= 0.63 and dd5 <= 0.20:
             recommended.append(sym)
-        elif wr >= 0.60 and dd3 <= 0.30:
+        elif wr >= 0.60 and dd5 <= 0.30:
             acceptable.append(sym)
         else:
             caution.append(sym)
@@ -723,18 +723,23 @@ def generate_inference_config(
             "sl_atr_mult":      SL_ATR_MULT,
             "max_holding_bars": MAX_HOLDING_BARS,
         },
+        
+        # ── Fallback TP/SL (digunakan jika swing NaN) ─────────────────────────
+        "fallback_tp_sl": {
+            "tp_atr_mult": TP_ATR_MULT,
+            "sl_atr_mult": SL_ATR_MULT,
+        },
 
         # ── Parameter Risk ────────────────────────────────────────────────────
         "risk": {
             "modal_per_trade":      MODAL_PER_TRADE,
-            "leverage_recommended": 3.0,
-            "leverage_max":         5.0,
+            "leverage_recommended": 5.0,
             "fee_per_side":         FEE_PER_SIDE,
         },
 
         # ── Koin yang Sudah Divalidasi ────────────────────────────────────────
-        # recommended : winrate ≥ 63% dan DD lev3x ≤ 20%
-        # acceptable  : winrate ≥ 60% dan DD lev3x ≤ 30%
+        # recommended : winrate ≥ 63% dan DD lev5x ≤ 20%
+        # acceptable  : winrate ≥ 60% dan DD lev5x ≤ 30%
         # caution     : di bawah threshold — pakai dengan hati-hati
         "coins_validated": {
             "recommended": recommended,
@@ -746,19 +751,26 @@ def generate_inference_config(
         "backtest_summary": {
             "mean_winrate":         aggregate["mean_winrate"],
             "mean_trade_per_month": aggregate["mean_trade_per_month"],
-            "mean_drawdown_lev3x":  aggregate["mean_drawdown_lev3x"],
+            "mean_drawdown_lev5x":  aggregate["mean_drawdown_lev5x"],
+            "mean_pnl_lev5x":       aggregate["mean_pnl_lev5x"],
             "max_consecutive_loss": aggregate["max_consecutive_loss"],
+            "mean_sharpe":          aggregate["mean_sharpe"],
+            "mean_sortino":         aggregate["mean_sortino"],
+            "mean_calmar":          aggregate["mean_calmar"],
+            "mean_profit_factor":   aggregate["mean_profit_factor"],
         },
         "backtest_per_coin": {
             sym: {
                 "winrate":         r.get("winrate", 0),
                 "trade_per_month": r.get("trade_per_month", 0),
-                "dd_lev3x":        r.get("max_drawdown_lev3x", 0),
                 "dd_lev5x":        r.get("max_drawdown_lev5x", 0),
-                "pnl_lev3x":       r.get("pnl_lev3x", 0),
                 "pnl_lev5x":       r.get("pnl_lev5x", 0),
                 "max_consec_loss": r.get("max_consecutive_loss", 0),
                 "total_trades":    r.get("total_trades", 0),
+                "sharpe_ratio":    r.get("sharpe_ratio", 0),
+                "sortino_ratio":   r.get("sortino_ratio", 0),
+                "calmar_ratio":    r.get("calmar_ratio", 0),
+                "profit_factor":   r.get("profit_factor", 0),
             }
             for sym, r in results.items()
         },
@@ -896,12 +908,15 @@ def main():
     plot_summary_chart(results, trades_all, run_dir)
 
     # ── Aggregate metrics ─────────────────────────────────────────────────────
-    all_wr   = [r["winrate"]             for r in results.values()]
-    all_tpm  = [r["trade_per_month"]     for r in results.values()]
-    all_mcl  = [r["max_consecutive_loss"] for r in results.values()]
-    all_pnl3 = [r.get("pnl_lev3x", 0)   for r in results.values()]
-    all_pnl5 = [r.get("pnl_lev5x", 0)   for r in results.values()]
-    all_dd3  = [r.get("max_drawdown_lev3x", 0) for r in results.values()]
+    all_wr   = [r["winrate"]                    for r in results.values()]
+    all_tpm  = [r["trade_per_month"]            for r in results.values()]
+    all_mcl  = [r["max_consecutive_loss"]       for r in results.values()]
+    all_pnl5 = [r.get("pnl_lev5x", 0)          for r in results.values()]
+    all_dd5  = [r.get("max_drawdown_lev5x", 0)  for r in results.values()]
+    all_sh   = [r.get("sharpe_ratio", 0)        for r in results.values()]
+    all_so   = [r.get("sortino_ratio", 0)       for r in results.values()]
+    all_ca   = [r.get("calmar_ratio", 0)        for r in results.values()]
+    all_pf   = [r.get("profit_factor", 0)       for r in results.values()]
 
     aggregate = {
         "run_id":               run_id,
@@ -915,9 +930,12 @@ def main():
         "mean_winrate":         round(float(np.mean(all_wr)),   4),
         "std_winrate":          round(float(np.std(all_wr)),    4),
         "mean_trade_per_month": round(float(np.mean(all_tpm)), 2),
-        "mean_pnl_lev3x":       round(float(np.mean(all_pnl3)), 2),
         "mean_pnl_lev5x":       round(float(np.mean(all_pnl5)), 2),
-        "mean_drawdown_lev3x":  round(float(np.mean(all_dd3)), 4),
+        "mean_drawdown_lev5x":  round(float(np.mean(all_dd5)), 4),
+        "mean_sharpe":          round(float(np.mean(all_sh)),  4),
+        "mean_sortino":         round(float(np.mean(all_so)),  4),
+        "mean_calmar":          round(float(np.mean(all_ca)),  4),
+        "mean_profit_factor":   round(float(np.mean(all_pf)),  4),
         "max_consecutive_loss": int(max(all_mcl)),
         "per_symbol":           results,
     }
@@ -933,9 +951,12 @@ def main():
         "ensemble_v2",
         winrate              = aggregate["mean_winrate"],
         trade_per_month      = aggregate["mean_trade_per_month"],
-        pnl_lev3x            = aggregate["mean_pnl_lev3x"],
         pnl_lev5x            = aggregate["mean_pnl_lev5x"],
-        max_drawdown         = aggregate["mean_drawdown_lev3x"],
+        max_drawdown         = aggregate["mean_drawdown_lev5x"],
+        sharpe_ratio         = aggregate["mean_sharpe"],
+        sortino_ratio        = aggregate["mean_sortino"],
+        calmar_ratio         = aggregate["mean_calmar"],
+        profit_factor        = aggregate["mean_profit_factor"],
         max_consecutive_loss = aggregate["max_consecutive_loss"],
         status               = "active",
     )
@@ -960,9 +981,12 @@ def main():
     print(f"  {'-'*28}  {'-'*10}")
     print(f"  {'Mean Winrate':<28}  {aggregate['mean_winrate']:>10.2%}")
     print(f"  {'Mean Trade/Bulan':<28}  {aggregate['mean_trade_per_month']:>10.1f}")
-    print(f"  {'Mean PnL Lev3x (USD)':<28}  {aggregate['mean_pnl_lev3x']:>+10.2f}")
     print(f"  {'Mean PnL Lev5x (USD)':<28}  {aggregate['mean_pnl_lev5x']:>+10.2f}")
-    print(f"  {'Mean Max Drawdown Lev3x':<28}  {aggregate['mean_drawdown_lev3x']:>10.2%}")
+    print(f"  {'Mean Max Drawdown Lev5x':<28}  {aggregate['mean_drawdown_lev5x']:>10.2%}")
+    print(f"  {'Mean Sharpe Ratio':<28}  {aggregate['mean_sharpe']:>10.2f}")
+    print(f"  {'Mean Sortino Ratio':<28}  {aggregate['mean_sortino']:>10.2f}")
+    print(f"  {'Mean Calmar Ratio':<28}  {aggregate['mean_calmar']:>10.2f}")
+    print(f"  {'Mean Profit Factor':<28}  {aggregate['mean_profit_factor']:>10.2f}")
     print(f"  {'Max Consecutive Loss':<28}  {aggregate['max_consecutive_loss']:>10}")
     print(f"{sep}")
     print(f"\n  Per-symbol winrate:")

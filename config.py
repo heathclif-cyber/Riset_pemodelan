@@ -31,10 +31,11 @@ ALL_COINS = TRAINING_COINS + NEW_COINS
 SYMBOL_MAP = {coin: i for i, coin in enumerate(ALL_COINS)}
 
 # ─── Periode Data ─────────────────────────────────────────────────────────────
-TRAIN_START     = datetime(2022, 1, 1, tzinfo=timezone.utc)
-TRAIN_END       = datetime(2025, 4, 1, tzinfo=timezone.utc)
-NEW_COINS_START = datetime(2023, 4, 1, tzinfo=timezone.utc)
-NEW_COINS_END   = datetime(2025, 4, 1, tzinfo=timezone.utc)
+# Semua koin — baik training maupun new coins — menggunakan periode yang sama.
+# Koin yang listing setelah 2020 (SUI, TON, PEPE, TAO, ARB) akan otomatis
+# mendapat data lebih pendek sesuai tanggal listing mereka di Binance.
+TRAIN_START = datetime(2020, 1, 1, tzinfo=timezone.utc)
+TRAIN_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
 
 START_DATE = TRAIN_START
 END_DATE   = TRAIN_END
@@ -56,15 +57,15 @@ LONG_SHORT_LIMIT  = 500
 KLINE_INTERVALS = ["1h", "4h", "1d"]
 
 # ─── Feature Engineering ──────────────────────────────────────────────────────
-TP_ATR_MULT      = 2.0
-SL_ATR_MULT      = 1.0
-MAX_HOLDING_BARS = 48    # bar H1 = 48 jam
+TP_ATR_MULT      = 2.0       # TP untuk legacy path (non-swing)
+SL_ATR_MULT      = 1.0       # SL untuk legacy path (non-swing)
+MAX_HOLDING_BARS = 24        # bar H1 = 24 jam (sebelumnya 48)
 
 # ── Swing-Based Labeling v3 ───────────────────────────────────────────────────
-SWING_LABEL_MAX_HOLD = 48     # bar H1 = 48 jam
-SWING_LABEL_MIN_RR   = 1.5
-SWING_LABEL_MIN_TP   = 1.5
-SWING_LABEL_MAX_SL   = 3.0
+SWING_LABEL_MAX_HOLD = 24     # bar H1 = 24 jam (sebelumnya 48) — lever utama kurangi FLAT
+SWING_LABEL_MIN_RR   = 1.2    # sebelumnya 1.5 — lever sekunder, lebih realistis untuk crypto
+SWING_LABEL_MIN_TP   = 1.2    # sebelumnya 1.5 — lever utama, TP lebih mudah tercapai
+SWING_LABEL_MAX_SL   = 3.0    # TETAP — SL ketat di crypto noisy meningkatkan false negatives
 SWING_H4_LOOKBACK    = 5
 SWING_ROLLING_BARS   = 24     # 24 jam rolling swing
 
@@ -208,9 +209,9 @@ FEATURE_COLS_V3 = [
     "effort_vs_result",
 ]
 
-# ─── Trading Simulation Parameters ───────────────────────────────────────────
-MODAL_PER_TRADE            = 1000.0
-LEVERAGE_SIM               = [3.0, 5.0]
+# ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
+MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
+LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
-CONFIDENCE_THRESHOLD_ENTRY = 0.60
-MIN_HOLD_BARS              = 2     # bar H1 = 4 jam minimum hold
+CONFIDENCE_THRESHOLD_ENTRY = 0.50     # diturunkan dari 0.60 karena FLAT dominance akan berkurang
+MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold

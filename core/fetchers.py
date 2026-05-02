@@ -229,7 +229,7 @@ def _fetch_btc_dom_proxy(start: datetime, end: datetime) -> Optional[pd.DataFram
                 if dt > end:
                     break
                 year = dt.year
-                dom  = {2022: 43.0, 2023: 47.0, 2024: 52.0}.get(year, 55.0)
+                dom  = {2020: 63.0, 2021: 45.0, 2022: 43.0, 2023: 47.0, 2024: 52.0, 2025: 58.0, 2026: 58.0}.get(year, 55.0)
                 records.append({
                     "timestamp":         dt,
                     "btc_close":         float(k[4]),
@@ -294,7 +294,7 @@ def fetch_btc_dominance(
             dt = datetime.fromtimestamp(int(ts_ms) / 1000, tz=timezone.utc)
             if start <= dt <= end:
                 year = dt.year
-                dom  = {2022: 43.0, 2023: 47.0, 2024: 52.0}.get(year, 55.0)
+                dom  = {2020: 63.0, 2021: 45.0, 2022: 43.0, 2023: 47.0, 2024: 52.0, 2025: 58.0, 2026: 58.0}.get(year, 55.0)
                 records.append({"timestamp": dt, "btc_market_cap_usd": btc_mc,
                                  "btc_dominance_pct": dom})
 

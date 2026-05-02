@@ -509,7 +509,7 @@ def main():
                 logger.info(
                     f"[{symbol}] Winrate: {report['winrate']:.2%} | "
                     f"Trades: {report['total_trades']} | "
-                    f"DD lev3x: {report.get('max_drawdown_lev3x', 0):.2%}"
+                    f"DD lev5x: {report.get('max_drawdown_lev5x', 0):.2%}"
                 )
             else:
                 failed.append(symbol)
@@ -523,10 +523,14 @@ def main():
         return
 
     # ── Aggregate ─────────────────────────────────────────────────────────────
-    all_wr  = [r["winrate"]              for r in results.values()]
-    all_tpm = [r["trade_per_month"]      for r in results.values()]
-    all_dd3 = [r.get("max_drawdown_lev3x", 0) for r in results.values()]
-    all_mcl = [r["max_consecutive_loss"] for r in results.values()]
+    all_wr  = [r["winrate"]                    for r in results.values()]
+    all_tpm = [r["trade_per_month"]            for r in results.values()]
+    all_dd5 = [r.get("max_drawdown_lev5x", 0)  for r in results.values()]
+    all_mcl = [r["max_consecutive_loss"]       for r in results.values()]
+    all_sh  = [r.get("sharpe_ratio", 0)        for r in results.values()]
+    all_so  = [r.get("sortino_ratio", 0)       for r in results.values()]
+    all_ca  = [r.get("calmar_ratio", 0)        for r in results.values()]
+    all_pf  = [r.get("profit_factor", 0)       for r in results.values()]
 
     aggregate = {
         "run_id":               run_id,
@@ -537,7 +541,11 @@ def main():
         "mean_winrate":         round(float(np.mean(all_wr)),  4),
         "std_winrate":          round(float(np.std(all_wr)),   4),
         "mean_trade_per_month": round(float(np.mean(all_tpm)), 2),
-        "mean_drawdown_lev3x":  round(float(np.mean(all_dd3)), 4),
+        "mean_drawdown_lev5x":  round(float(np.mean(all_dd5)), 4),
+        "mean_sharpe":          round(float(np.mean(all_sh)),  4),
+        "mean_sortino":         round(float(np.mean(all_so)),  4),
+        "mean_calmar":          round(float(np.mean(all_ca)),  4),
+        "mean_profit_factor":   round(float(np.mean(all_pf)),  4),
         "max_consecutive_loss": int(max(all_mcl)),
         "per_symbol":           results,
     }
@@ -555,7 +563,9 @@ def main():
     print(f"  {'-'*28}  {'-'*10}")
     print(f"  {'Mean Winrate':<28}  {aggregate['mean_winrate']:>10.2%}")
     print(f"  {'Mean Trade/Bulan':<28}  {aggregate['mean_trade_per_month']:>10.1f}")
-    print(f"  {'Mean Max DD Lev3x':<28}  {aggregate['mean_drawdown_lev3x']:>10.2%}")
+    print(f"  {'Mean Max DD Lev5x':<28}  {aggregate['mean_drawdown_lev5x']:>10.2%}")
+    print(f"  {'Mean Sharpe Ratio':<28}  {aggregate['mean_sharpe']:>10.2f}")
+    print(f"  {'Mean Profit Factor':<28}  {aggregate['mean_profit_factor']:>10.2f}")
     print(f"  {'Max Consecutive Loss':<28}  {aggregate['max_consecutive_loss']:>10}")
     print(f"{sep}")
     print(f"\n  Per-symbol winrate:")

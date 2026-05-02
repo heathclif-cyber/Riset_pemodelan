@@ -1030,9 +1030,9 @@ def engineer_features(
     symbol: str,
     symbol_id: int,
     # Labeling parameters
-    max_hold:  int   = 48,    # bar H1 = 48 jam
-    min_rr:    float = 1.5,
-    min_tp_atr: float = 1.5,
+    max_hold:  int   = 24,    # bar H1 = 24 jam
+    min_rr:    float = 1.2,
+    min_tp_atr: float = 1.2,
     max_sl_atr: float = 3.0,
     long_max_price_in_range:  float = 0.8,
     short_min_price_in_range: float = 0.2,
@@ -1214,8 +1214,24 @@ def engineer_features(
     feat["time_to_funding_norm"] = calc_time_to_funding(df.index)
 
     # ── 23. Long/Short Ratio ──────────────────────────────────────────────────
+    # Gunakan data real jika tersedia dan memiliki variasi cukup (>10% non-NaN).
+    # Fallback ke synthetic proxy jika data tidak ada atau semua 0/NaN —
+    # mencegah feature distribution shift antara training dan inference.
     ls_col = _col(df, "long_short_ratio", "globalLongShortAccountRatio")
-    feat["long_short_ratio"] = df[ls_col] if ls_col else pd.Series(np.nan, index=df.index)
+    real_ls = df[ls_col] if ls_col else None
+    use_real = (
+        real_ls is not None
+        and real_ls.notna().mean() > 0.1
+        and real_ls.abs().gt(0).mean() > 0.1
+    )
+    if use_real:
+        feat["long_short_ratio"] = real_ls
+    else:
+        # Synthetic proxy: directional volume pressure, normalized terhadap MA-24.
+        # Distribusi: ~0.5–2.0 (mirip real L/S ratio), center di 1.0 = netral.
+        vol_delta = v * (c - o) / c.replace(0, np.nan)
+        vol_ma24  = v.rolling(24, min_periods=5).mean().replace(0, np.nan)
+        feat["long_short_ratio"] = (1.0 + vol_delta / vol_ma24).clip(0.1, 5.0)
 
     # ── 24. Symbol encoding ───────────────────────────────────────────────────
     feat["symbol"] = symbol_id
