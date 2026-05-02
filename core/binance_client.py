@@ -43,6 +43,17 @@ _last_working_kline_endpoint: Optional[str] = None
 _fapi_blocked: dict = {"blocked": False, "ts": 0.0}
 _FAPI_RETRY_COOLDOWN = 30 * 60  # 30 menit cooldown
 
+# Symbol mapping: futures "1000" prefix → spot symbol
+# Tokens dengan harga sangat rendah (SHIB, PEPE) menggunakan "1000" prefix di futures API,
+# namun spot API tidak mengenali prefix tersebut.
+SYMBOL_1000_MAP = {
+    "1000SHIBUSDT": "SHIBUSDT",
+    "1000PEPEUSDT": "PEPEUSDT",
+}
+
+# Track per-endpoint 1000-mapping logging (set of endpoint names already logged)
+_1000_mapping_logged: set = set()
+
 
 class BinanceClient:
     """
@@ -202,8 +213,22 @@ class BinanceClient:
                 if elapsed < self.sleep_between:
                     time.sleep(self.sleep_between - elapsed)
                 
+                # ── Symbol mapping untuk "1000" prefix ─────────────────────
+                # Spot endpoints tidak mengenali "1000" prefix (futures convention).
+                # Otomatis map 1000SHIBUSDT → SHIBUSDT untuk spot endpoints.
+                actual_params = params
+                symbol = params.get("symbol", "")
+                spot_symbol = SYMBOL_1000_MAP.get(symbol)
+                if spot_symbol is not None and "fapi.binance.com" not in url:
+                    actual_params = dict(params)  # Copy agar tidak mengubah params asli
+                    actual_params["symbol"] = spot_symbol
+                    if endpoint_name not in _1000_mapping_logged:
+                        logger.info(f"  ↳ Mapping {symbol} → {spot_symbol} untuk {endpoint_name}")
+                        _1000_mapping_logged.add(endpoint_name)
+                # ───────────────────────────────────────────────────────────
+                
                 self._last_request_time = time.time()
-                resp = self.session.get(url, params=params, timeout=30, verify=self.verify_ssl)
+                resp = self.session.get(url, params=actual_params, timeout=30, verify=self.verify_ssl)
                 
                 if resp.status_code == 200:
                     _last_working_kline_endpoint = url
