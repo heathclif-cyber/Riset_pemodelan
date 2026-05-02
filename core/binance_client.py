@@ -335,7 +335,7 @@ class BinanceClient:
         # Fallback ke spot API
         for url, name in KLINE_ENDPOINTS[1:]:  # Skip fapi
             try:
-                base = url.rsplit("/", 2)[0]  # Remove /klines
+                base = url.rsplit("/", 1)[0]  # Remove only /klines, keep full API path
                 resp = self.session.get(f"{base}/time", timeout=10, verify=self.verify_ssl)
                 if resp.status_code == 200:
                     return resp.json().get("serverTime")
@@ -348,7 +348,7 @@ class BinanceClient:
         # Coba ping ke berbagai endpoint
         for url, name in KLINE_ENDPOINTS:
             try:
-                base = url.rsplit("/", 2)[0]
+                base = url.rsplit("/", 1)[0]  # Remove only /klines, keep full API path
                 resp = self.session.get(f"{base}/ping", timeout=10, verify=self.verify_ssl)
                 if resp.status_code == 200:
                     logger.info(f"✅ Connection OK via {name}")
