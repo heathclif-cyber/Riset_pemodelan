@@ -503,8 +503,16 @@ def calc_cvd_divergence(
       Rate of change CVD di H4, mengukur momentum smart money.
       Positif = net buying, negatif = net selling.
     """
-    price_chg = h4_close.diff(window)
-    cvd_chg   = h4_cvd.diff(window)
+    # ── Align h4_cvd ke h4_close index ─────────────────────────────────────
+    # h4_cvd bisa berasal dari resample ("4h".last()) yang punya frekuensi 4h
+    # asli (~8.353 bar), sementara h4_close dari df forward-filled ke H1
+    # (33.410 bar). Resample h4_close ke 4h agar keduanya match.
+    h4_close_4h = h4_close.resample("4h").last()
+    h4_cvd_4h   = h4_cvd.reindex(h4_close_4h.index).ffill()
+    # ───────────────────────────────────────────────────────────────────────
+
+    price_chg = h4_close_4h.diff(window)
+    cvd_chg   = h4_cvd_4h.diff(window)
 
     div_raw = np.where(
         (price_chg > 0) & (cvd_chg < 0), -1.0,    # distribusi
@@ -513,8 +521,8 @@ def calc_cvd_divergence(
             0.0
         )
     )
-    cvd_div_h4_raw  = pd.Series(div_raw, index=h4_close.index)
-    cvd_slope_raw   = h4_cvd.diff(window) / (h4_cvd.abs().rolling(window).mean() + 1e-10)
+    cvd_div_h4_raw  = pd.Series(div_raw, index=h4_close_4h.index)
+    cvd_slope_raw   = h4_cvd_4h.diff(window) / (h4_cvd_4h.abs().rolling(window).mean() + 1e-10)
 
     # Align ke base index (H1) — ffill saja, tidak ada interpolasi
     cvd_div_h4 = cvd_div_h4_raw.reindex(
