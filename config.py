@@ -106,9 +106,9 @@ LGBM_H4_PARAMS = {
     "objective":         "binary",      # binary: hanya LONG vs SHORT (FLAT = below threshold)
     "n_estimators":      500,
     "learning_rate":     0.03,
-    "max_depth":         4,
-    "num_leaves":        15,
-    "min_child_samples": 30,
+    "max_depth":         6,             # dinaikkan dari 4 — lebih kompleks untuk regime H4
+    "num_leaves":        31,            # dinaikkan dari 15
+    "min_child_samples": 50,            # dinaikkan dari 30 — regulasi untuk cegah overfit
     "subsample":         0.8,
     "colsample_bytree":  0.7,
     "verbose":           -1,
@@ -138,6 +138,12 @@ H4_FEATURE_COLS = [
     # Momentum H4
     "rsi_h4", "rsi_divergence",
 
+    # Trend dynamics (slope-based)
+    "ema_21_slope_h4", "ema_50_slope_h4",
+    "price_vs_ema_50_h4",
+    "atr_percent_h4", "range_expansion_h4",
+    "rsi_slope_h4",
+
     # Key levels
     "PDH", "PDL", "PWH", "PWL",
 
@@ -155,9 +161,6 @@ H4_FEATURE_COLS = [
 
     # Open interest & funding
     "open_interest", "funding_rate",
-
-    # Symbol encoding
-    "symbol",
 ]
 
 # H4 Labeling — TP/SL proportionally larger for H4 timeframe
@@ -278,10 +281,6 @@ FEATURE_COLS_V3 = [
 
     # Long/short ratio
     "long_short_ratio",
-
-    # Symbol encoding
-    "symbol",
-
     # Swing structure (v2)
     "dist_swing_high", "dist_swing_low", "price_in_range", "swing_momentum",
 

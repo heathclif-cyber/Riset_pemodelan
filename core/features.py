@@ -1178,6 +1178,13 @@ def engineer_features(
         ema_h4_raw[span]         = aligned_ema
         feat[f"ema_{span}_h4"]   = (aligned_ema - c) / atr_safe
 
+    # ── 14b. EMA H4 Slopes & Price vs EMA (trend dynamics) ───────────────────
+    ema_21_aligned = ema_h4_raw[21]
+    ema_50_aligned = ema_h4_raw[50]
+    feat["ema_21_slope_h4"]    = (ema_21_aligned - ema_21_aligned.shift(4)) / atr_safe
+    feat["ema_50_slope_h4"]    = (ema_50_aligned - ema_50_aligned.shift(4)) / atr_safe
+    feat["price_vs_ema_50_h4"] = (c - ema_50_aligned) / atr_safe
+
     # ── 15. RSI & StochRSI (H1) ───────────────────────────────────────────────
     feat["rsi_6"]          = calc_rsi(c, 6)
     feat["stochrsi_k"], feat["stochrsi_d"] = calc_stochrsi(c)
@@ -1241,10 +1248,7 @@ def engineer_features(
         vol_ma24  = v.rolling(24, min_periods=5).mean().replace(0, np.nan)
         feat["long_short_ratio"] = (1.0 + vol_delta / vol_ma24).clip(0.1, 5.0)
 
-    # ── 24. Symbol encoding ───────────────────────────────────────────────────
-    feat["symbol"] = symbol_id
-
-    # ── 25. Swing Structure Features (v2, dipertahankan) ──────────────────────
+    # ── 24. Swing Structure Features (v2, dipertahankan) ──────────────────────
     roll_high = h.rolling(swing_rolling_bars, min_periods=5).max()
     roll_low  = l.rolling(swing_rolling_bars, min_periods=5).min()
     roll_rng  = (roll_high - roll_low).replace(0, np.nan)
@@ -1297,6 +1301,18 @@ def engineer_features(
     rsi_h4_series     = calc_rsi_h4(h4_c, c, period=14)
     feat["rsi_h4"]        = rsi_h4_series
     feat["rsi_divergence"] = calc_rsi_divergence(c, rsi_h4_series, window=5)
+
+    # ── 27b. H4 Trend Dynamics (slope-based) ──────────────────────────────────
+    # RSI slope — akselerasi momentum (4 bar = ~16 jam)
+    feat["rsi_slope_h4"] = rsi_h4_series - rsi_h4_series.shift(4)
+
+    # ATR percent — volatilitas relatif terhadap harga
+    feat["atr_percent_h4"] = atr_h4 / c.replace(0, np.nan) * 100
+
+    # Range expansion — deteksi ekspansi/konstraksi H4
+    prev_range    = (h4_h - h4_l).shift(1)
+    current_range = h4_h - h4_l
+    feat["range_expansion_h4"] = current_range / prev_range.replace(0, np.nan)
 
     # Wyckoff Phase (bergantung pada fitur sebelumnya)
     price_in_range_clean = feat["price_in_range"].fillna(0.5)

@@ -74,18 +74,24 @@ def compute_h4_swing_labels(
 ) -> pd.Series:
     """
     Hitung swing labels (LONG/FLAT/SHORT) pada H4 timeframe.
-    Menggunakan ATR H4 (atr_14_h4) sebagai basis TP/SL.
+    Menggunakan HIGH/LOW untuk TP/SL detection (standar backtesting).
 
     Logic:
-      - LONG  : dalam max_hold bar ke depan, price mencapai TP (min_tp_atr × atr)
-                sebelum mencapai SL (max_sl_atr × atr) dengan RR >= min_rr
-      - SHORT : kebalikannya
+      - LONG  : dalam max_hold bar ke depan, HIGH mencapai TP (min_tp_atr × atr)
+                sebelum LOW mencapai SL (max_sl_atr × atr) dengan RR >= min_rr
+      - SHORT : kebalikannya — LOW mencapai TP sebelum HIGH mencapai SL
       - FLAT  : tidak memenuhi syarat LONG atau SHORT
+
+    Perbaikan dari CLOSE-only ke HIGH/LOW meningkatkan jumlah label non-FLAT
+    secara signifikan karena TP/SL dievaluasi pada intra-bar extreme, bukan
+    harga penutupan. (Lihat AUDIT_REPORT.md — Prioritas 1)
     """
     n = len(df_h4)
     labels = np.full(n, "FLAT", dtype=object)
 
     close = df_h4["close"].values
+    high  = df_h4["high"].values
+    low   = df_h4["low"].values
     atr   = df_h4["atr_14_h4"].values if "atr_14_h4" in df_h4.columns else \
             df_h4["atr_14_h1"].values if "atr_14_h1" in df_h4.columns else \
             np.abs(np.diff(close, prepend=close[0])) * 5  # rough fallback
@@ -104,26 +110,29 @@ def compute_h4_swing_labels(
         rr_long  = (tp_long - c) / (c - sl_long)   if (c - sl_long)  > 0 else 0
         rr_short = (c - tp_short) / (sl_short - c)  if (sl_short - c) > 0 else 0
 
-        # Scan forward bars
+        # Scan forward bars — pakai HIGH/LOW seperti backtesting standar
         end = min(i + 1 + max_hold, n)
-        future_close = close[i + 1:end]
+        future_high = high[i + 1:end]
+        future_low  = low[i + 1:end]
 
         long_hit  = False
         short_hit = False
 
-        for fc in future_close:
-            if fc >= tp_long and not long_hit and not short_hit:
+        # LONG: HIGH mencapai TP sebelum LOW mencapai SL
+        for j in range(len(future_high)):
+            if future_high[j] >= tp_long:
                 long_hit = True
                 break
-            if fc <= sl_long:
+            if future_low[j] <= sl_long:
                 break
 
+        # SHORT: LOW mencapai TP sebelum HIGH mencapai SL
         if not long_hit:
-            for fc in future_close:
-                if fc <= tp_short and not short_hit:
+            for j in range(len(future_high)):
+                if future_low[j] <= tp_short:
                     short_hit = True
                     break
-                if fc >= sl_short:
+                if future_high[j] >= sl_short:
                     break
 
         if long_hit and rr_long >= min_rr:
@@ -216,10 +225,6 @@ def load_and_resample_to_h4(symbol: str) -> pd.DataFrame | None:
     # ── Forward-fill H4 features ──────────────────────────────────────────────
     feat_cols = [c for c in H4_FEATURE_COLS if c in df_h4.columns]
     df_h4[feat_cols] = df_h4[feat_cols].ffill().fillna(0)
-
-    # Tambahkan symbol ID
-    if "symbol" in H4_FEATURE_COLS and "symbol" not in df_h4.columns:
-        df_h4["symbol"] = SYMBOL_MAP.get(symbol, -1)
 
     logger.info(f"[{symbol}] H4 resampled: {len(df_h4):,} bars × {len(feat_cols)} features")
     return df_h4
