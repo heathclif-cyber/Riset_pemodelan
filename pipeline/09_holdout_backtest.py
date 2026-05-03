@@ -30,6 +30,7 @@ from pathlib import Path
 import joblib
 import numpy as np
 import pandas as pd
+import torch
 import pyarrow as pa
 import pyarrow.parquet as pq
 
