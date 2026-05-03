@@ -1099,6 +1099,16 @@ def engineer_features(
         atr_h4_raw.index.union(df.index)
     ).ffill().reindex(df.index)
 
+    # ── D1 OHLCV (higher timeframe context) ──────────────────────────────────
+    d1_h = df.get("1d_high",  h)
+    d1_l = df.get("1d_low",   l)
+    d1_c = df.get("1d_close", c)
+
+    atr_d1_raw = calc_atr(d1_h, d1_l, d1_c, 14)
+    atr_d1 = atr_d1_raw.reindex(
+        atr_d1_raw.index.union(df.index)
+    ).ffill().reindex(df.index)
+
     # ── 3. Inisialisasi dict fitur ────────────────────────────────────────────
     feat: dict[str, pd.Series] = {}
 
@@ -1184,6 +1194,23 @@ def engineer_features(
     feat["ema_21_slope_h4"]    = (ema_21_aligned - ema_21_aligned.shift(4)) / atr_safe
     feat["ema_50_slope_h4"]    = (ema_50_aligned - ema_50_aligned.shift(4)) / atr_safe
     feat["price_vs_ema_50_h4"] = (c - ema_50_aligned) / atr_safe
+
+    # ── 14c. D1 EMA (higher timeframe trend) ──────────────────────────────────
+    ema_d1_raw: dict[int, pd.Series] = {}
+    for span in (50, 200):
+        raw_ema       = calc_ema(d1_c, span)
+        aligned_ema   = raw_ema.reindex(
+            raw_ema.index.union(df.index)
+        ).ffill().reindex(df.index)
+        ema_d1_raw[span]         = aligned_ema
+        feat[f"ema_{span}_d1"]   = (aligned_ema - c) / atr_safe
+
+    # D1 EMA Slopes (4 bar = ~4 hari)
+    ema_50_d1  = ema_d1_raw[50]
+    ema_200_d1 = ema_d1_raw[200]
+    feat["ema_50_slope_d1"]    = (ema_50_d1 - ema_50_d1.shift(4)) / atr_safe
+    feat["ema_200_slope_d1"]   = (ema_200_d1 - ema_200_d1.shift(4)) / atr_safe
+    feat["price_vs_ema_50_d1"] = (c - ema_50_d1) / atr_safe
 
     # ── 15. RSI & StochRSI (H1) ───────────────────────────────────────────────
     feat["rsi_6"]          = calc_rsi(c, 6)
@@ -1314,7 +1341,45 @@ def engineer_features(
     current_range = h4_h - h4_l
     feat["range_expansion_h4"] = current_range / prev_range.replace(0, np.nan)
 
-    # Wyckoff Phase (bergantung pada fitur sebelumnya)
+    # ── 27c. Higher Timeframe (D1) Features ──────────────────────────────────
+    # D1 ATR percentile — volatility regime (100 bar ~100 hari)
+    feat["atr_d1_percentile"] = atr_d1.rolling(100, min_periods=20).rank(pct=True)
+
+    # D1 trend direction — EMA7 vs EMA21 pada daily
+    ema7_d1_raw  = calc_ema(d1_c, 7)
+    ema21_d1_raw = calc_ema(d1_c, 21)
+    ema7_d1  = ema7_d1_raw.reindex(
+        ema7_d1_raw.index.union(df.index)
+    ).ffill().reindex(df.index)
+    ema21_d1 = ema21_d1_raw.reindex(
+        ema21_d1_raw.index.union(df.index)
+    ).ffill().reindex(df.index)
+
+    d1_trend = pd.Series(
+        np.where(ema7_d1 > ema21_d1, 1, np.where(ema7_d1 < ema21_d1, -1, 0)),
+        index=df.index,
+    )
+    feat["d1_trend"] = d1_trend
+
+    # Multi-timeframe alignment: H4 trend vs D1 trend
+    # 1 = align (sama-sama bullish/bearish), 0 = conflict
+    feat["htf_alignment"] = (
+        (feat["h4_trend"].fillna(0) == d1_trend.fillna(0)) & (d1_trend.fillna(0) != 0)
+    ).astype(int)
+
+    # D1 trend strength — EMA21 vs EMA50 gap (semakin lebar, semakin kuat)
+    ema50_d1_aligned = ema_d1_raw[50]
+    feat["d1_trend_strength"] = (ema21_d1 - ema50_d1_aligned) / atr_d1.replace(0, np.nan)
+
+    # D1 HH/HL structure bias — simple swing detection (5 bar lookback)
+    d1_swing_high = (d1_h.rolling(5, min_periods=3).max() == d1_h) & (d1_h > d1_h.shift(5))
+    d1_swing_low  = (d1_l.rolling(5, min_periods=3).min() == d1_l) & (d1_l < d1_l.shift(5))
+    feat["d1_hh_hl_bias"] = np.where(
+        d1_swing_high & ~d1_swing_low, 1,
+        np.where(~d1_swing_high & d1_swing_low, -1, 0)
+    )
+
+    # ── Wyckoff Phase (bergantung pada fitur sebelumnya) ────────────────────────
     price_in_range_clean = feat["price_in_range"].fillna(0.5)
     vol_regime_clean     = feat["vol_regime"].fillna(1.0)
     h4_trend_clean       = feat["h4_trend"].fillna(0)

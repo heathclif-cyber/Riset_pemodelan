@@ -150,6 +150,15 @@ H4_FEATURE_COLS = [
     # Market regime
     "h4_trend", "trend_strength", "vol_regime",
 
+    # Higher Timeframe (D1) — trend makro, vol regime, alignment
+    "ema_50_d1", "ema_200_d1",
+    "ema_50_slope_d1", "ema_200_slope_d1",
+    "price_vs_ema_50_d1",
+    "atr_d1_percentile",
+    "d1_trend", "d1_trend_strength",
+    "htf_alignment",
+    "d1_hh_hl_bias",
+
     # Smart money H4
     "cvd_div_h4", "cvd_slope_h4",
 
