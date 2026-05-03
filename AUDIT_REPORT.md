@@ -1,98 +1,71 @@
-# Audit Report: H4 Threshold & Soft Filter Penalty Tuning
+# Audit Report: H4 Soft Filter — Opsi A (Balanced) Penalty Refinement
 
 **Date:** 2026-05-03  
-**Session:** Post-Fix 6 (threshold=0.65, soft filter, class weights=1.5)  
-**Trigger:** H4 pass_rate = 1.4% (terlalu rendah setelah threshold dinaikkan ke 0.65)
+**Topic:** Fine-tuning soft filter penalty values for neutral bias
 
 ---
 
 ## RINGKASAN EKSEKUTIF
 
-H4 binary model menunjukkan **pass_rate = 1.4%** setelah threshold dinaikkan ke 0.65 — artinya H4 hampir tidak pernah aktif sebagai filter. Dua masalah utama: (1) **threshold 0.65 terlalu agresif** untuk distribusi probabilitas H4 yang sempit (P50≈0.506, P90≈0.572) sehingga memotong hampir semua sampel, dan (2) **penalti FLAT dan opposite disamakan** (`-0.02`) padahal FLAT berarti "tidak punya opini" (bukan "salah"), sehingga perlu dibedakan. Tidak ada bug — ini murni masalah tuning dan desain soft filter.
+Current soft filter penalties (flat=-0.01, opposite=-0.04) create a large gap between FLAT and OPPOSITE treatment, biasing the system towards "trade unless H4 strongly opposes." Reviewer proposes **Opsi A (balanced)**: flat=-0.015, opposite=-0.035. This narrows the gap, making the filter more neutral — FLAT gets slightly more penalty (no longer ignorable), opposite gets slightly less penalty (no longer catastrophic). Net effect: system is less "bullish" on trade execution, more balanced.
 
 ---
 
 ## TEMUAN PER KATEGORI
 
-### [KONFIGURASI] Lokasi: `config.py:183-184`
-**Deskripsi:** `H4_BINARY_THRESHOLD_LONG = 0.65` dan `H4_BINARY_THRESHOLD_SHORT = 0.65`.
-**Dampak:** Dengan distribusi probabilitas H4 P90=0.572, threshold 0.65 berada di ekstrem tail. Hanya ~1.4% sampel yang lolos, membuat H4 praktikalnya tidak pernah digunakan sebagai filter.
-**Bukti:**
-- P10=0.448, P50=0.506, P90=0.572 (dari live run)
-- Pass rate = 1.4% (target ideal 8-15%)
-- Threshold ideal berdasarkan distribusi: 0.58–0.62
-
-### [LOGIKA] Lokasi: `pipeline/backtest_utils.py:226-231`
-**Deskripsi:** Kondisi `bias == 1` (FLAT) dan `bias != h1_best_dir` (opposite) menggunakan penalty yang sama: `-H4_SOFT_MISALIGN_PENALTY` (-0.02).
-**Dampak:** FLAT dihukum sama kerasnya dengan opposite. Ini tidak tepat secara konsep: FLAT berarti H4 tidak punya opini (netral), bukan berarti H4 berlawanan dengan H1. Hukuman yang sama menyamakan "tidak yakin" dengan "salah".
+### [KONFIGURASI] Lokasi: `config.py:194-196`
+**Deskripsi:** Current soft filter penalty values are aggressive — FLAT penalty is very light (0.01), opposite penalty is heavy (0.04).
+**Dampak:** Gap of 0.03 between FLAT and OPPOSITE is wide. When H4 is FLAT (~70%+ of samples for AUC 0.55), the -0.01 penalty is negligible, so almost all H1 decisions pass. System is biased toward action.
 **Bukti:**
 ```python
-elif bias == 1:
-    # H4 is FLAT → slight penalty (but NOT hard reject)
-    h4_adjustment = -H4_SOFT_MISALIGN_PENALTY  # -0.02
-else:
-    # H4 opposite to H1 → slightly bigger penalty
-    h4_adjustment = -H4_SOFT_MISALIGN_PENALTY  # -0.02 (SAMA!)
+H4_SOFT_ALIGN_BOOST      = 0.04   # strong boost
+H4_SOFT_FLAT_PENALTY     = 0.01   # very light
+H4_SOFT_OPPOSITE_PENALTY = 0.04   # heavy
 ```
 
-### [KONSEP] Analisis: H4 AUC realistic ceiling
-**Deskripsi:** H4 binary model memprediksi arah swing 24 jam ke depan dengan SL 3.0 ATR dan TP 2.0 ATR pada data crypto yang noisy. Ini inherently sulit — AUC 0.55-0.60 adalah realistic ceiling.
-**Dampak:** Tidak perlu terus-menerus tuning H4. Fokus sebaiknya dialihkan ke:
-1. Improve H1 (sudah F1 ~0.66)
-2. Refine entry threshold
-3. Optimasi risk management (DD 72% walau PF 6.3)
+### [KONSEP] Analisis bias: "terlalu bullish"
+**Deskripsi:** Current design heavily favors trade execution:
+- Aligned: +0.04 (reward)
+- FLAT: -0.01 (barely penalized)
+- Opposing: -0.04 (harsh)
+
+Net effect: When H4 is FLAT (most common), system barely penalizes. This creates a "trading bias" — system defaults toward action unless H4 actively opposes.
+**Dampak:** May increase trade frequency at the cost of quality.
+**Rekomendasi:** Opsi A balanced — narrower gap, more neutral stance.
 
 ---
 
-## JALUR EKSEKUSI YANG TERIDENTIFIKASI
+## JALUR EKSEKUSI
 
 ```
-hierarchical_predict() → H4 bias → [bias == aligned?] → +0.04 boost
-                        ↘ [bias == FLAT?]              → -0.02 (sama dengan opposite!)
-                        ↘ [bias == opposite?]          → -0.02
-                        → H1 decision layer → LSTM adjustment → final signal
+config.py → H4_SOFT_FLAT_PENALTY, H4_SOFT_OPPOSITE_PENALTY
+         → backtest_utils.py: hierarchical_predict() → H4 adjustment
 ```
-
-Masalah: FLAT (-0.02) = opposite (-0.02) secara logika tidak konsisten.
 
 ---
 
-## HIPOTESIS PENYEBAB ROOT (diurutkan dari paling mungkin)
+## HIPOTESIS PENYEBAB ROOT
 
-1. **Threshold 0.65 terlalu tinggi** — Distribusi probabilitas H4 sangat sempit (range 0.448-0.572). Threshold 0.65 memotong >98.6% sampel, menyebabkan pass_rate 1.4%. Target pass_rate 8-15% membutuhkan threshold 0.58-0.62.
-
-2. **FLAT penalty tidak dibedakan dari opposite** — FLAT (bias=1) berarti H4 tidak memiliki conviction arah. Ini berbeda secara fundamental dari opposite (bias berlawanan dengan H1). Menyamakan keduanya membuat sistem kehilangan informasi: FLAT seharusnya penalty ringan (-0.01), opposite seharusnya penalty lebih berat (-0.04).
-
-3. **Tidak ada config variable untuk FLAT penalty** — Saat ini `H4_SOFT_MISALIGN_PENALTY` digunakan untuk kedua kondisi. Perlu variabel terpisah: `H4_SOFT_FLAT_PENALTY` dan `H4_SOFT_OPPOSITE_PENALTY`.
-
----
-
-## PERTANYAAN KLARIFIKASI
-
-Tidak ada — data sudah cukup jelas dari live run metrics.
+1. **Penalty gap terlalu lebar** — 0.03 antara FLAT (-0.01) dan OPPOSITE (-0.04) membuat treatment tidak proporsional untuk weak model.
 
 ---
 
 ## REKOMENDASI PERBAIKAN
 
-### 1. Threshold: 0.65 → 0.60
-**Apa:** Turunkan `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.65 ke 0.60 di `config.py`.
-**Mengapa:** P90 distribusi probabilitas = 0.572. Threshold 0.60 memungkinkan ~8-15% sampel lolos (target ideal), sedangkan 0.65 terlalu ekstrem (hanya 1.4%). Ini akan mengaktifkan H4 sebagai filter tanpa memotong terlalu banyak.
+### Opsi A (Balanced) — Rekomendasi reviewer
+| Condition | Current | Proposed | Delta |
+|-----------|---------|----------|-------|
+| Aligned   | +0.04   | +0.04    | same  |
+| FLAT      | -0.01   | **-0.015** | 50% heavier |
+| Opposite  | -0.04   | **-0.035** | 12.5% lighter |
 
-### 2. Config: Tambah variabel penalty terpisah
-**Apa:** Tambah `H4_SOFT_FLAT_PENALTY = 0.01` dan `H4_SOFT_OPPOSITE_PENALTY = 0.04` di `config.py`.
-**Mengapa:** FLAT (netral) secara konsep berbeda dari opposite (berlawanan). Dengan variabel terpisah, tuning bisa dilakukan independen.
+**Mengapa:** Gap mengecil dari 0.03 ke 0.02. FLAT tidak lagi bisa diabaikan, opposite tidak lagi terlalu keras. Sistem lebih netral — tidak "bullish" terhadap trade execution.
 
-### 3. Logika: Bedakan FLAT vs opposite di soft filter
-**Apa:** Ubah logika di `pipeline/backtest_utils.py:226-231`:
-- `bias == 1` (FLAT): `h4_adjustment = -H4_SOFT_FLAT_PENALTY` (-0.01, ringan)
-- `bias` opposite: `h4_adjustment = -H4_SOFT_OPPOSITE_PENALTY` (-0.04, lebih keras)
-**Mengapa:** FLAT = "no opinion" → konsekuensi minimal. Opposite = "H4 yakin tapi berlawanan dengan H1" → konsekuensi lebih besar. Ini memberikan gradasi yang lebih realistis.
+### Implementation
+Ubah nilai di `config.py:195-196`:
+```python
+H4_SOFT_FLAT_PENALTY     = 0.015  # dinaikkan dari 0.01
+H4_SOFT_OPPOSITE_PENALTY = 0.035  # diturunkan dari 0.04
+```
 
-### 4. Komentar: Update threshold comment
-**Apa:** Ubah komentar di `config.py:182` — threshold 0.60 dipilih berdasarkan distribusi probabilitas H4 (P90=0.572), bukan berdasarkan asumsi.
-**Mengapa:** Dokumentasi yang akurat membantu debugging di masa depan.
-
----
-
-*End of audit report.*
+Tidak perlu perubahan di `backtest_utils.py` — logika sudah menggunakan variabel terpisah.
