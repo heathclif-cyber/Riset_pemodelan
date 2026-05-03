@@ -1,91 +1,88 @@
-# Audit Report: H4 Isotonic Calibration Collapse
+# Audit Report: H4 Model Quality & Cascade Design
 
 ## Ringkasan Eksekutif
 
-Kalibrasi isotonic untuk H4 binary model mengalami **complete collapse**: setelah kalibrasi, 100% probabilitas menjadi 1.0 (LONG). Ini membuat H4 filter selalu memberikan izin, sehingga cascade berubah menjadi `H4 ≈ always ON → system ≈ H1 only`. Penyebab utama: (1) concatenated all-fold calibration (data leakage), (2) AUC model ~0.55 (near-random) dengan distribusi prediksi sempit (P10=0.437, P90=0.593) yang membuat IsotonicRegression over-extrapolate, (3) penggunaan IsotonicRegression yang agresif untuk distribusi probabilitas sempit.
+Setelah calibration collapse diperbaiki, H4 model menunjukkan performa yang masih belum memuaskan: Mean AUC = 0.5546 (sedikit di atas random), fold instability parah (Fold 1=0.6149, Fold 5=0.4692), dan pass rate 27% terlalu tinggi untuk H4 timeframe. Diagnosis: (1) Binary training (drop FLAT) memaksa model mempelajari noise, (2) Class weights 3.0 terlalu agresif, (3) Threshold 0.55 terlalu longgar, (4) Hard gate cascade (H4 veto) tidak cocok untuk model dengan signal quality rendah. Solusi: naikkan threshold ke 0.65, turunkan class weights ke 1.5, dan ubah H4 dari hard gate menjadi soft confidence adjuster.
 
 ## Temuan Per Kategori
 
-### [BUG — DATA LEAKAGE] `pipeline/04_train_lgbm_h4.py:410-451`
-**Deskripsi:** Semua fold validation probabilities digabung (`np.concatenate(all_val_proba)`), lalu satu `IsotonicRegression` tunggal di-fit pada data gabungan tersebut. Ini adalah data leakage — kalibrator melihat data validasi dari semua fold sekaligus, bukan out-of-fold predictions per fold.
-**Dampak:** Informasi dari fold masa depan bocor ke kalibrator. IsotonicRegression menganggap distribusi 49k samples sebagai satu set, bukan 8 independent folds.
-**Bukti:**
-```python
-val_proba_all  = np.concatenate(all_val_proba)   # 48,928 samples
-val_labels_all = np.concatenate(all_val_labels)
-calibrator = ProbabilityCalibrator()
-calibrator.fit(val_proba_all.reshape(-1, 1), val_labels_all)
-```
-
-### [BUG — ISOTONIC COLLAPSE] `core/models.py:99-130`
-**Deskripsi:** `ProbabilityCalibrator` menggunakan `IsotonicRegression(out_of_bounds="clip")` default. Untuk distribusi probabilitas sempit (P10=0.437, P50=0.518, P90=0.593), isotonic memetakan input range ~0.15 ke output [0, 1]. Karena sebagian besar sample > 0.5, isotonic "memaksa" transformasi ke ekstrem 1.0.
-**Dampak:** Semua probabilitas setelah kalibrasi = 1.0. Threshold 0.55 tidak berguna — 99.9% sample lolos.
+### [DATA — DISTRIBUSI] `pipeline/04_train_lgbm_h4.py`
+**Deskripsi:** H4 binary training membuang ~56% data (FLAT) dan hanya melatih LONG vs SHORT. Ini menyebabkan loss informasi — model tidak pernah belajar mengenali "no trade" regime.
+**Dampak:** Model dipaksa mengklasifikasikan regime yang sebenarnya FLAT sebagai LONG atau SHORT, meningkatkan false positive rate.
 **Bukti (log runtime):**
 ```
-P50 0.518 → 1.000 (+48.2pp)
-pass_rate 27.0% → 99.9%
+Label distribution: LONG≈22%, SHORT≈21%, FLAT≈56%
+Binary training: SHORT=27k, LONG=27k (FLAT dropped)
 ```
 
-### [KONFIGURASI] `pipeline/backtest_utils.py:121`
-**Deskripsi:** Backtest (`get_h4_bias()`) tidak menggunakan calibrator sama sekali — langsung `h4_model.predict_proba()`. Ini berarti backtest results selama ini sebenarnya valid (tidak terpengaruh calibration collapse), tapi production inference di `inference.py` menggunakan calibrator.
-**Dampak:** Backtest vs production mismatch. Backtest menunjukkan performa realistis, production collapse karena calibrator.
+### [KONFIGURASI — CLASS WEIGHTS TERLALU AGGRESIF] `pipeline/04_train_lgbm_h4.py:266`
+**Deskripsi:** `BINARY_WEIGHTS = {0: 3.0, 1: 3.0}` — kedua kelas diberi bobot 3x. Untuk model dengan AUC~0.55, ini menyebabkan overfitting ke sample noise karena sample weight memperkuat sinyal lemah.
+**Dampak:** Fold instability (Fold 5=0.4692, worse than random). Model overfit ke noise di beberapa fold.
 **Bukti:**
 ```python
-# backtest_utils.py:121 — NO calibrator usage
-h4_proba = h4_model.predict_proba(df_slice[valid_h4_cols])
+BINARY_WEIGHTS = {0: 3.0, 1: 3.0}  # SHORT=3x, LONG=3x
 ```
+
+### [KONFIGURASI — THRESHOLD TERLALU RENDAH] `config.py:182-183`
+**Deskripsi:** `H4_BINARY_THRESHOLD_LONG = 0.55` dengan distribusi probabilitas P50=0.518 menyebabkan pass rate 27% — terlalu tinggi untuk H4 timeframe yang seharusnya hanya melewati regime kuat.
+**Dampak:** Cascade menjadi noisy. H1 entry quality turun karena terlalu banyak bar yang diberi bias.
+**Bukti (log runtime):**
+```
+P50=0.518, threshold=0.55 → pass_rate=27%
+Ideal untuk H4: pass_rate 10-15%
+```
+
+### [LOGIKA — HARD GATE TIDAK COCOK UNTUK MODEL LEMAH] `pipeline/backtest_utils.py:193-194`
+**Deskripsi:** `if bias == 1: continue` — H4 FLAT = hard reject, tidak ada kesempatan untuk H1. Untuk model dengan AUC~0.55, hard decision (ya/tidak) terlalu berisiko.
+**Dampak:** Cascade menderita karena H4 yang lemah memveto H1 yang kuat. Sistem = good entry + weak filter.
+**Bukti:**
 ```python
-# inference.py:392 — WITH calibrator
-if bundle.h4_calibrator is not None:
-    h4_p_cal = bundle.h4_calibrator.transform(h4_p.reshape(1, -1))[0]
+if bias == 1:
+    continue  # H4 FLAT → skip (hard reject!)
 ```
 
 ## Jalur Eksekusi
 
-**Training:**
+**Current (hard gate):**
 ```
-04_train_lgbm_h4.py:walk_forward_cv_h4() → concatenate all fold val_proba
-→ ProbabilityCalibrator.fit(48k samples) → IsotonicRegression
-→ save h4_calibrator.pkl  ← [BUG: data leakage + isotonic collapse]
-```
-
-**Backtest (tidak terpengaruh):**
-```
-backtest_utils.py:get_h4_bias()
-→ h4_model.predict_proba() langsung → raw proba → threshold check
-→ bias_dir = LONG/SHORT/FLAT
+get_h4_bias() → threshold 0.55 → pass_rate 27%
+→ bias=FLAT? → HARD REJECT (H1 tidak pernah diperiksa)
+→ bias=LONG/SHORT? → H1 check → LSTM → emit signal
 ```
 
-**Production (terpengaruh):**
+**Proposed (soft filter):**
 ```
-inference.py:_hierarchical_proba()
-→ h4_model.predict_proba() → raw proba
-→ bundle.h4_calibrator.transform() → [COLLAPSE: semua jadi 1.0]
-→ threshold check → selalu lolos → bias = LONG
+get_h4_bias() → threshold 0.65 → pass_rate ~12%
+→ bias=FLAT? → h1_conf -= 0.02 (slight penalty, not reject)
+→ bias=LONG? → h1_long_conf += 0.04 (slight boost)
+→ bias=SHORT? → h1_short_conf += 0.04 (slight boost)
+→ H1 check (dengan adjusted conf) → LSTM → emit signal
 ```
 
 ## Hipotesis Penyebab Root
 
-1. **IsotonicRegression + AUC rendah + distribusi sempit (PALING MUNGKIN):** Model H4 binary memiliki AUC ~0.55, nyaris random. Distribusi probabilitas output sangat sempit (range ~0.15). IsotonicRegression dirancang untuk distribusi probabilitas yang terkalibrasi baik; pada distribusi sempit ia "memaksa" mapping ke [0,1] sehingga terjadi ekstrapolasi agresif → semua > 0.5 menjadi 1.0.
+1. **Binary training + class weights 3x (PALING MUNGKIN):** Membuang FLAT (56% data) dan memberikan bobot 3x ke kelas minoritas membuat model over-amplify noise. AUC 0.55 dan fold instability adalah konsekuensi langsung.
 
-2. **Concatenated folds (data leakage):** Meskipun masalah utama adalah isotonic collapse, concatenating all folds tetap salah secara metodologi. Kalibrator harus di-fit pada out-of-fold predictions per fold.
+2. **Threshold terlalu rendah:** P50=0.518 dengan threshold 0.55 berarti ~50% probabilitas di atas threshold. H4 seharusnya jadi filter ketat, bukan gate yang longgar.
 
-3. **Tidak perlu kalibrasi untuk binary threshold:** Untuk model binary dengan AUC rendah, kalibrasi isotonic tidak memberikan manfaat. Threshold sederhana pada raw probability lebih stabil dan interpretable. Sigmoid calibration (Platt scaling) lebih robust untuk distribusi sempit.
+3. **Hard gate cascade tidak sesuai:** Arsitektur cascade yang memberikan H4 kekuatan veto tidak cocok untuk model dengan signal quality rendah. Soft filter (confidence adjustment) lebih robust.
 
 ## Rekomendasi Perbaikan
 
-### PRIORITAS 1 — Matikan H4 Calibration (EKSEKUSI SEKARANG)
-**Lokasi:** `pipeline/04_train_lgbm_h4.py:410-453`
-**Apa:** Tambahkan flag `H4_USE_CALIBRATION = False` di `config.py`. Di `04_train_lgbm_h4.py`, skip seluruh blok fitting & saving calibrator ketika flag False. Pertahankan logging percentile BEFORE calibration untuk monitoring.
-**Mengapa:** Calibrator saat ini merusak inference. Raw probability langsung ke threshold sudah cukup untuk model binary dengan AUC rendah. Backtest sudah membuktikan ini (tidak pakai calibrator).
+### PRIORITAS 1 — Naikkan H4 Threshold (EKSEKUSI SEKARANG)
+**Lokasi:** `config.py:182-183`
+**Apa:** Ubah `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.55 → 0.65 (atau bahkan 0.70).
+**Mengapa:** Menargetkan pass rate 10-15%, hanya mengambil regime yang benar-benar kuat. H4 yang lemah perlu threshold lebih ketat untuk menjaga precision.
 
-### PRIORITAS 2 — Tuning Threshold Langsung
-**Lokasi:** `config.py:172-174`
-**Apa:** Turunkan `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.55 ke 0.52-0.53 (atau cari optimal via grid search pada validation set).
-**Mengapa:** Tanpa calibrator, threshold di raw probability perlu disesuaikan. P50=0.518 berarti threshold 0.55 terlalu ketat untuk model saat ini.
-**Rekomendasi:** Jalankan grid search threshold pada validation OOF predictions: coba threshold 0.48 s.d. 0.60 step 0.01, pilih yang memberikan profit factor + Sharpe ratio optimal.
+### PRIORITAS 2 — Turunkan H4 Class Weights (EKSEKUSI SEKARANG)
+**Lokasi:** `pipeline/04_train_lgbm_h4.py:266` dan `config.py`
+**Apa:** Ubah `BINARY_WEIGHTS` dari `{0: 3.0, 1: 3.0}` → `{0: 1.5, 1: 1.5}`. Pindahkan ke `config.py` agar mudah di-tuning.
+**Mengapa:** Bobot 3x terlalu agresif untuk model dengan AUC~0.55. Bobot 1.5x memberikan regularisasi alami, mengurangi fold instability.
 
-### PRIORITAS 3 — Opsional: Ganti ke Sigmoid Jika Ingin Kalibrasi Ulang
-**Lokasi:** `config.py` dan `pipeline/04_train_lgbm_h4.py`
-**Apa:** Jika ingin kalibrasi di masa depan, ubah method dari `"isotonic"` ke `"sigmoid"` (Platt scaling / LogisticRegression). Sigmoid lebih stabil karena hanya mempelajari parameter logistik (skala + intercept), bukan non-parametric step function.
-**Mengapa:** Logistic regression untuk binary calibration hanya punya 2 parameter (slope + bias), jauh lebih robust terhadap AUC rendah dan distribusi sempit dibanding IsotonicRegression yang bisa memiliki puluhan steps.
+### PRIORITAS 3 — Ubah H4 dari Hard Gate ke Soft Filter (EKSEKUSI SEKARANG)
+**Lokasi:** `pipeline/backtest_utils.py:193-222` dan `inference.py:424-438`
+**Apa:** Hapus hard reject (`if bias == 1: continue`). Ganti dengan confidence adjustment:
+- Jika H4 bias align dengan H1 arah: `h1_conf += H4_SOFT_ALIGN_BOOST` (default +0.04)
+- Jika H4 bias FLAT atau opposite: `h1_conf -= H4_SOFT_MISALIGN_PENALTY` (default -0.02)
+- H1 tetap menjadi decision layer utama dengan threshold sendiri
+**Mengapa:** H4 tidak cukup kuat untuk hard decision. Soft filter memungkinkan H1 tetap emit signal meskipun H4 ragu-ragu, hanya dengan confidence yang disesuaikan. Ini lebih robust.

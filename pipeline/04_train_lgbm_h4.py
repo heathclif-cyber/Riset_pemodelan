@@ -54,6 +54,7 @@ from config import (
     H4_SWING_LABEL_MIN_RR, H4_SWING_LABEL_MIN_TP,
     H4_SWING_LABEL_MAX_SL, H4_SWING_LABEL_MAX_HOLD,
     H4_USE_CALIBRATION,
+    H4_BINARY_CLASS_WEIGHTS,
     LABEL_MAP,
 )
 from core.models import ProbabilityCalibrator
@@ -259,11 +260,10 @@ def walk_forward_cv_h4(
     Binary class weights: SHORT=3x, LONG=3x (seimbang).
     """
     logger.info(f"H4 Binary Walk-Forward CV (n_splits={n_splits}, gap={gap_bars} bar H4 ≈ {gap_bars*4}h)")
-    logger.info("Binary class weights: SHORT=3x, LONG=3x")
+    logger.info(f"Binary class weights: SHORT={H4_BINARY_CLASS_WEIGHTS[0]}x, LONG={H4_BINARY_CLASS_WEIGHTS[1]}x")
 
     tscv = TimeSeriesSplit(n_splits=n_splits, gap=gap_bars)
-    # Binary sample weights: kedua kelas diperlakukan setara (3x vs class balancing)
-    BINARY_WEIGHTS = {0: 3.0, 1: 3.0}  # SHORT=0, LONG=1
+    BINARY_WEIGHTS = H4_BINARY_CLASS_WEIGHTS  # dari config.py
 
     results = []
     for fold, (train_idx, val_idx) in enumerate(tscv.split(X), 1):

@@ -179,9 +179,21 @@ H4_USE_CALIBRATION = False
 
 # ─── Hierarchical Decision Thresholds ─────────────────────────────────────────
 # H4 Binary thresholds — binary model output: [prob_SHORT, prob_LONG]
-H4_BINARY_THRESHOLD_LONG  = 0.55  # prob_LONG  >= 0.55 → bias LONG
-H4_BINARY_THRESHOLD_SHORT = 0.55  # prob_SHORT >= 0.55 → bias SHORT
+# Dinaikkan ke 0.65 karena Mean AUC=0.55 (weak edge). Target pass_rate ~10-15%.
+H4_BINARY_THRESHOLD_LONG  = 0.65  # dinaikkan dari 0.55
+H4_BINARY_THRESHOLD_SHORT = 0.65  # dinaikkan dari 0.55
 H4_BINARY_MARGIN          = 0.05  # bias hanya jika prob unggul >= margin atas lawan
+
+# H4 Soft Filter — menggantikan hard gate karena H4 masih lemah (AUC~0.55)
+# Jika H4 align dengan H1: boost confidence. Misalign/skip: slight penalty.
+# H1 tetap decision layer utama — H4 hanya confidence modifier.
+H4_SOFT_FILTER_ENABLED   = True
+H4_SOFT_ALIGN_BOOST      = 0.04   # jika bias H4 = arah H1: +0.04 ke h1_conf
+H4_SOFT_MISALIGN_PENALTY = 0.02   # jika bias H4 != arah H1 atau FLAT: -0.02
+
+# H4 Binary class weights — diturunkan dari 3.0 ke 1.5 (AUC rendah → overfit)
+H4_BINARY_CLASS_WEIGHTS  = {0: 1.5, 1: 1.5}  # SHORT=0, LONG=1 (sebelumnya 3.0)
+
 # H1 entry thresholds (3-class model tidak berubah)
 H1_THRESHOLD_LONG  = 0.62   # H1 LGBM minimum untuk entry LONG
 H1_THRESHOLD_SHORT = 0.62   # H1 LGBM minimum untuk entry SHORT

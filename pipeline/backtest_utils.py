@@ -28,6 +28,7 @@ logger = logging.getLogger("backtest_utils")
 from config import (
     NUM_CLASSES,
     H4_BINARY_THRESHOLD_LONG, H4_BINARY_THRESHOLD_SHORT, H4_BINARY_MARGIN,
+    H4_SOFT_FILTER_ENABLED, H4_SOFT_ALIGN_BOOST, H4_SOFT_MISALIGN_PENALTY,
     H1_THRESHOLD_LONG, H1_THRESHOLD_SHORT,
     LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
@@ -145,13 +146,20 @@ def hierarchical_predict(
     df_slice,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    Hierarchical cascade decision:
-      1. H4 LGBM → bias
-      2. H1 LGBM → entry probability
-      3. LSTM     → soft proportional confidence adjustment
-      4. Decision layer → final signal
+    Hierarchical cascade decision with H4 soft filter:
+      1. H4 LGBM → bias (confidence modifier, NOT hard gate)
+      2. H1 LGBM → entry probability (primary decision layer)
+      3. H4 soft adjustment → boost/penalty h1_conf based on alignment
+      4. LSTM     → soft proportional confidence adjustment
+      5. Decision layer → final signal
 
-    LSTM soft adjustment (replaces hard veto):
+    H4 soft filter (replaces hard gate):
+      - H4 AUC ~0.55 (weak edge) → tidak cukup kuat untuk hard veto
+      - If H4 bias aligns with H1 direction: h1_conf += H4_SOFT_ALIGN_BOOST
+      - If H4 bias is FLAT or opposite:        h1_conf -= H4_SOFT_MISALIGN_PENALTY
+      - H1 always gets a chance to decide (no hard reject)
+
+    LSTM soft adjustment:
       - LSTM agree  : +0.05 × (1 - h1_conf)
       - LSTM neutral: -0.05 × h1_conf
       - LSTM oppose : -0.15 × h1_conf
@@ -176,7 +184,7 @@ def hierarchical_predict(
     else:
         lstm_proba = None
 
-    # STEP 4: Decision layer with soft adjustment
+    # STEP 4: Decision layer with H4 soft filter + LSTM adjustment
     _pass_rate["total"] = n
     _pass_rate["h4"]    = 0
     _pass_rate["h1"]    = 0
@@ -190,49 +198,59 @@ def hierarchical_predict(
         h1_long_conf  = h1_proba[i, 2]  # P(LONG)  dari H1 LGBM
         h1_short_conf = h1_proba[i, 0]  # P(SHORT) dari H1 LGBM
 
-        if bias == 1:
-            continue  # H4 FLAT → skip
+        # H1 is always the primary decision layer
+        # Check both LONG and SHORT thresholds for H1
+        h1_long_passed  = h1_long_conf  >= H1_THRESHOLD_LONG
+        h1_short_passed = h1_short_conf >= H1_THRESHOLD_SHORT
 
-        _pass_rate["h4"] += 1  # H4 gate passed
+        if not h1_long_passed and not h1_short_passed:
+            continue  # H1 tidak yakin sama sekali → FLAT
 
-        # Pilih threshold dan confidence sesuai bias
-        if bias == 2:
-            h1_conf = h1_long_conf
-            h1_thr  = H1_THRESHOLD_LONG
+        # Determine H1's preferred direction and confidence
+        if h1_long_conf >= h1_short_conf:
+            h1_best_dir = 2  # LONG
+            h1_best_conf = h1_long_conf
+            h1_thr = H1_THRESHOLD_LONG
         else:
-            h1_conf = h1_short_conf
-            h1_thr  = H1_THRESHOLD_SHORT
+            h1_best_dir = 0  # SHORT
+            h1_best_conf = h1_short_conf
+            h1_thr = H1_THRESHOLD_SHORT
 
-        if h1_conf < h1_thr:
-            continue  # H1 threshold not met
+        # STEP 4a: H4 soft filter — adjust H1 confidence based on H4 alignment
+        h4_adjustment = 0.0
+        if H4_SOFT_FILTER_ENABLED:
+            if bias == h1_best_dir:
+                # H4 aligns with H1 → slight boost
+                h4_adjustment = H4_SOFT_ALIGN_BOOST
+                _pass_rate["h4"] += 1
+            elif bias == 1:
+                # H4 is FLAT → slight penalty (but NOT hard reject)
+                h4_adjustment = -H4_SOFT_MISALIGN_PENALTY
+            else:
+                # H4 opposite to H1 → slightly bigger penalty
+                h4_adjustment = -H4_SOFT_MISALIGN_PENALTY
 
-        _pass_rate["h1"] += 1  # H1 gate passed
+        adjusted_conf = np.clip(h1_best_conf + h4_adjustment, 0.0, 1.0)
 
-        # LSTM soft adjustment
+        # STEP 4b: LSTM soft adjustment
         if lstm_proba is not None:
             lstm_dir = int(np.argmax(lstm_proba[i]))
-            adj = _lstm_adjustment(h1_conf, lstm_dir, bias)
-            adjusted_conf = np.clip(h1_conf + adj, 0.0, 1.0)
-        else:
-            adjusted_conf = h1_conf
+            lstm_adj = _lstm_adjustment(adjusted_conf, lstm_dir, h1_best_dir)
+            adjusted_conf = np.clip(adjusted_conf + lstm_adj, 0.0, 1.0)
 
         if adjusted_conf >= h1_thr:
-            _pass_rate["lstm"] += 1  # LSTM gate passed
-            y_pred[i]     = bias
+            _pass_rate["lstm"] += 1
+            y_pred[i]     = h1_best_dir
             confidence[i] = adjusted_conf
         # else: remain FLAT
 
     # Log pass rate summary
     if n > 0:
+        n_h4_pass = _pass_rate['h4']
+        n_lstm = _pass_rate['lstm']
         logger.info(
-            f"[pass_rate] H4={_pass_rate['h4']}/{n} "
-            f"({_pass_rate['h4']/n:.1%}) → "
-            f"H1={_pass_rate['h1']}/{_pass_rate['h4']} "
-            f"({_pass_rate['h1']/_pass_rate['h4']:.1%} of H4_pass) → "
-            f"LSTM={_pass_rate['lstm']}/{_pass_rate['h1']} "
-            f"({_pass_rate['lstm']/_pass_rate['h1']:.1%} of H1_pass) → "
-            f"FINAL={_pass_rate['lstm']}/{n} "
-            f"({_pass_rate['lstm']/n:.1%} total)"
+            f"[pass_rate] H4_align={n_h4_pass}/{n} ({n_h4_pass/n:.1%}) → "
+            f"FINAL={n_lstm}/{n} ({n_lstm/n:.1%} total)"
         )
 
     return y_pred, confidence
