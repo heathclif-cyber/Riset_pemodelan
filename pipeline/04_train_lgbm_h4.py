@@ -9,7 +9,7 @@ H4 LGBM berfungsi sebagai regime filter (bias gate) dalam hierarchical cascade:
 Key differences dari H1 LGBM:
   - Data diresample dari H1 → H4 sebelum training
   - Fitur: subset H4_FEATURE_COLS (30 fitur H4-specific)
-  - Label: dihitung ulang dengan H4_SWING_LABEL_MIN_RR=2.0 (proporsional)
+  - Label: dihitung ulang dengan H4_SWING_LABEL_MIN_RR=0.6 (ATR-based; RR = min_tp/max_sl ≈ 0.667)
   - Model: LGBM_H4_PARAMS (lebih konservatif karena ~1/4 sample H1)
   - Purge gap: H4_PURGE_GAP_BARS=6 bars H4 ≈ 24 jam
 

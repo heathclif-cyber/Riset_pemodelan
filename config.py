@@ -161,7 +161,7 @@ H4_FEATURE_COLS = [
 ]
 
 # H4 Labeling — TP/SL proportionally larger for H4 timeframe
-H4_SWING_LABEL_MIN_RR   = 2.0   # vs 1.2 di H1
+H4_SWING_LABEL_MIN_RR   = 0.6   # max theoretical RR = min_tp/max_sl = 2.0/3.0 ≈ 0.667
 H4_SWING_LABEL_MIN_TP   = 2.0   # vs 1.2 di H1
 H4_SWING_LABEL_MAX_SL   = 3.0   # sama dengan H1
 H4_SWING_LABEL_MAX_HOLD = 6     # bar H4 = 24 jam (setara MAX_HOLDING_BARS H1)
