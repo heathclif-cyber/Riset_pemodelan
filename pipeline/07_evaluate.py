@@ -223,8 +223,10 @@ def evaluate_h4_lgbm(run_dir: Path) -> dict:
     with open(feat_path) as f:
         h4_feat_cols = json.load(f)
 
-    # Import H4 resampler dari trainer H4
-    from pipeline.p04_train_lgbm_h4 import load_and_resample_to_h4
+    # Import H4 resampler dari trainer H4 (gunakan importlib karena '04' diawali digit)
+    import importlib
+    _h4_mod = importlib.import_module("pipeline.04_train_lgbm_h4")
+    load_and_resample_to_h4 = _h4_mod.load_and_resample_to_h4
     df_h4 = load_and_resample_to_h4(SAMPLE_SYMBOL)
     if df_h4 is None or len(df_h4) < 50:
         logger.warning(f"H4 data untuk {SAMPLE_SYMBOL} terlalu sedikit — skip")
