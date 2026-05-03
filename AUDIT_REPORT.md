@@ -1,121 +1,139 @@
-# Audit Report: Pipeline Readiness — Siap Running?
+# Audit Report: `10_visualize.py` — Stacked Ensemble Left Behind After Refactor
 
-**Date:** 2026-05-03  
-**Topic:** Verifikasi apakah seluruh pipeline siap dijalankan tanpa error
+**Date:** 2026-05-03
+**Topic:** `FileNotFoundError: models/ensemble_meta.pkl` saat menjalankan `10_visualize.py`
 
 ---
 
 ## RINGKASAN EKSEKUTIF
 
-Seluruh pipeline **siap running**. Semua 7 file pipeline dan 2 file core telah lulus:
-
-1. ✅ **Syntax check** — semua file lulus `py_compile`
-2. ✅ **Config import consistency** — semua variabel yang di-import dari `config.py` oleh pipeline files valid dan terdefinisi
-3. ✅ **Feature column integrity** — semua fitur di `H4_FEATURE_COLS` (termasuk 10 D1 features) dihasilkan oleh `engineer_features()`
-4. ✅ **D1 data flow** — data `1d_*` mengalir dari `02_clean.py` → `core/features.py` → `04_train_lgbm_h4.py` → `08_backtest.py` tanpa titik putus
-
-Tidak ada yang perlu diperbaiki sebelum running.
+`10_visualize.py` crash di baris 68 dengan `FileNotFoundError` karena mencoba memuat `models/ensemble_meta.pkl` — sebuah file yang **tidak lagi diproduksi** oleh pipeline mana pun. File ini adalah artefak dari arsitektur *stacked ensemble* (LogReg meta-learner + Isotonic calibrator) yang telah dihapus dari `08_backtest.py` dan `09_holdout_backtest.py` karena terbukti mendegradasi sinyal (lihat docstring `08_backtest.py:10-11`). Kedua file tersebut kini menggunakan `hierarchical_predict()` dari `backtest_utils.py`. Namun `10_visualize.py` **tidak pernah diupdate** mengikuti perubahan ini, sehingga masih bergantung pada meta-learner dan calibrator yang sudah tidak ada.
 
 ---
 
 ## TEMUAN PER KATEGORI
 
-### [SYNTAX] ✅ Semua file lulus syntax check
-| File | Status |
-|------|--------|
-| `config.py` | ✅ |
-| `core/features.py` | ✅ |
-| `core/evaluator.py` | ✅ |
-| `core/models.py` | ✅ |
-| `core/utils.py` | ✅ |
-| `pipeline/03_engineer.py` | ✅ |
-| `pipeline/04_train_lgbm_h4.py` | ✅ |
-| `pipeline/05_train_lgbm_h1.py` | ✅ |
-| `pipeline/07_evaluate.py` | ✅ |
-| `pipeline/08_backtest.py` | ✅ |
-| `pipeline/backtest_utils.py` | ✅ |
-
-### [KONFIGURASI] ✅ Semua import dari config.py valid
-
-| File | Jumlah Import | Missing |
-|------|--------------|---------|
-| `04_train_lgbm_h4.py` | 18 | 0 ✅ |
-| `backtest_utils.py` | 15 | 0 ✅ |
-| `08_backtest.py` | 51 | 0 ✅ |
-| `05_train_lgbm_h1.py` | 13 | 0 ✅ |
-| `03_engineer.py` | 17 | 0 ✅ |
-| `07_evaluate.py` | 22 | 0 ✅ |
-| `core/features.py` | 2 | 0 ✅ |
-
-### [FITUR] ✅ Semua fitur D1 dihasilkan oleh `engineer_features()`
-
-| Feature | Method | Status |
-|---------|--------|--------|
-| `ema_50_d1` | `feat[f"ema_{span}_d1"]` di line 1206 (f-string, span=50) | ✅ |
-| `ema_200_d1` | `feat[f"ema_{span}_d1"]` di line 1206 (f-string, span=200) | ✅ |
-| `ema_50_slope_d1` | `feat["ema_50_slope_d1"]` di line 1211 | ✅ |
-| `ema_200_slope_d1` | `feat["ema_200_slope_d1"]` di line 1212 | ✅ |
-| `price_vs_ema_50_d1` | `feat["price_vs_ema_50_d1"]` di line 1213 | ✅ |
-| `atr_d1_percentile` | `feat["atr_d1_percentile"]` di line 1346 | ✅ |
-| `d1_trend` | `feat["d1_trend"]` di line 1362 | ✅ |
-| `d1_trend_strength` | `feat["d1_trend_strength"]` di line 1372 | ✅ |
-| `htf_alignment` | `feat["htf_alignment"]` di line 1366 | ✅ |
-| `d1_hh_hl_bias` | `feat["d1_hh_hl_bias"]` di line 1377 | ✅ |
-
-**Catatan:** `ema_50_d1` dan `ema_200_d1` dihasilkan via f-string `feat[f"ema_{span}_d1"]` — secara dinamis membentuk nama fitur yang benar saat runtime.
-
-### [DATA] ✅ D1 Data Flow End-to-End
+```
+[KONSISTENSI] Lokasi: pipeline/10_visualize.py:64-77
+Deskripsi: Fungsi load_models() mencoba memuat ensemble_meta.pkl dan calibrator.pkl
+Dampak: FileNotFoundError karena tidak ada pipeline step yang membuat file tersebut
+Bukti:
+  meta_learner = joblib.load(MODEL_DIR / "ensemble_meta.pkl")   # line 68 — TIDAK ADA
+  calibrator   = ProbabilityCalibrator.load(MODEL_DIR / "calibrator.pkl")  # line 69 — TIDAK ADA
+```
 
 ```
-02_clean.py:173-180
-  → join 1d_* columns ke H1 master ✅
+[KONSISTENSI] Lokasi: pipeline/10_visualize.py:83-137
+Deskripsi: Fungsi run_inference() menggunakan meta_learner.predict_proba() dan
+           calibrator.transform() — arsitektur ensemble lama
+Dampak: Output inference tidak konsisten dengan 08_backtest/09_holdout_backtest
+         yang menggunakan hierarchical_predict()
+Bukti:
+  meta_input = np.hstack([lgbm_proba, lstm_proba])              # line 123
+  cal_proba  = calibrator.transform(meta_learner.predict_proba(meta_input))  # line 124
+```
 
-core/features.py:1102-1110
-  → ekstrak d1_h, d1_l, d1_c ✅
+```
+[KONSISTENSI] Lokasi: pipeline/08_backtest.py:10-11
+Deskripsi: Docstring 08_backtest.py menyatakan stacked ensemble telah dihapus
+Dampak: Dokumentasi mengatakan ensemble dihapus, tapi 10_visualize.py masih menggunakannya
+Bukti:
+  "Stacked ensemble (LogReg meta-learner + Isotonic calibrator) telah dihapus
+   karena terbukti mendegradasi sinyal (lihat AUDIT_REPORT.md)."
+```
 
-core/features.py:1198-1213
-  → EMA 50/200 D1, slopes ✅
+```
+[KONSISTENSI] Lokasi: pipeline/09_holdout_backtest.py:7
+Deskripsi: Docstring 09_holdout_backtest.py juga menyatakan ensemble dihapus
+Dampak: Sama seperti di atas
+Bukti:
+  "Stacked ensemble (LogReg + Isotonic) telah dihapus — lihat AUDIT_REPORT.md."
+```
 
-core/features.py:1344-1380
-  → ATR percentile, D1 trend, HTF alignment, HH/HL ✅
+```
+[DEPENDENSI] Lokasi: pipeline/10_visualize.py:50
+Deskripsi: Masih mengimpor ProbabilityCalibrator yang sudah tidak diperlukan
+Dampak: Import tidak terpakai (dead import) jika beralih ke hierarchical_predict()
+Bukti:
+  from core.models import load_lstm, ProbabilityCalibrator
+```
 
-03_engineer.py
-  → save {symbol}_features_v3.parquet ✅
-
-04_train_lgbm_h4.py:185-188
-  → h4_specific_cols mencakup D1 features ✅
-
-04_train_lgbm_h4.py:378
-  → feat_cols = [c for c in H4_FEATURE_COLS if c in df_h4.columns] ✅
-
-08_backtest.py:80-101
-  → load_symbol() menerima H4_FEATURE_COLS ✅
-
-backtest_utils.py:119
-  → get_h4_bias() menggunakan h4_feat_cols ✅
+```
+[DEPENDENSI] Lokasi: pipeline/10_visualize.py:53
+Deskripsi: Masih mengimpor SequenceDataset dari p05_utils
+Dampak: Import tidak langsung terpakai di run_inference() — SequenceDataset
+         digunakan oleh get_lstm_proba() di backtest_utils.py secara internal
+Bukti:
+  from pipeline.p05_utils import SequenceDataset
 ```
 
 ---
 
-## RISIKO TERSISA (Minor, Non-Blocking)
+## JALUR EKSEKUSI YANG TERIDENTIFIKASI
 
-1. **D1 features akan NaN di baris awal H4** — karena EMA 50/200 dan ATR percentile butuh data harian minimal 20-100 hari. Ini normal dan sudah di-handle oleh fillna di `04_train_lgbm_h4.py:229` dan `08_backtest.py:98`.
+```
+10_visualize.py:502 main()
+  → 10_visualize.py:478 load_models()
+     → 10_visualize.py:68 joblib.load("models/ensemble_meta.pkl")
+        ✗ FileNotFoundError — file tidak ada
+```
 
-2. **Produksi inference.py belum sync** — file `../swint_tradev2/app/services/inference.py` masih menggunakan hard gate pattern (bukan soft filter). Ini tidak mempengaruhi pipeline training/backtest, hanya deployment.
+Jalur yang SEHARUSNYA (mengikuti pola 08_backtest.py):
+```
+10_visualize.py:main()
+  → load_models() (refactored)
+     → joblib.load("models/lgbm_baseline.pkl")        ✅ H1 LGBM
+     → load_lstm("models/lstm_best.pt")               ✅ LSTM
+     → joblib.load("models/lstm_scaler.pkl")          ✅ LSTM Scaler
+     → json.load("models/feature_cols_v2.json")       ✅ H1 features
+     → joblib.load("models/lgbm_h4.pkl") (optional)   ✅ H4 LGBM
+     → json.load("models/h4_feature_cols.json")       ✅ H4 features
+  → process_symbol()
+     → hierarchical_predict() dari backtest_utils.py  ✅ Hierarchical cascade
+```
 
 ---
 
-## KESIMPULAN
+## HIPOTESIS PENYEBAB ROOT (diurutkan dari paling mungkin)
 
-**✅ Pipeline READY untuk running.** Tidak ada blocking issue.
+1. **Paling mungkin — Refactor遗漏 (refactor omission):**
+   Ketika `08_backtest.py` dan `09_holdout_backtest.py` direfactor untuk menggunakan `hierarchical_predict()` (menghapus stacked ensemble), `10_visualize.py` tidak diikutkan dalam perubahan. Ini adalah *oversight* umum ketika beberapa file berbagi arsitektur yang sama tetapi hanya sebagian yang diupdate.
 
-Urutan running di Colab:
-```bash
-git pull
-python pipeline/03_engineer.py --all
-python pipeline/04_train_lgbm_h4.py --all
-python pipeline/05_train_lgbm_h1.py --all
-python pipeline/06_train_lstm.py --all
-python pipeline/07_evaluate.py
-python pipeline/08_backtest.py --all
-```
+   **Bukti:** Docstring di `08_backtest.py:10-11` dan `09_holdout_backtest.py:7` secara eksplisit menyebutkan ensemble telah dihapus. Tidak ada docstring serupa di `10_visualize.py`.
+
+2. **Kemungkinan — File pipeline/06_ensemble.py dihapus:**
+   Berdasarkan komentar di `core/models.py:3` dan `pipeline/p05_utils.py:2`, dulu ada file `pipeline/06_ensemble.py` yang bertugas melatih meta-learner. File ini sudah tidak ada di struktur proyek saat ini, mengonfirmasi bahwa seluruh komponen ensemble telah dihapus.
+
+   **Bukti:** `p05_utils.py:2` menyebut "pipeline/p05_utils.py — SequenceDataset shared antara 05_train_lstm dan 06_ensemble". File `06_ensemble.py` tidak ditemukan.
+
+---
+
+## PERTANYAAN KLARIFIKASI
+
+Tidak ada — penyebab sudah jelas dan dapat diperbaiki tanpa informasi tambahan.
+
+---
+
+## REKOMENDASI PERBAIKAN (deskriptif, bukan kode)
+
+### Perbaikan 1: Refactor `load_models()` — ikuti pola `08_backtest.py`
+
+Ubah `load_models()` untuk:
+- Hanya memuat model yang benar-benar ada: `lgbm_baseline.pkl` (H1), `lstm_best.pt`, `lstm_scaler.pkl`, `feature_cols_v2.json`
+- Memuat H4 model (`lgbm_h4.pkl` dan `h4_feature_cols.json`) secara opsional (tidak wajib — fallback ke FLAT semua jika tidak ada)
+- **Hapus** loading `ensemble_meta.pkl` dan `calibrator.pkl`
+
+### Perbaikan 2: Ganti `run_inference()` dengan `hierarchical_predict()`
+
+Hapus fungsi `run_inference()` yang lama (menggunakan stacked ensemble). Ganti dengan pemanggilan ke `hierarchical_predict()` dari `backtest_utils.py`. Fungsi ini sudah menerapkan:
+- H4 bias direction (margin-based binary threshold)
+- H1 entry signal (threshold-based)
+- LSTM soft proportional adjustment
+- H4 soft filter (boost/penalty based on alignment)
+
+### Perbaikan 3: Update signatures dan imports
+
+- `process_symbol()` dan `main()` — sesuaikan parameter signatures: hapus `meta_learner` dan `calibrator`, tambah `h4_model` dan `h4_feat_cols`
+- Hapus import `ProbabilityCalibrator` (tidak lagi diperlukan)
+- Tambah import `hierarchical_predict` dari `pipeline.backtest_utils`
+- Impor `SequenceDataset` masih diperlukan oleh `backtest_utils.get_lstm_proba()` secara internal — tetapi bisa dihapus dari `10_visualize.py` jika tidak digunakan langsung

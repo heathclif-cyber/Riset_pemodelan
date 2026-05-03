@@ -25,7 +25,6 @@ import matplotlib.pyplot as plt
 import numpy as np
 import pandas as pd
 import torch
-from torch.utils.data import DataLoader
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
@@ -47,10 +46,10 @@ from config import (
     LEVERAGE_SIM,
     FEE_PER_SIDE,
 )
-from core.models import load_lstm, ProbabilityCalibrator
+from core.models import load_lstm
 from core.evaluator import simulate_trades_swing
 from core.utils import setup_logger, ensure_utc_index
-from pipeline.p05_utils import SequenceDataset
+from pipeline.backtest_utils import hierarchical_predict
 
 logger = setup_logger("10_visualize")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -62,19 +61,49 @@ HOLDOUT_LABEL_DIR = ROOT / "data" / "holdout" / "labeled"
 # LOAD MODELS
 # ═══════════════════════════════════════════════════════════════════════════════
 def load_models():
-    lgbm_model   = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
-    lstm_model   = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
-    lstm_scaler  = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
-    meta_learner = joblib.load(MODEL_DIR / "ensemble_meta.pkl")
-    calibrator   = ProbabilityCalibrator.load(MODEL_DIR / "calibrator.pkl")
+    required_models = [
+        (MODEL_DIR / "lgbm_baseline.pkl",    "H1 LightGBM"),
+        (MODEL_DIR / "lstm_best.pt",         "LSTM"),
+        (MODEL_DIR / "lstm_scaler.pkl",      "LSTM Scaler"),
+        (MODEL_DIR / "feature_cols_v2.json", "H1 Feature cols"),
+    ]
+    for path, name in required_models:
+        if not path.exists():
+            raise FileNotFoundError(
+                f"{name} tidak ditemukan: {path}\n"
+                f"Jalankan pipeline 04, 05 terlebih dahulu."
+            )
+
+    h1_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
+    lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
 
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
-    with open(MODEL_DIR / "inference_config.json") as f:
-        cfg = json.load(f)
 
-    logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)}")
-    return lgbm_model, lstm_model, lstm_scaler, meta_learner, calibrator, feat_cols, cfg
+    # H4 model opsional — jika belum ada, cascade tanpa H4 bias (H4=FLAT semua)
+    h4_model_path = MODEL_DIR / "lgbm_h4.pkl"
+    h4_feat_path  = MODEL_DIR / "h4_feature_cols.json"
+    if h4_model_path.exists() and h4_feat_path.exists():
+        h4_model     = joblib.load(h4_model_path)
+        with open(h4_feat_path) as f:
+            h4_feat_cols = json.load(f)
+        logger.info(f"H4 model loaded: {len(h4_feat_cols)} features")
+    else:
+        h4_model     = None
+        h4_feat_cols = []
+        logger.warning("lgbm_h4.pkl tidak ditemukan — H4 bias dinonaktifkan (jalankan 04_train_lgbm_h4.py)")
+
+    # inference_config.json opsional — fallback ke CONFIDENCE_THRESHOLD_ENTRY dari config.py
+    cfg_path = MODEL_DIR / "inference_config.json"
+    if cfg_path.exists():
+        with open(cfg_path) as f:
+            cfg = json.load(f)
+    else:
+        cfg = {"inference": {"confidence_threshold_entry": CONFIDENCE_THRESHOLD_ENTRY}}
+
+    logger.info(f"Models loaded | Device: {DEVICE} | H1 features: {len(feat_cols)} | H4 features: {len(h4_feat_cols)}")
+    return h1_model, lstm_model, lstm_scaler, h4_model, feat_cols, h4_feat_cols, cfg
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -83,14 +112,14 @@ def load_models():
 def run_inference(
     df: pd.DataFrame,
     feat_cols: list,
-    lgbm_model,
+    h1_model,
     lstm_model,
     lstm_scaler,
-    meta_learner,
-    calibrator,
+    h4_model,
+    h4_feat_cols: list,
     confidence_threshold: float,
-) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
-    """Return y_pred_raw, y_pred_filtered, confidence."""
+) -> tuple[pd.DataFrame, np.ndarray, np.ndarray, np.ndarray]:
+    """Run hierarchical cascade inference using backtest_utils.hierarchical_predict()."""
     mask = df["label"].astype(str).isin(LABEL_MAP)
     df   = df[mask].copy()
 
@@ -98,34 +127,19 @@ def run_inference(
     X_df = df[valid_feat].ffill().fillna(0)
     X    = X_df.values.astype(np.float64)
 
-    # LGBM
-    lgbm_proba = lgbm_model.predict_proba(X_df)
+    # Hierarchical cascade prediction
+    y_pred, confidence = hierarchical_predict(
+        h4_model     = h4_model,
+        h1_model     = h1_model,
+        lstm_model   = lstm_model,
+        lstm_scaler  = lstm_scaler,
+        X            = X,
+        feat_cols    = feat_cols,
+        h4_feat_cols = h4_feat_cols,
+        df_slice     = df,
+    )
 
-    # LSTM
-    X_sc   = lstm_scaler.transform(X)
-    dummy  = np.zeros(len(X_sc), dtype=np.int64)
-    ds     = SequenceDataset(X_sc, dummy)
-    loader = DataLoader(ds, batch_size=1024, shuffle=False)
-
-    lstm_list = []
-    lstm_model.eval()
-    with torch.no_grad():
-        for xb, _ in loader:
-            logits = lstm_model(xb.to(DEVICE))
-            lstm_list.append(torch.softmax(logits, dim=1).cpu().numpy())
-    lstm_proba = np.vstack(lstm_list)
-
-    if len(lstm_proba) < len(lgbm_proba):
-        pad = np.ones((len(lgbm_proba) - len(lstm_proba), NUM_CLASSES)) / NUM_CLASSES
-        lstm_proba = np.vstack([pad, lstm_proba])
-
-    # Ensemble
-    meta_input = np.hstack([lgbm_proba, lstm_proba])
-    cal_proba  = calibrator.transform(meta_learner.predict_proba(meta_input))
-    y_pred     = cal_proba.argmax(axis=1)
-    confidence = cal_proba.max(axis=1)
-
-    # Confidence filter
+    # Confidence filter (sama seperti run_inference di 08_backtest.py)
     y_filtered = y_pred.copy()
     y_filtered[(y_filtered != 1) & (confidence < confidence_threshold)] = 1
 
@@ -421,12 +435,12 @@ def process_symbol(
     holdout: bool,
     verify_swing: bool,
     n_bars: int,
-    lgbm_model,
+    h1_model,
     lstm_model,
     lstm_scaler,
-    meta_learner,
-    calibrator,
+    h4_model,
     feat_cols: list,
+    h4_feat_cols: list,
     cfg: dict,
 ) -> None:
     label_dir = HOLDOUT_LABEL_DIR if holdout else LABEL_DIR
@@ -447,7 +461,8 @@ def process_symbol(
 
     # Inference
     df_masked, y_pred, y_filtered, confidence = run_inference(
-        df, feat_cols, lgbm_model, lstm_model, lstm_scaler, meta_learner, calibrator, confidence_threshold,
+        df, feat_cols, h1_model, lstm_model, lstm_scaler,
+        h4_model, h4_feat_cols, confidence_threshold,
     )
 
     # Build trades
@@ -475,7 +490,7 @@ def process_symbol(
 
 def main():
     args = parse_args()
-    lgbm_model, lstm_model, lstm_scaler, meta_learner, calibrator, feat_cols, cfg = load_models()
+    h1_model, lstm_model, lstm_scaler, h4_model, feat_cols, h4_feat_cols, cfg = load_models()
     coins = ALL_COINS if args.all else [args.symbol.upper()]
 
     for symbol in coins:
@@ -485,12 +500,12 @@ def main():
                 holdout      = args.holdout,
                 verify_swing = args.verify_swing,
                 n_bars       = args.n_bars,
-                lgbm_model   = lgbm_model,
+                h1_model     = h1_model,
                 lstm_model   = lstm_model,
                 lstm_scaler  = lstm_scaler,
-                meta_learner = meta_learner,
-                calibrator   = calibrator,
+                h4_model     = h4_model,
                 feat_cols    = feat_cols,
+                h4_feat_cols = h4_feat_cols,
                 cfg          = cfg,
             )
         except Exception as e:
