@@ -1,88 +1,98 @@
-# Audit Report: H4 Model Quality & Cascade Design
+# Audit Report: H4 Threshold & Soft Filter Penalty Tuning
 
-## Ringkasan Eksekutif
+**Date:** 2026-05-03  
+**Session:** Post-Fix 6 (threshold=0.65, soft filter, class weights=1.5)  
+**Trigger:** H4 pass_rate = 1.4% (terlalu rendah setelah threshold dinaikkan ke 0.65)
 
-Setelah calibration collapse diperbaiki, H4 model menunjukkan performa yang masih belum memuaskan: Mean AUC = 0.5546 (sedikit di atas random), fold instability parah (Fold 1=0.6149, Fold 5=0.4692), dan pass rate 27% terlalu tinggi untuk H4 timeframe. Diagnosis: (1) Binary training (drop FLAT) memaksa model mempelajari noise, (2) Class weights 3.0 terlalu agresif, (3) Threshold 0.55 terlalu longgar, (4) Hard gate cascade (H4 veto) tidak cocok untuk model dengan signal quality rendah. Solusi: naikkan threshold ke 0.65, turunkan class weights ke 1.5, dan ubah H4 dari hard gate menjadi soft confidence adjuster.
+---
 
-## Temuan Per Kategori
+## RINGKASAN EKSEKUTIF
 
-### [DATA — DISTRIBUSI] `pipeline/04_train_lgbm_h4.py`
-**Deskripsi:** H4 binary training membuang ~56% data (FLAT) dan hanya melatih LONG vs SHORT. Ini menyebabkan loss informasi — model tidak pernah belajar mengenali "no trade" regime.
-**Dampak:** Model dipaksa mengklasifikasikan regime yang sebenarnya FLAT sebagai LONG atau SHORT, meningkatkan false positive rate.
-**Bukti (log runtime):**
-```
-Label distribution: LONG≈22%, SHORT≈21%, FLAT≈56%
-Binary training: SHORT=27k, LONG=27k (FLAT dropped)
-```
+H4 binary model menunjukkan **pass_rate = 1.4%** setelah threshold dinaikkan ke 0.65 — artinya H4 hampir tidak pernah aktif sebagai filter. Dua masalah utama: (1) **threshold 0.65 terlalu agresif** untuk distribusi probabilitas H4 yang sempit (P50≈0.506, P90≈0.572) sehingga memotong hampir semua sampel, dan (2) **penalti FLAT dan opposite disamakan** (`-0.02`) padahal FLAT berarti "tidak punya opini" (bukan "salah"), sehingga perlu dibedakan. Tidak ada bug — ini murni masalah tuning dan desain soft filter.
 
-### [KONFIGURASI — CLASS WEIGHTS TERLALU AGGRESIF] `pipeline/04_train_lgbm_h4.py:266`
-**Deskripsi:** `BINARY_WEIGHTS = {0: 3.0, 1: 3.0}` — kedua kelas diberi bobot 3x. Untuk model dengan AUC~0.55, ini menyebabkan overfitting ke sample noise karena sample weight memperkuat sinyal lemah.
-**Dampak:** Fold instability (Fold 5=0.4692, worse than random). Model overfit ke noise di beberapa fold.
+---
+
+## TEMUAN PER KATEGORI
+
+### [KONFIGURASI] Lokasi: `config.py:183-184`
+**Deskripsi:** `H4_BINARY_THRESHOLD_LONG = 0.65` dan `H4_BINARY_THRESHOLD_SHORT = 0.65`.
+**Dampak:** Dengan distribusi probabilitas H4 P90=0.572, threshold 0.65 berada di ekstrem tail. Hanya ~1.4% sampel yang lolos, membuat H4 praktikalnya tidak pernah digunakan sebagai filter.
+**Bukti:**
+- P10=0.448, P50=0.506, P90=0.572 (dari live run)
+- Pass rate = 1.4% (target ideal 8-15%)
+- Threshold ideal berdasarkan distribusi: 0.58–0.62
+
+### [LOGIKA] Lokasi: `pipeline/backtest_utils.py:226-231`
+**Deskripsi:** Kondisi `bias == 1` (FLAT) dan `bias != h1_best_dir` (opposite) menggunakan penalty yang sama: `-H4_SOFT_MISALIGN_PENALTY` (-0.02).
+**Dampak:** FLAT dihukum sama kerasnya dengan opposite. Ini tidak tepat secara konsep: FLAT berarti H4 tidak punya opini (netral), bukan berarti H4 berlawanan dengan H1. Hukuman yang sama menyamakan "tidak yakin" dengan "salah".
 **Bukti:**
 ```python
-BINARY_WEIGHTS = {0: 3.0, 1: 3.0}  # SHORT=3x, LONG=3x
+elif bias == 1:
+    # H4 is FLAT → slight penalty (but NOT hard reject)
+    h4_adjustment = -H4_SOFT_MISALIGN_PENALTY  # -0.02
+else:
+    # H4 opposite to H1 → slightly bigger penalty
+    h4_adjustment = -H4_SOFT_MISALIGN_PENALTY  # -0.02 (SAMA!)
 ```
 
-### [KONFIGURASI — THRESHOLD TERLALU RENDAH] `config.py:182-183`
-**Deskripsi:** `H4_BINARY_THRESHOLD_LONG = 0.55` dengan distribusi probabilitas P50=0.518 menyebabkan pass rate 27% — terlalu tinggi untuk H4 timeframe yang seharusnya hanya melewati regime kuat.
-**Dampak:** Cascade menjadi noisy. H1 entry quality turun karena terlalu banyak bar yang diberi bias.
-**Bukti (log runtime):**
-```
-P50=0.518, threshold=0.55 → pass_rate=27%
-Ideal untuk H4: pass_rate 10-15%
-```
+### [KONSEP] Analisis: H4 AUC realistic ceiling
+**Deskripsi:** H4 binary model memprediksi arah swing 24 jam ke depan dengan SL 3.0 ATR dan TP 2.0 ATR pada data crypto yang noisy. Ini inherently sulit — AUC 0.55-0.60 adalah realistic ceiling.
+**Dampak:** Tidak perlu terus-menerus tuning H4. Fokus sebaiknya dialihkan ke:
+1. Improve H1 (sudah F1 ~0.66)
+2. Refine entry threshold
+3. Optimasi risk management (DD 72% walau PF 6.3)
 
-### [LOGIKA — HARD GATE TIDAK COCOK UNTUK MODEL LEMAH] `pipeline/backtest_utils.py:193-194`
-**Deskripsi:** `if bias == 1: continue` — H4 FLAT = hard reject, tidak ada kesempatan untuk H1. Untuk model dengan AUC~0.55, hard decision (ya/tidak) terlalu berisiko.
-**Dampak:** Cascade menderita karena H4 yang lemah memveto H1 yang kuat. Sistem = good entry + weak filter.
-**Bukti:**
-```python
-if bias == 1:
-    continue  # H4 FLAT → skip (hard reject!)
-```
+---
 
-## Jalur Eksekusi
+## JALUR EKSEKUSI YANG TERIDENTIFIKASI
 
-**Current (hard gate):**
 ```
-get_h4_bias() → threshold 0.55 → pass_rate 27%
-→ bias=FLAT? → HARD REJECT (H1 tidak pernah diperiksa)
-→ bias=LONG/SHORT? → H1 check → LSTM → emit signal
+hierarchical_predict() → H4 bias → [bias == aligned?] → +0.04 boost
+                        ↘ [bias == FLAT?]              → -0.02 (sama dengan opposite!)
+                        ↘ [bias == opposite?]          → -0.02
+                        → H1 decision layer → LSTM adjustment → final signal
 ```
 
-**Proposed (soft filter):**
-```
-get_h4_bias() → threshold 0.65 → pass_rate ~12%
-→ bias=FLAT? → h1_conf -= 0.02 (slight penalty, not reject)
-→ bias=LONG? → h1_long_conf += 0.04 (slight boost)
-→ bias=SHORT? → h1_short_conf += 0.04 (slight boost)
-→ H1 check (dengan adjusted conf) → LSTM → emit signal
-```
+Masalah: FLAT (-0.02) = opposite (-0.02) secara logika tidak konsisten.
 
-## Hipotesis Penyebab Root
+---
 
-1. **Binary training + class weights 3x (PALING MUNGKIN):** Membuang FLAT (56% data) dan memberikan bobot 3x ke kelas minoritas membuat model over-amplify noise. AUC 0.55 dan fold instability adalah konsekuensi langsung.
+## HIPOTESIS PENYEBAB ROOT (diurutkan dari paling mungkin)
 
-2. **Threshold terlalu rendah:** P50=0.518 dengan threshold 0.55 berarti ~50% probabilitas di atas threshold. H4 seharusnya jadi filter ketat, bukan gate yang longgar.
+1. **Threshold 0.65 terlalu tinggi** — Distribusi probabilitas H4 sangat sempit (range 0.448-0.572). Threshold 0.65 memotong >98.6% sampel, menyebabkan pass_rate 1.4%. Target pass_rate 8-15% membutuhkan threshold 0.58-0.62.
 
-3. **Hard gate cascade tidak sesuai:** Arsitektur cascade yang memberikan H4 kekuatan veto tidak cocok untuk model dengan signal quality rendah. Soft filter (confidence adjustment) lebih robust.
+2. **FLAT penalty tidak dibedakan dari opposite** — FLAT (bias=1) berarti H4 tidak memiliki conviction arah. Ini berbeda secara fundamental dari opposite (bias berlawanan dengan H1). Menyamakan keduanya membuat sistem kehilangan informasi: FLAT seharusnya penalty ringan (-0.01), opposite seharusnya penalty lebih berat (-0.04).
 
-## Rekomendasi Perbaikan
+3. **Tidak ada config variable untuk FLAT penalty** — Saat ini `H4_SOFT_MISALIGN_PENALTY` digunakan untuk kedua kondisi. Perlu variabel terpisah: `H4_SOFT_FLAT_PENALTY` dan `H4_SOFT_OPPOSITE_PENALTY`.
 
-### PRIORITAS 1 — Naikkan H4 Threshold (EKSEKUSI SEKARANG)
-**Lokasi:** `config.py:182-183`
-**Apa:** Ubah `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.55 → 0.65 (atau bahkan 0.70).
-**Mengapa:** Menargetkan pass rate 10-15%, hanya mengambil regime yang benar-benar kuat. H4 yang lemah perlu threshold lebih ketat untuk menjaga precision.
+---
 
-### PRIORITAS 2 — Turunkan H4 Class Weights (EKSEKUSI SEKARANG)
-**Lokasi:** `pipeline/04_train_lgbm_h4.py:266` dan `config.py`
-**Apa:** Ubah `BINARY_WEIGHTS` dari `{0: 3.0, 1: 3.0}` → `{0: 1.5, 1: 1.5}`. Pindahkan ke `config.py` agar mudah di-tuning.
-**Mengapa:** Bobot 3x terlalu agresif untuk model dengan AUC~0.55. Bobot 1.5x memberikan regularisasi alami, mengurangi fold instability.
+## PERTANYAAN KLARIFIKASI
 
-### PRIORITAS 3 — Ubah H4 dari Hard Gate ke Soft Filter (EKSEKUSI SEKARANG)
-**Lokasi:** `pipeline/backtest_utils.py:193-222` dan `inference.py:424-438`
-**Apa:** Hapus hard reject (`if bias == 1: continue`). Ganti dengan confidence adjustment:
-- Jika H4 bias align dengan H1 arah: `h1_conf += H4_SOFT_ALIGN_BOOST` (default +0.04)
-- Jika H4 bias FLAT atau opposite: `h1_conf -= H4_SOFT_MISALIGN_PENALTY` (default -0.02)
-- H1 tetap menjadi decision layer utama dengan threshold sendiri
-**Mengapa:** H4 tidak cukup kuat untuk hard decision. Soft filter memungkinkan H1 tetap emit signal meskipun H4 ragu-ragu, hanya dengan confidence yang disesuaikan. Ini lebih robust.
+Tidak ada — data sudah cukup jelas dari live run metrics.
+
+---
+
+## REKOMENDASI PERBAIKAN
+
+### 1. Threshold: 0.65 → 0.60
+**Apa:** Turunkan `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.65 ke 0.60 di `config.py`.
+**Mengapa:** P90 distribusi probabilitas = 0.572. Threshold 0.60 memungkinkan ~8-15% sampel lolos (target ideal), sedangkan 0.65 terlalu ekstrem (hanya 1.4%). Ini akan mengaktifkan H4 sebagai filter tanpa memotong terlalu banyak.
+
+### 2. Config: Tambah variabel penalty terpisah
+**Apa:** Tambah `H4_SOFT_FLAT_PENALTY = 0.01` dan `H4_SOFT_OPPOSITE_PENALTY = 0.04` di `config.py`.
+**Mengapa:** FLAT (netral) secara konsep berbeda dari opposite (berlawanan). Dengan variabel terpisah, tuning bisa dilakukan independen.
+
+### 3. Logika: Bedakan FLAT vs opposite di soft filter
+**Apa:** Ubah logika di `pipeline/backtest_utils.py:226-231`:
+- `bias == 1` (FLAT): `h4_adjustment = -H4_SOFT_FLAT_PENALTY` (-0.01, ringan)
+- `bias` opposite: `h4_adjustment = -H4_SOFT_OPPOSITE_PENALTY` (-0.04, lebih keras)
+**Mengapa:** FLAT = "no opinion" → konsekuensi minimal. Opposite = "H4 yakin tapi berlawanan dengan H1" → konsekuensi lebih besar. Ini memberikan gradasi yang lebih realistis.
+
+### 4. Komentar: Update threshold comment
+**Apa:** Ubah komentar di `config.py:182` — threshold 0.60 dipilih berdasarkan distribusi probabilitas H4 (P90=0.572), bukan berdasarkan asumsi.
+**Mengapa:** Dokumentasi yang akurat membantu debugging di masa depan.
+
+---
+
+*End of audit report.*

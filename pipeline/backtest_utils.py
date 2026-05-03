@@ -28,7 +28,8 @@ logger = logging.getLogger("backtest_utils")
 from config import (
     NUM_CLASSES,
     H4_BINARY_THRESHOLD_LONG, H4_BINARY_THRESHOLD_SHORT, H4_BINARY_MARGIN,
-    H4_SOFT_FILTER_ENABLED, H4_SOFT_ALIGN_BOOST, H4_SOFT_MISALIGN_PENALTY,
+    H4_SOFT_FILTER_ENABLED, H4_SOFT_ALIGN_BOOST,
+    H4_SOFT_FLAT_PENALTY, H4_SOFT_OPPOSITE_PENALTY,
     H1_THRESHOLD_LONG, H1_THRESHOLD_SHORT,
     LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
@@ -224,11 +225,11 @@ def hierarchical_predict(
                 h4_adjustment = H4_SOFT_ALIGN_BOOST
                 _pass_rate["h4"] += 1
             elif bias == 1:
-                # H4 is FLAT → slight penalty (but NOT hard reject)
-                h4_adjustment = -H4_SOFT_MISALIGN_PENALTY
+                # H4 is FLAT (no opinion) → light penalty (-0.01)
+                h4_adjustment = -H4_SOFT_FLAT_PENALTY
             else:
-                # H4 opposite to H1 → slightly bigger penalty
-                h4_adjustment = -H4_SOFT_MISALIGN_PENALTY
+                # H4 opposite to H1 → harder penalty (-0.04)
+                h4_adjustment = -H4_SOFT_OPPOSITE_PENALTY
 
         adjusted_conf = np.clip(h1_best_conf + h4_adjustment, 0.0, 1.0)
 

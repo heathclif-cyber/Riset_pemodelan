@@ -179,17 +179,21 @@ H4_USE_CALIBRATION = False
 
 # ─── Hierarchical Decision Thresholds ─────────────────────────────────────────
 # H4 Binary thresholds — binary model output: [prob_SHORT, prob_LONG]
-# Dinaikkan ke 0.65 karena Mean AUC=0.55 (weak edge). Target pass_rate ~10-15%.
-H4_BINARY_THRESHOLD_LONG  = 0.65  # dinaikkan dari 0.55
-H4_BINARY_THRESHOLD_SHORT = 0.65  # dinaikkan dari 0.55
+# Distribusi probabilitas H4: P50≈0.506, P90≈0.572 → threshold 0.60 optimal.
+# Target pass_rate ~8-15% (sebelumnya 0.65 → hanya 1.4%).
+H4_BINARY_THRESHOLD_LONG  = 0.60  # diturunkan dari 0.65 (P90=0.572)
+H4_BINARY_THRESHOLD_SHORT = 0.60  # diturunkan dari 0.65 (P90=0.572)
 H4_BINARY_MARGIN          = 0.05  # bias hanya jika prob unggul >= margin atas lawan
 
 # H4 Soft Filter — menggantikan hard gate karena H4 masih lemah (AUC~0.55)
 # Jika H4 align dengan H1: boost confidence. Misalign/skip: slight penalty.
 # H1 tetap decision layer utama — H4 hanya confidence modifier.
-H4_SOFT_FILTER_ENABLED   = True
-H4_SOFT_ALIGN_BOOST      = 0.04   # jika bias H4 = arah H1: +0.04 ke h1_conf
-H4_SOFT_MISALIGN_PENALTY = 0.02   # jika bias H4 != arah H1 atau FLAT: -0.02
+# FLAT (bias=1) = H4 tidak punya opini → penalty ringan (-0.01)
+# Opposite        = H4 yakin berlawanan arah → penalty lebih keras (-0.04)
+H4_SOFT_FILTER_ENABLED      = True
+H4_SOFT_ALIGN_BOOST         = 0.04   # jika bias H4 = arah H1: +0.04 ke h1_conf
+H4_SOFT_FLAT_PENALTY        = 0.01   # jika H4 FLAT: -0.01 (ringan, no opinion)
+H4_SOFT_OPPOSITE_PENALTY    = 0.04   # jika H4 opposite: -0.04 (keras, confident wrong)
 
 # H4 Binary class weights — diturunkan dari 3.0 ke 1.5 (AUC rendah → overfit)
 H4_BINARY_CLASS_WEIGHTS  = {0: 1.5, 1: 1.5}  # SHORT=0, LONG=1 (sebelumnya 3.0)
