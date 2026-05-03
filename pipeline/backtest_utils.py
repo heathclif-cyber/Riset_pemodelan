@@ -27,7 +27,7 @@ logger = logging.getLogger("backtest_utils")
 
 from config import (
     NUM_CLASSES,
-    H4_BINARY_THRESHOLD_LONG, H4_BINARY_THRESHOLD_SHORT,
+    H4_BINARY_THRESHOLD_LONG, H4_BINARY_THRESHOLD_SHORT, H4_BINARY_MARGIN,
     H1_THRESHOLD_LONG, H1_THRESHOLD_SHORT,
     LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
@@ -120,9 +120,17 @@ def get_h4_bias(
 
     h4_proba = h4_model.predict_proba(df_slice[valid_h4_cols])
     # Binary model output: col 0 = prob_SHORT, col 1 = prob_LONG
-    bias_dir  = np.full(n, 1, dtype=np.int64)  # default FLAT
-    bias_dir[h4_proba[:, 1] >= H4_BINARY_THRESHOLD_LONG]  = 2  # LONG bias
-    bias_dir[h4_proba[:, 0] >= H4_BINARY_THRESHOLD_SHORT] = 0  # SHORT bias
+    # Margin-based: bias hanya jika prob unggul >= margin atas lawan
+    prob_long  = h4_proba[:, 1]
+    prob_short = h4_proba[:, 0]
+    
+    bias_dir = np.full(n, 1, dtype=np.int64)  # default FLAT
+    
+    long_mask  = (prob_long  >= H4_BINARY_THRESHOLD_LONG)  & (prob_long  >= prob_short + H4_BINARY_MARGIN)
+    short_mask = (prob_short >= H4_BINARY_THRESHOLD_SHORT) & (prob_short >= prob_long  + H4_BINARY_MARGIN)
+    
+    bias_dir[long_mask]  = 2  # LONG bias
+    bias_dir[short_mask] = 0  # SHORT bias
     return bias_dir, h4_proba
 
 

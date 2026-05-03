@@ -288,7 +288,7 @@ def update_model_metrics(
     **metrics,
 ) -> None:
     """
-    Update metrics untuk model di registry.
+    Update / create metrics untuk model di registry.
     
     Args:
         model_name: Nama model (key di registry["models"])
@@ -297,8 +297,7 @@ def update_model_metrics(
     
     Example:
         update_model_metrics(
-            "ensemble_v2",
-            f1_macro=0.58,
+            "hierarchical_v1",
             winrate=0.61,
             status="active"
         )
@@ -306,7 +305,10 @@ def update_model_metrics(
     registry = load_model_registry(registry_path)
     
     if model_name not in registry["models"]:
-        raise KeyError(f"Model '{model_name}' tidak ditemukan di registry.")
+        registry["models"][model_name] = {
+            "status": "created",
+            "trained_date": None,
+        }
     
     for key, value in metrics.items():
         if value is not None:

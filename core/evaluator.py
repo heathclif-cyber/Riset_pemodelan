@@ -214,6 +214,7 @@ def simulate_trades_swing(
     min_tp_atr:      float = 1.2,
     max_sl_atr:      float = 3.0,
     max_hold:        int   = 24,
+    swing_lookback:  int   = 3,    # look-ahead bars di detect_h4_swing_points
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis berbasis swing high/low H4.
@@ -222,7 +223,20 @@ def simulate_trades_swing(
     - TP = swing high H4 terdekat di atas (LONG) / swing low H4 di bawah (SHORT)
     - SL = swing low  H4 terdekat di bawah (LONG) / swing high H4 di atas (SHORT)
     - Skip trade jika R:R < min_rr (capital preservation)
+
+    Look-ahead correction:
+    detect_h4_swing_points() menggunakan future_bars (i+1..i+lookback) untuk
+    konfirmasi swing. Array swing di-shift maju swing_lookback bar agar hanya
+    menggunakan info yang tersedia di bar i dalam simulasi.
     """
+    # ── Remove look-ahead: shift swing arrays forward ──────────────────────────
+    if swing_lookback > 0:
+        _sh = np.full_like(h4_swing_highs, np.nan)
+        _sl = np.full_like(h4_swing_lows,  np.nan)
+        _sh[swing_lookback:] = h4_swing_highs[:-swing_lookback]
+        _sl[swing_lookback:] = h4_swing_lows[:-swing_lookback]
+        h4_swing_highs = _sh
+        h4_swing_lows  = _sl
     n          = len(close)
     trades     = []
     equity     = modal
