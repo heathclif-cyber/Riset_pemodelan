@@ -53,6 +53,7 @@ from config import (
     H4_FEATURE_COLS, H4_BINARY_THRESHOLD_LONG,
     H4_SWING_LABEL_MIN_RR, H4_SWING_LABEL_MIN_TP,
     H4_SWING_LABEL_MAX_SL, H4_SWING_LABEL_MAX_HOLD,
+    H4_USE_CALIBRATION,
     LABEL_MAP,
 )
 from core.models import ProbabilityCalibrator
@@ -407,23 +408,25 @@ def main():
     joblib.dump(best_model, model_path_root)
     logger.info(f"[H4 LGBM] Best model (fold {best_fold}, AUC={best_auc:.4f}) → {model_path_root}")
 
-    # ── Fit & simpan isotonic calibrator (concatenated all folds) ─────────────
+    # ── Log percentile (diagnostik) ──────────────────────────────────────────
     if all_val_proba:
         val_proba_all  = np.concatenate(all_val_proba)
         val_labels_all = np.concatenate(all_val_labels)
+        p_before = np.percentile(val_proba_all, [10, 25, 50, 75, 90])
+        logger.info(
+            f"[H4 LGBM] Val proba — "
+            f"P10={p_before[0]:.3f} P25={p_before[1]:.3f} "
+            f"P50={p_before[2]:.3f} P75={p_before[3]:.3f} P90={p_before[4]:.3f} | "
+            f"threshold={H4_BINARY_THRESHOLD_LONG} → "
+            f"pass_rate={(val_proba_all >= H4_BINARY_THRESHOLD_LONG).mean():.1%}"
+        )
+
+    # ── Fit & simpan calibrator (jika diaktifkan) ───────────────────────────
+    if all_val_proba and H4_USE_CALIBRATION:
         logger.info(
             f"[H4 LGBM] Fitting calibrator on {len(val_proba_all):,} samples "
             f"(concatenated {len(all_val_proba)} folds)"
         )
-
-        # Log percentile BEFORE calibration
-        p_before = np.percentile(val_proba_all, [10, 25, 50, 75, 90])
-        logger.info(
-            f"[H4 LGBM] Val proba BEFORE calibration — "
-            f"P10={p_before[0]:.3f} P25={p_before[1]:.3f} "
-            f"P50={p_before[2]:.3f} P75={p_before[3]:.3f} P90={p_before[4]:.3f}"
-        )
-
         calibrator = ProbabilityCalibrator()
         calibrator.fit(val_proba_all.reshape(-1, 1), val_labels_all)
 
@@ -439,7 +442,6 @@ def main():
             f"[H4 LGBM] Calibration shift: "
             f"P50 {p_before[2]:.3f}→{p_after[2]:.3f} "
             f"({(p_after[2]-p_before[2])*100:+.1f}pp) | "
-            f"threshold={H4_BINARY_THRESHOLD_LONG} → "
             f"pass_rate_before={(val_proba_all >= H4_BINARY_THRESHOLD_LONG).mean():.1%} "
             f"pass_rate_after={(cal_proba >= H4_BINARY_THRESHOLD_LONG).mean():.1%}"
         )
@@ -449,6 +451,8 @@ def main():
         calibrator.save(cal_path_run)
         calibrator.save(cal_path_root)
         logger.info(f"[H4 LGBM] Isotonic calibrator (concatenated {len(all_val_proba)} folds) → {cal_path_root}")
+    elif all_val_proba and not H4_USE_CALIBRATION:
+        logger.info("[H4 LGBM] Calibration disabled (H4_USE_CALIBRATION=False) — using raw probability directly")
     else:
         logger.warning("[H4 LGBM] Tidak ada calibration data — skip isotonic calibrator")
 

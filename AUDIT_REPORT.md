@@ -1,208 +1,91 @@
-# AUDIT REPORT: H4 Model Root Cause Analysis
+# Audit Report: H4 Isotonic Calibration Collapse
 
-**Tanggal:** 2026-05-03  
-**Auditor:** Roo (Code)  
-**Sasaran:** Diagnosa mengapa H4 binary model memiliki LONG Precision=0.0 dan cascade signal rate sangat rendah (~4.7%)
+## Ringkasan Eksekutif
 
----
+Kalibrasi isotonic untuk H4 binary model mengalami **complete collapse**: setelah kalibrasi, 100% probabilitas menjadi 1.0 (LONG). Ini membuat H4 filter selalu memberikan izin, sehingga cascade berubah menjadi `H4 ≈ always ON → system ≈ H1 only`. Penyebab utama: (1) concatenated all-fold calibration (data leakage), (2) AUC model ~0.55 (near-random) dengan distribusi prediksi sempit (P10=0.437, P90=0.593) yang membuat IsotonicRegression over-extrapolate, (3) penggunaan IsotonicRegression yang agresif untuk distribusi probabilitas sempit.
 
-## RINGKASAN EKSEKUTIF
+## Temuan Per Kategori
 
-H4 binary model gagal memprediksi LONG dengan presisi > 0 karena kombinasi **tiga masalah struktural**: (1) label H4 dihitung hanya dari CLOSE price, bukan HIGH/LOW, sehingga sangat sedikit bar yang mencapai TP 2.0×ATR; (2) tidak ada fitur trend slope/momentum eksplisit di H4_FEATURE_COLS yang bisa menangkap akselerasi tren; (3) `"symbol"` sebagai fitur mengikat model ke bias koin individual daripada pola market structure umum. Akibatnya H4 model collapse ke prediksi FLAT hampir di semua bar, dan cascade tidak pernah mendapat sinyal H4 binary yang valid.
-
----
-
-## TEMUAN PER KATEGORI
-
-### [BUG] H4 Labeling Hanya Pakai CLOSE — Bukan HIGH/LOW
-**Lokasi:** `pipeline/04_train_lgbm_h4.py:107-127`  
-**Deskripsi:** `compute_h4_swing_labels()` menggunakan `future_close = close[i + 1:end]` untuk mengecek apakah TP atau SL tercapai. Tidak pernah menggunakan `high[]` atau `low[]`.  
-**Dampak:** Untuk label LONG, close harus mencapai `c + 2.0 × ATR` dalam max_hold bar. Ini sangat sulit — padahal secara real, high intra-bar bisa mencapai level TP walau close di bawahnya. Akibatnya jumlah label LONG/SHORT sangat sedikit (∼0.1–0.5% dari total bar H4).  
+### [BUG — DATA LEAKAGE] `pipeline/04_train_lgbm_h4.py:410-451`
+**Deskripsi:** Semua fold validation probabilities digabung (`np.concatenate(all_val_proba)`), lalu satu `IsotonicRegression` tunggal di-fit pada data gabungan tersebut. Ini adalah data leakage — kalibrator melihat data validasi dari semua fold sekaligus, bukan out-of-fold predictions per fold.
+**Dampak:** Informasi dari fold masa depan bocor ke kalibrator. IsotonicRegression menganggap distribusi 49k samples sebagai satu set, bukan 8 independent folds.
 **Bukti:**
 ```python
-# Baris 107-119 — hanya close, tidak ada high/low
-end = min(i + 1 + max_hold, n)
-future_close = close[i + 1:end]
-
-for fc in future_close:
-    if fc >= tp_long and not long_hit and not short_hit:
-        long_hit = True
-        break
-    if fc <= sl_long:
-        break
+val_proba_all  = np.concatenate(all_val_proba)   # 48,928 samples
+val_labels_all = np.concatenate(all_val_labels)
+calibrator = ProbabilityCalibrator()
+calibrator.fit(val_proba_all.reshape(-1, 1), val_labels_all)
 ```
-**Perbaikan:** Gunakan `high[i+1:end]` untuk LONG TP check dan `low[i+1:end]` untuk SHORT TP check.
 
----
+### [BUG — ISOTONIC COLLAPSE] `core/models.py:99-130`
+**Deskripsi:** `ProbabilityCalibrator` menggunakan `IsotonicRegression(out_of_bounds="clip")` default. Untuk distribusi probabilitas sempit (P10=0.437, P50=0.518, P90=0.593), isotonic memetakan input range ~0.15 ke output [0, 1]. Karena sebagian besar sample > 0.5, isotonic "memaksa" transformasi ke ekstrem 1.0.
+**Dampak:** Semua probabilitas setelah kalibrasi = 1.0. Threshold 0.55 tidak berguna — 99.9% sample lolos.
+**Bukti (log runtime):**
+```
+P50 0.518 → 1.000 (+48.2pp)
+pass_rate 27.0% → 99.9%
+```
 
-### [DATA] `"symbol"` sebagai Fitur — Generalization Leak
-**Lokasi:** `config.py:160` di `H4_FEATURE_COLS` | `core/features.py:1245`  
-**Deskripsi:** `feat["symbol"] = symbol_id` menambahkan integer ID koin (0–4 untuk training coins) sebagai fitur. Model bisa belajar "SOLUSDT (ID 0) cenderung bullish, XRPUSDT (ID 3) cenderung sideways" alih-alih pola market structure umum.  
-**Dampak:** Untuk koin baru (NEW_COINS, ID 5–17) yang tidak ada di training, feature distribution symbol_id berubah drastis (out-of-distribution). Model gagal generalize ke koin unseen.  
+### [KONFIGURASI] `pipeline/backtest_utils.py:121`
+**Deskripsi:** Backtest (`get_h4_bias()`) tidak menggunakan calibrator sama sekali — langsung `h4_model.predict_proba()`. Ini berarti backtest results selama ini sebenarnya valid (tidak terpengaruh calibration collapse), tapi production inference di `inference.py` menggunakan calibrator.
+**Dampak:** Backtest vs production mismatch. Backtest menunjukkan performa realistis, production collapse karena calibrator.
 **Bukti:**
 ```python
-# config.py:19-29
-TRAINING_COINS = ["SOLUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT"]  # ID 0-4
-NEW_COINS = ["TONUSDT", "ADAUSDT", ...]  # ID 5-17 — TIDAK PERNAH DILIHAT SAAT TRAINING
+# backtest_utils.py:121 — NO calibrator usage
+h4_proba = h4_model.predict_proba(df_slice[valid_h4_cols])
 ```
-
----
-
-### [KONFIGURASI] H4 Feature Set Kurang Trend Dynamics
-**Lokasi:** `config.py:122-161` (`H4_FEATURE_COLS`)  
-**Deskripsi:** H4_FEATURE_COLS sudah memiliki EMA (level) dan `rsi_h4`, tetapi tidak memiliki fitur momentum/slope eksplisit seperti `ema_slope`, `price_vs_ema`, `rsi_slope`, atau `range_expansion`. Fitur yang ada saat ini:
-- ✅ EMA level (ATR-normalized): `ema_7/21/50/200_h4`
-- ✅ Trend direction: `h4_trend` (EMA7 > EMA21 ? 1 : -1)
-- ✅ Trend strength: `trend_strength` ((EMA7 - EMA50) / ATR)
-- ✅ RSI H4: `rsi_h4`
-- ❌ `ema_21_slope_h4` — rate of change EMA21
-- ❌ `ema_50_slope_h4` — rate of change EMA50
-- ❌ `price_vs_ema_50_h4` — posisi close relatif terhadap EMA50 (sekarang hanya sebagai normalized EMA)
-- ❌ `atr_percent_h4` — ATR sebagai % harga
-- ❌ `range_expansion_h4` — deteksi ekspansi range
-- ❌ `rsi_slope_h4` — akselerasi momentum
-
-**Dampak:** Model H4 kesulitan membedakan "trend yang sedang akselerasi" vs "trend yang sudah mature". Ini menjelaskan recall LONG yang sangat rendah.  
-**Bukti:** Lihat `core/features.py:1167-1179` — EMA dihitung sebagai (EMA - close) / ATR. Slope tidak pernah dihitung.
-
----
-
-### [LOGIKA] H4 Labeling RR Check Tidak Pernah Gagal
-**Lokasi:** `pipeline/04_train_lgbm_h4.py:99-105,129-132`  
-**Deskripsi:** Karena RR dihitung sebagai `min_tp_atr / max_sl_atr = 2.0/3.0 ≈ 0.667` (KONSTAN per bar), dan `min_rr = 0.6`, maka kondisi `rr_long >= min_rr` SELALU TRUE untuk setiap bar yang mencapai TP sebelum SL. Parameter `H4_SWING_LABEL_MIN_RR = 0.6` tidak berfungsi sebagai filter — semua bar lolos.  
-**Dampak:** Parameter min_rr secara efektif mati (dead config). Tidak ada downside risk filtering.  
-**Bukti:**
 ```python
-# Baris 99-105 — RR fixed
-tp_long  = c + min_tp_atr * a    # = c + 2.0 * ATR
-sl_long  = c - max_sl_atr * a    # = c - 3.0 * ATR
-rr_long  = (tp_long - c) / (c - sl_long)   # = (2.0*ATR) / (3.0*ATR) = 0.667
-
-# Baris 129 — selalu True karena 0.667 >= 0.6
-if long_hit and rr_long >= min_rr:   # min_rr = 0.6
+# inference.py:392 — WITH calibrator
+if bundle.h4_calibrator is not None:
+    h4_p_cal = bundle.h4_calibrator.transform(h4_p.reshape(1, -1))[0]
 ```
 
----
+## Jalur Eksekusi
 
-### [KONFIGURASI] H4 LGBM Model Mungkin Terlalu Sederhana
-**Lokasi:** `config.py:105-117` (`LGBM_H4_PARAMS`)  
-**Deskripsi:** Parameter saat ini: max_depth=4, num_leaves=15, min_child_samples=30, n_estimators=500. Dengan ∼12K–20K binary samples setelah drop FLAT, model dengan 15 leaves mungkin tidak cukup kompleks untuk menangkap regime switching non-linear.  
-**Dampak:** Model underfit — tidak bisa membedakan pola LONG vs SHORT dengan baik.  
-**Bukti:**
-```python
-LGBM_H4_PARAMS = {
-    "max_depth":         4,         # 2^4 = 16 leaves max
-    "num_leaves":        15,        # ≤ max_depth
-    "min_child_samples": 30,        # cukup rendah untuk 12K samples
-    "n_estimators":      500,       # cukup
-    "learning_rate":     0.03,      # konservatif
-}
+**Training:**
+```
+04_train_lgbm_h4.py:walk_forward_cv_h4() → concatenate all fold val_proba
+→ ProbabilityCalibrator.fit(48k samples) → IsotonicRegression
+→ save h4_calibrator.pkl  ← [BUG: data leakage + isotonic collapse]
 ```
 
----
-
-### [KONFIGURASI] Threshold Cascade Terlalu Ketat (Sekunder)
-**Lokasi:** `config.py:175-180`  
-**Deskripsi:** H4_BINARY_THRESHOLD=0.55 dan H1_THRESHOLD=0.62. Efek kaskade: probabilitas bar lolos kedua threshold = ~(sisa H4 non-FLAT) × (H1 signal rate). Jika H4 hanya 30% non-FLAT dan H1 hanya 30% sinyal, total signal rate = 9%. Dengan H4_BINARY_MARGIN=0.05 yang baru, ini bisa turun ke 5–7%.  
-**Dampak:** Signal rate rendah (4.7%) secara alami mengikuti dari threshold ketat + margin baru. Bukan penyebab utama H4 model collapse.  
-**Bukti:** Lihat `pipeline/backtest_utils.py:129-130` — margin-based masking.
-
----
-
-## JALUR EKSEKUSI YANG TERIDENTIFIKASI
-
+**Backtest (tidak terpengaruh):**
 ```
-compute_h4_swing_labels()  → [CLOSE-only check] → sangat sedikit non-FLAT labels
-       ↓
-load_and_resample_to_h4() → label distribution: LONG~0.1% SHORT~0.1% FLAT~99.8%
-       ↓
-H4 model training (binary) → hanya 0.2% positive class → model collapse ke FLAT
-       ↓
-hierarchical_predict() → get_h4_bias() → 99.9% FLAT → cascade tidak pernah aktif
-       ↓
-evaluate_cascade() → signal rate ~4.7% → LONG Precision=0.0
+backtest_utils.py:get_h4_bias()
+→ h4_model.predict_proba() langsung → raw proba → threshold check
+→ bias_dir = LONG/SHORT/FLAT
 ```
 
----
+**Production (terpengaruh):**
+```
+inference.py:_hierarchical_proba()
+→ h4_model.predict_proba() → raw proba
+→ bundle.h4_calibrator.transform() → [COLLAPSE: semua jadi 1.0]
+→ threshold check → selalu lolos → bias = LONG
+```
 
-## HIPOTESIS PENYEBAB ROOT
+## Hipotesis Penyebab Root
 
-1. **Paling Kuat: H4 labeling hanya pakai CLOSE** — Jika labeling menggunakan HIGH/LOW untuk TP/SL detection (seperti standar backtesting), jumlah label non-FLAT bisa meningkat 3–5×. Ini adalah penyebab paling fundamental karena langsung membatasi jumlah training sample yang tersedia untuk H4 binary model.
+1. **IsotonicRegression + AUC rendah + distribusi sempit (PALING MUNGKIN):** Model H4 binary memiliki AUC ~0.55, nyaris random. Distribusi probabilitas output sangat sempit (range ~0.15). IsotonicRegression dirancang untuk distribusi probabilitas yang terkalibrasi baik; pada distribusi sempit ia "memaksa" mapping ke [0,1] sehingga terjadi ekstrapolasi agresif → semua > 0.5 menjadi 1.0.
 
-2. **Kedua: Tidak ada fitur trend slope eksplisit** — H4 model perlu membedakan trend fase awal (potensi LONG) dari trend fase akhir (potensi reversal). EMA slope, RSI slope, dan price position relatif terhadap EMA memberikan sinyal ini. Tanpanya, model hanya punya "snapshot" level harga tanpa konteks momentum.
+2. **Concatenated folds (data leakage):** Meskipun masalah utama adalah isotonic collapse, concatenating all folds tetap salah secara metodologi. Kalibrator harus di-fit pada out-of-fold predictions per fold.
 
-3. **Ketiga: `symbol` sebagai fitur** — Model belajar shortcut: "SOLUSDT (ID 0) lebih sering LONG daripada XRPUSDT (ID 3)". Ini menyebabkan model gagal generalisasi ke koin baru dan tidak belajar pola market structure universal.
+3. **Tidak perlu kalibrasi untuk binary threshold:** Untuk model binary dengan AUC rendah, kalibrasi isotonic tidak memberikan manfaat. Threshold sederhana pada raw probability lebih stabil dan interpretable. Sigmoid calibration (Platt scaling) lebih robust untuk distribusi sempit.
 
-4. **Keempat: H4 model terlalu sederhana** — max_depth=4 dengan ~12K samples mungkin underfit. max_depth=6 (64 leaves) memberikan kapasitas lebih tanpa risiko overfitting berlebihan untuk jumlah data tersebut.
+## Rekomendasi Perbaikan
 
----
+### PRIORITAS 1 — Matikan H4 Calibration (EKSEKUSI SEKARANG)
+**Lokasi:** `pipeline/04_train_lgbm_h4.py:410-453`
+**Apa:** Tambahkan flag `H4_USE_CALIBRATION = False` di `config.py`. Di `04_train_lgbm_h4.py`, skip seluruh blok fitting & saving calibrator ketika flag False. Pertahankan logging percentile BEFORE calibration untuk monitoring.
+**Mengapa:** Calibrator saat ini merusak inference. Raw probability langsung ke threshold sudah cukup untuk model binary dengan AUC rendah. Backtest sudah membuktikan ini (tidak pakai calibrator).
 
-## PERTANYAAN KLARIFIKASI
+### PRIORITAS 2 — Tuning Threshold Langsung
+**Lokasi:** `config.py:172-174`
+**Apa:** Turunkan `H4_BINARY_THRESHOLD_LONG` dan `H4_BINARY_THRESHOLD_SHORT` dari 0.55 ke 0.52-0.53 (atau cari optimal via grid search pada validation set).
+**Mengapa:** Tanpa calibrator, threshold di raw probability perlu disesuaikan. P50=0.518 berarti threshold 0.55 terlalu ketat untuk model saat ini.
+**Rekomendasi:** Jalankan grid search threshold pada validation OOF predictions: coba threshold 0.48 s.d. 0.60 step 0.01, pilih yang memberikan profit factor + Sharpe ratio optimal.
 
-1. Apakah `compute_h4_swing_labels()` sengaja menggunakan CLOSE saja (bukan HIGH/LOW) karena alasan tertentu (misalnya, menghindari look-ahead)? Jika tidak, ini bug yang jelas.
-2. Apakah penggunaan `"symbol"` sebagai fitur sengaja untuk menangkap perbedaan volatilitas antar koin? Atau ini oversight dari pipeline engineer awal?
-3. Apakah ada data H4 results dari training sebelumnya yang menunjukkan distribusi label (berapa % LONG, SHORT, FLAT sebelum drop FLAT)?
-
----
-
-## REKOMENDASI PERBAIKAN
-
-### PRIORITAS 1 — H4 Labeling: Gunakan HIGH/LOW
-**Lokasi:** `pipeline/04_train_lgbm_h4.py:107-127`  
-**Deskripsi:** Ubah `compute_h4_swing_labels()` untuk menggunakan `high[i+1:end]` dan `low[i+1:end]` dalam mendeteksi TP/SL hit. Ini adalah praktik standar dalam backtesting — TP dianggap tercapai jika HIGH >= TP (untuk LONG), bukan jika CLOSE >= TP.
-- Gunakan `high[i+1:end].max()` untuk LONG TP check
-- Gunakan `low[i+1:end].min()` untuk LONG SL check
-- Gunakan `low[i+1:end].min()` untuk SHORT TP check
-- Gunakan `high[i+1:end].max()` untuk SHORT SL check
-**Dampak:** Jumlah label non-FLAT meningkat signifikan (estimasi 3–5×).
-
-### PRIORITAS 2 — Hapus `"symbol"` dari H4_FEATURE_COLS
-**Lokasi:** `config.py:160`  
-**Deskripsi:** Hapus `"symbol"` dari `H4_FEATURE_COLS`. Juga hapus dari `FEATURE_COLS_V3` (line 282-283) jika memungkinkan.
-**Alternatif:** Jika ingin tetap mempertahankan informasi volatilitas per-koin, ganti dengan fitur yang lebih general seperti `log_volume_ma_ratio` atau `volatility_percentile` yang bisa generalize ke koin unseen.
-**Dampak:** Model belajar pola market structure umum, bukan bias koin individual.
-
-### PRIORITAS 3 — Tambah Trend Slope Features
-**Lokasi:** `config.py:122-161` dan `core/features.py` (sekitar baris 1172)  
-**Deskripsi:** Tambahkan fitur berikut ke `H4_FEATURE_COLS` dan hitung di `engineer_features()`:
-- `ema_21_slope_h4` = (ema_21 - ema_21.shift(4)) / (atr_h4) — slope 4 bar H4
-- `ema_50_slope_h4` = (ema_50 - ema_50.shift(4)) / (atr_h4)
-- `price_vs_ema_50_h4` = (close - ema_50) / atr_h4 (lebih eksplisit dari normalized EMA)
-- `atr_percent_h4` = atr_14_h4 / close * 100
-- `range_expansion_h4` = (high - low) / (high.shift(1) - low.shift(1) + epsilon)
-- `rsi_slope_h4` = rsi_h4 - rsi_h4.shift(4)
-**Dampak:** Model mendapatkan informasi momentum dan akselerasi tren, bukan hanya level.
-
-### PRIORITAS 4 — Review H4 LGBM Params
-**Lokasi:** `config.py:105-117`  
-**Deskripsi:** Setelah label dan fitur diperbaiki, evaluasi apakah `max_depth=4, num_leaves=15` cukup. Pertimbangkan:
-- `max_depth=6, num_leaves=31, min_child_samples=50` — versi yang selaras dengan H1 params
-- Alternatif: `max_depth=5, num_leaves=20` — kompromi antara kapasitas dan overfitting
-**Catatan:** Jangan ubah parameter sebelum label dan fitur diperbaiki, karena model akan dilatih ulang dengan data yang berbeda.
-
-### PRIORITAS 5 — Review Threshold (Pasca Retrain)
-**Lokasi:** `config.py:175-180`  
-**Deskripsi:** Setelah retrain H4 dengan label dan fitur baru, evaluasi distribusi probabilitas output. Jika calibrated proba terdistribusi lebih baik (tidak collapse ke 0.5), threshold bisa diturunkan untuk meningkatkan signal rate.
-- H4_BINARY_THRESHOLD bisa diturunkan ke 0.50 jika distribusi proba bagus
-- H1_THRESHOLD bisa tetap di 0.60–0.62 untuk menjaga kualitas entry
-**Catatan:** Tuning threshold tanpa model yang baik adalah sia-sia. Lakukan setelah Prioritas 1–3 selesai.
-
----
-
-## KESIMPULAN
-
-Masalah H4 LONG Precision=0.0 dan signal rate 4.7% BUKAN disebabkan oleh pipeline, LSTM, atau kalibrasi. Akar masalah ada di **tiga tempat**:
-
-| # | Masalah | Dampak | Prioritas |
-|---|---------|--------|-----------|
-| 1 | H4 labeling pakai CLOSE bukan HIGH/LOW | Sangat sedikit label non-FLAT | 🔴 WAJIB |
-| 2 | `"symbol"` sebagai fitur | Generalisasi jelek ke koin baru | 🔴 WAJIB |
-| 3 | Kurang trend slope features | Model buta momentum | 🟡 PENTING |
-| 4 | H4 model terlalu sederhana | Underfitting | 🟡 PENTING |
-| 5 | Threshold ketat | Signal rate rendah (sekunder) | 🟢 NICE TO HAVE |
-
-Setelah Prioritas 1–3 diterapkan, distribusi label H4 diestimasi berubah dari:
-- **Sekarang:** LONG=0.1% SHORT=0.1% FLAT=99.8% → binary samples ~100
-- **Setelah:** LONG=~5% SHORT=~5% FLAT=~90% → binary samples ~6,000
-
-Dengan 6K+ binary samples, H4 model memiliki data cukup untuk belajar pola regime detection yang bermakna.
+### PRIORITAS 3 — Opsional: Ganti ke Sigmoid Jika Ingin Kalibrasi Ulang
+**Lokasi:** `config.py` dan `pipeline/04_train_lgbm_h4.py`
+**Apa:** Jika ingin kalibrasi di masa depan, ubah method dari `"isotonic"` ke `"sigmoid"` (Platt scaling / LogisticRegression). Sigmoid lebih stabil karena hanya mempelajari parameter logistik (skala + intercept), bukan non-parametric step function.
+**Mengapa:** Logistic regression untuk binary calibration hanya punya 2 parameter (slope + bias), jauh lebih robust terhadap AUC rendah dan distribusi sempit dibanding IsotonicRegression yang bisa memiliki puluhan steps.

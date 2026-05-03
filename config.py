@@ -173,6 +173,10 @@ H4_SWING_LABEL_MAX_HOLD = 6     # bar H4 = 24 jam (setara MAX_HOLDING_BARS H1)
 H4_N_FOLDS        = 8
 H4_PURGE_GAP_BARS = 6   # 6 bar H4 ≈ 24 jam ≈ 24 bar H1
 
+# H4 Calibration — dimatikan karena isotonic collapse (P50=0.518→1.000)
+# Lihat AUDIT_REPORT.md § Isotonic Collapse
+H4_USE_CALIBRATION = False
+
 # ─── Hierarchical Decision Thresholds ─────────────────────────────────────────
 # H4 Binary thresholds — binary model output: [prob_SHORT, prob_LONG]
 H4_BINARY_THRESHOLD_LONG  = 0.55  # prob_LONG  >= 0.55 → bias LONG
