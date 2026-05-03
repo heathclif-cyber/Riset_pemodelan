@@ -29,6 +29,7 @@ def simulate_trades(
     modal:        float = 100.0,
     leverage:     float = 5.0,
     fee_per_side: float = 0.0004,
+    slippage:     float = 0.0005,
     tp_mult:      float = 2.0,
     sl_mult:      float = 1.0,
     max_hold:     int   = 24,
@@ -57,13 +58,19 @@ def simulate_trades(
             i += 1
             continue
 
-        entry_price = close[i]
+        raw_entry   = close[i]
         atr_i       = atr[i]
 
-        if np.isnan(entry_price) or np.isnan(atr_i) or atr_i == 0 or entry_price == 0:
+        if np.isnan(raw_entry) or np.isnan(atr_i) or atr_i == 0 or raw_entry == 0:
             equity_curve[i] = cumulative
             i += 1
             continue
+
+        # Apply slippage on entry — LONG buy at ask, SHORT sell at bid
+        if pred == 2:  # LONG
+            entry_price = raw_entry * (1.0 + slippage)
+        else:  # SHORT
+            entry_price = raw_entry * (1.0 - slippage)
 
         if pred == 2:  # LONG
             tp_price = entry_price + tp_mult * atr_i
@@ -103,6 +110,12 @@ def simulate_trades(
                 exit_bar = j
                 exit_price = close[j]
                 break
+
+        # Apply slippage on exit — LONG sell at bid, SHORT buy to cover at ask
+        if pred == 2:  # LONG exit = sell
+            exit_price = exit_price * (1.0 - slippage)
+        else:  # SHORT exit = buy to cover
+            exit_price = exit_price * (1.0 + slippage)
 
         tp_pct = (tp_mult * atr_i) / entry_price
         sl_pct = (sl_mult * atr_i) / entry_price
@@ -196,6 +209,7 @@ def simulate_trades_swing(
     modal:           float = 100.0,
     leverage:        float = 5.0,
     fee_per_side:    float = 0.0004,
+    slippage:        float = 0.0005,
     min_rr:          float = 1.2,
     min_tp_atr:      float = 1.2,
     max_sl_atr:      float = 3.0,
@@ -222,7 +236,12 @@ def simulate_trades_swing(
             equity_curve.append(equity)
             continue
 
-        price  = close[i]
+        raw_price = close[i]
+        # Apply slippage on entry — LONG buy at ask, SHORT sell at bid
+        if sig == LONG:
+            price = raw_price * (1.0 + slippage)
+        else:  # SHORT
+            price = raw_price * (1.0 - slippage)
         atr_i  = atr[i]
         sh_i   = h4_swing_highs[i]
         sl_i   = h4_swing_lows[i]
@@ -266,7 +285,8 @@ def simulate_trades_swing(
 
         # ── Scan ke depan ─────────────────────────────────────────────────────
         outcome = "TIMEOUT"
-        exit_price = price
+        # Default exit = entry price (no trade), will be overwritten if TP/SL hit
+        raw_exit = price
 
         end = min(i + max_hold, n)
         for j in range(i + 1, end):
@@ -274,14 +294,20 @@ def simulate_trades_swing(
                 continue
             if sig == LONG:
                 if high[j] >= tp_price:
-                    outcome    = "WIN";  exit_price = tp_price; break
+                    outcome    = "WIN";  raw_exit = tp_price; break
                 if low[j]  <= sl_price:
-                    outcome    = "LOSS"; exit_price = sl_price; break
+                    outcome    = "LOSS"; raw_exit = sl_price; break
             else:
                 if low[j]  <= tp_price:
-                    outcome    = "WIN";  exit_price = tp_price; break
+                    outcome    = "WIN";  raw_exit = tp_price; break
                 if high[j] >= sl_price:
-                    outcome    = "LOSS"; exit_price = sl_price; break
+                    outcome    = "LOSS"; raw_exit = sl_price; break
+
+        # Apply slippage on exit — LONG sell at bid, SHORT buy to cover at ask
+        if sig == LONG:
+            exit_price = raw_exit * (1.0 - slippage)
+        else:
+            exit_price = raw_exit * (1.0 + slippage)
 
         # ── Hitung PnL ────────────────────────────────────────────────────────
         pct_move = (exit_price - price) / price
@@ -373,7 +399,7 @@ def simulate_trades_swing(
 
 # ─── Drawdown ────────────────────────────────────────────────────────────────
 
-def calc_drawdown(equity_curve: list, modal_per_trade: float = 1000.0) -> dict:
+def calc_drawdown(equity_curve: list, modal_per_trade: float = 100.0) -> dict:
     if not equity_curve:
         return {"max_drawdown": 0.0, "max_drawdown_pct": 0.0, "drawdown_curve": []}
 
@@ -481,6 +507,7 @@ def full_trading_report(
     max_hold:     int   = 24,
     min_hold:     int   = 2,
     symbol:       Optional[str] = None,
+    slippage:     float = 0.0005,
     # Parameters for Swing V3 Option:
     high:         Optional[np.ndarray] = None,
     low:          Optional[np.ndarray] = None,
@@ -503,6 +530,7 @@ def full_trading_report(
                 y_pred=y_pred, close=close, high=high, low=low, atr=atr,
                 h4_swing_highs=h4_swing_highs, h4_swing_lows=h4_swing_lows,
                 modal=modal, leverage=lev, fee_per_side=fee_per_side,
+                slippage=slippage,
                 min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
                 max_hold=max_hold
             )
@@ -510,6 +538,7 @@ def full_trading_report(
             return simulate_trades(
                 y_pred=y_pred, close=close, atr=atr,
                 modal=modal, leverage=lev, fee_per_side=fee_per_side,
+                slippage=slippage,
                 tp_mult=tp_mult, sl_mult=sl_mult,
                 max_hold=max_hold, min_hold=min_hold,
             )

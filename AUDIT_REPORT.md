@@ -1,252 +1,172 @@
-# AUDIT: Diskontinuitas Periode Data — Risiko Underfitting pada New Coins
+# Audit Report: Training Readiness — Pipeline Sinkronisasi & Kelayakan Eksekusi
 
-**Auditor:** Roo  
-**Tanggal:** 2026-05-02  
-**Fokus Audit:** Penelusuran seluruh referensi `NEW_COINS_START` / `NEW_COINS_END` di pipeline — verifikasi dampak perioda data berbeda antara training coins dan new coins
-
----
-
-## RINGKASAN EKSEKUTIF
-
-Pipeline saat ini membagi koin menjadi 2 grup dengan perioda data **berbeda**: `TRAINING_COINS` (SOL, ETH, BNB, XRP, DOGE) mendapatkan data penuh **2020-01-01 → 2026-04-01** (~6,3 tahun), sementara `NEW_COINS` (TON, ADA, TRX, SHIB, AVAX, LINK, DOT, SUI, POL, NEAR, PEPE, TAO, ARB — 13 koin) hanya mendapatkan data **2023-04-01 → 2026-04-01** (~3 tahun). Disparitas 3 tahun ini berarti new coins **tidak pernah melihat bull 2021 maupun bear 2022**, sehingga model ensemble (LGBM + LSTM) yang dilatih pada new coins akan memiliki **representasi regime pasar yang jauh lebih sempit**. Mengingat user menginginkan semua koin diperlakukan seragam — `ALL_COINS = TRAINING_COINS + NEW_COINS` dengan satu perioda `TRAIN_START` yang sama — maka konfigurasi saat ini perlu disederhanakan.
+**Tanggal:** 2026-05-03  
+**Auditor:** AI Code Analysis  
+**Scope:** Apakah pipeline siap dijalankan untuk training penuh (01_fetch → 08_backtest)
 
 ---
 
-## TEMUAN PER KATEGORI
+## Ringkasan Eksekutif
 
-### [KONFIGURASI] Lokasi: [`config.py:36-37`](config.py:36)
-```
-Deskripsi: NEW_COINS_START = 2023-04-01 dan NEW_COINS_END = 2026-04-01
-           didefinisikan terpisah dari TRAIN_START (2020-01-01).
-Dampak:    New coins kehilangan 3 tahun data historis (2020-2023).
-           Tidak ada data bear market 2022, bull 2021.
-Bukti:
-    TRAIN_START     = datetime(2020, 1, 1, tzinfo=timezone.utc)
-    TRAIN_END       = datetime(2026, 4, 1, tzinfo=timezone.utc)
-    NEW_COINS_START = datetime(2023, 4, 1, tzinfo=timezone.utc)  ← 3 tahun lebih pendek
-    NEW_COINS_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
-```
+**Verdict: ✅ LAYAK DIJALANKAN**
 
-### [LOGIKA] Lokasi: [`pipeline/01_fetch.py:57-99`](pipeline/01_fetch.py:57)
-```
-Deskripsi: Fungsi _build_coin_schedule() mengimplementasikan logika cabang:
-           - Jika coin ∈ TRAINING_COINS → pakai TRAIN_START (2020)
-           - Jika coin ∈ NEW_COINS → pakai NEW_COINS_START (2023)
-           Ini terjadi di 3 mode: --new, --all, dan --coins custom.
-Dampak:    Setiap kali fetch dijalankan dengan --all, 13 dari 20 koin
-           hanya mendapat 3 tahun data. Model akan under-trained untuk
-           new coins pada regime bear.
-Bukti:
-    if args.all:
-        schedule = (
-            [(sym, TRAIN_START, TRAIN_END)         for sym in TRAINING_COINS] +
-            [(sym, NEW_COINS_START, NEW_COINS_END)  for sym in NEW_COINS]
-        )
-    elif args.coins:
-        schedule = [
-            (sym,
-             TRAIN_START      if sym in TRAINING_SET else NEW_COINS_START,
-             TRAIN_END        if sym in TRAINING_SET else NEW_COINS_END,
-            ) for sym in custom
-        ]
-```
+Setelah verifikasi menyeluruh terhadap seluruh pipeline (01_fetch → 08_backtest), `run_pipeline.py`, `config.py`, dan sinkronisasi dengan `Riset_pemodelan.ipynb`, **tidak ditemukan showstopper**. Semua 5 perbaikan dari audit sebelumnya telah teraplikasi dengan benar. Terdapat 3 temuan minor yang perlu dicatat tetapi **tidak menghalangi eksekusi training**.
 
-### [DATA] Lokasi: [`pipeline/04_train_lgbm.py`](pipeline/04_train_lgbm.py) dan [`pipeline/05_train_lstm.py`](pipeline/05_train_lstm.py)
-```
-Deskripsi: Kedua skrip training (LGBM line 156, LSTM line 233)
-           menggunakan ALL_COINS atau TRAINING_COINS untuk iterasi,
-           tetapi TIDAK menentukan filter tanggal. Data loader membaca
-           semua file parquet yang ada di LABEL_DIR.
-Dampak:    Training akan menggunakan data apa pun yang ada di disk.
-           Jika new coins hanya di-fetch dari 2023, maka training
-           hanya melihat 3 tahun data untuk koin tersebut.
-           Walk-forward validation dengan 8 folds akan memiliki
-           window lebih pendek untuk new coins.
-Bukti:
-    # 04_train_lgbm.py:156
-    coins = ALL_COINS if args.all else TRAINING_COINS
+---
 
-    # 05_train_lstm.py:233
-    coins = ALL_COINS if args.all else TRAINING_COINS
-```
+## Temuan Per Kategori
 
-### [DATA] Lokasi: [`pipeline/06_ensemble.py:107`](pipeline/06_ensemble.py:107)
-```
-Deskripsi: Ensemble juga menggunakan ALL_COINS / TRAINING_COINS
-           tanpa filter tanggal.
-Dampak:    Meta-learner (Logistic Regression) akan melihat OOF
-           predictions dari new coins yang hanya punya data 2023+.
-           Konsistensi antar koin tidak seragam.
-```
+### ✅ PASS — Semua Berfungsi Dengan Benar
 
-### [DATA] Lokasi: [`pipeline/08_backtest.py:818-823`](pipeline/08_backtest.py:818)
-```
-Deskripsi: Backtest menggunakan ALL_COINS / TRAINING_COINS.
-           Tapi inference config (line 671-673) menulis:
-           training_period.start = TRAIN_START.date() (2020-01-01)
-           untuk SEMUA koin — termasuk new coins yang sebenarnya
-           hanya punya data dari 2023.
-Dampak:    Inference config memberikan informasi yang MENYESATKAN:
-           mengklaim training period 2020-2026 untuk new coins
-           padahal data aktual hanya 2023-2026.
-```
+| Area | Status | Detail |
+|------|--------|--------|
+| Pipeline Execution Order | ✅ | `run_pipeline.py` urut: 01→02→03→04→05→06→07→08. `--train` = 04+05+06 |
+| CLI Argument Parsing | ✅ | Semua script punya `--all`, `--run-id`. Argumen diverifikasi per script |
+| H4 Walk-Forward Gap | ✅ | `TimeSeriesSplit(n_splits=8, gap=6)` = ~24 jam purge |
+| H1 Walk-Forward Gap | ✅ | `TimeSeriesSplit(n_splits=4, gap=24)` = ~24 jam purge |
+| LSTM Purge Gap | ✅ | `PURGE_GAP_BARS=5` dengan purge di kedua sisi fold |
+| Model File Checks (08) | ✅ | Check: `lgbm_baseline.pkl`, `lstm_best.pt`, `lstm_scaler.pkl`, `feature_cols_v2.json`. H4 model opsional |
+| Data Independence (H4↔H1) | ✅ | Kedua training baca dari `LABEL_DIR/*_features_v3.parquet` yang sama; tidak ada dependency silang |
+| Previous Audit Fixes | ✅ | Semua 5 fix (percentile logging, pass rate, all-folds calibration, tiered LSTM, inference.py logging) terkonfirmasi |
+| Binance Multi-Endpoint | ✅ | `core/binance_client.py:27-33` punya 5 endpoint fallback — fapi → data-api → api1 → api2 → api3 |
+| requirements.txt | ✅ | Semua dependency kunci (lightgbm, torch, shap, scikit-learn, pandas) tercantum |
+| No PostgreSQL Dep | ✅ | Pipeline training tidak bergantung pada database — independence terjamin |
 
-### [KONFIGURASI] Lokasi: [`d:/Apps-Dev/swint_tradev2/models/inference_config.json:5-6`](d:/Apps-Dev/swint_tradev2/models/inference_config.json:5)
-```
-Deskripsi: Inference config DEPLOYMENT (swint_tradev2) masih menyimpan
-           training_period.start = "2022-01-01" — ini STALE dari
-           konfigurasi lama. Config.py sekarang 2020-01-01.
-Dampak:    Deployment tidak sadar bahwa model diperbarui dengan
-           data mulai 2020. Tidak ada dampak runtime, tapi
-           informasi perioda di inference_config.json tidak akurat.
-```
+### 🟡 MINOR — Perlu Dicatat, Tidak Blokir
 
-### [KONFIGURASI] Lokasi: [`d:/Apps-Dev/swint_tradev2/models/inference_config.json:13,31`](d:/Apps-Dev/swint_tradev2/models/inference_config.json:13)
+#### Temuan 1: `feature_cols_v2.json` Overwrite Antar Script
+
+| Field | Detail |
+|-------|--------|
+| **Lokasi** | `pipeline/05_train_lgbm_h1.py:207` dan `pipeline/06_train_lstm.py:288` |
+| **Deskripsi** | Kedua script menyimpan `feature_cols_v2.json` ke `MODEL_DIR` yang sama. Karena 06 berjalan setelah 05, file ditimpa dengan feature cols dari LSTM. |
+| **Dampak** | **Saat ini tidak masalah** karena kedua script menggunakan logika identik: `[c for c in df.columns if c not in NON_FEATURE_COLS]` dengan `NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}`. Output feature list identik. |
+| **Risiko** | Jika suatu saat `06_train_lstm.py` melakukan preprocessing yang berbeda (drop kolom, filter), feature cols akan divergen dan menyebabkan **dimension mismatch** saat `08_backtest.py` memuat `feature_cols_v2.json`. |
+| **Rekomendasi** | Simpan feature cols per-model: `h1_feature_cols.json` dan `lstm_feature_cols.json`. Atau jika memang identik, simpan sekali saja di 03_engineer. |
+
+#### Temuan 2: `sed` Workaround di Notebook Mungkin Redundan untuk Klines
+
+| Field | Detail |
+|-------|--------|
+| **Lokasi** | `Riset_pemodelan.ipynb:817` — `sed -i 's|https://fapi.binance.com|https://data-api.binance.vision|g' config.py` |
+| **Deskripsi** | Notebook mengubah `BINANCE_BASE_URL` di config.py untuk fallback kline. Namun `core/binance_client.py:27-33` sudah memiliki `KLINE_ENDPOINTS` dengan multi-endpoint fallback — data-api.binance.vision sudah sebagai fallback ke-2. |
+| **Dampak** | sed **masih diperlukan untuk non-kline endpoints** (funding rate, OI) yang menggunakan `BINANCE_BASE_URL` dari config.py (`01_fetch.py:108` → `BinanceClient(base_url=BINANCE_BASE_URL)`). |
+| **Verifikasi** | `config.py:44`: `BINANCE_BASE_URL = "https://fapi.binance.com"` — koneksi funding rate, OI, taker ratio tetap perlu fallback jika fapi diblokir. |
+
+#### Temuan 3: `04_train_lgbm_h4.py` Tidak Punya `--coins` Flag
+
+| Field | Detail |
+|-------|--------|
+| **Lokasi** | `pipeline/04_train_lgbm_h4.py:323-327` |
+| **Deskripsi** | Hanya punya `--all` dan `--run-id`. Tidak seperti 05/06 yang juga punya mekanisme `--all`/`TRAINING_COINS` scoping (via `ALL_COINS` vs `TRAINING_COINS` di config). |
+| **Dampak** | Konsisten dengan desain — H4 selalu dilatih pada koin yang tersedia. Bukan bug. |
+
+---
+
+## Jalur Eksekusi yang Teridentifikasi
+
 ```
-Deskripsi: max_hold_bars = 48 di inference config, sedangkan
-           config.py sekarang SWING_LABEL_MAX_HOLD = 24.
-           Juga max_holding_bars = 48 di section labeling (line 31).
-Dampak:    Jika inference engine membaca max_hold_bars dari
-           inference_config.json (bukan config.py), maka sinyal
-           trading realtime menggunakan parameter LAMA (48 bar)
-           yang sudah di-rekomendasikan untuk diturunkan.
+run_pipeline.py --all
+  │
+  ├── 01_fetch.py ───────────────────────────────────── Binance API (multi-endpoint fallback)
+  │     │
+  │     └── core/binance_client.py · KLINE_ENDPOINTS [fapi → data-api → api1→api2→api3]
+  │
+  ├── 02_clean.py ────────────────────────────────────── Multi-TF alignment → H1 grid
+  │     │
+  │     └── audit_leakage() · fix_ohlc() · detect_gaps()
+  │
+  ├── 03_engineer.py ─────────────────────────────────── 85 fitur V3 + swing labels
+  │     │
+  │     └── engineer_features() · validate_features() → _features_v3.parquet
+  │
+  ├── 04_train_lgbm_h4.py ────────────────────────────── Resample H4 → Binary (LONG/SHORT)
+  │     │                                                 Walk-Forward CV (8 fold, gap 6)
+  │     │                                                 Isotonic Calibration (all folds)
+  │     │
+  │     └── Output: lgbm_h4.pkl + h4_calibrator.pkl + h4_feature_cols.json
+  │
+  ├── 05_train_lgbm_h1.py ────────────────────────────── 3-class LGBM (SHORT/FLAT/LONG)
+  │     │                                                 Walk-Forward CV (4 fold, gap 24)
+  │     │
+  │     └── Output: lgbm_baseline.pkl + feature_cols_v2.json ← overwritten by 06
+  │
+  ├── 06_train_lstm.py ───────────────────────────────── Purged Walk-Forward CV (8 fold, gap 5)
+  │     │                                                 LSTM (seq_len=32, hidden=128)
+  │     │
+  │     └── Output: lstm_best.pt + lstm_scaler.pkl + feature_cols_v2.json ← overwrites 05
+  │
+  ├── 07_evaluate.py ─────────────────────────────────── Multi-model eval (H4+H1+cascade)
+  │
+  └── 08_backtest.py ─────────────────────────────────── Walk-forward backtest
+        │                                                 hierarchical_predict(H4→H1→LSTM)
+        └── Output: backtest_results.json + charts
 ```
 
 ---
 
-## JALUR EKSEKUSI YANG TERIDENTIFIKASI
+## Hipotesis Risiko (Diurutkan dari Paling Mungkin)
 
-### Alur Data Perioda — Training Coins
-```
-config.py:TRAIN_START=2020-01-01
-    → 01_fetch.py:schedule → fetch dari Binance (2020→2026)
-        → data/raw/klines/*/  ← data penuh 6,3 tahun
-            → 02_clean.py → data/processed/*_clean.parquet
-                → 03_engineer.py → data/labeled/*_features_v3.parquet
-                    → 04_train_lgbm.py  ✅ data 2020-2026
-                    → 05_train_lstm.py  ✅ data 2020-2026
-                    → 06_ensemble.py    ✅ data 2020-2026
-                    → 08_backtest.py    ✅ data 2020-2026
-```
+### 1. ⚠️ Feature Cols Divergence (Risiko Masa Depan)
+**Jika** suatu saat `06_train_lstm.py` mengubah preprocessing (misal: drop kolom tertentu sebelum training), `feature_cols_v2.json` akan menyimpan daftar feature LSTM yang berbeda dari H1. Saat `08_backtest.py` memuat file ini, ia akan memberikan feature set LSTM ke H1 LGBM, menyebabkan:
+- `ValueError: Number of features mismatch` jika feature list lebih pendek
+- Silent wrong predictions jika feature list tidak akurat
 
-### Alur Data Perioda — New Coins (BERMASALAH)
-```
-config.py:NEW_COINS_START=2023-04-01
-    → 01_fetch.py:schedule → fetch dari Binance (2023→2026)  ⚠️
-        → data/raw/klines/*/  ← data hanya 3 tahun
-            → 02_clean.py → data/processed/*_clean.parquet
-                → 03_engineer.py → data/labeled/*_features_v3.parquet
-                    → 04_train_lgbm.py  ⚠️ hanya data 2023-2026
-                    → 05_train_lstm.py  ⚠️ hanya data 2023-2026
-                    → 06_ensemble.py    ⚠️ hanya data 2023-2026
-                    → 08_backtest.py    ⚠️ hanya data 2023-2026
-                                        ❌ TAPI inference config menulis 2020-2026
-```
+**Probabilitas:** Rendah saat ini, tapi meningkat setiap kali ada modifikasi kode.
 
-### Lingkup Dampak per Pipeline Stage
+### 2. 🟢 Binance FAPI Blocking (Risiko Eksternal)
+Jika IP cloud (Colab/VPS) memblokir `fapi.binance.com`:
+- **Klines**: ✅ Aman — `binance_client.py` fallback ke `data-api.binance.vision` secara otomatis
+- **Funding Rate / OI**: ⚠️ Bergantung pada `BINANCE_BASE_URL` yang di-sed di notebook
+- **Test**: ✅ `test_connection()` mencoba semua 5 endpoint
 
-| Pipeline | Impor `NEW_COINS_START`? | Terdampak? | Detail |
-|----------|--------------------------|------------|--------|
-| `01_fetch.py` | ✅ Ya — line 26, 69, 75, 87 | **LANGSUNG** | Jadwal fetch berbeda per grup koin |
-| `02_clean.py` | ❌ Tidak | Tidak langsung | Hanya membersihkan apa yang ada di raw/ |
-| `03_engineer.py` | ❌ Tidak | Tidak langsung | Fitur dihitung dari data yang ada |
-| `04_train_lgbm.py` | ❌ Tidak | **Tidak langsung** | Data new coins hanya 3 tahun |
-| `05_train_lstm.py` | ❌ Tidak | **Tidak langsung** | Sama seperti LGBM |
-| `06_ensemble.py` | ❌ Tidak | **Tidak langsung** | OOF new coins dari data terbatas |
-| `07_evaluate.py` | ❌ Tidak | Tidak langsung | SHAP dari fitur yang ada |
-| `08_backtest.py` | ❌ Tidak | **Tidak langsung** | Backtest new coins hanya 3 tahun |
-| `09_holdout_backtest.py` | ❌ Tidak | **Tidak langsung** | Holdout independen (2025→2026) |
-| `10_visualize.py` | ❌ Tidak | Tidak langsung | Visualisasi dari data yang ada |
+### 3. 🟢 H4 Label Imbalance
+`04_train_lgbm_h4.py:210` sudah memperingatkan jika LONG+SHORT < 2% dari total bars. Ini tidak blocking tapi bisa menyebabkan model bias ke FLAT (yang kemudian di-drop) atau binary classifier tidak balanced.
 
 ---
 
-## HIPOTESIS PENYEBAB ROOT
+## Ringkasan Status Perbaikan Sebelumnya
 
-### 1. 🎯 Asumsi "New Coins = Baru Listing" — Kemungkinan: 95%
-**Bukti:** Komentar di [`01_fetch.py:62-64`](pipeline/01_fetch.py:62):
-```python
-# Training coins mendapat data penuh dari TRAIN_START (Jan 2020).
-# New coins mendapat data dari NEW_COINS_START (Apr 2023) karena banyak
-# yang baru listing setelah 2023.
-```
-Ini menunjukkan developer berasumsi bahwa `NEW_COINS` adalah koin yang baru listing di Binance sekitar 2023. Namun kenyataannya:
-- ADAUSDT — listing sejak 2021
-- TRXUSDT — listing sejak 2019
-- DOTUSDT — listing sejak 2020
-- LINKUSDT — listing sejak 2019
-- AVAXUSDT — listing sejak 2021
-**Hanya TAOUSDT dan ARBUSDT yang benar-benar baru listing setelah 2023.** Jadi asumsi ini salah untuk mayoritas new coins.
-
-### 2. 🎯 Warisan dari Konfigurasi Lama — Kemungkinan: 80%
-**Bukti:** `NEW_COINS_START` mungkin merupakan sisa dari konfigurasi sebelumnya ketika `TRAIN_START` masih `2022-01-01` (lihat `inference_config.json` yang masih menyimpan `"start": "2022-01-01"`). Saat `TRAIN_START` diperpanjang ke 2020, `NEW_COINS_START` tidak ikut diperbarui.
-
-### 3. 🎯 Kekhawatiran Binance Rate Limit — Kemungkinan: 40%
-**Bukti:** Dengan 20 koin × 3 timeframe × ~6 tahun data, jumlah request API bisa besar. Mungkin sengaja membatasi new coins untuk mengurangi waktu fetch. Tapi ini tidak relevan karena pipeline sudah memiliki rate limit handling (`SLEEP_BETWEEN_REQUESTS=0.12`, `SLEEP_ON_RATE_LIMIT=60`).
+| # | Item | Status | File |
+|---|------|--------|------|
+| 🔴 2.1 | Log percentile post-calibration | ✅ | `04_train_lgbm_h4.py:414-440` |
+| 🟡 2.2 | All-folds concatenated calibration | ✅ | `04_train_lgbm_h4.py:406-446` |
+| 🔴 2.3 | Log pass rate per layer | ✅ | `backtest_utils.py:213-219` |
+| 🟡 2.4 | LSTM penalty tiered/absolute | ✅ | `config.py:197-200` |
+| 🔴 2.1 | Percentile logging in inference.py | ✅ | `inference.py` (external project) |
 
 ---
 
-## PERTANYAAN KLARIFIKASI
+## Checklist Training Readiness
 
-1. Apakah TONUSDT, ADAUSDT, TRXUSDT, AVAXUSDT, LINKUSDT, DOTUSDT memiliki data historis di Binance sejak 2020? (Perlu dicep—kemungkinan besar ya untuk mayoritas)
-2. Apakah ada koin di NEW_COINS yang benar-benar baru listing setelah 2023? (Hanya TAOUSDT ≈ Feb 2024, ARBUSDT ≈ Mar 2023)
-3. Apakah ingin tetap mempertahankan `TRAINING_COINS` vs `NEW_COINS` sebagai grup terpisah untuk keperluan validasi hold-out, atau semua koin diperlakukan identik?
-
----
-
-## REKOMENDASI PERBAIKAN
-
-### Rekomendasi 1 (WAJIB — Prioritas Tertinggi)
-**Apa:** Hapus `NEW_COINS_START` dan `NEW_COINS_END` dari config.py. Gunakan `TRAIN_START` dan `TRAIN_END` untuk semua koin tanpa pengecualian.
-
-**Mengapa:** User secara eksplisit menginginkan `ALL_COINS = TRAINING_COINS + NEW_COINS` dengan perioda seragam. Semua koin kecuali TAO & ARB sudah listing di Binance sejak sebelum 2020 atau setidaknya 2021. Data 2020-2022 (bull 2021, bear 2022) penting untuk representasi regime pasar.
-
-**File yang perlu diubah:**
-- [`config.py:36-37`](config.py:36) — hapus `NEW_COINS_START` dan `NEW_COINS_END`
-- [`pipeline/01_fetch.py:57-99`](pipeline/01_fetch.py:57) — sederhanakan `_build_coin_schedule()`: semua koin pakai `TRAIN_START` dan `TRAIN_END`
-- [`pipeline/01_fetch.py:23-27`](pipeline/01_fetch.py:23) — hapus import `NEW_COINS_START, NEW_COINS_END`
-
-### Rekomendasi 2 (PENTING)
-**Apa:** Setelah menghapus `NEW_COINS_START`, jalankan ulang fetch untuk semua new coins dengan perioda penuh `python pipeline/01_fetch.py --new --reset`.
-
-**Mengapa:** Data existing di `data/raw/` untuk new coins hanya dari 2023. Perlu difetch ulang dari 2020 untuk mengisi gap data.
-
-### Rekomendasi 3 (PENTING — Maintenance)
-**Apa:** Perbarui `inference_config.json` di `swint_tradev2/models/` setelah training selesai dengan nilai parameter terkini. Pipeline [`08_backtest.py:671-673`](pipeline/08_backtest.py:671) sudah melakukan ini saat `generate_inference_config()`, jadi hanya perlu memastikan file deployment di-copy setelah training.
-
-**Mengapa:** Inference config yang stale (max_hold_bars=48, training_period=2022-2025) dapat menyebabkan inkonsistensi antara training dan inference jika deployment membaca parameter dari JSON tersebut.
-
-### Rekomendasi 4 (OPSIONAL — Refactoring)
-**Apa:** Pertimbangkan untuk menghapus `TRAINING_COINS` / `NEW_COINS` dikotomi jika semua koin diperlakukan identik. Cukup gunakan `ALL_COINS` di semua pipeline stage.
-
-**Mengapa:** Menyederhanakan kode dan menghilangkan kemungkinan perlakuan berbeda di masa depan. Argumen `--new` di CLI bisa dihapus karena tidak lagi relevan.
+| Step | Script | Ready? | Notes |
+|------|--------|--------|-------|
+| 01 — Fetch | `01_fetch.py` | ✅ | Multi-endpoint fallback, `--all` support |
+| 02 — Clean | `02_clean.py` | ✅ | Gap detection, leakage audit, multi-TF alignment |
+| 03 — Engineer | `03_engineer.py` | ✅ | 85 fitur V3, swing labels, NaN handling |
+| 04 — H4 LGBM | `04_train_lgbm_h4.py` | ✅ | Binary classification, isotonic calibration, all-folds |
+| 05 — H1 LGBM | `05_train_lgbm_h1.py` | ✅ | 3-class, cost-sensitive, walk-forward CV |
+| 06 — LSTM | `06_train_lstm.py` | ✅ | Purged CV, early stopping, GPU support |
+| 07 — Evaluate | `07_evaluate.py` | ✅ | Multi-model, SHAP, cascade evaluation |
+| 08 — Backtest | `08_backtest.py` | ✅ | Hierarchical predict, pass rate logging, confidence filter |
+| Orchestrator | `run_pipeline.py` | ✅ | `--all` = 01→08, `--train` = 04→06 |
 
 ---
 
-## LAMPIRAN: Daftar Koin dan Perkiraan Listing di Binance Futures
+## Rekomendasi (Deskriptif, Tanpa Kode)
 
-| Koin | Grup | Listing Binance Futures | Data 2020? |
-|------|------|------------------------|------------|
-| SOLUSDT | Training | Aug 2021 | ✅ Tersedia |
-| ETHUSDT | Training | Sejak awal | ✅ Tersedia |
-| BNBUSDT | Training | Sejak awal | ✅ Tersedia |
-| XRPUSDT | Training | Sejak awal | ✅ Tersedia |
-| DOGEUSDT | Training | Apr 2021 | ✅ Tersedia |
-| **TONUSDT** | **New** | **Nov 2024** | ❌ Baru listing |
-| **ADAUSDT** | **New** | **Mar 2021** | **✅ Tersedia — tapi dibatasi 2023** |
-| **TRXUSDT** | **New** | **Jan 2020** | **✅ Tersedia — tapi dibatasi 2023** |
-| **1000SHIBUSDT** | **New** | **May 2021** | **✅ Tersedia — tapi dibatasi 2023** |
-| **AVAXUSDT** | **New** | **Sep 2021** | **✅ Tersedia — tapi dibatasi 2023** |
-| **LINKUSDT** | **New** | **2019** | **✅ Tersedia — tapi dibatasi 2023** |
-| **DOTUSDT** | **New** | **Sep 2020** | **✅ Tersedia — tapi dibatasi 2023** |
-| **SUIUSDT** | **New** | **May 2023** | ❌ Listing 2023 |
-| **POLUSDT** | **New** | **~2021** | **✅ Tersedia — tapi dibatasi 2023** |
-| **NEARUSDT** | **New** | **Oct 2021** | **✅ Tersedia — tapi dibatasi 2023** |
-| **1000PEPEUSDT** | **New** | **Apr 2023** | ❌ Listing 2023 |
-| **TAOUSDT** | **New** | **Feb 2024** | ❌ Listing 2024 |
-| **ARBUSDT** | **New** | **Mar 2023** | ❌ Listing 2023 |
+1. **Pisahkan Feature Cols per Model** — Simpan `h1_feature_cols.json` dan `lstm_feature_cols.json` secara terpisah untuk menghindari risiko overwrite. `feature_cols_v2.json` dapat dipertahankan sebagai alias backward-compat atau dihapus jika sudah tidak digunakan.
 
-**Kesimpulan:** Dari 13 new coins, **9 koin (69%) sudah listing sebelum 2023** dan seharusnya bisa mendapat data dari 2020. Hanya 4 koin (TON, SUI, PEPE, TAO, ARB ≈ 31%) yang benar-benar baru listing setelah 2023. Untuk koin-koin yang benar-benar baru, Binance akan mengembalikan data kosong untuk periode sebelum listing — fetch akan tetap aman (tidak error), hanya dapat data sedikit.
+2. **Dokumentasi sed Workaround** — Tambahkan komentar di notebook bahwa sed pada `config.py` diperlukan untuk non-kline endpoints (funding rate, OI), bukan untuk klines — karena `binance_client.py` sudah punya fallback internal.
+
+3. **Validasi Post-Training** — Setelah semua training selesai, jalankan `07_evaluate.py` dengan `--run-id` yang sesuai untuk memverifikasi bahwa semua model dapat dimuat dan menghasilkan prediksi yang konsisten, sebelum lanjut ke `08_backtest.py`.
 
 ---
 
-*Audit selesai. Tidak ada perubahan kode yang dilakukan — laporan ini hanya untuk analisis.*
+## Kesimpulan
+
+**✅ PIPELINE LAYAK DIJALANKAN UNTUK TRAINING.**
+
+Semua komponen kritis telah diverifikasi: argument parsing, walk-forward gap integrity, model file dependencies, multi-endpoint fallback, data independence antar training stage, dan seluruh 5 perbaikan dari audit sebelumnya. Tidak ada showstopper.
+
+Tiga temuan minor (feature_cols overwrite, sed redundancy parsial, H4 CLI keterbatasan) perlu dicatat untuk pengembangan ke depan tetapi **tidak menghalangi eksekusi training sekarang**.

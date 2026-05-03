@@ -1,11 +1,32 @@
 """
-pipeline/05_train_lstm.py — Fase 5: LSTM Temporal Sequence Model
+pipeline/06_train_lstm.py — Fase 06: LSTM Momentum Confirmation Training
 Purged Walk-Forward CV (8 fold, purge gap 5 bar)
 
+PERAN DALAM HIERARCHICAL CASCADE:
+  LSTM berfungsi sebagai "confirmation vote" pada STEP 3 dari cascade:
+
+    STEP 1  04_train_lgbm_h4.py → H4 LGBM bias direction (LONG/SHORT/FLAT)
+    STEP 2  05_train_lgbm_h1.py → H1 LGBM entry signal dengan confidence threshold
+    STEP 3  06_train_lstm.py    → LSTM ← file ini
+    STEP 4  Decision            → sinyal diterbitkan hanya jika H4 + H1 + LSTM sepakat
+
+  Aturan konfirmasi (di backtest_utils.py & inference.py):
+    • Jika H4=LONG dan H1 P(LONG) ≥ 0.62 → cek LSTM:
+        LSTM predict LONG  → CONFIRMED → sinyal LONG
+        LSTM predict lain  → REJECTED  → FLAT (hindari false breakout)
+    • Jika H4=SHORT dan H1 P(SHORT) ≥ 0.62 → cek LSTM:
+        LSTM predict SHORT → CONFIRMED → sinyal SHORT
+        LSTM predict lain  → REJECTED  → FLAT
+    • H4=FLAT → selalu FLAT (tidak cek H1/LSTM)
+
+  Training pipeline TIDAK berubah — LSTM tetap dilatih dengan 3-class swing
+  labels (LONG/FLAT/SHORT) menggunakan purged walk-forward CV. Perubahan hanya
+  ada di decision layer (interpretation), bukan di training objective.
+
 Jalankan:
-  python pipeline/05_train_lstm.py               # training coins
-  python pipeline/05_train_lstm.py --all         # semua 20 koin
-  python pipeline/05_train_lstm.py --run-id my_run
+  python pipeline/06_train_lstm.py               # training coins
+  python pipeline/06_train_lstm.py --all         # semua 20 koin
+  python pipeline/06_train_lstm.py --run-id my_run
 
 CATATAN: Lebih baik dijalankan di Google Colab dengan GPU T4.
 Output: models/runs/{run_id}/lstm.pt, lstm_scaler.pkl, lstm_cv_results.json
@@ -43,7 +64,7 @@ from config import (
 from core.models import TradingLSTM, save_lstm
 from core.utils import setup_logger
 
-logger = setup_logger("05_train_lstm")
+logger = setup_logger("06_train_lstm")
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}

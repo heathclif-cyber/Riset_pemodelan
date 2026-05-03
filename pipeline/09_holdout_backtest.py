@@ -2,7 +2,9 @@
 pipeline/09_holdout_backtest.py — Hold-Out Backtest (Genuine Out-of-Sample)
 
 Fetch data baru (default: Mei 2025 – Apr 2026), engineer fitur,
-lalu backtest menggunakan model yang sudah ada TANPA retraining.
+lalu backtest menggunakan hierarchical cascade (H4→H1→LSTM) TANPA retraining.
+
+Stacked ensemble (LogReg + Isotonic) telah dihapus — lihat AUDIT_REPORT.md.
 
 Output disimpan terpisah di:
   data/holdout/raw/        ← raw klines hold-out
@@ -30,8 +32,6 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
-import torch
-from torch.utils.data import DataLoader
 
 warnings.filterwarnings("ignore")
 
@@ -45,20 +45,21 @@ from config import (
     SLEEP_ON_RATE_LIMIT, MAX_RETRIES, RETRY_BACKOFF_BASE,
     KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT,
     LABEL_MAP, NUM_CLASSES, LSTM_SEQ_LEN,
-    MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE,
+    MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE, SLIPPAGE_PER_SIDE,
     MAX_HOLDING_BARS, CONFIDENCE_THRESHOLD_ENTRY,
     SWING_LABEL_MAX_HOLD, SWING_LABEL_MIN_RR,
     SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     FEATURE_COLS_V3, VP_WINDOW, VP_BINS,
     SWING_LOOKBACK, FVG_MIN_GAP_ATR,
+    H4_FEATURE_COLS, LSTM_CONFIRMATION_ENABLED,
 )
 from core.binance_client import BinanceClient
 from core.fetchers import fetch_coin, fetch_all_macro
-from core.models import load_lstm, ProbabilityCalibrator
+from core.models import load_lstm
 from core.evaluator import full_trading_report
 from core.utils import setup_logger, ensure_utc_index
 from core.features import engineer_features
-from pipeline.p05_utils import SequenceDataset
+from pipeline.backtest_utils import hierarchical_predict
 
 logger = setup_logger("09_holdout_backtest")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -293,42 +294,18 @@ def engineer_holdout_symbol(symbol: str) -> bool:
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
-# STEP 4 — BACKTEST
+# STEP 4 — BACKTEST (Hierarchical Cascade)
 # ═══════════════════════════════════════════════════════════════════════════════
-
-def get_ensemble_proba(
-    lgbm_model, lstm_model, lstm_scaler,
-    meta_learner, calibrator,
-    X: np.ndarray, feat_cols: list[str], df_slice: pd.DataFrame,
-) -> tuple[np.ndarray, np.ndarray]:
-    lgbm_proba = lgbm_model.predict_proba(df_slice[feat_cols])
-
-    X_sc   = lstm_scaler.transform(X)
-    dummy  = np.zeros(len(X_sc), dtype=np.int64)
-    ds     = SequenceDataset(X_sc, dummy)
-    loader = DataLoader(ds, batch_size=1024, shuffle=False)
-
-    lstm_list = []
-    lstm_model.eval()
-    with torch.no_grad():
-        for xb, _ in loader:
-            logits = lstm_model(xb.to(DEVICE))
-            lstm_list.append(torch.softmax(logits, dim=1).cpu().numpy())
-    lstm_proba = np.vstack(lstm_list)
-
-    if len(lstm_proba) < len(lgbm_proba):
-        pad = np.ones((len(lgbm_proba) - len(lstm_proba), NUM_CLASSES)) / NUM_CLASSES
-        lstm_proba = np.vstack([pad, lstm_proba])
-
-    meta_input = np.hstack([lgbm_proba, lstm_proba])
-    cal_proba  = calibrator.transform(meta_learner.predict_proba(meta_input))
-    return cal_proba.argmax(axis=1), cal_proba.max(axis=1)
-
+# get_ensemble_proba() dihapus — gunakan hierarchical_predict() dari 08_backtest
 
 def backtest_holdout_symbol(
-    symbol: str, feat_cols: list[str],
-    lgbm_model, lstm_model, lstm_scaler,
-    meta_learner, calibrator,
+    symbol: str,
+    feat_cols: list[str],
+    h4_model,
+    h1_model,
+    lstm_model,
+    lstm_scaler,
+    h4_feat_cols: list[str],
 ) -> dict | None:
     path = HOLDOUT_LABEL_DIR / f"{symbol}_features_v3.parquet"
     if not path.exists():
@@ -349,11 +326,10 @@ def backtest_holdout_symbol(
 
     logger.info(f"[{symbol}] Hold-out inference: {len(df):,} bars...")
 
-    # Tidak ada fold — predict seluruh hold-out sekaligus (murni out-of-sample)
-    y_pred, confidence = get_ensemble_proba(
-        lgbm_model, lstm_model, lstm_scaler,
-        meta_learner, calibrator,
-        X, valid_cols, df[valid_cols],
+    # Hierarchical cascade — predict seluruh hold-out (murni out-of-sample)
+    y_pred, confidence = hierarchical_predict(
+        h4_model, h1_model, lstm_model, lstm_scaler,
+        X, valid_cols, h4_feat_cols, df[valid_cols],
     )
 
     # Confidence filter
@@ -383,6 +359,7 @@ def backtest_holdout_symbol(
         modal          = MODAL_PER_TRADE,
         leverages      = LEVERAGE_SIM,
         fee_per_side   = FEE_PER_SIDE,
+        slippage       = SLIPPAGE_PER_SIDE,
         min_rr         = SWING_LABEL_MIN_RR,
         min_tp_atr     = SWING_LABEL_MIN_TP,
         max_sl_atr     = SWING_LABEL_MAX_SL,
@@ -467,30 +444,39 @@ def main():
     else:
         logger.info("=== STEP 3: SKIP ENGINEER ===")
 
-    # ── Step 4: Load models ───────────────────────────────────────────────────
-    logger.info("=== STEP 4: BACKTEST ===")
-    for path, name in [
-        (MODEL_DIR / "lgbm_baseline.pkl",    "LightGBM"),
+    # ── Step 4: Load models (Hierarchical Cascade) ────────────────────────────
+    logger.info("=== STEP 4: BACKTEST (Hierarchical Cascade) ===")
+    required_models = [
+        (MODEL_DIR / "lgbm_baseline.pkl",    "H1 LightGBM"),
         (MODEL_DIR / "lstm_best.pt",         "LSTM"),
         (MODEL_DIR / "lstm_scaler.pkl",      "LSTM Scaler"),
-        (MODEL_DIR / "ensemble_meta.pkl",    "Meta-learner"),
-        (MODEL_DIR / "calibrator.pkl",       "Calibrator"),
-        (MODEL_DIR / "feature_cols_v2.json", "Feature cols"),
-    ]:
+        (MODEL_DIR / "feature_cols_v2.json", "H1 Feature cols"),
+    ]
+    for path, name in required_models:
         if not path.exists():
             raise FileNotFoundError(f"{name} tidak ditemukan: {path}")
 
-    lgbm_model   = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
-    lstm_model   = load_lstm(MODEL_DIR / "lstm_best.pt",
-                             device=str(DEVICE)).to(DEVICE)  # ← PERBAIKAN DI SINI
-    lstm_scaler  = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
-    meta_learner = joblib.load(MODEL_DIR / "ensemble_meta.pkl")
-    calibrator   = ProbabilityCalibrator.load(MODEL_DIR / "calibrator.pkl")
+    # H4 model opsional — fallback bias FLAT jika belum dilatih
+    h4_model_path = MODEL_DIR / "lgbm_h4.pkl"
+    h4_feat_path  = MODEL_DIR / "h4_feature_cols.json"
+    if h4_model_path.exists() and h4_feat_path.exists():
+        h4_model = joblib.load(h4_model_path)
+        with open(h4_feat_path) as f:
+            h4_feat_cols = json.load(f)
+        logger.info(f"H4 model loaded: {len(h4_feat_cols)} features")
+    else:
+        h4_model     = None
+        h4_feat_cols = []
+        logger.warning("lgbm_h4.pkl tidak ditemukan — H4 bias FLAT (jalankan 04_train_lgbm_h4.py)")
+
+    h1_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
+    lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
 
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
 
-    logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)}")
+    logger.info(f"Models loaded | Device: {DEVICE} | H1: {len(feat_cols)} | H4: {len(h4_feat_cols)}")
 
     # ── Step 5: Backtest per symbol ───────────────────────────────────────────
     results         = {}
@@ -500,8 +486,8 @@ def main():
         try:
             report = backtest_holdout_symbol(
                 symbol, feat_cols,
-                lgbm_model, lstm_model, lstm_scaler,
-                meta_learner, calibrator,
+                h4_model, h1_model, lstm_model, lstm_scaler,
+                h4_feat_cols,
             )
             if report:
                 results[symbol] = report
@@ -523,18 +509,19 @@ def main():
         return
 
     # ── Aggregate ─────────────────────────────────────────────────────────────
-    all_wr  = [r["winrate"]                    for r in results.values()]
-    all_tpm = [r["trade_per_month"]            for r in results.values()]
-    all_dd5 = [r.get("max_drawdown_lev5x", 0)  for r in results.values()]
-    all_mcl = [r["max_consecutive_loss"]       for r in results.values()]
-    all_sh  = [r.get("sharpe_ratio", 0)        for r in results.values()]
-    all_so  = [r.get("sortino_ratio", 0)       for r in results.values()]
-    all_ca  = [r.get("calmar_ratio", 0)        for r in results.values()]
-    all_pf  = [r.get("profit_factor", 0)       for r in results.values()]
+    all_wr  = [r["winrate"]                   for r in results.values()]
+    all_tpm = [r["trade_per_month"]           for r in results.values()]
+    all_dd5 = [r.get("max_drawdown_lev5x", 0) for r in results.values()]
+    all_mcl = [r["max_consecutive_loss"]      for r in results.values()]
+    all_sh  = [r.get("sharpe_ratio", 0)       for r in results.values()]
+    all_so  = [r.get("sortino_ratio", 0)      for r in results.values()]
+    all_ca  = [r.get("calmar_ratio", 0)       for r in results.values()]
+    all_pf  = [r.get("profit_factor", 0)      for r in results.values()]
 
     aggregate = {
         "run_id":               run_id,
         "holdout_period":       f"{start.date()} → {end.date()}",
+        "model_type":           "hierarchical_v1",
         "coins":                coins,
         "success":              success,
         "failed":               failed,

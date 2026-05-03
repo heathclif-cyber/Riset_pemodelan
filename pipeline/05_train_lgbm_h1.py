@@ -1,11 +1,18 @@
 """
-pipeline/04_train_lgbm.py — Fase 4: LightGBM Baseline Training
-Walk-Forward Validation (TimeSeriesSplit) + Balanced Class Weights
+pipeline/05_train_lgbm_h1.py — Fase 05: LightGBM H1 Entry Signal Training
+Walk-Forward Validation (TimeSeriesSplit) + Cost-Sensitive Class Weights
+
+H1 LGBM adalah primary entry signal generator dalam hierarchical cascade:
+  STEP 1  04_train_lgbm_h4.py → H4 LGBM bias (regime filter)
+  STEP 2  05_train_lgbm_h1.py → H1 LGBM entry ← file ini
+  STEP 3  06_train_lstm.py    → LSTM confirmation
+
+Class weights {SHORT:3x, FLAT:1x, LONG:3x} memaksa model lebih discriminative.
 
 Jalankan:
-  python pipeline/04_train_lgbm.py               # training coins (default)
-  python pipeline/04_train_lgbm.py --all         # semua 20 koin
-  python pipeline/04_train_lgbm.py --run-id my_run  # custom run ID
+  python pipeline/05_train_lgbm_h1.py               # training coins (default)
+  python pipeline/05_train_lgbm_h1.py --all         # semua 20 koin
+  python pipeline/05_train_lgbm_h1.py --run-id my_run  # custom run ID
 
 Output disimpan di models/runs/{run_id}/
 """
@@ -23,7 +30,6 @@ import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
 from sklearn.model_selection import TimeSeriesSplit
-from sklearn.utils.class_weight import compute_sample_weight
 
 warnings.filterwarnings("ignore")
 
@@ -36,10 +42,11 @@ from config import (
     LGBM_PARAMS, LGBM_EARLY_STOPPING,
     N_FOLDS, PURGE_GAP_BARS,
     LABEL_MAP, LABEL_MAP_INV, NUM_CLASSES,
+    LGBM_CLASS_WEIGHTS,
 )
 from core.utils import setup_logger
 
-logger = setup_logger("04_train_lgbm")
+logger = setup_logger("05_train_lgbm_h1")
 
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
@@ -89,8 +96,11 @@ def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int =
     """
     Walk-forward validation — fold selalu maju, tidak pernah mundur.
     Setiap fold: train pada semua data sebelum titik split, test pada setelah.
+    Menggunakan LGBM_CLASS_WEIGHTS {SHORT:3x, FLAT:1x, LONG:3x} untuk
+    cost-sensitive learning agar H1 LGBM lebih discriminative sebagai entry gate.
     """
     logger.info(f"Starting Walk-Forward CV (n_splits={n_splits}, gap={gap_bars} bars)...")
+    logger.info(f"Class weights: SHORT={LGBM_CLASS_WEIGHTS[0]}x, FLAT={LGBM_CLASS_WEIGHTS[1]}x, LONG={LGBM_CLASS_WEIGHTS[2]}x")
     
     # TimeSeriesSplit untuk walk-forward, gap diisi buffer untuk hindari leakage fitur rolling
     tscv = TimeSeriesSplit(n_splits=n_splits, gap=gap_bars)
@@ -100,8 +110,9 @@ def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int =
         X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
         y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
-        # Class weight balanced untuk atasi FLAT underperform
-        sample_w = compute_sample_weight("balanced", y_tr)
+        # Cost-sensitive class weights: SHORT & LONG dinaikkan 3x vs FLAT
+        # Ini mendorong LGBM menghasilkan probabilitas diskriminatif untuk LONG/SHORT
+        sample_w = np.array([LGBM_CLASS_WEIGHTS[int(label)] for label in y_tr], dtype=np.float32)
 
         model = lgb.LGBMClassifier(**params)
         model.fit(
