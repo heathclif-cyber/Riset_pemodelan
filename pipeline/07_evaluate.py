@@ -1,27 +1,21 @@
 """
 pipeline/07_evaluate.py — Fase 7: Multi-Model Evaluation + SHAP Analysis
 
-Mengevaluasi semua komponen dalam hierarchical cascade:
-  1. H4 LGBM  — SHAP + regime classification metrics (accuracy per direction)
-  2. H1 LGBM  — SHAP + entry precision/recall untuk LONG dan SHORT
-  3. Cascade  — end-to-end trading simulation (winrate, Sharpe, drawdown)
-
-Perbaikan dari versi lama:
-  ❌ Sebelumnya: hanya evaluasi H1 LGBM standalone (blind spot — path production berbeda)
-  ✅ Sekarang  : evaluasi seluruh hierarki sesuai arsitektur actual inference
+Mengevaluasi komponen dalam 2-model cascade:
+  1. LGBM  — SHAP + entry precision/recall untuk LONG dan SHORT
+  2. Cascade (LGBM + LSTM) — end-to-end trading simulation
+  3. H4 LGBM — opsional, hanya jika --include-h4
 
 Jalankan:
-  python pipeline/07_evaluate.py                 # evaluasi lengkap
+  python pipeline/07_evaluate.py                 # evaluasi lengkap (LGBM + cascade)
   python pipeline/07_evaluate.py --run-id my_run
-  python pipeline/07_evaluate.py --skip-h4       # skip H4 jika belum dilatih
+  python pipeline/07_evaluate.py --include-h4    # tambah H4 LGBM eval
   python pipeline/07_evaluate.py --skip-cascade  # hanya SHAP, tanpa trading sim
 
 Output: models/runs/{run_id}/
-  shap_h1_ranking.json     ← H1 LGBM SHAP importance
-  shap_h4_ranking.json     ← H4 LGBM SHAP importance (jika tersedia)
-  cascade_metrics.json     ← end-to-end cascade trading metrics
+  shap_h1_ranking.json    ← LGBM SHAP importance
+  cascade_metrics.json    ← end-to-end cascade trading metrics
   shap_h1_importance.png
-  shap_h4_importance.png
 """
 
 import argparse
@@ -131,14 +125,14 @@ def _compute_shap(model, X_sample: pd.DataFrame, feat_cols: list[str]) -> pd.Dat
     return imp_df
 
 
-# ─── STEP 1: H1 LGBM SHAP ────────────────────────────────────────────────────
+# ─── STEP 1: LGBM SHAP ───────────────────────────────────────────────────────
 
-def evaluate_h1_lgbm(run_dir: Path) -> dict:
-    logger.info("=== EVALUASI H1 LGBM ===")
+def evaluate_lgbm(run_dir: Path) -> dict:
+    logger.info("=== EVALUASI LGBM ===")
 
     model_path = MODEL_DIR / "lgbm_baseline.pkl"
     if not model_path.exists():
-        logger.warning("lgbm_baseline.pkl tidak ditemukan — skip H1 LGBM eval")
+        logger.warning("lgbm_baseline.pkl tidak ditemukan — skip LGBM eval")
         return {}
 
     model = joblib.load(model_path)
@@ -169,13 +163,13 @@ def evaluate_h1_lgbm(run_dir: Path) -> dict:
 
     sep = "=" * 55
     print(f"\n{sep}")
-    print(f"  H1 LGBM — Entry Signal Evaluation ({SAMPLE_SYMBOL})")
+    print(f"  LGBM — Entry Signal Evaluation ({SAMPLE_SYMBOL})")
     print(f"{sep}")
     print(f"  {'Class':<8}  {'Precision':>9}  {'Recall':>9}  {'F1':>9}")
     print(f"  {'-'*8}  {'-'*9}  {'-'*9}  {'-'*9}")
     for i, name in enumerate(["SHORT", "FLAT", "LONG"]):
         print(f"  {name:<8}  {prec[i]:>9.4f}  {rec[i]:>9.4f}  {f1p[i]:>9.4f}")
-    print(f"\n  TOP-{TOP_N} FEATURES (H1 LGBM):")
+    print(f"\n  TOP-{TOP_N} FEATURES (LGBM):")
     for _, row in imp_df.head(TOP_N).iterrows():
         print(f"  {int(row['rank']):>4}  {row['feature']:<28}  {row['mean_abs_shap']:>11.6f}")
     print(f"{sep}\n")
@@ -183,7 +177,7 @@ def evaluate_h1_lgbm(run_dir: Path) -> dict:
     ranking_list = [{"rank": int(r["rank"]), "feature": r["feature"],
                      "mean_abs_shap": float(r["mean_abs_shap"])} for _, r in imp_df.iterrows()]
     out = {
-        "model": "h1_lgbm", "symbol": SAMPLE_SYMBOL, "n_samples": len(X_sample),
+        "model": "lgbm", "symbol": SAMPLE_SYMBOL, "n_samples": len(X_sample),
         "n_features": len(feat_cols),
         "entry_metrics": {
             "SHORT": {"precision": round(float(prec[0]), 4), "recall": round(float(rec[0]), 4), "f1": round(float(f1p[0]), 4)},
@@ -202,109 +196,19 @@ def evaluate_h1_lgbm(run_dir: Path) -> dict:
 
     _shap_bar_plot(
         imp_df,
-        title    = f"H1 LGBM — Top-{TOP_N} Features ({SAMPLE_SYMBOL}, n={len(X_sample):,})",
+        title    = f"LGBM — Top-{TOP_N} Features ({SAMPLE_SYMBOL}, n={len(X_sample):,})",
         out_path = run_dir / "shap_h1_importance.png",
     )
     return out
 
 
-# ─── STEP 2: H4 LGBM SHAP ────────────────────────────────────────────────────
-
-def evaluate_h4_lgbm(run_dir: Path) -> dict:
-    logger.info("=== EVALUASI H4 LGBM ===")
-
-    model_path = MODEL_DIR / "lgbm_h4.pkl"
-    feat_path  = MODEL_DIR / "h4_feature_cols.json"
-    if not model_path.exists():
-        logger.warning("lgbm_h4.pkl tidak ditemukan — skip. Jalankan 04_train_lgbm_h4.py dulu.")
-        return {}
-
-    model = joblib.load(model_path)
-    with open(feat_path) as f:
-        h4_feat_cols = json.load(f)
-
-    # Import H4 resampler dari trainer H4 (gunakan importlib karena '04' diawali digit)
-    import importlib
-    _h4_mod = importlib.import_module("pipeline.04_train_lgbm_h4")
-    load_and_resample_to_h4 = _h4_mod.load_and_resample_to_h4
-    df_h4 = load_and_resample_to_h4(SAMPLE_SYMBOL)
-    if df_h4 is None or len(df_h4) < 50:
-        logger.warning(f"H4 data untuk {SAMPLE_SYMBOL} terlalu sedikit — skip")
-        return {}
-
-    mask = df_h4["label"].astype(str).isin(LABEL_MAP)
-    df_h4 = df_h4[mask].copy()
-    feat_cols = [c for c in h4_feat_cols if c in df_h4.columns]
-    X = df_h4[feat_cols].ffill().fillna(0)
-
-    rng        = np.random.default_rng(SAMPLE_SEED)
-    sample_idx = np.sort(rng.choice(len(X), size=min(min(SAMPLE_N, len(X)), 5000), replace=False))
-    X_sample   = X.iloc[sample_idx]
-
-    logger.info(f"H4 SHAP: {len(X_sample):,} samples × {len(feat_cols)} features")
-    imp_df = _compute_shap(model, X_sample, feat_cols)
-
-    # Regime classification accuracy
-    y_actual = df_h4["label"].map(LABEL_MAP).values
-    y_pred   = model.predict(X)
-    from sklearn.metrics import accuracy_score, precision_score, recall_score
-    regime_mask = y_actual != 1  # exclude FLAT
-    regime_acc  = float(accuracy_score(y_actual[regime_mask], y_pred[regime_mask])) \
-                  if regime_mask.sum() > 0 else 0.0
-    prec = precision_score(y_actual, y_pred, average=None, zero_division=0, labels=[0, 1, 2])
-    rec  = recall_score(y_actual, y_pred, average=None, zero_division=0, labels=[0, 1, 2])
-
-    label_dist = pd.Series(df_h4["label"]).value_counts(normalize=True).to_dict()
-
-    sep = "=" * 55
-    print(f"\n{sep}")
-    print(f"  H4 LGBM — Regime Filter Evaluation ({SAMPLE_SYMBOL})")
-    print(f"{sep}")
-    print(f"  Label distribution: {label_dist}")
-    print(f"  Regime accuracy (non-FLAT): {regime_acc:.4f}")
-    print(f"  {'Class':<8}  {'Precision':>9}  {'Recall':>9}")
-    for i, name in enumerate(["SHORT", "FLAT", "LONG"]):
-        print(f"  {name:<8}  {prec[i]:>9.4f}  {rec[i]:>9.4f}")
-    print(f"\n  TOP-{TOP_N} FEATURES (H4 LGBM):")
-    for _, row in imp_df.head(TOP_N).iterrows():
-        print(f"  {int(row['rank']):>4}  {row['feature']:<28}  {row['mean_abs_shap']:>11.6f}")
-    print(f"{sep}\n")
-
-    ranking_list = [{"rank": int(r["rank"]), "feature": r["feature"],
-                     "mean_abs_shap": float(r["mean_abs_shap"])} for _, r in imp_df.iterrows()]
-    out = {
-        "model": "h4_lgbm", "symbol": SAMPLE_SYMBOL, "n_samples": len(X_sample),
-        "n_features": len(feat_cols),
-        "label_distribution": {k: round(float(v), 4) for k, v in label_dist.items()},
-        "regime_accuracy_non_flat": round(regime_acc, 4),
-        "class_metrics": {
-            "SHORT": {"precision": round(float(prec[0]), 4), "recall": round(float(rec[0]), 4)},
-            "FLAT":  {"precision": round(float(prec[1]), 4), "recall": round(float(rec[1]), 4)},
-            "LONG":  {"precision": round(float(prec[2]), 4), "recall": round(float(rec[2]), 4)},
-        },
-        "shap_ranking": ranking_list,
-    }
-
-    rank_path = run_dir / "shap_h4_ranking.json"
-    with open(rank_path, "w") as f:
-        json.dump(out, f, indent=2)
-    logger.info(f"H4 SHAP ranking → {rank_path}")
-
-    _shap_bar_plot(
-        imp_df,
-        title    = f"H4 LGBM — Top-{TOP_N} Features ({SAMPLE_SYMBOL}, n={len(X_sample):,})",
-        out_path = run_dir / "shap_h4_importance.png",
-    )
-    return out
-
-
-# ─── STEP 3: Cascade End-to-End Trading Metrics ───────────────────────────────
+# ─── STEP 2: Cascade End-to-End Trading Metrics ──────────────────────────────
 
 def evaluate_cascade(run_dir: Path) -> dict:
     logger.info("=== EVALUASI CASCADE END-TO-END ===")
 
     required = [
-        (MODEL_DIR / "lgbm_baseline.pkl", "H1 LGBM"),
+        (MODEL_DIR / "lgbm_baseline.pkl", "LGBM"),
         (MODEL_DIR / "lstm_best.pt",      "LSTM"),
         (MODEL_DIR / "lstm_scaler.pkl",   "LSTM Scaler"),
         (MODEL_DIR / "feature_cols_v2.json", "H1 feature cols"),
@@ -314,7 +218,7 @@ def evaluate_cascade(run_dir: Path) -> dict:
             logger.warning(f"{name} tidak ditemukan — skip cascade eval")
             return {}
 
-    h1_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    lgbm_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
     lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
     lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
@@ -342,8 +246,8 @@ def evaluate_cascade(run_dir: Path) -> dict:
     logger.info(f"Cascade eval: {len(df):,} bars ({SAMPLE_SYMBOL})")
 
     y_pred, confidence = hierarchical_predict(
-        h4_model, h1_model, lstm_model, lstm_scaler,
-        X, valid_cols, h4_feat_cols, df[valid_cols],
+        None, lgbm_model, lstm_model, lstm_scaler,
+        X, valid_cols, [], df[valid_cols],
     )
 
     # Statistik sinyal
@@ -411,7 +315,7 @@ def evaluate_cascade(run_dir: Path) -> dict:
     print(f"{sep}\n")
 
     update_model_metrics(
-        "hierarchical_v1",
+        "cascade_v2",
         winrate              = trading_report.get("winrate", 0),
         trade_per_month      = trading_report.get("trade_per_month", 0),
         pnl_lev5x            = trading_report.get("pnl_lev5x"),
@@ -429,9 +333,8 @@ def evaluate_cascade(run_dir: Path) -> dict:
 # ─── Main ─────────────────────────────────────────────────────────────────────
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Multi-Model Evaluation Pipeline")
+    parser = argparse.ArgumentParser(description="2-Model Evaluation Pipeline (LGBM + LSTM)")
     parser.add_argument("--run-id",       default=None)
-    parser.add_argument("--skip-h4",      action="store_true", help="Skip H4 LGBM eval")
     parser.add_argument("--skip-cascade", action="store_true", help="Skip cascade trading sim")
     return parser.parse_args()
 
@@ -445,22 +348,17 @@ def main():
 
     logger.info(f"Run ID: {run_id} | Symbol: {SAMPLE_SYMBOL}")
 
-    # Evaluasi H1 LGBM (selalu)
-    h1_result = evaluate_h1_lgbm(run_dir)
+    # Evaluasi LGBM — SHAP + precision/recall
+    h1_result = evaluate_lgbm(run_dir)
 
-    # Evaluasi H4 LGBM (jika ada)
-    h4_result = {} if args.skip_h4 else evaluate_h4_lgbm(run_dir)
-
-    # Cascade end-to-end
+    # Cascade end-to-end (LGBM + LSTM)
     cascade_result = {} if args.skip_cascade else evaluate_cascade(run_dir)
 
     print(f"\n  Output dir: {run_dir}")
     if h1_result:
-        print(f"  H1 SHAP  : {run_dir}/shap_h1_ranking.json")
-    if h4_result:
-        print(f"  H4 SHAP  : {run_dir}/shap_h4_ranking.json")
+        print(f"  LGBM SHAP : {run_dir}/shap_h1_ranking.json")
     if cascade_result:
-        print(f"  Cascade  : {run_dir}/cascade_metrics.json")
+        print(f"  Cascade   : {run_dir}/cascade_metrics.json")
 
 
 if __name__ == "__main__":

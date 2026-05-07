@@ -425,7 +425,7 @@ def fetch_coin(
     """
     Fetch OHLCV semua interval + funding rate untuk satu koin.
     OI/taker/long-short ratio di-skip karena tidak reliable untuk history panjang.
-    Synthetic OI dihitung di pipeline/03_engineer.py dari CVD.
+    Synthetic OI dihitung di pipeline/04_engineer.py dari CVD.
     """
     if intervals is None:
         intervals = ["1h", "4h", "1d"]

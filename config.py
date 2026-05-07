@@ -194,23 +194,20 @@ H4_BINARY_THRESHOLD_LONG  = 0.60  # diturunkan dari 0.65 (P90=0.572)
 H4_BINARY_THRESHOLD_SHORT = 0.60  # diturunkan dari 0.65 (P90=0.572)
 H4_BINARY_MARGIN          = 0.05  # bias hanya jika prob unggul >= margin atas lawan
 
-# H4 Soft Filter — Opsi A (balanced): tidak terlalu bullish
-# Jika H4 align dengan H1: boost confidence. Misalign/skip: slight penalty.
-# H1 tetap decision layer utama — H4 hanya confidence modifier.
-# FLAT (bias=1) = H4 tidak punya opini → penalty moderate (-0.015)
-# Opposite        = H4 yakin berlawanan arah → penalty balanced (-0.035)
-# Gap FLAT↔OPPOSITE: 0.02 (sebelumnya 0.03). Lebih netral, tidak terlalu bullish.
-H4_SOFT_FILTER_ENABLED      = True
-H4_SOFT_ALIGN_BOOST         = 0.04   # jika bias H4 = arah H1: +0.04 ke h1_conf
-H4_SOFT_FLAT_PENALTY        = 0.015  # jika H4 FLAT: -0.015 (dinaikkan dari 0.01)
-H4_SOFT_OPPOSITE_PENALTY    = 0.035  # jika H4 opposite: -0.035 (diturunkan dari 0.04)
+# H4 Soft Filter — dinonaktifkan (arsitektur 2 model: LGBM + LSTM)
+# H4 regime context kini ditangani langsung via fitur di LGBM:
+# htf_alignment, d1_trend, trend_accel_4h, vol_price_confirm, dll.
+H4_SOFT_FILTER_ENABLED      = False
+H4_SOFT_ALIGN_BOOST         = 0.04
+H4_SOFT_FLAT_PENALTY        = 0.015
+H4_SOFT_OPPOSITE_PENALTY    = 0.035
 
 # H4 Binary class weights — diturunkan dari 3.0 ke 1.5 (AUC rendah → overfit)
 H4_BINARY_CLASS_WEIGHTS  = {0: 1.5, 1: 1.5}  # SHORT=0, LONG=1 (sebelumnya 3.0)
 
 # H1 entry thresholds (3-class model tidak berubah)
-H1_THRESHOLD_LONG  = 0.62   # H1 LGBM minimum untuk entry LONG
-H1_THRESHOLD_SHORT = 0.62   # H1 LGBM minimum untuk entry SHORT
+LGBM_THRESHOLD_LONG  = 0.62   # LGBM minimum confidence untuk entry LONG
+LGBM_THRESHOLD_SHORT = 0.62   # LGBM minimum confidence untuk entry SHORT
 LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)
@@ -232,12 +229,8 @@ LSTM_ADJUST_MODE         = "tiered"     # "relative" | "absolute" | "tiered"
 LSTM_ADJUST_AGREE_BOOST  = 0.05         # boost saat agree (mode relative/absolute)
 LSTM_ADJUST_NEUTRAL_PEN  = 0.05         # penalty saat LSTM FLAT
 LSTM_ADJUST_OPPOSITE_PEN = 0.08         # penalty saat LSTM opposite (0.15 asli → 0.08)
-# Backward-compat alias (deprecated — gunakan H4_BINARY_THRESHOLD_*)
-H4_THRESHOLD_LONG  = H4_BINARY_THRESHOLD_LONG
-H4_THRESHOLD_SHORT = H4_BINARY_THRESHOLD_SHORT
-
 # LSTM Params
-LSTM_SEQ_LEN    = 32
+LSTM_SEQ_LEN    = 16   # diturunkan dari 32 — lebih reaktif ke koreksi (32 jam → 16 jam)
 LSTM_HIDDEN     = 128
 LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
@@ -266,7 +259,7 @@ VCB_LOOKBACK_BARS          = 24
 
 MONITOR_POLL_INTERVAL_SECS = 300
 
-# ─── Feature Columns v3 (H1 Base - 85 fitur) ─────────────────────────────────
+# ─── Feature Columns v3 (H1 Base - 103 fitur) ────────────────────────────────
 FEATURE_COLS_V3 = [
     # OHLCV base
     "open", "high", "low", "close", "volume",
@@ -311,11 +304,13 @@ FEATURE_COLS_V3 = [
 
     # Long/short ratio
     "long_short_ratio",
+
     # Swing structure (v2)
     "dist_swing_high", "dist_swing_low", "price_in_range", "swing_momentum",
 
     # Market regime (v2)
     "h4_trend", "trend_strength", "vol_regime",
+
     # Smart money v3
     "cvd_div_h4", "cvd_slope_h4",
     "vol_efficiency", "absorption_z",
@@ -338,6 +333,19 @@ FEATURE_COLS_V3 = [
     # Smart money v4 — VSA
     "spread_to_volume", "ultra_high_vol", "no_demand", "no_supply",
     "effort_vs_result",
+
+    # H4 dynamics — slope & volatility (sebelumnya hilang dari parquet, fix bug H4)
+    "ema_21_slope_h4", "ema_50_slope_h4", "price_vs_ema_50_h4",
+    "rsi_slope_h4", "atr_percent_h4", "range_expansion_h4",
+
+    # D1 higher timeframe context (HTF regime awareness, fix bug H4)
+    "ema_50_d1", "ema_200_d1",
+    "ema_50_slope_d1", "ema_200_slope_d1", "price_vs_ema_50_d1",
+    "atr_d1_percentile",
+    "d1_trend", "d1_trend_strength", "htf_alignment", "d1_hh_hl_bias",
+
+    # Trend quality — correction detection
+    "trend_accel_4h", "vol_price_confirm", "dist_from_8h_high",
 ]
 
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
@@ -345,10 +353,9 @@ MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.62     # dinaikkan dari 0.50 — H1 LGBM kini primary entry gate
+CONFIDENCE_THRESHOLD_ENTRY = 0.62     # minimum confidence untuk entry (sama dengan LGBM_THRESHOLD_*)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
-# ─── H1 LGBM Class Weights (Cost-Sensitive Learning) ─────────────────────────
-# Penalti lebih tinggi untuk FLAT (kelas 1) — model didorong lebih aktif deteksi LONG/SHORT
+# ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────
 # Format: {label_idx: weight} sesuai LABEL_MAP = {SHORT:0, FLAT:1, LONG:2}
-LGBM_CLASS_WEIGHTS = {0: 3.0, 1: 1.0, 2: 3.0}   # SHORT=3x, FLAT=1x, LONG=3x
+LGBM_CLASS_WEIGHTS = {0: 3.0, 1: 1.5, 2: 3.0}   # SHORT=3x, FLAT=1.5x, LONG=3x

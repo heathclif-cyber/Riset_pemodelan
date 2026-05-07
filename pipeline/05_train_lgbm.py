@@ -1,20 +1,17 @@
 """
-pipeline/05_train_lgbm_h1.py — Fase 05: LightGBM H1 Entry Signal Training
+pipeline/05_train_lgbm.py — Fase 05: LightGBM Entry Signal Training
 Walk-Forward Validation (TimeSeriesSplit) + Cost-Sensitive Class Weights
 
-H1 LGBM adalah primary entry signal generator dalam hierarchical cascade:
-  STEP 1  04_train_lgbm_h4.py → H4 LGBM bias (regime filter)
-  STEP 2  05_train_lgbm_h1.py → H1 LGBM entry ← file ini
-  STEP 3  06_train_lstm.py    → LSTM confirmation
+LGBM adalah primary entry signal generator dalam 2-model cascade:
+  STEP 1  05_train_lgbm.py  → LGBM entry signal ← file ini
+  STEP 2  06_train_lstm.py  → LSTM confirmation
 
-Class weights {SHORT:3x, FLAT:1x, LONG:3x} memaksa model lebih discriminative.
+Class weights {SHORT:3x, FLAT:1.5x, LONG:3x}.
 
 Jalankan:
-  python pipeline/05_train_lgbm_h1.py               # training coins (default)
-  python pipeline/05_train_lgbm_h1.py --all         # semua 20 koin
-  python pipeline/05_train_lgbm_h1.py --run-id my_run  # custom run ID
-
-Output disimpan di models/runs/{run_id}/
+  python pipeline/05_train_lgbm.py               # training coins (default)
+  python pipeline/05_train_lgbm.py --all         # semua 20 koin
+  python pipeline/05_train_lgbm.py --run-id my_run
 """
 
 import argparse
@@ -46,7 +43,7 @@ from config import (
 )
 from core.utils import setup_logger
 
-logger = setup_logger("05_train_lgbm_h1")
+logger = setup_logger("05_train_lgbm")
 
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
@@ -97,7 +94,7 @@ def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int =
     Walk-forward validation — fold selalu maju, tidak pernah mundur.
     Setiap fold: train pada semua data sebelum titik split, test pada setelah.
     Menggunakan LGBM_CLASS_WEIGHTS {SHORT:3x, FLAT:1x, LONG:3x} untuk
-    cost-sensitive learning agar H1 LGBM lebih discriminative sebagai entry gate.
+    cost-sensitive learning agar LGBM lebih discriminative sebagai entry gate.
     """
     logger.info(f"Starting Walk-Forward CV (n_splits={n_splits}, gap={gap_bars} bars)...")
     logger.info(f"Class weights: SHORT={LGBM_CLASS_WEIGHTS[0]}x, FLAT={LGBM_CLASS_WEIGHTS[1]}x, LONG={LGBM_CLASS_WEIGHTS[2]}x")
