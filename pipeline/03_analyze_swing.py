@@ -285,6 +285,8 @@ def parse_args():
                        help="Koin spesifik (default: 2 training coins pertama)")
     parser.add_argument("--top",  type=int, default=15,
                         help="Tampilkan N kombinasi terbaik (default: 15)")
+    parser.add_argument("--verbose", action="store_true",
+                        help="Tampilkan detail per kombinasi parameter")
     return parser.parse_args()
 
 

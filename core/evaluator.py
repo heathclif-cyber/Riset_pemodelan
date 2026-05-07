@@ -215,6 +215,8 @@ def simulate_trades_swing(
     max_sl_atr:      float = 3.0,
     max_hold:        int   = 24,
     swing_lookback:  int   = 3,    # look-ahead bars di detect_h4_swing_points
+    tp_fallback_atr: float = 2.0,  # TP fallback (× ATR) saat swing belum terbentuk
+    sl_fallback_atr: float = 1.5,  # SL fallback (× ATR) saat swing belum terbentuk
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis berbasis swing high/low H4.
@@ -222,6 +224,7 @@ def simulate_trades_swing(
     Berbeda dari simulate_trades() yang pakai fixed ATR multiple:
     - TP = swing high H4 terdekat di atas (LONG) / swing low H4 di bawah (SHORT)
     - SL = swing low  H4 terdekat di bawah (LONG) / swing high H4 di atas (SHORT)
+    - Fallback: jika swing belum terbentuk (NaN) → ATR-based TP/SL
     - Skip trade jika R:R < min_rr (capital preservation)
 
     Look-ahead correction:
@@ -264,21 +267,24 @@ def simulate_trades_swing(
             equity_curve.append(equity)
             continue
 
-        # ── Tentukan TP/SL dinamis ────────────────────────────────────────────
+        # ── Tentukan TP/SL dinamis (fallback ATR jika swing belum terbentuk) ───
+        use_fallback = np.isnan(sh_i) or np.isnan(sl_i)
         if sig == LONG:
-            if np.isnan(sh_i) or np.isnan(sl_i):
-                equity_curve.append(equity)
-                continue
-            tp_price = sh_i
-            sl_price = sl_i
+            if use_fallback:
+                tp_price = price + tp_fallback_atr * atr_i
+                sl_price = price - sl_fallback_atr * atr_i
+            else:
+                tp_price = sh_i
+                sl_price = sl_i
             tp_dist  = tp_price - price
             sl_dist  = price    - sl_price
         else:  # SHORT
-            if np.isnan(sh_i) or np.isnan(sl_i):
-                equity_curve.append(equity)
-                continue
-            tp_price = sl_i
-            sl_price = sh_i
+            if use_fallback:
+                tp_price = price - tp_fallback_atr * atr_i
+                sl_price = price + sl_fallback_atr * atr_i
+            else:
+                tp_price = sl_i
+                sl_price = sh_i
             tp_dist  = price    - tp_price
             sl_dist  = sl_price - price
 
@@ -530,6 +536,8 @@ def full_trading_report(
     min_rr:       float = 1.2,
     min_tp_atr:   float = 1.2,
     max_sl_atr:   float = 3.0,
+    tp_fallback_atr: float = 2.0,  # TP fallback saat swing NaN
+    sl_fallback_atr: float = 1.5,  # SL fallback saat swing NaN
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
@@ -546,7 +554,8 @@ def full_trading_report(
                 modal=modal, leverage=lev, fee_per_side=fee_per_side,
                 slippage=slippage,
                 min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
-                max_hold=max_hold
+                max_hold=max_hold,
+                tp_fallback_atr=tp_fallback_atr, sl_fallback_atr=sl_fallback_atr,
             )
         else:
             return simulate_trades(

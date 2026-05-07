@@ -72,7 +72,7 @@ def load_lstm(
 ) -> TradingLSTM:
     """Load LSTM dari state dict."""
     model = TradingLSTM(n_features, hidden_size, num_layers, dropout, num_classes)
-    state = torch.load(str(path), map_location=device)
+    state = torch.load(str(path), map_location=device, weights_only=True)
     model.load_state_dict(state)
     model.eval()
     return model

@@ -45,6 +45,7 @@ from config import (
     MODAL_PER_TRADE,
     LEVERAGE_SIM,
     FEE_PER_SIDE,
+    SLIPPAGE_PER_SIDE,
 )
 from core.models import load_lstm
 from core.evaluator import simulate_trades_swing
@@ -131,7 +132,7 @@ def run_inference(
     # Hierarchical cascade prediction
     y_pred, confidence = hierarchical_predict(
         h4_model     = h4_model,
-        h1_model     = h1_model,
+        lgbm_model   = h1_model,
         lstm_model   = lstm_model,
         lstm_scaler  = lstm_scaler,
         X            = X,
@@ -185,10 +186,13 @@ def build_trades_df(
         modal          = MODAL_PER_TRADE,
         leverage       = LEVERAGE_SIM[0],
         fee_per_side   = FEE_PER_SIDE,
+        slippage       = SLIPPAGE_PER_SIDE,
         min_rr         = SWING_LABEL_MIN_RR,
         min_tp_atr     = SWING_LABEL_MIN_TP,
         max_sl_atr     = SWING_LABEL_MAX_SL,
         max_hold       = MAX_HOLDING_BARS,
+        tp_fallback_atr = 2.0,
+        sl_fallback_atr = 1.5,
     )
     
     trades_raw = sim.get("trades", [])
