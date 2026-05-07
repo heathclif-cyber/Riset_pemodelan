@@ -1,11 +1,11 @@
 """
-pipeline/03_engineer.py — Fase 3: Feature Engineering & Labeling
+pipeline/04_engineer.py — Fase 04: Feature Engineering & Labeling
 
 Jalankan:
-  python pipeline/03_engineer.py                    # engineer training coins
-  python pipeline/03_engineer.py --new              # engineer new coins
-  python pipeline/03_engineer.py --all              # engineer semua koin
-  python pipeline/03_engineer.py --coins SOLUSDT    # koin spesifik
+  python pipeline/04_engineer.py                    # engineer training coins
+  python pipeline/04_engineer.py --new              # engineer new coins
+  python pipeline/04_engineer.py --all              # engineer semua koin
+  python pipeline/04_engineer.py --coins SOLUSDT    # koin spesifik
 """
 
 import argparse
@@ -34,7 +34,7 @@ from config import (
 from core.utils import setup_logger, ensure_utc_index
 from core.features import engineer_features
 
-logger = setup_logger("03_engineer")
+logger = setup_logger("04_engineer")
 
 # Filter thresholds (disesuaikan jika belum ada di config)
 LONG_MAX_PRICE_IN_RANGE = 0.8

@@ -1,5 +1,5 @@
 """
-pipeline/p05_utils.py — SequenceDataset shared antara 05_train_lstm dan 06_ensemble
+pipeline/shared.py — Shared utilities untuk pipeline training dan backtest
 """
 import numpy as np
 import torch

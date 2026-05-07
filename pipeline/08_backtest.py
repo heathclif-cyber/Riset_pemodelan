@@ -62,7 +62,7 @@ from config import (
 from core.models import load_lstm
 from core.evaluator import full_trading_report
 from core.utils import setup_logger, update_model_metrics
-from pipeline.p05_utils import SequenceDataset
+from pipeline.shared import SequenceDataset
 from pipeline.backtest_utils import hierarchical_predict, get_lstm_proba
 
 logger = setup_logger("08_backtest")

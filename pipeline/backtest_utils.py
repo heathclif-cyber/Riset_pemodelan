@@ -34,7 +34,7 @@ from config import (
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
 )
-from pipeline.p05_utils import SequenceDataset
+from pipeline.shared import SequenceDataset
 
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
 

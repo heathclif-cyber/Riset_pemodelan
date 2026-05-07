@@ -1,11 +1,11 @@
 """
-pipeline/04_analyze_swing.py — Fase 04: Grid Search Parameter Swing Detection
+pipeline/03_analyze_swing.py — Fase 03: Grid Search Parameter Swing Detection
 
-Dijalankan SEBELUM 03_engineer.py untuk menemukan parameter labeling terbaik.
+Dijalankan SEBELUM 04_engineer.py untuk menemukan parameter labeling terbaik.
 Tidak ada side-effect — hanya membaca cleaned parquet dari 02_clean.py.
 
 Alur tuning:
-  02_clean.py → 04_analyze_swing.py → [update config.py] → 03_engineer.py
+  02_clean.py → 03_analyze_swing.py → [update config.py] → 04_engineer.py
 
 Tujuan:
   Temukan kombinasi parameter terbaik untuk swing-based labeling:
@@ -15,10 +15,10 @@ Tujuan:
     4. Imbalance LONG vs SHORT
 
 Jalankan:
-  python pipeline/04_analyze_swing.py
-  python pipeline/04_analyze_swing.py --coins SOLUSDT ETHUSDT
-  python pipeline/04_analyze_swing.py --all
-  python pipeline/04_analyze_swing.py --coins SOLUSDT --top 20
+  python pipeline/03_analyze_swing.py
+  python pipeline/03_analyze_swing.py --coins SOLUSDT ETHUSDT
+  python pipeline/03_analyze_swing.py --all
+  python pipeline/03_analyze_swing.py --coins SOLUSDT --top 20
 """
 
 import argparse
@@ -40,7 +40,7 @@ from core.features import (
     get_nearest_swing_levels,
 )
 
-logger = setup_logger("04_analyze_swing")
+logger = setup_logger("03_analyze_swing")
 
 
 # ─── Grid parameter ───────────────────────────────────────────────────────────

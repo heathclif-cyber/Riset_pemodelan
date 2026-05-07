@@ -50,7 +50,7 @@ from config import (
 from core.models import load_lstm, ProbabilityCalibrator
 from core.evaluator import simulate_trades_swing
 from core.utils import setup_logger, ensure_utc_index
-from pipeline.p05_utils import SequenceDataset
+from pipeline.shared import SequenceDataset
 
 logger = setup_logger("10_visualize")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")

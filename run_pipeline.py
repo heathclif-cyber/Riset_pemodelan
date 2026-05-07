@@ -6,7 +6,7 @@ Arsitektur: 2-Model Cascade (LGBM → LSTM)
 Urutan fase:
   01_fetch.py          → Fetch klines + funding dari Binance
   02_clean.py          → Clean + alignment multi-TF ke H1 grid
-  04_analyze_swing.py  → [OPSIONAL] Grid search parameter swing labeling
+  03_analyze_swing.py  → [OPSIONAL] Grid search parameter swing labeling
   03_engineer.py       → Feature engineering + swing labeling
   05_train_lgbm.py     → LGBM entry signal (primary model)
   06_train_lstm.py     → LSTM confirmation
@@ -84,11 +84,11 @@ def main():
     # Jalankan setelah clean, sebelum engineer untuk tuning parameter labeling.
     # Output: rekomendasi SWING_H4_LOOKBACK, SWING_LABEL_MIN_RR, dll.
     if args.analyze_swing:
-        run(["pipeline/04_analyze_swing.py"] + coin_flag)
+        run(["pipeline/03_analyze_swing.py"] + coin_flag)
 
     # -- Fase 03: Engineer ----------------------------------------------------
     if do_all or args.engineer:
-        run(["pipeline/03_engineer.py"] + coin_flag)
+        run(["pipeline/04_engineer.py"] + coin_flag)
 
     # -- Fase 05: LGBM entry signal (primary model) --------------------------
     if do_all or args.train:

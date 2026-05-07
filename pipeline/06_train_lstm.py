@@ -55,6 +55,7 @@ from config import (
 )
 from core.models import TradingLSTM, save_lstm
 from core.utils import setup_logger
+from pipeline.shared import SequenceDataset
 
 logger = setup_logger("06_train_lstm")
 
@@ -108,26 +109,6 @@ def build_purged_folds(n: int) -> list[tuple[np.ndarray, np.ndarray]]:
         test_idx  = test_raw[PURGE_GAP_BARS:]   if len(test_raw) > PURGE_GAP_BARS  else test_raw
         folds.append((train_idx, test_idx))
     return folds
-
-
-# ─── Dataset ─────────────────────────────────────────────────────────────────
-
-class SequenceDataset(Dataset):
-    def __init__(self, X: np.ndarray, y: np.ndarray, seq_len: int = LSTM_SEQ_LEN):
-        self.X       = torch.from_numpy(X.astype(np.float32))
-        self.y       = torch.from_numpy(y.astype(np.int64))
-        self.seq_len = seq_len
-        self.indices = list(range(seq_len - 1, len(X)))
-
-    def __len__(self):
-        return len(self.indices)
-
-    def __getitem__(self, idx):
-        end = self.indices[idx]
-        return self.X[end - self.seq_len + 1: end + 1], self.y[end]
-
-    def get_labels(self):
-        return self.y[self.indices].numpy()
 
 
 def build_sampler(labels: np.ndarray) -> WeightedRandomSampler:
