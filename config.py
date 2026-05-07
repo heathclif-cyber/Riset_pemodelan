@@ -353,7 +353,7 @@ MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.62     # minimum confidence untuk entry (sama dengan LGBM_THRESHOLD_*)
+CONFIDENCE_THRESHOLD_ENTRY = 0.70     # minimum confidence untuk entry (naik dari 0.62 — filter sinyal lebih ketat)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────
