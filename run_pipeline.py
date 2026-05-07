@@ -4,23 +4,32 @@ run_pipeline.py — Entry point untuk menjalankan semua fase pipeline
 Arsitektur: 2-Model Cascade (LGBM → LSTM)
 
 Urutan fase:
-  01_fetch.py         → Fetch klines + funding dari Binance
-  02_clean.py         → Clean + alignment multi-TF ke H1 grid
-  03_engineer.py      → Feature engineering + swing labeling
-  05_train_lgbm.py    → LGBM entry signal (primary model)
-  06_train_lstm.py    → LSTM confirmation
-  07_evaluate.py      → Evaluation + SHAP analysis
-  08_backtest.py      → Walk-forward backtest
-  09_holdout_backtest → Hold-out backtest (genuine OOS)
+  01_fetch.py          → Fetch klines + funding dari Binance
+  02_clean.py          → Clean + alignment multi-TF ke H1 grid
+  04_analyze_swing.py  → [OPSIONAL] Grid search parameter swing labeling
+  03_engineer.py       → Feature engineering + swing labeling
+  05_train_lgbm.py     → LGBM entry signal (primary model)
+  06_train_lstm.py     → LSTM confirmation
+  07_evaluate.py       → Evaluation + SHAP analysis
+  08_backtest.py       → Walk-forward backtest
+  09_holdout_backtest  → Hold-out backtest (genuine OOS)
+
+Alur tuning swing (sebelum retrain):
+  python run_pipeline.py --clean
+  python run_pipeline.py --analyze-swing         # temukan parameter terbaik
+  # → update config.py dengan rekomendasi
+  python run_pipeline.py --engineer
+  python run_pipeline.py --train
 
 Contoh penggunaan:
   python run_pipeline.py --fetch                 # fetch training coins
   python run_pipeline.py --clean                 # clean training coins
+  python run_pipeline.py --analyze-swing         # tuning swing parameters
   python run_pipeline.py --engineer              # feature engineering
   python run_pipeline.py --train                 # latih LGBM + LSTM
   python run_pipeline.py --evaluate              # evaluasi + SHAP
   python run_pipeline.py --backtest              # walk-forward backtest
-  python run_pipeline.py --all                   # semua fase (01-08) sekaligus
+  python run_pipeline.py --all                   # semua fase (01-08, skip 04)
   python run_pipeline.py --fetch --clean --engineer --train --all-coins
 """
 
@@ -42,16 +51,17 @@ def run(cmd: list[str]):
 
 def parse_args():
     parser = argparse.ArgumentParser(description="Trading ML Pipeline — 2-Model Cascade (LGBM + LSTM)")
-    parser.add_argument("--fetch",     action="store_true", help="Fase 01: Fetch data dari Binance")
-    parser.add_argument("--clean",     action="store_true", help="Fase 02: Clean + align multi-TF")
-    parser.add_argument("--engineer",  action="store_true", help="Fase 03: Feature engineering")
-    parser.add_argument("--train",     action="store_true", help="Fase 05-06: Latih LGBM + LSTM")
-    parser.add_argument("--evaluate",  action="store_true", help="Fase 07: Evaluation + SHAP")
-    parser.add_argument("--backtest",  action="store_true", help="Fase 08: Walk-forward backtest")
-    parser.add_argument("--holdout",   action="store_true", help="Fase 09: Hold-out backtest (OOS)")
-    parser.add_argument("--all",       action="store_true", help="Semua fase (01-08)")
-    parser.add_argument("--all-coins", action="store_true", help="Jalankan untuk semua 20 koin")
-    parser.add_argument("--run-id",    default=None,        help="Run ID untuk folder output")
+    parser.add_argument("--fetch",          action="store_true", help="Fase 01: Fetch data dari Binance")
+    parser.add_argument("--clean",          action="store_true", help="Fase 02: Clean + align multi-TF")
+    parser.add_argument("--analyze-swing",  action="store_true", help="Fase 04: Grid search swing parameters (opsional, sebelum engineer)")
+    parser.add_argument("--engineer",       action="store_true", help="Fase 03: Feature engineering + labeling")
+    parser.add_argument("--train",          action="store_true", help="Fase 05-06: Latih LGBM + LSTM")
+    parser.add_argument("--evaluate",       action="store_true", help="Fase 07: Evaluation + SHAP")
+    parser.add_argument("--backtest",       action="store_true", help="Fase 08: Walk-forward backtest")
+    parser.add_argument("--holdout",        action="store_true", help="Fase 09: Hold-out backtest (OOS)")
+    parser.add_argument("--all",            action="store_true", help="Semua fase wajib (01-03, 05-08) — skip 04")
+    parser.add_argument("--all-coins",      action="store_true", help="Jalankan untuk semua koin")
+    parser.add_argument("--run-id",         default=None,        help="Run ID untuk folder output")
     return parser.parse_args()
 
 
@@ -69,6 +79,12 @@ def main():
     # -- Fase 02: Clean -------------------------------------------------------
     if do_all or args.clean:
         run(["pipeline/02_clean.py"] + coin_flag)
+
+    # -- Fase 04: Analyze Swing (opsional — tidak masuk --all) ----------------
+    # Jalankan setelah clean, sebelum engineer untuk tuning parameter labeling.
+    # Output: rekomendasi SWING_H4_LOOKBACK, SWING_LABEL_MIN_RR, dll.
+    if args.analyze_swing:
+        run(["pipeline/04_analyze_swing.py"] + coin_flag)
 
     # -- Fase 03: Engineer ----------------------------------------------------
     if do_all or args.engineer:
@@ -94,8 +110,8 @@ def main():
     if args.holdout:
         run(["pipeline/09_holdout_backtest.py"] + coin_flag + run_flag)
 
-    if not any([do_all, args.fetch, args.clean, args.engineer,
-                args.train, args.evaluate,
+    if not any([do_all, args.fetch, args.clean, args.analyze_swing,
+                args.engineer, args.train, args.evaluate,
                 args.backtest, args.holdout]):
         print("Tidak ada fase yang dipilih. Gunakan --help untuk melihat opsi.")
 
