@@ -1,14 +1,10 @@
 """
-pipeline/08_backtest.py — Fase 8: Walk-Forward Backtest (Hierarchical Cascade)
+pipeline/08_backtest.py — Fase 8: Walk-Forward Backtest (2-Model Cascade)
 
-Walk-forward backtest menggunakan hierarchical cascade:
-  STEP 1: H4 LGBM → bias direction (LONG/SHORT/FLAT)
-  STEP 2: H1 LGBM → entry signal dengan confidence threshold
-  STEP 3: LSTM    → confirmation vote (agree/disagree dengan H1)
-  STEP 4: Decision layer: signal = LONG/SHORT hanya jika semua 3 agree
-
-Stacked ensemble (LogReg meta-learner + Isotonic calibrator) telah dihapus
-karena terbukti mendegradasi sinyal (lihat AUDIT_REPORT.md).
+Walk-forward backtest menggunakan 2-model cascade:
+  STEP 1: LGBM  → entry signal + confidence (primary)
+  STEP 2: LSTM  → soft confidence adjustment (confirmation)
+  STEP 3: Decision layer → final signal
 
 Jalankan:
   python pipeline/08_backtest.py                 # training coins
@@ -59,8 +55,7 @@ from config import (
     SIGNAL_FLIP_CONF_MIN, FLIP_CONFIRM_BARS, FLIP_COOLDOWN_SECS, SAME_DIR_COOLDOWN_HOURS,
     VCB_ENABLED, VCB_ATR_MULTIPLIER, VCB_LOOKBACK_BARS,
     MONITOR_POLL_INTERVAL_SECS,
-    H4_FEATURE_COLS, H4_BINARY_THRESHOLD_LONG, H4_BINARY_THRESHOLD_SHORT,
-    H1_THRESHOLD_LONG, H1_THRESHOLD_SHORT, LSTM_CONFIRMATION_ENABLED,
+    LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT, LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
 )
@@ -68,7 +63,7 @@ from core.models import load_lstm
 from core.evaluator import full_trading_report
 from core.utils import setup_logger, update_model_metrics
 from pipeline.p05_utils import SequenceDataset
-from pipeline.backtest_utils import hierarchical_predict, get_h4_bias, get_lstm_proba
+from pipeline.backtest_utils import hierarchical_predict, get_lstm_proba
 
 logger = setup_logger("08_backtest")
 DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
@@ -137,7 +132,7 @@ def build_trades_from_predictions(
     Return DataFrame satu baris per trade dengan entry/exit/TP/SL info.
     """
     close_arr = df_valid["close"].values
-    atr_arr   = df_valid["atr_14_m15"].values if "atr_14_m15" in df_valid.columns else np.ones(len(df_valid))
+    atr_arr   = df_valid["atr_14_h1"].values if "atr_14_h1" in df_valid.columns else np.ones(len(df_valid))
     index_arr = df_valid.index
 
     trades    = []
@@ -519,11 +514,9 @@ def plot_summary_chart(results: dict, trades_all: dict, run_dir: Path) -> None:
 def backtest_symbol(
     symbol: str,
     feat_cols: list[str],
-    h4_model,
-    h1_model,
+    lgbm_model,
     lstm_model,
     lstm_scaler,
-    h4_feat_cols: list[str],
 ) -> dict | None:
     result = load_symbol(symbol, feat_cols)
     if result is None:
@@ -543,8 +536,8 @@ def backtest_symbol(
         df_te = df.iloc[te_pos]
         X_te  = X[te_pos]
         y_pred, confidence = hierarchical_predict(
-            h4_model, h1_model, lstm_model, lstm_scaler,
-            X_te, feat_cols, h4_feat_cols, df_te,
+            None, lgbm_model, lstm_model, lstm_scaler,
+            X_te, feat_cols, [], df_te,
         )
         oof_pred[te_pos]  = y_pred
         oof_conf[te_pos]  = confidence
@@ -643,7 +636,7 @@ def generate_inference_config(
             caution.append(sym)
 
     return {
-        "model_version": "hierarchical_v1",
+        "model_version": "cascade_v2",
         "created_at":    datetime.now(timezone.utc).isoformat(),
         "training_period": {
             "start": str(TRAIN_START.date()),
@@ -715,17 +708,15 @@ def generate_inference_config(
             "slippage_per_side":    SLIPPAGE_PER_SIDE,
         },
 
-        # ── Hierarchical Thresholds ───────────────────────────────────────────
-        "hierarchical_thresholds": {
-            "h4_binary_threshold_long":  H4_BINARY_THRESHOLD_LONG,
-            "h4_binary_threshold_short": H4_BINARY_THRESHOLD_SHORT,
-            "h1_threshold_long":         H1_THRESHOLD_LONG,
-            "h1_threshold_short":        H1_THRESHOLD_SHORT,
-            "lstm_confirmation":         LSTM_CONFIRMATION_ENABLED,
-            "lstm_adjust_mode":          LSTM_ADJUST_MODE,
-            "lstm_adjust_agree_boost":   LSTM_ADJUST_AGREE_BOOST,
-            "lstm_adjust_neutral_pen":   LSTM_ADJUST_NEUTRAL_PEN,
-            "lstm_adjust_opposite_pen":  LSTM_ADJUST_OPPOSITE_PEN,
+        # ── Cascade Thresholds (2-model: LGBM + LSTM) ────────────────────────
+        "cascade": {
+            "lgbm_threshold_long":      LGBM_THRESHOLD_LONG,
+            "lgbm_threshold_short":     LGBM_THRESHOLD_SHORT,
+            "lstm_confirmation":        LSTM_CONFIRMATION_ENABLED,
+            "lstm_adjust_mode":         LSTM_ADJUST_MODE,
+            "lstm_adjust_agree_boost":  LSTM_ADJUST_AGREE_BOOST,
+            "lstm_adjust_neutral_pen":  LSTM_ADJUST_NEUTRAL_PEN,
+            "lstm_adjust_opposite_pen": LSTM_ADJUST_OPPOSITE_PEN,
         },
 
         # ── Koin yang Sudah Divalidasi ────────────────────────────────────────
@@ -767,14 +758,11 @@ def generate_inference_config(
         },
 
         # ── File Model ────────────────────────────────────────────────────────
-        # Path relatif dari folder models/
         "model_files": {
-            "h4_lgbm":       "lgbm_h4.pkl",
-            "h1_lgbm":       "lgbm_baseline.pkl",
-            "lstm":          "lstm_best.pt",
-            "lstm_scaler":   "lstm_scaler.pkl",
-            "h1_features":   "feature_cols_v2.json",
-            "h4_features":   "h4_feature_cols.json",
+            "lgbm":        "lgbm_baseline.pkl",
+            "lstm":        "lstm_best.pt",
+            "lstm_scaler": "lstm_scaler.pkl",
+            "features":    "feature_cols_v2.json",
         },
 
 
@@ -814,41 +802,28 @@ def main():
     else:
         coins = TRAINING_COINS
 
-    # ── Load models ───────────────────────────────────────────────────────────
+    # ── Load models (2-model: LGBM + LSTM) ───────────────────────────────────
     required_models = [
-        (MODEL_DIR / "lgbm_baseline.pkl",    "H1 LightGBM"),
+        (MODEL_DIR / "lgbm_baseline.pkl",    "LightGBM"),
         (MODEL_DIR / "lstm_best.pt",         "LSTM"),
         (MODEL_DIR / "lstm_scaler.pkl",      "LSTM Scaler"),
-        (MODEL_DIR / "feature_cols_v2.json", "H1 Feature cols"),
+        (MODEL_DIR / "feature_cols_v2.json", "Feature cols"),
     ]
     for path, name in required_models:
         if not path.exists():
             raise FileNotFoundError(
                 f"{name} tidak ditemukan: {path}\n"
-                f"Jalankan pipeline 04, 05 terlebih dahulu."
+                f"Jalankan pipeline 05 dan 06 terlebih dahulu."
             )
 
-    # H4 model opsional — jika belum ada, cascade tanpa H4 bias (H4=FLAT semua)
-    h4_model_path = MODEL_DIR / "lgbm_h4.pkl"
-    h4_feat_path  = MODEL_DIR / "h4_feature_cols.json"
-    if h4_model_path.exists() and h4_feat_path.exists():
-        h4_model = joblib.load(h4_model_path)
-        with open(h4_feat_path) as f:
-            h4_feat_cols = json.load(f)
-        logger.info(f"H4 model loaded: {len(h4_feat_cols)} features")
-    else:
-        h4_model      = None
-        h4_feat_cols  = []
-        logger.warning("lgbm_h4.pkl tidak ditemukan — H4 bias dinonaktifkan (jalankan 04_train_lgbm_h4.py)")
-
-    h1_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    lgbm_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
     lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
     lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
 
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
 
-    logger.info(f"Models loaded | Device: {DEVICE} | H1 features: {len(feat_cols)} | H4 features: {len(h4_feat_cols)} | Coins: {coins}")
+    logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)} | Coins: {coins}")
 
     # ── Backtest per symbol ───────────────────────────────────────────────────
     results         = {}
@@ -858,8 +833,7 @@ def main():
         try:
             report = backtest_symbol(
                 symbol, feat_cols,
-                h4_model, h1_model, lstm_model, lstm_scaler,
-                h4_feat_cols,
+                lgbm_model, lstm_model, lstm_scaler,
             )
             if report:
                 results[symbol] = report
@@ -950,7 +924,7 @@ def main():
 
     # ── Update model registry ─────────────────────────────────────────────────
     update_model_metrics(
-        "hierarchical_v1",
+        "cascade_v2",
         winrate              = aggregate["mean_winrate"],
         trade_per_month      = aggregate["mean_trade_per_month"],
         pnl_lev5x            = aggregate["mean_pnl_lev5x"],

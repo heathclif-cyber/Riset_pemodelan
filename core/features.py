@@ -4,7 +4,7 @@ Base Timeframe: H1 (bukan M15)
 Konteks Swing: H4 (swing high/low, trend, divergence)
 
 Fungsi utama:
-  engineer_features()          — hitung semua 83 fitur dari cleaned parquet (H1 base)
+  engineer_features()          — hitung semua 100 fitur dari cleaned parquet (H1 base)
   swing_based_labeling()       — labeling v3 berbasis H4 swing high/low
   structural_label_filter()    — filter label berdasarkan posisi harga dalam range
   compute_synthetic_oi()       — synthetic OI dari CVD (H1-adjusted windows)
@@ -15,6 +15,7 @@ Perubahan v3 vs v2:
   - +9 fitur smart money: cvd_div_h4, cvd_slope_h4, vol_efficiency,
     absorption_z, funding_price_div, rsi_h4, rsi_divergence,
     wyckoff_phase, spring_upthrust
+  - +16 fitur H4 dynamics & D1 HTF context (fix: sebelumnya hilang dari parquet)
   - Semua rolling windows disesuaikan ke satuan bar H1
   - Parameter names dibersihkan (tidak ada lagi referensi "m15")
 """
@@ -854,6 +855,53 @@ def calc_rsi_divergence(
 
 
 # ═══════════════════════════════════════════════════════════════════════════════
+# TREND QUALITY FEATURES (correction detection)
+# ═══════════════════════════════════════════════════════════════════════════════
+
+def calc_trend_acceleration(
+    trend_strength: pd.Series,
+    atr_h4: pd.Series,
+    window: int = 4,
+) -> pd.Series:
+    """
+    Rate of change trend_strength dalam N bar H4 (~16 jam).
+    Negatif saat h4_trend masih UP = trend mulai kelelahan (warning LONG).
+    Positif saat h4_trend masih DOWN = trend bearish melemah (warning SHORT).
+    """
+    return trend_strength.diff(window) / atr_h4.replace(0, np.nan)
+
+
+def calc_volume_price_confirm(
+    vol_regime: pd.Series,
+    h4_trend: pd.Series,
+) -> pd.Series:
+    """
+    Volume × arah trend H4.
+    Nilai rendah (VolR 0.01 × trend DOWN = -0.01) = volume tidak konfirmasi.
+    Nilai tinggi positif = volume mendukung uptrend.
+    Menggabungkan vol_regime + h4_trend secara eksplisit agar LGBM tidak perlu
+    menemukan interaksinya sendiri.
+    """
+    return vol_regime * h4_trend
+
+
+def calc_dist_from_recent_high(
+    high: pd.Series,
+    close: pd.Series,
+    atr_h1: pd.Series,
+    window: int = 8,
+) -> pd.Series:
+    """
+    Jarak harga dari highest high N bar terakhir (ATR-normalized).
+    -0.3 = baru mulai turun dari puncak (koreksi awal, entry SHORT masih valid).
+    -2.0 = sudah koreksi 2 ATR (mungkin sudah oversold, jangan entry SHORT).
+     0.0 = harga di/dekat puncak (tidak ada koreksi).
+    """
+    roll_high = high.rolling(window, min_periods=3).max()
+    return (close - roll_high) / atr_h1.replace(0, np.nan)
+
+
+# ═══════════════════════════════════════════════════════════════════════════════
 # SWING-BASED LABELING v3
 # ═══════════════════════════════════════════════════════════════════════════════
 
@@ -1057,16 +1105,17 @@ def engineer_features(
     sl_mult: float = 1.0,
 ) -> pd.DataFrame:
     """
-    Hitung semua 83 fitur v3 dari cleaned DataFrame (H1 base).
+    Hitung semua 100 fitur v3 dari cleaned DataFrame (H1 base).
 
     Input:
         df — output dari 02_clean.py dengan kolom prefixed:
              "1h_open/high/low/close/volume"
              "4h_open/high/low/close" (untuk H4 context)
+             "1d_open/high/low/close" (untuk D1 HTF context)
              "funding_rate_*", "macro_*" (optional)
 
     Output:
-        DataFrame dengan 83 fitur + label (jika add_label=True)
+        DataFrame dengan 100 fitur + label (jika add_label=True)
     """
     df = ensure_utc_index(df)
 
@@ -1449,6 +1498,23 @@ def engineer_features(
         window_avg   = 24,
     )
     feat.update(vsa_feats)
+
+    # ── 28b. Trend Quality Features (correction detection) ────────────────────
+    feat["trend_accel_4h"]    = calc_trend_acceleration(
+        trend_strength = feat["trend_strength"],
+        atr_h4         = atr_h4,
+        window         = 4,
+    )
+    feat["vol_price_confirm"] = calc_volume_price_confirm(
+        vol_regime = feat["vol_regime"],
+        h4_trend   = feat["h4_trend"],
+    )
+    feat["dist_from_8h_high"] = calc_dist_from_recent_high(
+        high   = h,
+        close  = c,
+        atr_h1 = atr_h1,
+        window = 8,
+    )
 
     # ── 29. Build DataFrame ───────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)

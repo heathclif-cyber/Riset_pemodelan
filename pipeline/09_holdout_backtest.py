@@ -2,9 +2,7 @@
 pipeline/09_holdout_backtest.py — Hold-Out Backtest (Genuine Out-of-Sample)
 
 Fetch data baru (default: Mei 2025 – Apr 2026), engineer fitur,
-lalu backtest menggunakan hierarchical cascade (H4→H1→LSTM) TANPA retraining.
-
-Stacked ensemble (LogReg + Isotonic) telah dihapus — lihat AUDIT_REPORT.md.
+lalu backtest menggunakan 2-model cascade (LGBM → LSTM) TANPA retraining.
 
 Output disimpan terpisah di:
   data/holdout/raw/        ← raw klines hold-out
@@ -32,6 +30,7 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import torch
 
 warnings.filterwarnings("ignore")
 
@@ -51,7 +50,6 @@ from config import (
     SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     FEATURE_COLS_V3, VP_WINDOW, VP_BINS,
     SWING_LOOKBACK, FVG_MIN_GAP_ATR,
-    H4_FEATURE_COLS, LSTM_CONFIRMATION_ENABLED,
 )
 from core.binance_client import BinanceClient
 from core.fetchers import fetch_coin, fetch_all_macro
@@ -301,11 +299,9 @@ def engineer_holdout_symbol(symbol: str) -> bool:
 def backtest_holdout_symbol(
     symbol: str,
     feat_cols: list[str],
-    h4_model,
-    h1_model,
+    lgbm_model,
     lstm_model,
     lstm_scaler,
-    h4_feat_cols: list[str],
 ) -> dict | None:
     path = HOLDOUT_LABEL_DIR / f"{symbol}_features_v3.parquet"
     if not path.exists():
@@ -326,10 +322,10 @@ def backtest_holdout_symbol(
 
     logger.info(f"[{symbol}] Hold-out inference: {len(df):,} bars...")
 
-    # Hierarchical cascade — predict seluruh hold-out (murni out-of-sample)
+    # 2-model cascade — predict seluruh hold-out (murni out-of-sample)
     y_pred, confidence = hierarchical_predict(
-        h4_model, h1_model, lstm_model, lstm_scaler,
-        X, valid_cols, h4_feat_cols, df[valid_cols],
+        None, lgbm_model, lstm_model, lstm_scaler,
+        X, valid_cols, [], df[valid_cols],
     )
 
     # Confidence filter
@@ -444,39 +440,26 @@ def main():
     else:
         logger.info("=== STEP 3: SKIP ENGINEER ===")
 
-    # ── Step 4: Load models (Hierarchical Cascade) ────────────────────────────
-    logger.info("=== STEP 4: BACKTEST (Hierarchical Cascade) ===")
+    # ── Step 4: Load models (2-model cascade: LGBM + LSTM) ───────────────────
+    logger.info("=== STEP 4: BACKTEST (2-Model Cascade) ===")
     required_models = [
-        (MODEL_DIR / "lgbm_baseline.pkl",    "H1 LightGBM"),
+        (MODEL_DIR / "lgbm_baseline.pkl",    "LightGBM"),
         (MODEL_DIR / "lstm_best.pt",         "LSTM"),
         (MODEL_DIR / "lstm_scaler.pkl",      "LSTM Scaler"),
-        (MODEL_DIR / "feature_cols_v2.json", "H1 Feature cols"),
+        (MODEL_DIR / "feature_cols_v2.json", "Feature cols"),
     ]
     for path, name in required_models:
         if not path.exists():
             raise FileNotFoundError(f"{name} tidak ditemukan: {path}")
 
-    # H4 model opsional — fallback bias FLAT jika belum dilatih
-    h4_model_path = MODEL_DIR / "lgbm_h4.pkl"
-    h4_feat_path  = MODEL_DIR / "h4_feature_cols.json"
-    if h4_model_path.exists() and h4_feat_path.exists():
-        h4_model = joblib.load(h4_model_path)
-        with open(h4_feat_path) as f:
-            h4_feat_cols = json.load(f)
-        logger.info(f"H4 model loaded: {len(h4_feat_cols)} features")
-    else:
-        h4_model     = None
-        h4_feat_cols = []
-        logger.warning("lgbm_h4.pkl tidak ditemukan — H4 bias FLAT (jalankan 04_train_lgbm_h4.py)")
-
-    h1_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
+    lgbm_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
     lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
     lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
 
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
 
-    logger.info(f"Models loaded | Device: {DEVICE} | H1: {len(feat_cols)} | H4: {len(h4_feat_cols)}")
+    logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)}")
 
     # ── Step 5: Backtest per symbol ───────────────────────────────────────────
     results         = {}
@@ -486,8 +469,7 @@ def main():
         try:
             report = backtest_holdout_symbol(
                 symbol, feat_cols,
-                h4_model, h1_model, lstm_model, lstm_scaler,
-                h4_feat_cols,
+                lgbm_model, lstm_model, lstm_scaler,
             )
             if report:
                 results[symbol] = report

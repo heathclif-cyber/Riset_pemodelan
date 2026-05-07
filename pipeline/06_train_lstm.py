@@ -2,26 +2,18 @@
 pipeline/06_train_lstm.py — Fase 06: LSTM Momentum Confirmation Training
 Purged Walk-Forward CV (8 fold, purge gap 5 bar)
 
-PERAN DALAM HIERARCHICAL CASCADE:
-  LSTM berfungsi sebagai "confirmation vote" pada STEP 3 dari cascade:
+PERAN DALAM 2-MODEL CASCADE:
+  LSTM berfungsi sebagai "soft confirmation" pada STEP 2:
 
-    STEP 1  04_train_lgbm_h4.py → H4 LGBM bias direction (LONG/SHORT/FLAT)
-    STEP 2  05_train_lgbm_h1.py → H1 LGBM entry signal dengan confidence threshold
-    STEP 3  06_train_lstm.py    → LSTM ← file ini
-    STEP 4  Decision            → sinyal diterbitkan hanya jika H4 + H1 + LSTM sepakat
+    STEP 1  05_train_lgbm.py → LGBM entry signal (primary)
+    STEP 2  06_train_lstm.py    → LSTM soft adjustment ← file ini
 
-  Aturan konfirmasi (di backtest_utils.py & inference.py):
-    • Jika H4=LONG dan H1 P(LONG) ≥ 0.62 → cek LSTM:
-        LSTM predict LONG  → CONFIRMED → sinyal LONG
-        LSTM predict lain  → REJECTED  → FLAT (hindari false breakout)
-    • Jika H4=SHORT dan H1 P(SHORT) ≥ 0.62 → cek LSTM:
-        LSTM predict SHORT → CONFIRMED → sinyal SHORT
-        LSTM predict lain  → REJECTED  → FLAT
-    • H4=FLAT → selalu FLAT (tidak cek H1/LSTM)
-
-  Training pipeline TIDAK berubah — LSTM tetap dilatih dengan 3-class swing
-  labels (LONG/FLAT/SHORT) menggunakan purged walk-forward CV. Perubahan hanya
-  ada di decision layer (interpretation), bukan di training objective.
+  Aturan konfirmasi (di backtest_utils.py):
+    • LGBM predict LONG/SHORT dengan conf >= threshold → cek LSTM:
+        LSTM agree    → +LSTM_ADJUST_AGREE_BOOST ke confidence
+        LSTM neutral  → -LSTM_ADJUST_NEUTRAL_PEN
+        LSTM opposite → -LSTM_ADJUST_OPPOSITE_PEN (tiered by margin)
+    • Final signal = LONG/SHORT jika adjusted_conf >= threshold, else FLAT
 
 Jalankan:
   python pipeline/06_train_lstm.py               # training coins
