@@ -1,0 +1,15 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(xargs ls *)",
+      "Bash(git pull *)",
+      "Bash(python -c \"from config import FEATURE_COLS_V3, H4_FEATURE_COLS; missing=[c for c in H4_FEATURE_COLS if c not in FEATURE_COLS_V3]; print\\(f'FEATURE_COLS_V3: {len\\(FEATURE_COLS_V3\\)} fitur'\\); print\\(f'H4_FEATURE_COLS: {len\\(H4_FEATURE_COLS\\)} fitur'\\); print\\(f'H4 masih missing dari FEATURE_COLS_V3: {missing}'\\)\")",
+      "Bash(python -c ' *)",
+      "Bash(git add *)",
+      "Bash(git rm *)",
+      "Bash(git commit -m ' *)",
+      "Bash(git push *)",
+      "Bash(python -c \"import ast; ast.parse\\(open\\('pipeline/03_analyze_swing.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")"
+    ]
+  }
+}
