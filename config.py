@@ -208,6 +208,10 @@ H4_BINARY_CLASS_WEIGHTS  = {0: 1.5, 1: 1.5}  # SHORT=0, LONG=1 (sebelumnya 3.0)
 # H1 entry thresholds (3-class model tidak berubah)
 LGBM_THRESHOLD_LONG  = 0.62   # LGBM minimum confidence untuk entry LONG
 LGBM_THRESHOLD_SHORT = 0.62   # LGBM minimum confidence untuk entry SHORT
+# FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
+# LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
+# Makin rendah → makin sering LSTM dipanggil → lebih banyak sinyal, lebih berat.
+LGBM_FLAT_REVIEW_THRESHOLD = 0.90  # default 0.90 (confidence FLAT ≥ 0.90 → skip LSTM)
 LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)

@@ -30,6 +30,7 @@ logger = logging.getLogger("backtest_utils")
 from config import (
     NUM_CLASSES,
     LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT,
+    LGBM_FLAT_REVIEW_THRESHOLD,
     LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
@@ -110,16 +111,28 @@ def hierarchical_predict(
     df_slice,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    2-Model cascade: LGBM (primary) → LSTM (soft confirmation).
+    2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review).
 
     H4 LGBM dihapus dari decision layer. Regime context (trend acceleration,
     volume confirmation, HTF alignment, D1 trend) sudah embedded sebagai fitur
     di LGBM — model belajar interaksinya sendiri tanpa layer terpisah.
 
+    Alur:
+      LGBM predict
+        ├─ LONG  & conf ≥ LGBM_THRESHOLD_LONG  → LSTM adjustment     (seperti semula)
+        ├─ SHORT & conf ≥ LGBM_THRESHOLD_SHORT → LSTM adjustment     (seperti semula)
+        ├─ FLAT  & max_conf < FLAT_REVIEW_THR  → LSTM review (BARU)  ← fix FLAT bias
+        └─ FLAT  & max_conf ≥ FLAT_REVIEW_THR  → langsung FLAT       (hemat komputasi)
+
     LSTM soft adjustment (mode "tiered"):
       agree   : +LSTM_ADJUST_AGREE_BOOST
       neutral : -LSTM_ADJUST_NEUTRAL_PEN
       opposite: -LSTM_ADJUST_OPPOSITE_PEN × multiplier(margin)
+
+    LSTM FLAT review:
+      LSTM LONG  & conf ≥ LGBM_THRESHOLD_LONG  → override ke LONG
+      LSTM SHORT & conf ≥ LGBM_THRESHOLD_SHORT → override ke SHORT
+      LSTM FLAT  atau conf tidak cukup         → tetap FLAT
 
     Returns:
       y_pred     : array int64 (0=SHORT, 1=FLAT, 2=LONG)
@@ -132,7 +145,7 @@ def hierarchical_predict(
     lgbm_proba  = lgbm_model.predict_proba(df_slice[valid_cols])
     # lgbm_proba: (N, 3) — col 0=SHORT, 1=FLAT, 2=LONG
 
-    # STEP 2: LSTM soft adjustment
+    # STEP 2: LSTM probabilities (jika enabled)
     if LSTM_CONFIRMATION_ENABLED and lstm_model is not None:
         lstm_proba = get_lstm_proba(lstm_model, lstm_scaler, X, n)
     else:
@@ -149,9 +162,34 @@ def hierarchical_predict(
         lgbm_long_conf  = lgbm_proba[i, 2]
         lgbm_short_conf = lgbm_proba[i, 0]
 
+        # ── LGBM output FLAT (tidak melewati threshold entry) ─────────────────
         if lgbm_long_conf < LGBM_THRESHOLD_LONG and lgbm_short_conf < LGBM_THRESHOLD_SHORT:
-            continue  # LGBM tidak yakin → FLAT
+            # Hitung max confidence LGBM dari semua kelas
+            lgbm_max_conf = float(np.max(lgbm_proba[i]))
 
+            # FLAT review: jika LGBM ragu (max_conf < threshold), beri LSTM kesempatan
+            if lstm_proba is not None and lgbm_max_conf < LGBM_FLAT_REVIEW_THRESHOLD:
+                lstm_dir       = int(np.argmax(lstm_proba[i]))
+                lstm_conf_long  = lstm_proba[i, 2]
+                lstm_conf_short = lstm_proba[i, 0]
+
+                if lstm_dir == 2 and lstm_conf_long >= LGBM_THRESHOLD_LONG:
+                    # LSTM yakin LONG — override FLAT
+                    _pass_rate["lgbm"] += 1
+                    _pass_rate["lstm"] += 1
+                    y_pred[i]     = 2
+                    confidence[i] = lstm_conf_long
+                elif lstm_dir == 0 and lstm_conf_short >= LGBM_THRESHOLD_SHORT:
+                    # LSTM yakin SHORT — override FLAT
+                    _pass_rate["lgbm"] += 1
+                    _pass_rate["lstm"] += 1
+                    y_pred[i]     = 0
+                    confidence[i] = lstm_conf_short
+                # else: LSTM FLAT atau confidence tidak cukup → tetap FLAT (continue)
+
+            continue  # FLAT (baik high-confidence maupun LSTM gagal confirm)
+
+        # ── LGBM output LONG atau SHORT ───────────────────────────────────────
         if lgbm_long_conf >= lgbm_short_conf:
             lgbm_dir  = 2
             lgbm_conf = lgbm_long_conf
@@ -163,7 +201,7 @@ def hierarchical_predict(
 
         _pass_rate["lgbm"] += 1
 
-        # STEP 3: LSTM soft adjustment
+        # STEP 3: LSTM soft adjustment (untuk LONG/SHORT path)
         adj_conf = lgbm_conf
         if lstm_proba is not None:
             lstm_dir = int(np.argmax(lstm_proba[i]))
