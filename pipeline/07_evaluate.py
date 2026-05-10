@@ -1,15 +1,13 @@
 """
-pipeline/07_evaluate.py — Fase 7: Multi-Model Evaluation + SHAP Analysis
+pipeline/07_evaluate.py — Fase 7: Model Evaluation + SHAP Analysis
 
-Mengevaluasi komponen dalam 2-model cascade:
-  1. LGBM  — SHAP + entry precision/recall untuk LONG dan SHORT
-  2. Cascade (LGBM + LSTM) — end-to-end trading simulation
-  3. H4 LGBM — opsional, hanya jika --include-h4
+Mengevaluasi komponen dalam 2-model cascade_v2:
+  1. LGBM — SHAP + entry precision/recall
+  2. Cascade (LGBM + LSTM + TP/SL Regressor) — end-to-end trading simulation
 
 Jalankan:
-  python pipeline/07_evaluate.py                 # evaluasi lengkap (LGBM + cascade)
+  python pipeline/07_evaluate.py                 # evaluasi lengkap
   python pipeline/07_evaluate.py --run-id my_run
-  python pipeline/07_evaluate.py --include-h4    # tambah H4 LGBM eval
   python pipeline/07_evaluate.py --skip-cascade  # hanya SHAP, tanpa trading sim
 
 Output: models/runs/{run_id}/
@@ -45,7 +43,6 @@ from config import (
     SLIPPAGE_PER_SIDE,
     TP_ATR_MULT, SL_ATR_MULT, CONFIDENCE_THRESHOLD_ENTRY,
     SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL, MAX_HOLDING_BARS,
-    H4_FEATURE_COLS, LSTM_SEQ_LEN, LSTM_HIDDEN, LSTM_LAYERS, LSTM_DROPOUT,
 )
 from core.utils import setup_logger, update_model_metrics
 from core.evaluator import full_trading_report
@@ -219,21 +216,10 @@ def evaluate_cascade(run_dir: Path) -> dict:
             return {}
 
     lgbm_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
-    lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
+    lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt").to(DEVICE)
     lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
-
-    h4_model_path = MODEL_DIR / "lgbm_h4.pkl"
-    h4_feat_path  = MODEL_DIR / "h4_feature_cols.json"
-    if h4_model_path.exists() and h4_feat_path.exists():
-        h4_model = joblib.load(h4_model_path)
-        with open(h4_feat_path) as f:
-            h4_feat_cols = json.load(f)
-        logger.info(f"H4 model loaded: {len(h4_feat_cols)} features")
-    else:
-        h4_model, h4_feat_cols = None, []
-        logger.warning("lgbm_h4.pkl tidak ada — H4 bias = FLAT (partial cascade)")
 
     df = load_data(SAMPLE_SYMBOL)
     mask = df["label"].astype(str).isin(LABEL_MAP)
@@ -285,12 +271,12 @@ def evaluate_cascade(run_dir: Path) -> dict:
         max_sl_atr     = SWING_LABEL_MAX_SL,
         max_hold       = MAX_HOLDING_BARS,
         symbol         = SAMPLE_SYMBOL,
+        confidence     = confidence,
     )
 
     trading_report["signal_stats"] = {
         "n_long": n_long, "n_short": n_short, "n_flat": n_flat,
         "signal_rate": round(signal_rate, 4),
-        "h4_model_active": h4_model is not None,
     }
 
     cascade_path = run_dir / "cascade_metrics.json"
@@ -302,8 +288,8 @@ def evaluate_cascade(run_dir: Path) -> dict:
     print(f"\n{sep}")
     print(f"  HIERARCHICAL CASCADE — End-to-End ({SAMPLE_SYMBOL})")
     print(f"{sep}")
-    print(f"  H4 bias aktif : {'Ya' if h4_model else 'Tidak (fallback FLAT)'}")
-    print(f"  Signal rate   : {signal_rate:.1%}  (LONG={n_long} SHORT={n_short} FLAT={n_flat})")
+    print()
+    print(f"  Signal rate     : {signal_rate:.1%}  (LONG={n_long} SHORT={n_short} FLAT={n_flat})")
     print(f"  {'Metric':<28}  {'Value':>10}")
     print(f"  {'-'*28}  {'-'*10}")
     print(f"  {'Winrate':<28}  {trading_report.get('winrate', 0):>10.2%}")
@@ -326,7 +312,7 @@ def evaluate_cascade(run_dir: Path) -> dict:
         trained_date         = datetime.now().strftime("%Y-%m-%d"),
         status               = "active",
     )
-    logger.info("Model registry updated → hierarchical_v1")
+    logger.info("Model registry updated → cascade_v2")
     return trading_report
 
 

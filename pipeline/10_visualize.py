@@ -49,12 +49,12 @@ from config import (
 )
 from core.models import load_lstm
 from core.evaluator import simulate_trades_swing
-from core.utils import setup_logger, ensure_utc_index
+from core.utils import setup_logger, ensure_utc_index, get_lstm_device
 from pipeline.backtest_utils import hierarchical_predict
 from pipeline.shared import SequenceDataset
 
 logger = setup_logger("10_visualize")
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")  # LSTM inference via CPU
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 HOLDOUT_LABEL_DIR = ROOT / "data" / "holdout" / "labeled"
 

@@ -1,15 +1,28 @@
 {
   "permissions": {
     "allow": [
-      "Bash(xargs ls *)",
       "Bash(git pull *)",
-      "Bash(python -c \"from config import FEATURE_COLS_V3, H4_FEATURE_COLS; missing=[c for c in H4_FEATURE_COLS if c not in FEATURE_COLS_V3]; print\\(f'FEATURE_COLS_V3: {len\\(FEATURE_COLS_V3\\)} fitur'\\); print\\(f'H4_FEATURE_COLS: {len\\(H4_FEATURE_COLS\\)} fitur'\\); print\\(f'H4 masih missing dari FEATURE_COLS_V3: {missing}'\\)\")",
-      "Bash(python -c ' *)",
+      "Bash(Move-Item \".claude\\\\settings.local.json\" \".claude\\\\settings.local.json.bak\")",
       "Bash(git add *)",
-      "Bash(git rm *)",
       "Bash(git commit -m ' *)",
+      "Bash(git commit -m '@ *)",
       "Bash(git push *)",
-      "Bash(python -c \"import ast; ast.parse\\(open\\('pipeline/03_analyze_swing.py'\\).read\\(\\)\\); print\\('Syntax OK'\\)\")"
+      "PowerShell(Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\reports\" -Name 2>$null; if \\(-not \\(Test-Path \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\reports\"\\)\\) { Write-Output \"reports/ does not exist\" })",
+      "Bash(python *)",
+      "Bash(git commit *)",
+      "PowerShell(python -c \"import torch_directml; print\\('DirectML OK:', torch_directml.device\\(\\)\\)\" 2>&1)",
+      "PowerShell(pip install *)",
+      "PowerShell(python -c \"import torch_directml; dml = torch_directml.device\\(\\); print\\('DirectML device:', dml\\)\")",
+      "PowerShell(Get-ChildItem \"C:\\\\Users\\\\Bagas\\\\AppData\\\\Local\" -Directory | Select-Object Name | Where-Object {$_.Name -match \"jupyter|python|conda|anaconda|miniforge|mambaforge\"})",
+      "WebSearch",
+      "Bash(Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\" -Filter \"*regressor*\")",
+      "Bash(Select-Object Name, Length, LastWriteTime)",
+      "Bash(Rename-Item D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\tp_regressor.pkl D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\tp_regressor.pkl.bak -ErrorAction SilentlyContinue)",
+      "Bash(Rename-Item D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\sl_regressor.pkl D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\sl_regressor.pkl.bak -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"Regressor files hidden\")",
+      "PowerShell(Rename-Item *)",
+      "Bash(pip install *)",
+      "Bash(Get-ChildItem *)"
     ]
   }
 }

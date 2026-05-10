@@ -5,7 +5,29 @@ import numpy as np
 import torch
 from torch.utils.data import Dataset
 
-from config import LSTM_SEQ_LEN
+from config import LSTM_SEQ_LEN, N_FOLDS, PURGE_GAP_BARS
+
+
+def build_purged_folds(n: int, n_folds: int = N_FOLDS, purge: int = PURGE_GAP_BARS) -> list:
+    """
+    Build expanding-window folds with purging on both sides.
+
+    Data is split into n_folds+1 equal chunks. Fold k trains on chunks [0..k-1],
+    tests on chunk k. The last `purge` bars of training and the first `purge`
+    bars of testing are removed to prevent leakage through rolling features.
+
+    This is used by LGBM, LSTM, TP/SL regressor, and backtest — guaranteeing
+    consistent fold boundaries across all models.
+    """
+    splits = np.array_split(np.arange(n), n_folds + 1)
+    folds = []
+    for k in range(1, n_folds + 1):
+        train_raw = np.concatenate(splits[:k])
+        test_raw = splits[k]
+        train_idx = train_raw[:-purge] if len(train_raw) > purge else train_raw
+        test_idx = test_raw[purge:] if len(test_raw) > purge else test_raw
+        folds.append((train_idx, test_idx))
+    return folds
 
 
 class SequenceDataset(Dataset):

@@ -15,6 +15,13 @@ import numpy as np
 import pandas as pd
 from typing import Optional
 
+from config import (
+    TP_SL_HYBRID_MODE, TP_SL_SWING_FRESHNESS, TP_SL_STRUCTURAL_FILTER,
+    TP_SL_RR_GATE_ENABLED, TP_SL_MIN_RR, TP_SL_MIN_TP, TP_SL_MAX_SL,
+    TP_SL_FALLBACK_TP, TP_SL_FALLBACK_SL,
+    TP_SL_SLIPPAGE_ENABLED, TP_SL_TRIGGER_MODE,
+    TP_SL_SIZING_MODE, TP_SL_COOLDOWN_ENABLED,
+)
 from core.utils import setup_logger
 
 logger = setup_logger("evaluator")
@@ -215,51 +222,83 @@ def simulate_trades_swing(
     max_sl_atr:      float = 3.0,
     max_hold:        int   = 24,
     swing_lookback:  int   = 3,    # look-ahead bars di detect_h4_swing_points
-    tp_fallback_atr: float = 2.0,  # TP fallback (× ATR) saat swing belum terbentuk
-    sl_fallback_atr: float = 1.5,  # SL fallback (× ATR) saat swing belum terbentuk
+    tp_fallback_atr: float = TP_SL_FALLBACK_TP,  # TP fallback (× ATR) jika swing NaN
+    sl_fallback_atr: float = TP_SL_FALLBACK_SL,  # SL fallback (× ATR) jika swing NaN
+    confidence               = None,  # np.ndarray — needed for sizing_mode="tiered"
+    # ── Aspect toggles (from config.py) ────────────────────────────────────
+    hybrid_mode:          bool = TP_SL_HYBRID_MODE,       # #1
+    swing_freshness_check: bool = TP_SL_SWING_FRESHNESS,  # #2
+    structural_filter:     bool = TP_SL_STRUCTURAL_FILTER, # #3
+    slippage_enabled:      bool = TP_SL_SLIPPAGE_ENABLED,  # #7
+    sl_trigger_mode:       str  = TP_SL_TRIGGER_MODE,      # #8
+    sizing_mode:           str  = TP_SL_SIZING_MODE,       # #12
+    cooldown_enabled:      bool = TP_SL_COOLDOWN_ENABLED,  # #15
+    swing_sl_bumper_atr:   float = 0.5,                    # Bumper untuk mitigasi stop-hunt (0.5 ATR)
+    structural_tolerance_pct: float = 0.04,                # Toleransi breakout filter struktural (4%)
 ) -> dict:
     """
-    Simulasi trade dengan TP/SL dinamis berbasis swing high/low H4.
+    Simulasi trade dengan TP/SL dinamis — 2-tier priority:
 
-    Berbeda dari simulate_trades() yang pakai fixed ATR multiple:
-    - TP = swing high H4 terdekat di atas (LONG) / swing low H4 di bawah (SHORT)
-    - SL = swing low  H4 terdekat di bawah (LONG) / swing high H4 di atas (SHORT)
-    - Fallback: jika swing belum terbentuk (NaN) → ATR-based TP/SL
-    - Skip trade jika R:R < min_rr (capital preservation)
+    Tier 1: H4 Swing Points
+      TP = swing high/low H4 terdekat, SL = swing low/high H4 terdekat
 
-    Look-ahead correction:
-    detect_h4_swing_points() menggunakan future_bars (i+1..i+lookback) untuk
-    konfirmasi swing. Array swing di-shift maju swing_lookback bar agar hanya
-    menggunakan info yang tersedia di bar i dalam simulasi.
+    Tier 2: Fallback ATR Fixed (swing NaN)
+      TP = tp_fallback_atr × ATR, SL = sl_fallback_atr × ATR
+
+    Aspect toggles (lihat config.py untuk default):
+      hybrid_mode          — #1: max(swing,ATR) TP / min(swing,ATR) SL
+      swing_freshness_check — #2: tolak trade jika deviasi swing > 15% dari entry
+      structural_filter     — #3: entry harus dalam [H4 Low, H4 High]
+      slippage_enabled      — #7: apply slippage entry/exit
+      sl_trigger_mode       — #8: "close" = close candle, "highlow" = high/low candle
+      sizing_mode           — #12: "fixed"=$100, "tiered"=confidence-based
+      cooldown_enabled      — #15: cooldown setelah exit (tp=2h, sl=4h, time=2h)
+
+    Semua tier melalui validasi R:R yang sama — skip trade jika gagal.
     """
-    # ── Remove look-ahead: shift swing arrays forward ──────────────────────────
-    if swing_lookback > 0:
-        _sh = np.full_like(h4_swing_highs, np.nan)
-        _sl = np.full_like(h4_swing_lows,  np.nan)
-        _sh[swing_lookback:] = h4_swing_highs[:-swing_lookback]
-        _sl[swing_lookback:] = h4_swing_lows[:-swing_lookback]
-        h4_swing_highs = _sh
-        h4_swing_lows  = _sl
     n          = len(close)
     trades     = []
     equity     = modal
     equity_curve = [equity]
 
     LONG, SHORT, FLAT = 2, 0, 1   # sesuai LABEL_MAP
+    cooldown_until = -1            # #15: bar index sampai kapan skip entry
 
     for i in range(n - 1):
         sig = y_pred[i]
+
+        # ── #15 Cooldown check ──────────────────────────────────────────
+        if cooldown_enabled and i < cooldown_until:
+            equity_curve.append(equity)
+            continue
+
         if sig == FLAT:
             equity_curve.append(equity)
             continue
 
         raw_price = close[i]
         # Apply slippage on entry — LONG buy at ask, SHORT sell at bid
-        if sig == LONG:
-            price = raw_price * (1.0 + slippage)
-        else:  # SHORT
-            price = raw_price * (1.0 - slippage)
+        if slippage_enabled:
+            if sig == LONG:
+                price = raw_price * (1.0 + slippage)
+            else:
+                price = raw_price * (1.0 - slippage)
+        else:
+            price = raw_price
         atr_i  = atr[i]
+
+        # ── #12 Sizing ───────────────────────────────────────────────────
+        if sizing_mode == "tiered" and confidence is not None:
+            conf_i = confidence[i]
+            if conf_i > 0.75:
+                trade_modal = modal
+            elif conf_i > 0.60:
+                trade_modal = modal * 0.5
+            else:
+                equity_curve.append(equity)
+                continue
+        else:
+            trade_modal = modal
         sh_i   = h4_swing_highs[i]
         sl_i   = h4_swing_lows[i]
 
@@ -267,41 +306,87 @@ def simulate_trades_swing(
             equity_curve.append(equity)
             continue
 
-        # ── Tentukan TP/SL dinamis (fallback ATR jika swing belum terbentuk) ───
-        use_fallback = np.isnan(sh_i) or np.isnan(sl_i)
-        if sig == LONG:
-            if use_fallback:
+        use_swing = not np.isnan(sh_i) and not np.isnan(sl_i)
+
+        # ── #2 Swing Freshness Check ────────────────────────────────────
+        if swing_freshness_check and use_swing:
+            swing_dev = abs(sh_i - price) / price if sig == LONG else abs(sl_i - price) / price
+            if swing_dev > 0.15:  # swing > 15% dari entry = level basi
+                equity_curve.append(equity)
+                continue
+
+        # ── #3 Structural Filter ────────────────────────────────────────
+        if structural_filter and use_swing:
+            # Toleransi: entry diizinkan menembus swing max sebesar tolerance_pct
+            upper_bound = sh_i * (1.0 + structural_tolerance_pct)
+            lower_bound = sl_i * (1.0 - structural_tolerance_pct)
+            if price > upper_bound or price < lower_bound:  # entry di luar [H4 Low, H4 High] + tolerance
+                equity_curve.append(equity)
+                continue
+
+        # ── Tentukan TP/SL — Gate: Swing/ATR ────────────────────────────
+
+        if use_swing:
+            if sig == LONG:
+                swing_tp = sh_i
+                swing_sl = sl_i - (swing_sl_bumper_atr * atr_i)
+                atr_tp   = price + tp_fallback_atr * atr_i
+                atr_sl   = price - sl_fallback_atr * atr_i
+                if hybrid_mode:
+                    tp_price = max(swing_tp, atr_tp)   # max: whichever is further above
+                    sl_price = min(swing_sl, atr_sl)   # min: whichever is further below
+                else:
+                    tp_price = swing_tp
+                    sl_price = swing_sl
+                tp_dist  = tp_price - price
+                sl_dist  = price    - sl_price
+            else:
+                swing_tp = sl_i
+                swing_sl = sh_i + (swing_sl_bumper_atr * atr_i)
+                atr_tp   = price - tp_fallback_atr * atr_i
+                atr_sl   = price + sl_fallback_atr * atr_i
+                if hybrid_mode:
+                    tp_price = min(swing_tp, atr_tp)   # min: whichever is further below
+                    sl_price = max(swing_sl, atr_sl)   # max: whichever is further above
+                else:
+                    tp_price = swing_tp
+                    sl_price = swing_sl
+                tp_dist  = price    - tp_price
+                sl_dist  = sl_price - price
+        else:
+            # ── Tier 2: ATR Fallback (swing NaN) ─────────────────────────
+            if sig == LONG:
                 tp_price = price + tp_fallback_atr * atr_i
                 sl_price = price - sl_fallback_atr * atr_i
+                tp_dist  = tp_price - price
+                sl_dist  = price    - sl_price
             else:
-                tp_price = sh_i
-                sl_price = sl_i
-            tp_dist  = tp_price - price
-            sl_dist  = price    - sl_price
-        else:  # SHORT
-            if use_fallback:
                 tp_price = price - tp_fallback_atr * atr_i
                 sl_price = price + sl_fallback_atr * atr_i
-            else:
-                tp_price = sl_i
-                sl_price = sh_i
-            tp_dist  = price    - tp_price
-            sl_dist  = sl_price - price
+                tp_dist  = price    - tp_price
+                sl_dist  = sl_price - price
 
-        # Validasi R:R
-        if tp_dist <= 0 or sl_dist <= 0:
-            equity_curve.append(equity)
-            continue
-        if tp_dist < min_tp_atr * atr_i:
-            equity_curve.append(equity)
-            continue
-        if sl_dist > max_sl_atr * atr_i:
-            equity_curve.append(equity)
-            continue
-        rr = tp_dist / sl_dist
-        if rr < min_rr:
-            equity_curve.append(equity)
-            continue
+        # Validasi R:R (GATE — gagal = trade di-skip)
+        # #4: RR Gate dapat dinonaktifkan via TP_SL_RR_GATE_ENABLED
+        if TP_SL_RR_GATE_ENABLED:
+            if tp_dist <= 0 or sl_dist <= 0:
+                equity_curve.append(equity)
+                continue
+            if tp_dist < min_tp_atr * atr_i:
+                equity_curve.append(equity)
+                continue
+            if sl_dist > max_sl_atr * atr_i:
+                equity_curve.append(equity)
+                continue
+            rr = tp_dist / sl_dist
+            if rr < min_rr:
+                equity_curve.append(equity)
+                continue
+        else:
+            if tp_dist <= 0 or sl_dist <= 0:
+                equity_curve.append(equity)
+                continue
+            rr = tp_dist / sl_dist
 
         # ── Scan ke depan ─────────────────────────────────────────────────────
         outcome = "TIMEOUT"
@@ -310,32 +395,43 @@ def simulate_trades_swing(
 
         end = min(i + max_hold, n)
         for j in range(i + 1, end):
-            if np.isnan(high[j]) or np.isnan(low[j]):
+            if np.isnan(close[j]):
                 continue
             if sig == LONG:
                 if high[j] >= tp_price:
                     outcome    = "WIN";  raw_exit = tp_price; break
-                if low[j]  <= sl_price:
-                    outcome    = "LOSS"; raw_exit = sl_price; break
+                if sl_trigger_mode == "highlow":
+                    if low[j] <= sl_price:
+                        outcome = "LOSS"; raw_exit = sl_price; break
+                else:  # "close"
+                    if close[j] <= sl_price:
+                        outcome = "LOSS"; raw_exit = sl_price; break
             else:
-                if low[j]  <= tp_price:
+                if low[j] <= tp_price:
                     outcome    = "WIN";  raw_exit = tp_price; break
-                if high[j] >= sl_price:
-                    outcome    = "LOSS"; raw_exit = sl_price; break
+                if sl_trigger_mode == "highlow":
+                    if high[j] >= sl_price:
+                        outcome = "LOSS"; raw_exit = sl_price; break
+                else:  # "close"
+                    if close[j] >= sl_price:
+                        outcome = "LOSS"; raw_exit = sl_price; break
 
         # Apply slippage on exit — LONG sell at bid, SHORT buy to cover at ask
-        if sig == LONG:
-            exit_price = raw_exit * (1.0 - slippage)
+        if slippage_enabled:
+            if sig == LONG:
+                exit_price = raw_exit * (1.0 - slippage)
+            else:
+                exit_price = raw_exit * (1.0 + slippage)
         else:
-            exit_price = raw_exit * (1.0 + slippage)
+            exit_price = raw_exit
 
         # ── Hitung PnL ────────────────────────────────────────────────────────
         pct_move = (exit_price - price) / price
         if sig == SHORT:
             pct_move = -pct_move
 
-        gross_pnl  = modal * leverage * pct_move
-        fee_total  = modal * leverage * fee_per_side * 2
+        gross_pnl  = trade_modal * leverage * pct_move
+        fee_total  = trade_modal * leverage * fee_per_side * 2
         net_pnl    = gross_pnl - fee_total
 
         equity    += net_pnl
@@ -354,6 +450,16 @@ def simulate_trades_swing(
             "net_pnl":   round(net_pnl, 4),
             "equity":    round(equity, 4),
         })
+
+        # ── #15 Cooldown ─────────────────────────────────────────────────
+        if cooldown_enabled:
+            exit_bar = j if outcome != "TIMEOUT" else end
+            if outcome == "WIN":
+                cooldown_until = exit_bar + 2   # tp_hit = 2h
+            elif outcome == "LOSS":
+                cooldown_until = exit_bar + 4   # sl_hit = 4h
+            else:
+                cooldown_until = exit_bar + 2   # time_exit = 2h
 
     # ── Summary & Compatibility Mapping ───────────────────────────────────────
     if not trades:
@@ -533,15 +639,26 @@ def full_trading_report(
     low:          Optional[np.ndarray] = None,
     h4_swing_highs: Optional[np.ndarray] = None,
     h4_swing_lows:  Optional[np.ndarray] = None,
-    min_rr:       float = 1.2,
-    min_tp_atr:   float = 1.2,
-    max_sl_atr:   float = 3.0,
-    tp_fallback_atr: float = 2.0,  # TP fallback saat swing NaN
-    sl_fallback_atr: float = 1.5,  # SL fallback saat swing NaN
+    min_rr:       float = TP_SL_MIN_RR,
+    min_tp_atr:   float = TP_SL_MIN_TP,
+    max_sl_atr:   float = TP_SL_MAX_SL,
+    tp_fallback_atr: float = TP_SL_FALLBACK_TP,
+    sl_fallback_atr: float = TP_SL_FALLBACK_SL,
+    confidence         = None,  # for sizing_mode="tiered"
+    # Parameters for Dynamic TP/SL Regressor (Priority 1):
+    tp_regressor     = None,
+    sl_regressor     = None,
+    X_tp             = None,
+    X_sl             = None,
+    tp_reg_clip      = (0.5, 8.0),
+    sl_reg_clip      = (0.3, 5.0),
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
-    Mendukung legacy fixed ATR (v2) dan dynamic H4 Swing (v3).
+    Mendukung legacy fixed ATR (v2), dynamic H4 Swing (v3),
+    Dynamic TP/SL Regressor (Priority 1), dan Safe SL Classifier.
+
+    Semua parameter TP/SL mengikuti config.py (TP_SL_*).
     """
     label_prefix = f"[{symbol}] " if symbol else ""
     use_swing = h4_swing_highs is not None and h4_swing_lows is not None and high is not None
@@ -556,6 +673,10 @@ def full_trading_report(
                 min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
                 max_hold=max_hold,
                 tp_fallback_atr=tp_fallback_atr, sl_fallback_atr=sl_fallback_atr,
+                confidence=confidence,
+                tp_regressor=tp_regressor, sl_regressor=sl_regressor,
+                X_tp=X_tp, X_sl=X_sl,
+                tp_reg_clip=tp_reg_clip, sl_reg_clip=sl_reg_clip,
             )
         else:
             return simulate_trades(
@@ -619,7 +740,7 @@ def full_trading_report(
         report[f"total_fee_{key}"]    = sim.get("total_fee_paid", 0)
 
         logger.info(
-            f"{label_prefix}Lev {lev}x → "
+            f"{label_prefix}Lev {lev}x -> "
             f"PnL: ${sim.get('total_pnl', 0):+.2f} | "
             f"DD: {dd.get('max_drawdown_pct', 0):.2%}"
         )

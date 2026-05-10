@@ -14,6 +14,7 @@ H4 LGBM dihapus dari cascade. Regime context (H4 trend, D1 alignment,
 trend quality) sudah embedded langsung sebagai fitur di LGBM.
 """
 
+import joblib
 import logging
 import sys
 from pathlib import Path
@@ -34,12 +35,47 @@ from config import (
     LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
+    REGIME_NAMES, MODEL_DIR,
 )
 from pipeline.shared import SequenceDataset
+from core.utils import get_lstm_device
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")  # LSTM inference via CPU (hindari DirectML device mismatch)
 
-# ─── Pass Rate Counter ─────────────────────────────────────────────────────────
+# ─── Regime Model Registry ────────────────────────────────────────────────────
+# Cache per-regime LGBM models (loaded lazily on first use)
+_regime_models: dict = {}   # regime_name → lgbm model | None
+_regime_models_loaded = False
+
+
+def load_regime_models(model_dir: Path = MODEL_DIR) -> dict:
+    """
+    Load semua per-regime LGBM models dari models/lgbm_regime_*.pkl.
+    Return dict: {regime_name: model_or_None}.
+    Dipanggil sekali saat pertama kali hierarchical_predict() dijalankan.
+    """
+    global _regime_models, _regime_models_loaded
+    if _regime_models_loaded:
+        return _regime_models
+
+    for rname in REGIME_NAMES:
+        safe = rname.replace(" ", "_")
+        path = model_dir / f"lgbm_regime_{safe}.pkl"
+        if path.exists():
+            try:
+                _regime_models[rname] = joblib.load(path)
+                logger.info(f"[regime] Loaded: {path.name}")
+            except Exception as e:
+                logger.warning(f"[regime] Gagal load {path.name}: {e}")
+                _regime_models[rname] = None
+        else:
+            _regime_models[rname] = None
+
+    loaded = [k for k, v in _regime_models.items() if v is not None]
+    logger.info(f"[regime] Per-regime models loaded: {loaded}")
+    _regime_models_loaded = True
+    return _regime_models
+
 _pass_rate = {"lgbm": 0, "lstm": 0, "total": 0}
 
 
@@ -140,9 +176,37 @@ def hierarchical_predict(
     """
     n = len(df_slice)
 
+    # ── Load regime models (lazy, first call only) ────────────────────────────
+    regime_models = load_regime_models()
+    use_per_regime = any(v is not None for v in regime_models.values())
+    if use_per_regime:
+        regime_col = "hmm_regime" if "hmm_regime" in df_slice.columns else None
+        logger.info(f"[cascade] Regime-aware mode: regime col={'found' if regime_col else 'MISSING'}")
+    else:
+        regime_col = None
+        logger.info("[cascade] Standard mode (no per-regime models)")
+
     # STEP 1: LGBM entry signal (primary)
     valid_cols  = [c for c in feat_cols if c in df_slice.columns]
-    lgbm_proba  = lgbm_model.predict_proba(df_slice[valid_cols])
+
+    # Jika per-regime: kita perlu proba per baris menggunakan model yang sesuai
+    if use_per_regime and regime_col is not None:
+        # Batch predict per regime
+        lgbm_proba = np.full((n, NUM_CLASSES), 1.0 / NUM_CLASSES)
+        regimes    = df_slice[regime_col].fillna("RANGING_LOW_VOL").values
+
+        for rname, rmodel in regime_models.items():
+            if rmodel is None:
+                # Fallback ke lgbm_model global
+                rmodel = lgbm_model
+            mask = regimes == rname
+            if mask.sum() == 0:
+                continue
+            sub_cols = [c for c in valid_cols if c in df_slice.columns]
+            lgbm_proba[mask] = rmodel.predict_proba(df_slice[sub_cols].iloc[mask])
+    else:
+        # Standard: satu model untuk semua bar
+        lgbm_proba = lgbm_model.predict_proba(df_slice[valid_cols])
     # lgbm_proba: (N, 3) — col 0=SHORT, 1=FLAT, 2=LONG
 
     # STEP 2: LSTM probabilities (jika enabled)

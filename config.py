@@ -23,7 +23,8 @@ TRAINING_COINS = [
 NEW_COINS = [
     "TONUSDT", "ADAUSDT", "TRXUSDT", "1000SHIBUSDT", "AVAXUSDT",
     "LINKUSDT", "DOTUSDT", "SUIUSDT", "POLUSDT", "NEARUSDT",
-    "1000PEPEUSDT", "TAOUSDT", "ARBUSDT",
+    "1000PEPEUSDT", "TAOUSDT", "ARBUSDT", "XAUTUSDT",
+    "HBARUSDT", "ONDOUSDT",
 ]
 
 ALL_COINS = TRAINING_COINS + NEW_COINS
@@ -58,16 +59,27 @@ KLINE_INTERVALS = ["1h", "4h", "1d"]
 
 # ─── Feature Engineering ──────────────────────────────────────────────────────
 TP_ATR_MULT      = 2.0       # TP untuk legacy path (non-swing)
-SL_ATR_MULT      = 1.0       # SL untuk legacy path (non-swing)
+SL_ATR_MULT      = 1.5       # SL untuk legacy path (non-swing)
 MAX_HOLDING_BARS = 24        # bar H1 = 24 jam (sebelumnya 48)
 
 # ── Swing-Based Labeling v3 ───────────────────────────────────────────────────
 SWING_LABEL_MAX_HOLD = 24     # bar H1 = 24 jam (sebelumnya 48) — lever utama kurangi FLAT
-SWING_LABEL_MIN_RR   = 1.2    # sebelumnya 1.5 — lever sekunder, lebih realistis untuk crypto
+SWING_LABEL_MIN_RR   = 0.5    # 0.5 = TP minimal setengah risiko (setelah Bumper SL)
 SWING_LABEL_MIN_TP   = 1.2    # sebelumnya 1.5 — lever utama, TP lebih mudah tercapai
 SWING_LABEL_MAX_SL   = 3.0    # TETAP — SL ketat di crypto noisy meningkatkan false negatives
 SWING_H4_LOOKBACK    = 5
 SWING_ROLLING_BARS   = 24     # 24 jam rolling swing
+
+# ─── HMM Regime Detection ─────────────────────────────────────────────────────
+# Dipakai oleh pipeline/03b_regime_hmm.py + core/regime.py
+HMM_N_STATES  = 4      # 4 states: TRENDING_DOWN, RANGING_LOW_VOL, RANGING_HIGH_VOL, TRENDING_UP
+HMM_N_FOLDS   = 8      # walk-forward folds untuk OOF regime labels
+HMM_PURGE_H4  = 6      # purge gap (H4 bars) antara train/val ≈ 24 jam
+HMM_N_ITER    = 100    # max EM iterations untuk GaussianHMM
+
+# Nama regime canonical (ordered by mean_return ascending)
+REGIME_NAMES = ["TRENDING_DOWN", "RANGING_LOW_VOL", "RANGING_HIGH_VOL", "TRENDING_UP"]
+REGIME_ENC   = {name: i for i, name in enumerate(REGIME_NAMES)}
 
 # Volume Profile & FVG
 VP_WINDOW       = 24
@@ -85,6 +97,8 @@ N_FOLDS        = 8
 PURGE_GAP_BARS = 5
 
 # LightGBM Params (H1)
+# device_type="gpu" → pakai OpenCL (kompatibel AMD/Intel/NVIDIA)
+# GPU mode: n_jobs diabaikan, max_bin default 63 (lebih cepat, sedikit kurang presisi vs CPU 255)
 LGBM_PARAMS = {
     "objective":         "multiclass",
     "num_class":         3,
@@ -98,6 +112,9 @@ LGBM_PARAMS = {
     "verbose":           -1,
     "n_jobs":            -1,
     "random_state":      42,
+    "device_type":       "gpu",
+    "gpu_platform_id":   0,
+    "gpu_device_id":     0,
 }
 LGBM_EARLY_STOPPING = 50
 
@@ -240,7 +257,7 @@ LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
 LSTM_EPOCHS     = 100
 LSTM_PATIENCE   = 5
-LSTM_BATCH_SIZE = 512
+LSTM_BATCH_SIZE = 2048
 LSTM_LR         = 0.001
 
 LABEL_MAP     = {"SHORT": 0, "FLAT": 1, "LONG": 2}
@@ -352,6 +369,44 @@ FEATURE_COLS_V3 = [
     "trend_accel_4h", "vol_price_confirm", "dist_from_8h_high",
 ]
 
+# ─── TP/SL Architecture (Final — tested via ASPECT_COMPARISON.md) ───────────
+# Lihat pipeline/test_all_aspects.py untuk detail pengujian per aspek.
+# Arsitektur: Hybrid TP/SL + Swing Freshness + Structural Filter + RR Gate
+#             + Slippage ON + Close SL Trigger + Fixed Sizing + Cooldown OFF
+
+# #1: Hybrid TP/SL — max(swing, ATR) for TP, min(swing, ATR) for SL
+TP_SL_HYBRID_MODE = True
+
+# #2: Swing Freshness Check — tolak trade jika deviasi swing > 15% dari entry
+TP_SL_SWING_FRESHNESS = True
+
+# #3: Structural Filter — entry harus dalam [H4 Low, H4 High]
+TP_SL_STRUCTURAL_FILTER = True
+TP_SL_STRUCTURAL_TOLERANCE = 0.04  # Toleransi breakout 4%
+
+# #4: RR Gate — validasi TP/SL sebelum entry
+TP_SL_RR_GATE_ENABLED = True  # False = skip semua validasi RR
+TP_SL_MIN_RR   = SWING_LABEL_MIN_RR   # 1.0
+TP_SL_MIN_TP   = SWING_LABEL_MIN_TP   # 1.2 x ATR
+TP_SL_MAX_SL   = SWING_LABEL_MAX_SL   # 3.0 x ATR
+
+# #5: SL ATR Fallback Multiplier (hanya saat swing NaN)
+TP_SL_FALLBACK_TP = 2.0  # TP = 2.0 x ATR
+TP_SL_FALLBACK_SL = 1.5  # SL = 1.5 x ATR (Winrate lebih tinggi)
+
+# #7: Slippage entry/exit
+TP_SL_SLIPPAGE_ENABLED = True
+
+# #8: SL Trigger — "highlow" karena eksekusi manual order book
+TP_SL_TRIGGER_MODE = "highlow"  # "close" | "highlow"
+TP_SL_SWING_BUMPER = 0.5        # Bumper SL 0.5x ATR pencegah stop-hunt
+
+# #12: Position Sizing — "fixed" = $100/trade
+TP_SL_SIZING_MODE = "fixed"  # "fixed" | "tiered"
+
+# #15: Cooldown after exit — OFF (terlalu restriktif, buang 170 trade valid)
+TP_SL_COOLDOWN_ENABLED = False
+
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
 MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
@@ -363,3 +418,4 @@ MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────
 # Format: {label_idx: weight} sesuai LABEL_MAP = {SHORT:0, FLAT:1, LONG:2}
 LGBM_CLASS_WEIGHTS = {0: 3.0, 1: 1.5, 2: 3.0}   # SHORT=3x, FLAT=1.5x, LONG=3x
+

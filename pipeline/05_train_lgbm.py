@@ -26,7 +26,7 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
-from sklearn.model_selection import TimeSeriesSplit
+from pipeline.shared import build_purged_folds
 
 warnings.filterwarnings("ignore")
 
@@ -89,21 +89,19 @@ def get_feature_cols(df: pd.DataFrame) -> list[str]:
 
 # ─── Walk-Forward CV ─────────────────────────────────────────────────────────
 
-def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int = 4, gap_bars: int = 24):
+def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int = N_FOLDS, purge: int = PURGE_GAP_BARS):
     """
-    Walk-forward validation — fold selalu maju, tidak pernah mundur.
-    Setiap fold: train pada semua data sebelum titik split, test pada setelah.
-    Menggunakan LGBM_CLASS_WEIGHTS {SHORT:3x, FLAT:1x, LONG:3x} untuk
-    cost-sensitive learning agar LGBM lebih discriminative sebagai entry gate.
+    Walk-forward validation — expanding window folds dengan purging di kedua sisi.
+    Menggunakan build_purged_folds() yang konsisten dengan LSTM, backtest, dan
+    regressor. Fold selalu maju, train tidak pernah melihat data setelah test.
     """
-    logger.info(f"Starting Walk-Forward CV (n_splits={n_splits}, gap={gap_bars} bars)...")
+    logger.info(f"Walk-Forward CV (n_splits={n_splits}, purge={purge} bars)...")
     logger.info(f"Class weights: SHORT={LGBM_CLASS_WEIGHTS[0]}x, FLAT={LGBM_CLASS_WEIGHTS[1]}x, LONG={LGBM_CLASS_WEIGHTS[2]}x")
-    
-    # TimeSeriesSplit untuk walk-forward, gap diisi buffer untuk hindari leakage fitur rolling
-    tscv = TimeSeriesSplit(n_splits=n_splits, gap=gap_bars)
+
+    folds = build_purged_folds(len(X), n_folds=n_splits, purge=purge)
 
     results = []
-    for fold, (train_idx, val_idx) in enumerate(tscv.split(X), 1):
+    for fold, (train_idx, val_idx) in enumerate(folds, 1):
         X_tr, X_val = X.iloc[train_idx], X.iloc[val_idx]
         y_tr, y_val = y.iloc[train_idx], y.iloc[val_idx]
 
@@ -177,7 +175,7 @@ def main():
     logger.info(f"Features: {len(feat_cols)} | Samples: {len(df):,}")
 
     # Gap=24 (24 jam) karena Base Timeframe adalah H1
-    cv_results = walk_forward_cv(df_X, y, LGBM_PARAMS, n_splits=N_FOLDS, gap_bars=24)
+    cv_results = walk_forward_cv(df_X, y, LGBM_PARAMS, n_splits=N_FOLDS, purge=PURGE_GAP_BARS)
     
     best_model, best_f1, best_fold = None, -1.0, -1
     all_metrics = []

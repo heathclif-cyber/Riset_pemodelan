@@ -319,8 +319,8 @@ def calc_fvg(
         atr_val = atr.iloc[i]
         if pd.isna(atr_val) or atr_val == 0:
             continue
-        gap_up   = low.iloc[i + 1]  - high.iloc[i - 1]
-        gap_down = low.iloc[i - 1]  - high.iloc[i + 1]
+        gap_up   = low.iloc[i]  - high.iloc[i - 1]
+        gap_down = low.iloc[i - 1]  - high.iloc[i]
         if gap_up   > min_gap_atr * atr_val:
             fvg_up.iloc[i]   = gap_up   / atr_val
         if gap_down > min_gap_atr * atr_val:
@@ -1038,8 +1038,9 @@ def swing_based_labeling(
         elif short_valid:
             labels[i] = "SHORT" if outcome_short == "SHORT" else "FLAT"
 
-    # Bar di ekor data tidak punya cukup ruang untuk validasi → paksa FLAT
-    tail = min(max_hold // 4, n)
+    # Bar di ekor data tidak punya cukup forward window → paksa FLAT
+    # max_hold = forward scan penuh, purge_gap = buffer untuk fold construction
+    tail = min(max_hold, n)
     labels[-tail:] = "FLAT"
 
     return pd.Series(labels, index=close.index, name="label")
@@ -1188,6 +1189,12 @@ def engineer_features(
         h4_swing_lows  = h4_sl_raw,
         base_index     = df.index,
     )
+    # Shift forward to remove 3-bar look-ahead bias from swing detection.
+    # detect_h4_swing_points uses i-3..i+3 → the swing at bar i is confirmed
+    # by future bars. Shifting forward by lookback bars ensures features and
+    # labels only use swing info available at bar i.
+    h4_swing_highs = h4_swing_highs.shift(3)
+    h4_swing_lows  = h4_swing_lows.shift(3)
 
     # ── 8. Market Structure ───────────────────────────────────────────────────
     bos, choch, bars_since = calc_market_structure(h, l, c, swing_lookback)

@@ -2,7 +2,7 @@
 pipeline/09_holdout_backtest.py — Hold-Out Backtest (Genuine Out-of-Sample)
 
 Fetch data baru (default: Mei 2025 – Apr 2026), engineer fitur,
-lalu backtest menggunakan 2-model cascade (LGBM → LSTM) TANPA retraining.
+lalu backtest menggunakan 2-model cascade (LGBM - LSTM) TANPA retraining.
 
 Output disimpan terpisah di:
   data/holdout/raw/        ← raw klines hold-out
@@ -61,7 +61,8 @@ from core.features import engineer_features
 from pipeline.backtest_utils import hierarchical_predict
 
 logger = setup_logger("09_holdout_backtest")
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+from core.utils import get_lstm_device
+DEVICE = torch.device("cpu")  # LSTM inference via CPU
 
 # ── Hold-out directories (terpisah dari training data) ────────────────────────
 HOLDOUT_DIR       = ROOT / "data" / "holdout"
@@ -94,7 +95,7 @@ def fetch_holdout(coins: list[str], start: datetime, end: datetime) -> list[str]
     )
     if not client.test_connection():
         raise ConnectionError("Koneksi ke Binance gagal.")
-    logger.info(f"Binance OK | Periode: {start.date()} → {end.date()}")
+    logger.info(f"Binance OK | Periode: {start.date()} - {end.date()}")
 
     # Fetch macro ke holdout raw (fear & greed, btc dominance)
     macro_holdout_dir = HOLDOUT_RAW_DIR / "macro"
@@ -177,7 +178,7 @@ def _fix_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 
 
 def clean_holdout_symbol(symbol: str) -> bool:
-    """Clean satu koin dari HOLDOUT_RAW_DIR → HOLDOUT_PROC_DIR."""
+    """Clean satu koin dari HOLDOUT_RAW_DIR - HOLDOUT_PROC_DIR."""
     INTERVALS     = ["1h", "4h", "1d"]
     INTERVAL_FREQ = {"1h": "1h", "4h": "4h", "1d": "1D"}
 
@@ -232,7 +233,7 @@ def clean_holdout_symbol(symbol: str) -> bool:
 
     out_path = HOLDOUT_PROC_DIR / f"{symbol}_clean.parquet"
     _save_parquet(master, out_path)
-    logger.info(f"[{symbol}] Clean → {out_path} ({len(master):,} rows)")
+    logger.info(f"[{symbol}] Clean - {out_path} ({len(master):,} rows)")
     return True
 
 
@@ -241,7 +242,7 @@ def clean_holdout_symbol(symbol: str) -> bool:
 # ═══════════════════════════════════════════════════════════════════════════════
 
 def engineer_holdout_symbol(symbol: str) -> bool:
-    """Engineer fitur dari HOLDOUT_PROC_DIR → HOLDOUT_LABEL_DIR."""
+    """Engineer fitur dari HOLDOUT_PROC_DIR - HOLDOUT_LABEL_DIR."""
     in_path = HOLDOUT_PROC_DIR / f"{symbol}_clean.parquet"
     if not in_path.exists():
         logger.error(f"[{symbol}] Clean file tidak ada: {in_path}")
@@ -283,7 +284,7 @@ def engineer_holdout_symbol(symbol: str) -> bool:
 
         out_path = HOLDOUT_LABEL_DIR / f"{symbol}_features_v3.parquet"
         _save_parquet(feat_df, out_path)
-        logger.info(f"[{symbol}] Engineer → {out_path} ({len(feat_df):,} rows)")
+        logger.info(f"[{symbol}] Engineer - {out_path} ({len(feat_df):,} rows)")
         return True
 
     except Exception as e:
@@ -362,6 +363,7 @@ def backtest_holdout_symbol(
         max_sl_atr     = SWING_LABEL_MAX_SL,
         max_hold       = MAX_HOLDING_BARS,
         symbol         = symbol,
+        confidence     = confidence,
     )
     report["n_filtered_by_confidence"] = n_filtered
     return report
@@ -407,7 +409,7 @@ def main():
     sep = "=" * 60
     print(f"\n{sep}")
     print(f"  HOLD-OUT BACKTEST — {run_id}")
-    print(f"  Periode : {start.date()} → {end.date()}")
+    print(f"  Periode : {start.date()} - {end.date()}")
     print(f"  Koin    : {coins}")
     print(f"{sep}\n")
 
@@ -503,7 +505,7 @@ def main():
 
     aggregate = {
         "run_id":               run_id,
-        "holdout_period":       f"{start.date()} → {end.date()}",
+        "holdout_period":       f"{start.date()} - {end.date()}",
         "model_type":           "hierarchical_v1",
         "coins":                coins,
         "success":              success,
@@ -527,7 +529,7 @@ def main():
     # ── Print summary ─────────────────────────────────────────────────────────
     print(f"\n{sep}")
     print(f"  HOLD-OUT BACKTEST SELESAI — {run_id}")
-    print(f"  Periode  : {start.date()} → {end.date()}")
+    print(f"  Periode  : {start.date()} - {end.date()}")
     print(f"{sep}")
     print(f"  {'Metric':<28}  {'Value':>10}")
     print(f"  {'-'*28}  {'-'*10}")
@@ -540,7 +542,7 @@ def main():
     print(f"{sep}")
     print(f"\n  Per-symbol winrate:")
     for sym, r in results.items():
-        bar = "█" * int(r["winrate"] * 20)
+        bar = "#" * int(r["winrate"] * 20)
         print(f"  {sym:<14} {r['winrate']:.2%}  {bar}")
     print(f"\n  Output: {out_path}")
     print(f"{sep}\n")

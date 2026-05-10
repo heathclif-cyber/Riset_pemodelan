@@ -4,6 +4,7 @@ core/utils.py — Helper functions yang dipakai di seluruh pipeline
 
 import json
 import logging
+import sys
 import time
 from datetime import datetime, timezone
 from pathlib import Path
@@ -13,14 +14,50 @@ import numpy as np
 import pandas as pd
 import pyarrow as pa
 import pyarrow.parquet as pq
+import torch
+
+
+# ─── Device Detection (CUDA / DirectML / CPU) ────────────────────────────────
+
+def get_device() -> torch.device:
+    """
+    Deteksi device terbaik: CUDA → DirectML → CPU.
+    Dipakai untuk operasi non-LSTM (inference, backtest).
+    """
+    if torch.cuda.is_available():
+        return torch.device("cuda")
+    try:
+        import torch_directml
+        dml = torch_directml.device()
+        torch.zeros(1).to(dml)
+        return dml
+    except Exception:
+        pass
+    return torch.device("cpu")
+
+
+def get_lstm_device() -> torch.device:
+    """
+    Device untuk LSTM training & inference.
+    Setelah fix _CellLSTM (LSTMCell-based), DirectML sudah kompatibel.
+    """
+    return get_device()
 
 
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
+class _FlushHandler(logging.StreamHandler):
+    """StreamHandler yang flush setiap baris — agar real-time di Jupyter."""
+    def emit(self, record):
+        super().emit(record)
+        self.flush()
+
+
 def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:
     logger = logging.getLogger(name)
     if not logger.handlers:
-        handler = logging.StreamHandler()
+        # stdout (bukan stderr) agar Jupyter tampilkan real-time dengan -u
+        handler = _FlushHandler(sys.stdout)
         handler.setFormatter(logging.Formatter(
             "%(asctime)s | %(levelname)-8s | %(name)s | %(message)s",
             datefmt="%Y-%m-%d %H:%M:%S",

@@ -61,12 +61,12 @@ from config import (
 )
 from core.models import load_lstm
 from core.evaluator import full_trading_report
-from core.utils import setup_logger, update_model_metrics
+from core.utils import setup_logger, update_model_metrics, get_lstm_device
 from pipeline.shared import SequenceDataset
 from pipeline.backtest_utils import hierarchical_predict, get_lstm_proba
 
 logger = setup_logger("08_backtest")
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+DEVICE = torch.device("cpu")  # LSTM inference via CPU
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
 
@@ -104,16 +104,7 @@ def load_symbol(symbol: str, feat_cols: list[str]) -> tuple[pd.DataFrame, np.nda
 
 # ─── Walk-Forward Folds ───────────────────────────────────────────────────────
 
-def build_purged_folds(n: int) -> list[tuple[np.ndarray, np.ndarray]]:
-    splits = np.array_split(np.arange(n), N_FOLDS + 1)
-    folds  = []
-    for k in range(1, N_FOLDS + 1):
-        train_raw = np.concatenate(splits[:k])
-        test_raw  = splits[k]
-        train_idx = train_raw[:-PURGE_GAP_BARS] if len(train_raw) > PURGE_GAP_BARS else train_raw
-        test_idx  = test_raw[PURGE_GAP_BARS:]   if len(test_raw)  > PURGE_GAP_BARS  else test_raw
-        folds.append((train_idx, test_idx))
-    return folds
+from pipeline.shared import build_purged_folds
 
 
 # ─── Trade Chart ─────────────────────────────────────────────────────────────
@@ -584,6 +575,7 @@ def backtest_symbol(
         max_sl_atr      = SWING_LABEL_MAX_SL,
         max_hold        = MAX_HOLDING_BARS,
         symbol          = symbol,
+        confidence      = conf_filtered,
     )
 
     report["n_filtered_by_confidence"] = n_filtered
@@ -622,6 +614,7 @@ def generate_inference_config(
       - Koin mana yang validated dan direkomendasikan
       - Hasil backtest per koin
       - Arsitektur model (n_features, hidden size, dll)
+      - Dynamic TP/SL regressor (jika sudah ditraining via 05b)
     """
     # Tentukan kategori koin berdasarkan winrate dan drawdown
     recommended, acceptable, caution = [], [], []
@@ -635,6 +628,13 @@ def generate_inference_config(
         else:
             caution.append(sym)
 
+    model_files = {
+        "lgbm":        "lgbm_baseline.pkl",
+        "lstm":        "lstm_best.pt",
+        "lstm_scaler": "lstm_scaler.pkl",
+        "features":    "feature_cols_v2.json",
+    }
+
     return {
         "model_version": "cascade_v2",
         "created_at":    datetime.now(timezone.utc).isoformat(),
@@ -644,7 +644,6 @@ def generate_inference_config(
         },
 
         # ── Parameter Inference ───────────────────────────────────────────────
-        # Semua parameter yang dibutuhkan saat generate sinyal live
         "inference": {
             "confidence_threshold_entry": CONFIDENCE_THRESHOLD_ENTRY,
             "confidence_full_size":       CONFIDENCE_FULL,
@@ -687,17 +686,19 @@ def generate_inference_config(
         },
 
         # ── Parameter Labeling ────────────────────────────────────────────────
-        # Dipakai untuk hitung TP/SL di aplikasi
         "labeling": {
             "tp_atr_mult":      TP_ATR_MULT,
             "sl_atr_mult":      SL_ATR_MULT,
             "max_holding_bars": MAX_HOLDING_BARS,
         },
-        
-        # ── Fallback TP/SL (digunakan jika swing NaN) ─────────────────────────
-        "fallback_tp_sl": {
-            "tp_atr_mult": TP_ATR_MULT,
-            "sl_atr_mult": SL_ATR_MULT,
+
+        # ── TP/SL Parameters ──────────────────────────────────────────────────
+        "tp_sl": {
+            "min_rr":          SWING_LABEL_MIN_RR,
+            "min_tp_atr":      SWING_LABEL_MIN_TP,
+            "max_sl_atr":      SWING_LABEL_MAX_SL,
+            "tp_atr_mult":     TP_ATR_MULT,
+            "sl_atr_mult":     SL_ATR_MULT,
         },
 
         # ── Parameter Risk ────────────────────────────────────────────────────
@@ -720,9 +721,6 @@ def generate_inference_config(
         },
 
         # ── Koin yang Sudah Divalidasi ────────────────────────────────────────
-        # recommended : winrate ≥ 63% dan DD lev5x ≤ 20%
-        # acceptable  : winrate ≥ 60% dan DD lev5x ≤ 30%
-        # caution     : di bawah threshold — pakai dengan hati-hati
         "coins_validated": {
             "recommended": recommended,
             "acceptable":  acceptable,
@@ -758,16 +756,9 @@ def generate_inference_config(
         },
 
         # ── File Model ────────────────────────────────────────────────────────
-        "model_files": {
-            "lgbm":        "lgbm_baseline.pkl",
-            "lstm":        "lstm_best.pt",
-            "lstm_scaler": "lstm_scaler.pkl",
-            "features":    "feature_cols_v2.json",
-        },
-
+        "model_files": model_files,
 
         # ── Arsitektur Model ──────────────────────────────────────────────────
-        # Dipakai untuk load LSTM dengan parameter yang benar
         "model_architecture": {
             "n_features":   len(feat_cols),
             "lstm_hidden":  LSTM_HIDDEN,

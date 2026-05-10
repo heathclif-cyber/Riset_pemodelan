@@ -17,6 +17,66 @@ from config import FEATURE_COLS_V3
 
 # ─── TradingLSTM ─────────────────────────────────────────────────────────────
 
+class _ManualLSTMCell(nn.Module):
+    """
+    LSTM cell manual — hanya pakai matmul + sigmoid + tanh.
+    Menghindari _thnn_fused_lstm_cell yang tidak support DirectML/AMD GPU.
+    """
+    def __init__(self, input_size: int, hidden_size: int):
+        super().__init__()
+        self.hidden_size = hidden_size
+        k = hidden_size ** -0.5
+        self.W_ih = nn.Parameter(torch.empty(4 * hidden_size, input_size).uniform_(-k, k))
+        self.W_hh = nn.Parameter(torch.empty(4 * hidden_size, hidden_size).uniform_(-k, k))
+        self.b    = nn.Parameter(torch.zeros(4 * hidden_size))
+
+    def forward(self, x: torch.Tensor, hx: tuple) -> tuple:
+        h, c = hx
+        # Satu matmul gabungan: lebih efisien di GPU
+        gates = x @ self.W_ih.t() + h @ self.W_hh.t() + self.b
+        i, f, g, o = gates.chunk(4, dim=1)
+        i = torch.sigmoid(i)
+        f = torch.sigmoid(f)
+        g = torch.tanh(g)
+        o = torch.sigmoid(o)
+        c_new = f * c + i * g
+        h_new = o * torch.tanh(c_new)
+        return h_new, c_new
+
+
+class _CellLSTM(nn.Module):
+    """
+    Multi-layer LSTM menggunakan _ManualLSTMCell.
+    Kompatibel dengan DirectML (AMD RX 6600) karena hanya pakai basic ops.
+    """
+    def __init__(self, input_size: int, hidden_size: int, num_layers: int, dropout: float):
+        super().__init__()
+        self.hidden_size = hidden_size
+        self.num_layers  = num_layers
+        self.cells = nn.ModuleList([
+            _ManualLSTMCell(input_size if i == 0 else hidden_size, hidden_size)
+            for i in range(num_layers)
+        ])
+        self.drop = nn.Dropout(dropout) if dropout > 0 and num_layers > 1 else nn.Identity()
+
+    def forward(self, x: torch.Tensor):
+        # x: (batch, seq_len, input_size)
+        B, T, _ = x.shape
+        dev = x.device
+        h = [torch.zeros(B, self.hidden_size).to(dev) for _ in self.cells]
+        c = [torch.zeros(B, self.hidden_size).to(dev) for _ in self.cells]
+
+        out_seq = []
+        for t in range(T):
+            inp = x[:, t, :]
+            for i, cell in enumerate(self.cells):
+                h[i], c[i] = cell(inp, (h[i], c[i]))
+                inp = self.drop(h[i]) if i < self.num_layers - 1 else h[i]
+            out_seq.append(h[-1])
+
+        return torch.stack(out_seq, dim=1), None  # (batch, seq_len, hidden)
+
+
 class TradingLSTM(nn.Module):
     """
     Unidirectional LSTM untuk prediksi sinyal trading multiclass.
@@ -34,13 +94,11 @@ class TradingLSTM(nn.Module):
         num_classes: int   = 3,
     ):
         super().__init__()
-        self.lstm = nn.LSTM(
-            input_size    = n_features,
-            hidden_size   = hidden_size,
-            num_layers    = num_layers,
-            dropout       = dropout if num_layers > 1 else 0.0,
-            batch_first   = True,
-            bidirectional = False,
+        self.lstm = _CellLSTM(
+            input_size  = n_features,
+            hidden_size = hidden_size,
+            num_layers  = num_layers,
+            dropout     = dropout if num_layers > 1 else 0.0,
         )
         self.norm    = nn.LayerNorm(hidden_size)
         self.dropout = nn.Dropout(dropout)
@@ -70,9 +128,9 @@ def load_lstm(
     num_classes: int   = 3,
     device: str        = "cpu",
 ) -> TradingLSTM:
-    """Load LSTM dari state dict."""
+    """Load LSTM dari state dict ke CPU. Caller yang handle .to(device)."""
+    state = torch.load(str(path), map_location="cpu", weights_only=False)
     model = TradingLSTM(n_features, hidden_size, num_layers, dropout, num_classes)
-    state = torch.load(str(path), map_location=device, weights_only=True)
     model.load_state_dict(state)
     model.eval()
     return model

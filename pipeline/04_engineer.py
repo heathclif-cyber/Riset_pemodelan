@@ -29,8 +29,10 @@ from config import (
     SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     FEATURE_COLS_V3,
     VP_WINDOW, VP_BINS, SWING_LOOKBACK, FVG_MIN_GAP_ATR,
-    SWING_ROLLING_BARS
+    SWING_ROLLING_BARS,
+    HMM_N_STATES,
 )
+from core.regime import encode_regime
 from core.utils import setup_logger, ensure_utc_index
 from core.features import engineer_features
 
@@ -93,9 +95,30 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
             logger.warning(f"[{symbol}] Ada {len(missing_cols)} fitur V3 yang hilang: {missing_cols}")
             report["missing_features"] = missing_cols
 
-        # Amankan kolom-kolom V3 yang valid + kolom label + swing levels
-        cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + \
-                       ["label", "h4_swing_high", "h4_swing_low"]
+        # ── Merge HMM regime labels (jika sudah di-generate oleh 03b) ──────
+        regime_path = LABEL_DIR / f"{symbol}_regime_h1.parquet"
+        if regime_path.exists():
+            try:
+                reg_df = pd.read_parquet(regime_path)
+                if not isinstance(reg_df.index, pd.DatetimeIndex):
+                    reg_df.index = pd.to_datetime(reg_df.index, utc=True)
+                if reg_df.index.tz is None:
+                    reg_df.index = reg_df.index.tz_localize("UTC")
+                # Align index ke feat_df
+                feat_df = feat_df.join(reg_df[["hmm_regime", "hmm_regime_enc"]], how="left")
+                feat_df["hmm_regime_enc"] = feat_df["hmm_regime_enc"].fillna(1).astype("int32")
+                feat_df["hmm_regime"]     = feat_df["hmm_regime"].fillna("RANGING_LOW_VOL")
+                logger.info(f"[{symbol}] HMM regime merged — dist: {feat_df['hmm_regime'].value_counts().to_dict()}")
+            except Exception as e:
+                logger.warning(f"[{symbol}] HMM regime merge gagal: {e} — skip")
+        else:
+            logger.info(f"[{symbol}] Regime file tidak ada — jalankan 03b_regime_hmm.py dulu")
+
+        # Amankan kolom-kolom V3 yang valid + kolom label + swing levels + regime
+        extra_cols = ["label", "h4_swing_high", "h4_swing_low"]
+        if "hmm_regime_enc" in feat_df.columns:
+            extra_cols += ["hmm_regime", "hmm_regime_enc"]
+        cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + extra_cols
         feat_df = feat_df[cols_to_keep]
 
         # Buang NaN baris awal akibat rolling windows

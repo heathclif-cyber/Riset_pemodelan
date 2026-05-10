@@ -26,6 +26,7 @@ Output: models/runs/{run_id}/lstm.pt, lstm_scaler.pkl, lstm_cv_results.json
 
 import argparse
 import json
+import logging
 import sys
 import warnings
 from datetime import datetime
@@ -54,12 +55,20 @@ from config import (
     LSTM_EPOCHS, LSTM_PATIENCE, LSTM_BATCH_SIZE, LSTM_LR,
 )
 from core.models import TradingLSTM, save_lstm
-from core.utils import setup_logger
+from core.utils import setup_logger, get_lstm_device
 from pipeline.shared import SequenceDataset
 
 logger = setup_logger("06_train_lstm")
 
-DEVICE = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+# File handler — simpan semua log ke file agar bisa di-tail saat training
+LOG_DIR = ROOT / "logs"
+LOG_DIR.mkdir(parents=True, exist_ok=True)
+_fh = logging.FileHandler(LOG_DIR / "06_train_lstm.log", encoding="utf-8")
+_fh.setFormatter(logging.Formatter("%(asctime)s | %(levelname)-8s | %(name)s | %(message)s", datefmt="%Y-%m-%d %H:%M:%S"))
+_fh.setLevel(logging.DEBUG)
+logger.addHandler(_fh)
+
+DEVICE = get_lstm_device()
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
 
 
@@ -99,16 +108,7 @@ def preprocess(df: pd.DataFrame) -> tuple[pd.DataFrame, np.ndarray]:
     return df, y
 
 
-def build_purged_folds(n: int) -> list[tuple[np.ndarray, np.ndarray]]:
-    splits = np.array_split(np.arange(n), N_FOLDS + 1)
-    folds  = []
-    for k in range(1, N_FOLDS + 1):
-        train_raw = np.concatenate(splits[:k])
-        test_raw  = splits[k]
-        train_idx = train_raw[:-PURGE_GAP_BARS] if len(train_raw) > PURGE_GAP_BARS else train_raw
-        test_idx  = test_raw[PURGE_GAP_BARS:]   if len(test_raw) > PURGE_GAP_BARS  else test_raw
-        folds.append((train_idx, test_idx))
-    return folds
+from pipeline.shared import build_purged_folds
 
 
 def build_sampler(labels: np.ndarray) -> WeightedRandomSampler:
