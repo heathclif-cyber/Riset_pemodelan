@@ -33,9 +33,14 @@ from config import (
     LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT,
     LGBM_FLAT_REVIEW_THRESHOLD,
     LSTM_CONFIRMATION_ENABLED,
+    LSTM_FLAT_REVIEW_ENABLED,
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
+    LSTM_TIERED_MULTIPLIERS,
+    LSTM_OVERRIDE_THRESHOLD,
     REGIME_NAMES, MODEL_DIR,
+    TREND_ALIGNMENT_ENABLED, WITH_TREND_PENALTY, COUNTER_TREND_BOOST,
+    WITH_TREND_BLOCK_CONF,
 )
 from pipeline.shared import SequenceDataset
 from core.utils import get_lstm_device
@@ -99,13 +104,15 @@ def _lstm_adjustment(h1_conf: float, lstm_dir: int, bias: int) -> float:
         pen  = LSTM_ADJUST_OPPOSITE_PEN
         if LSTM_ADJUST_MODE == "tiered":
             # Penalti lebih ringan jika margin besar (confident)
+            # Multipliers dari config: [borderline, moderate, confident]
             margin = h1_conf - 0.62  # threshold reference
+            mul = LSTM_TIERED_MULTIPLIERS
             if margin < 0.05:
-                return -pen * 1.5        # borderline → heavy
+                return -pen * mul[0]       # borderline
             elif margin < 0.10:
-                return -pen * 1.0        # moderate → medium
+                return -pen * mul[1]       # moderate
             else:
-                return -pen * 0.5        # confident → light
+                return -pen * mul[2]       # confident
         return -pen * h1_conf if LSTM_ADJUST_MODE == "relative" else -pen
 
 
@@ -145,9 +152,15 @@ def hierarchical_predict(
     feat_cols: list[str],
     h4_feat_cols: list[str],  # unused
     df_slice,
+    # ── Trend Alignment (Grup 2) ──────────────────────────────────────────────
+    trend_alignment_enabled: bool = TREND_ALIGNMENT_ENABLED,
+    with_trend_penalty:      float = WITH_TREND_PENALTY,   # 2a
+    counter_trend_boost:     float = COUNTER_TREND_BOOST,  # 2b
+    with_trend_block_conf:   float = WITH_TREND_BLOCK_CONF, # 2c (0 = disable)
 ) -> tuple[np.ndarray, np.ndarray]:
     """
-    2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review).
+    2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review)
+    → Trend Alignment (Grup 2).
 
     H4 LGBM dihapus dari decision layer. Regime context (trend acceleration,
     volume confirmation, HTF alignment, D1 trend) sudah embedded sebagai fitur
@@ -169,6 +182,14 @@ def hierarchical_predict(
       LSTM LONG  & conf ≥ LGBM_THRESHOLD_LONG  → override ke LONG
       LSTM SHORT & conf ≥ LGBM_THRESHOLD_SHORT → override ke SHORT
       LSTM FLAT  atau conf tidak cukup         → tetap FLAT
+
+    Trend Alignment (Grup 2) — applied AFTER LSTM adjustment:
+      with_trend    (signal searah H4 trend)   → -with_trend_penalty
+      counter_trend (signal lawan H4 trend)    → +counter_trend_boost
+      block if with_trend & conf < with_trend_block_conf (2c)
+
+    Trend determined by h4_trend column in df_slice:
+      h4_trend > 0 → UP, h4_trend < 0 → DOWN, else RANGING
 
     Returns:
       y_pred     : array int64 (0=SHORT, 1=FLAT, 2=LONG)
@@ -232,23 +253,49 @@ def hierarchical_predict(
             lgbm_max_conf = float(np.max(lgbm_proba[i]))
 
             # FLAT review: jika LGBM ragu (max_conf < threshold), beri LSTM kesempatan
-            if lstm_proba is not None and lgbm_max_conf < LGBM_FLAT_REVIEW_THRESHOLD:
+            # Dapat di-disable via LSTM_FLAT_REVIEW_ENABLED (default False — WR 78.8% vs 57.9%)
+            if LSTM_FLAT_REVIEW_ENABLED and lstm_proba is not None and lgbm_max_conf < LGBM_FLAT_REVIEW_THRESHOLD:
                 lstm_dir       = int(np.argmax(lstm_proba[i]))
                 lstm_conf_long  = lstm_proba[i, 2]
                 lstm_conf_short = lstm_proba[i, 0]
 
-                if lstm_dir == 2 and lstm_conf_long >= LGBM_THRESHOLD_LONG:
-                    # LSTM yakin LONG — override FLAT
-                    _pass_rate["lgbm"] += 1
-                    _pass_rate["lstm"] += 1
-                    y_pred[i]     = 2
-                    confidence[i] = lstm_conf_long
-                elif lstm_dir == 0 and lstm_conf_short >= LGBM_THRESHOLD_SHORT:
+                if lstm_dir == 2 and lstm_conf_long >= LSTM_OVERRIDE_THRESHOLD:
+                    # LSTM yakin LONG — override FLAT (pakai threshold khusus override)
+                    override_conf = lstm_conf_long
+                    # Trend alignment for FLAT-review path (lstm_dir == LONG)
+                    if trend_alignment_enabled and "h4_trend" in df_slice.columns:
+                        trend_val = df_slice["h4_trend"].iloc[i]
+                        if not np.isnan(trend_val):
+                            if trend_val > 0:  # H4 UP → LONG is with-trend
+                                override_conf -= with_trend_penalty
+                            elif trend_val < 0:  # H4 DOWN → LONG is counter-trend
+                                override_conf += counter_trend_boost
+                            override_conf = float(np.clip(override_conf, 0.0, 1.0))
+                            if trend_val > 0 and with_trend_block_conf > 0 and override_conf < with_trend_block_conf:
+                                continue
+                    if override_conf >= LSTM_OVERRIDE_THRESHOLD:
+                        _pass_rate["lgbm"] += 1
+                        _pass_rate["lstm"] += 1
+                        y_pred[i]     = 2
+                        confidence[i] = override_conf
+                elif lstm_dir == 0 and lstm_conf_short >= LSTM_OVERRIDE_THRESHOLD:
                     # LSTM yakin SHORT — override FLAT
-                    _pass_rate["lgbm"] += 1
-                    _pass_rate["lstm"] += 1
-                    y_pred[i]     = 0
-                    confidence[i] = lstm_conf_short
+                    override_conf = lstm_conf_short
+                    if trend_alignment_enabled and "h4_trend" in df_slice.columns:
+                        trend_val = df_slice["h4_trend"].iloc[i]
+                        if not np.isnan(trend_val):
+                            if trend_val < 0:  # H4 DOWN → SHORT is with-trend
+                                override_conf -= with_trend_penalty
+                            elif trend_val > 0:  # H4 UP → SHORT is counter-trend
+                                override_conf += counter_trend_boost
+                            override_conf = float(np.clip(override_conf, 0.0, 1.0))
+                            if trend_val < 0 and with_trend_block_conf > 0 and override_conf < with_trend_block_conf:
+                                continue
+                    if override_conf >= LSTM_OVERRIDE_THRESHOLD:
+                        _pass_rate["lgbm"] += 1
+                        _pass_rate["lstm"] += 1
+                        y_pred[i]     = 0
+                        confidence[i] = override_conf
                 # else: LSTM FLAT atau confidence tidak cukup → tetap FLAT (continue)
 
             continue  # FLAT (baik high-confidence maupun LSTM gagal confirm)
@@ -271,6 +318,23 @@ def hierarchical_predict(
             lstm_dir = int(np.argmax(lstm_proba[i]))
             adj      = _lstm_adjustment(adj_conf, lstm_dir, lgbm_dir)
             adj_conf = float(np.clip(adj_conf + adj, 0.0, 1.0))
+
+        # STEP 4: Trend Alignment (Grup 2) — after LSTM adjustment
+        if trend_alignment_enabled:
+            h4_trend_col = "h4_trend"
+            if h4_trend_col in df_slice.columns:
+                trend_val = df_slice[h4_trend_col].iloc[i]
+                if not np.isnan(trend_val):
+                    is_with_trend = (lgbm_dir == 2 and trend_val > 0) or (lgbm_dir == 0 and trend_val < 0)
+                    is_counter    = (lgbm_dir == 2 and trend_val < 0) or (lgbm_dir == 0 and trend_val > 0)
+                    if is_with_trend:
+                        adj_conf -= with_trend_penalty
+                    elif is_counter:
+                        adj_conf += counter_trend_boost
+                    adj_conf = float(np.clip(adj_conf, 0.0, 1.0))
+                    # 2c: Block with-trend if conf below absolute threshold
+                    if is_with_trend and with_trend_block_conf > 0 and adj_conf < with_trend_block_conf:
+                        continue  # skip trade → FLAT
 
         if adj_conf >= lgbm_thr:
             _pass_rate["lstm"] += 1

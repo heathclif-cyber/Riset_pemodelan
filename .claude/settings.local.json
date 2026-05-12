@@ -22,7 +22,9 @@
       "Bash(Write-Output \"Regressor files hidden\")",
       "PowerShell(Rename-Item *)",
       "Bash(pip install *)",
-      "Bash(Get-ChildItem *)"
+      "Bash(Get-ChildItem *)",
+      "Bash(Remove-Item -Force temp_signals.csv, temp_trades.csv, temp_analysis.py, temp_compare.py, temp_compare2.py -ErrorAction SilentlyContinue)",
+      "Bash(Write-Output \"Cleaned up 5 temp files\")"
     ]
   }
 }

@@ -66,7 +66,7 @@ MAX_HOLDING_BARS = 24        # bar H1 = 24 jam (sebelumnya 48)
 SWING_LABEL_MAX_HOLD = 24     # bar H1 = 24 jam (sebelumnya 48) — lever utama kurangi FLAT
 SWING_LABEL_MIN_RR   = 0.5    # 0.5 = TP minimal setengah risiko (setelah Bumper SL)
 SWING_LABEL_MIN_TP   = 1.2    # sebelumnya 1.5 — lever utama, TP lebih mudah tercapai
-SWING_LABEL_MAX_SL   = 3.0    # TETAP — SL ketat di crypto noisy meningkatkan false negatives
+SWING_LABEL_MAX_SL   = 4.0    # 3.0→4.0 (2026-05-10): +697 trades, +$220 PnL, WR +0.14pp — lihat reports/PARAMETER_TEST_REPORT.md
 SWING_H4_LOOKBACK    = 5
 SWING_ROLLING_BARS   = 24     # 24 jam rolling swing
 
@@ -228,7 +228,9 @@ LGBM_THRESHOLD_SHORT = 0.62   # LGBM minimum confidence untuk entry SHORT
 # FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
 # LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
 # Makin rendah → makin sering LSTM dipanggil → lebih banyak sinyal, lebih berat.
-LGBM_FLAT_REVIEW_THRESHOLD = 0.90  # default 0.90 (confidence FLAT ≥ 0.90 → skip LSTM)
+LGBM_FLAT_REVIEW_THRESHOLD = 0.90  # threshold untuk trigger FLAT review (hanya relevan jika FLAT_REVIEW_ENABLED)
+LSTM_FLAT_REVIEW_ENABLED   = False # False = disable LSTM override FLAT (WR 78.8% vs 57.9%. Lihat EXPERIMENTS.md 2026-05-12)
+LSTM_OVERRIDE_THRESHOLD    = 0.70  # minimum LSTM confidence untuk override FLAT
 LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)
@@ -249,7 +251,10 @@ LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 LSTM_ADJUST_MODE         = "tiered"     # "relative" | "absolute" | "tiered"
 LSTM_ADJUST_AGREE_BOOST  = 0.05         # boost saat agree (mode relative/absolute)
 LSTM_ADJUST_NEUTRAL_PEN  = 0.05         # penalty saat LSTM FLAT
-LSTM_ADJUST_OPPOSITE_PEN = 0.08         # penalty saat LSTM opposite (0.15 asli → 0.08)
+LSTM_ADJUST_OPPOSITE_PEN = 0.04         # penalty saat LSTM opposite (0.15 asli -> 0.08 -> 0.04 — kurangi blocked trades)
+# Tiered multipliers (mode "tiered" only): penalty = pen × multiplier
+# margin < 0.05 → borderline, < 0.10 → moderate, else → confident
+LSTM_TIERED_MULTIPLIERS = [1.0, 0.5, 0.25]  # [borderline, moderate, confident] (was [1.5, 1.0, 0.5])
 # LSTM Params
 LSTM_SEQ_LEN    = 16   # diturunkan dari 32 — lebih reaktif ke koreksi (32 jam → 16 jam)
 LSTM_HIDDEN     = 128
@@ -388,7 +393,7 @@ TP_SL_STRUCTURAL_TOLERANCE = 0.04  # Toleransi breakout 4%
 TP_SL_RR_GATE_ENABLED = True  # False = skip semua validasi RR
 TP_SL_MIN_RR   = SWING_LABEL_MIN_RR   # 1.0
 TP_SL_MIN_TP   = SWING_LABEL_MIN_TP   # 1.2 x ATR
-TP_SL_MAX_SL   = SWING_LABEL_MAX_SL   # 3.0 x ATR
+TP_SL_MAX_SL   = SWING_LABEL_MAX_SL   # 4.0 x ATR (mengikuti SWING_LABEL_MAX_SL)
 
 # #5: SL ATR Fallback Multiplier (hanya saat swing NaN)
 TP_SL_FALLBACK_TP = 2.0  # TP = 2.0 x ATR
@@ -407,12 +412,46 @@ TP_SL_SIZING_MODE = "fixed"  # "fixed" | "tiered"
 # #15: Cooldown after exit — OFF (terlalu restriktif, buang 170 trade valid)
 TP_SL_COOLDOWN_ENABLED = False
 
+# ─── #16: VolR Conditional Max SL (Grup 1b/1c) ──────────────────────────────
+# Saat VolR (volume ratio) < threshold, longgarkan max_sl_atr atau disable total.
+# Mengatasi false positive di low ATR — SL struktural di-penalize max_sl_atr saat vol menyusut.
+TP_SL_VOLR_CONDITIONAL_ENABLED = False  # enable conditional max_sl via VolR
+TP_SL_VOLR_THRESHOLD           = 0.2    # threshold VolR untuk trigger low-vol
+TP_SL_MAX_SL_VOLR_LOW          = 8.0    # max_sl_atr saat VolR < threshold (1b)
+TP_SL_VOLR_DISABLE_MAX_SL      = False  # jika True, disable max_sl total di low-vol (1c)
+
+# ─── #17: SL % Distance Cap (Grup 1d) ───────────────────────────────────────
+# Alternatif metrik: batas SL berbasis persentase dari entry, bukan ATR.
+TP_SL_MAX_SL_PCT_ENABLED = False  # enable SL % cap
+TP_SL_MAX_SL_PCT         = 0.30   # max SL = 30% dari entry price
+
+# ─── #18: Trend Alignment Penalties (Grup 2) ─────────────────────────────────
+# With-trend trades WR rendah (33.3%) → penalty untuk kurangi sinyal with-trend.
+# Counter-trend trades WR tinggi (77.8%) → boost untuk perlebar akses.
+# Trend determined by h4_trend feature (>0 = UP, <0 = DOWN, ≈0 = RANGING).
+TREND_ALIGNMENT_ENABLED  = False  # enable trend alignment adjustment
+WITH_TREND_PENALTY       = 0.10   # penalty subtracted from confidence (2a)
+COUNTER_TREND_BOOST      = 0.05   # boost added to confidence (2b)
+WITH_TREND_BLOCK_CONF    = 0.95   # block all with-trend if conf < this (2c, 0 = disable)
+
+# ─── #19: Max Swing Deviation (Grup 3b) ─────────────────────────────────────
+# Tolak trade jika deviasi swing > threshold. Saat ini hardcoded 0.15.
+TP_SL_MAX_SWING_DEVIATION_PCT = 0.15  # max deviasi swing H4 dari entry (3b: uji 0.12, 0.10)
+
+# ─── #20: Individual Swing Freshness (Grup 3c) ───────────────────────────────
+# Cek freshness masing-masing swing (high dan low) secara individual.
+# Cegah TONUSDT-style leak — salah satu swing basi tetap lolos.
+TP_SL_INDIVIDUAL_SWING_FRESHNESS = False  # jika True, tolak jika salah satu swing dev > max
+
+# ─── #21: Conditional Sizing: Tiered + Half-Size for With-Trend (Grup 4b) ───
+TP_SL_SIZING_WITH_TREND_HALF = False  # half-size untuk with-trend trades (hanya di mode tiered)
+
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
 MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.70     # minimum confidence untuk entry (naik dari 0.62 — filter sinyal lebih ketat)
+CONFIDENCE_THRESHOLD_ENTRY = 0.62     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────

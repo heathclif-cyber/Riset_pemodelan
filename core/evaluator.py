@@ -21,6 +21,12 @@ from config import (
     TP_SL_FALLBACK_TP, TP_SL_FALLBACK_SL,
     TP_SL_SLIPPAGE_ENABLED, TP_SL_TRIGGER_MODE,
     TP_SL_SIZING_MODE, TP_SL_COOLDOWN_ENABLED,
+    TP_SL_STRUCTURAL_TOLERANCE,
+    TP_SL_VOLR_CONDITIONAL_ENABLED, TP_SL_VOLR_THRESHOLD,
+    TP_SL_MAX_SL_VOLR_LOW, TP_SL_VOLR_DISABLE_MAX_SL,
+    TP_SL_MAX_SL_PCT_ENABLED, TP_SL_MAX_SL_PCT,
+    TP_SL_MAX_SWING_DEVIATION_PCT, TP_SL_INDIVIDUAL_SWING_FRESHNESS,
+    TP_SL_SIZING_WITH_TREND_HALF,
 )
 from core.utils import setup_logger
 
@@ -235,6 +241,20 @@ def simulate_trades_swing(
     cooldown_enabled:      bool = TP_SL_COOLDOWN_ENABLED,  # #15
     swing_sl_bumper_atr:   float = 0.5,                    # Bumper untuk mitigasi stop-hunt (0.5 ATR)
     structural_tolerance_pct: float = 0.04,                # Toleransi breakout filter struktural (4%)
+    # ── NEW: Grup 1 — VolR Conditional & SL % Cap ──────────────────────────
+    vol_ratio                = None,  # np.ndarray — vol_ratio_20 untuk conditional max_sl
+    volr_conditional_enabled: bool = False,  # #16: enable VolR conditional max_sl
+    volr_threshold:           float = 0.2,  # threshold VolR low-vol
+    max_sl_volr_low:          float = 8.0,  # max_sl_atr saat low-vol (1b)
+    volr_disable_max_sl:      bool = False,  # disable max_sl total di low-vol (1c)
+    max_sl_pct_enabled:       bool = False,  # #17: enable SL % distance cap (1d)
+    max_sl_pct:               float = 0.30,  # max SL = 30% dari entry
+    # ── NEW: Grup 3 — Swing Freshness ──────────────────────────────────────
+    max_swing_deviation_pct:       float = 0.15,  # #19: max deviasi swing (3b)
+    individual_swing_freshness:    bool = False,  # #20: cek freshness per swing (3c)
+    # ── NEW: Grup 4 — Conditional Sizing ───────────────────────────────────
+    h4_trend                   = None,  # np.ndarray — h4_trend untuk with-trend detection
+    sizing_with_trend_half: bool = False,  # #21: half-size untuk with-trend (4b)
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis — 2-tier priority:
@@ -247,12 +267,17 @@ def simulate_trades_swing(
 
     Aspect toggles (lihat config.py untuk default):
       hybrid_mode          — #1: max(swing,ATR) TP / min(swing,ATR) SL
-      swing_freshness_check — #2: tolak trade jika deviasi swing > 15% dari entry
+      swing_freshness_check — #2: tolak trade jika deviasi swing > max_swing_deviation_pct
       structural_filter     — #3: entry harus dalam [H4 Low, H4 High]
       slippage_enabled      — #7: apply slippage entry/exit
       sl_trigger_mode       — #8: "close" = close candle, "highlow" = high/low candle
       sizing_mode           — #12: "fixed"=$100, "tiered"=confidence-based
       cooldown_enabled      — #15: cooldown setelah exit (tp=2h, sl=4h, time=2h)
+      volr_conditional_enabled — #16: longgarkan max_sl saat VolR < threshold
+      max_sl_pct_enabled    — #17: batas SL berbasis % dari entry
+      max_swing_deviation_pct — #19: max deviasi swing H4
+      individual_swing_freshness — #20: cek masing-masing swing level
+      sizing_with_trend_half — #21: half-size untuk with-trend
 
     Semua tier melalui validasi R:R yang sama — skip trade jika gagal.
     """
@@ -297,6 +322,13 @@ def simulate_trades_swing(
             else:
                 equity_curve.append(equity)
                 continue
+            # ── #21: Sizing with-trend half ──────────────────────────────
+            if sizing_with_trend_half and h4_trend is not None:
+                trend_i = h4_trend[i]
+                if not np.isnan(trend_i):
+                    is_with_trend = (sig == LONG and trend_i > 0) or (sig == SHORT and trend_i < 0)
+                    if is_with_trend:
+                        trade_modal = trade_modal * 0.5
         else:
             trade_modal = modal
         sh_i   = h4_swing_highs[i]
@@ -310,10 +342,18 @@ def simulate_trades_swing(
 
         # ── #2 Swing Freshness Check ────────────────────────────────────
         if swing_freshness_check and use_swing:
-            swing_dev = abs(sh_i - price) / price if sig == LONG else abs(sl_i - price) / price
-            if swing_dev > 0.15:  # swing > 15% dari entry = level basi
-                equity_curve.append(equity)
-                continue
+            if individual_swing_freshness:
+                # #20: Cek masing-masing swing individually — cegah TONUSDT leak
+                high_dev = abs(sh_i - price) / price
+                low_dev  = abs(sl_i - price) / price
+                if high_dev > max_swing_deviation_pct or low_dev > max_swing_deviation_pct:
+                    equity_curve.append(equity)
+                    continue
+            else:
+                swing_dev = abs(sh_i - price) / price if sig == LONG else abs(sl_i - price) / price
+                if swing_dev > max_swing_deviation_pct:
+                    equity_curve.append(equity)
+                    continue
 
         # ── #3 Structural Filter ────────────────────────────────────────
         if structural_filter and use_swing:
@@ -375,7 +415,23 @@ def simulate_trades_swing(
             if tp_dist < min_tp_atr * atr_i:
                 equity_curve.append(equity)
                 continue
-            if sl_dist > max_sl_atr * atr_i:
+
+            # ── #16: VolR Conditional max_sl ──────────────────────────────
+            _effective_max_sl = max_sl_atr
+            if volr_conditional_enabled and vol_ratio is not None:
+                vr_i = vol_ratio[i]
+                if not np.isnan(vr_i) and vr_i < volr_threshold:
+                    if volr_disable_max_sl:
+                        _effective_max_sl = float("inf")  # 1c: disable max_sl total
+                    else:
+                        _effective_max_sl = max_sl_volr_low  # 1b: longgarkan
+
+            # ── #17: SL % Distance Cap (alternatif ATR-based) ─────────────
+            _sl_cap = float("inf")
+            if max_sl_pct_enabled:
+                _sl_cap = price * max_sl_pct
+
+            if sl_dist > min(_effective_max_sl * atr_i, _sl_cap):
                 equity_curve.append(equity)
                 continue
             rr = tp_dist / sl_dist
@@ -652,6 +708,27 @@ def full_trading_report(
     X_sl             = None,
     tp_reg_clip      = (0.5, 8.0),
     sl_reg_clip      = (0.3, 5.0),
+    # ── NEW: Grup 1, 3, 4 parameters ──────────────────────────────────────
+    vol_ratio                 = None,  # np.ndarray
+    volr_conditional_enabled  = TP_SL_VOLR_CONDITIONAL_ENABLED,
+    volr_threshold            = TP_SL_VOLR_THRESHOLD,
+    max_sl_volr_low           = TP_SL_MAX_SL_VOLR_LOW,
+    volr_disable_max_sl       = TP_SL_VOLR_DISABLE_MAX_SL,
+    max_sl_pct_enabled        = TP_SL_MAX_SL_PCT_ENABLED,
+    max_sl_pct                = TP_SL_MAX_SL_PCT,
+    max_swing_deviation_pct   = TP_SL_MAX_SWING_DEVIATION_PCT,
+    individual_swing_freshness = TP_SL_INDIVIDUAL_SWING_FRESHNESS,
+    h4_trend                   = None,  # np.ndarray
+    sizing_with_trend_half     = TP_SL_SIZING_WITH_TREND_HALF,
+    structural_tolerance_pct   = TP_SL_STRUCTURAL_TOLERANCE,
+    swing_sl_bumper_atr        = 0.5,
+    hybrid_mode                = TP_SL_HYBRID_MODE,
+    swing_freshness_check      = TP_SL_SWING_FRESHNESS,
+    structural_filter          = TP_SL_STRUCTURAL_FILTER,
+    slippage_enabled           = TP_SL_SLIPPAGE_ENABLED,
+    sl_trigger_mode            = TP_SL_TRIGGER_MODE,
+    sizing_mode                = TP_SL_SIZING_MODE,
+    cooldown_enabled           = TP_SL_COOLDOWN_ENABLED,
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
@@ -674,9 +751,28 @@ def full_trading_report(
                 max_hold=max_hold,
                 tp_fallback_atr=tp_fallback_atr, sl_fallback_atr=sl_fallback_atr,
                 confidence=confidence,
-                tp_regressor=tp_regressor, sl_regressor=sl_regressor,
-                X_tp=X_tp, X_sl=X_sl,
-                tp_reg_clip=tp_reg_clip, sl_reg_clip=sl_reg_clip,
+                # New params Grup 1, 3, 4
+                vol_ratio=vol_ratio,
+                volr_conditional_enabled=volr_conditional_enabled,
+                volr_threshold=volr_threshold,
+                max_sl_volr_low=max_sl_volr_low,
+                volr_disable_max_sl=volr_disable_max_sl,
+                max_sl_pct_enabled=max_sl_pct_enabled,
+                max_sl_pct=max_sl_pct,
+                max_swing_deviation_pct=max_swing_deviation_pct,
+                individual_swing_freshness=individual_swing_freshness,
+                h4_trend=h4_trend,
+                sizing_with_trend_half=sizing_with_trend_half,
+                # Existing toggles
+                hybrid_mode=hybrid_mode,
+                swing_freshness_check=swing_freshness_check,
+                structural_filter=structural_filter,
+                structural_tolerance_pct=structural_tolerance_pct,
+                slippage_enabled=slippage_enabled,
+                sl_trigger_mode=sl_trigger_mode,
+                sizing_mode=sizing_mode,
+                cooldown_enabled=cooldown_enabled,
+                swing_sl_bumper_atr=swing_sl_bumper_atr,
             )
         else:
             return simulate_trades(
