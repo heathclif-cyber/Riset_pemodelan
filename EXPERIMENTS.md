@@ -433,6 +433,133 @@ TRX satu-satunya koin dengan LONG >> SHORT (91.0% vs 85.2%). Model TIDAK bias ar
 
 ---
 
+## 2026-05-15 — Guardian v3 Deploy: TP Momentum Mode + Holdout Validasi Ulang
+
+### Latar Belakang
+
+Guardian v3 di-deploy ke `swint_tradev2` production dengan perubahan arsitektur exit:
+TP tidak lagi hard-close posisi — sebagai gantinya, TP mengaktifkan **Guardian momentum mode**
+yang membiarkan Guardian ride profit melewati level TP awal. Holdout backtest dijalankan ulang
+untuk validasi final dengan 21 koin penuh.
+
+### Perubahan Deploy (swint_tradev2)
+
+| # | Perubahan | Detail |
+|---|-----------|--------|
+| 1 | TP → momentum trigger | TP tidak hard-close. `candle >= tp_price` → `tp_guardian_activated = True` |
+| 2 | Guardian dual mode | EARLY (sebelum TP): activation gates 3 bar + 1×ATR. MOMENTUM (setelah TP): gates bypass |
+| 3 | Partial exit 50% | PARTIAL_EXIT tutup 50% posisi, `partial_exit_done` flag cegah repeat |
+| 4 | Kolom DB baru | `max_favorable_price`, `partial_exit_done`, `tp_guardian_activated` |
+| 5 | GuardianService | Load model/scaler/features, compute 111 fitur, predict exit per bar |
+| 6 | Exit reason baru | `guardian_exit` (early), `guardian_momentum_exit` (after TP). `tp_hit` TIDAK muncul lagi |
+
+### Mekanisme Exit 5-Tier (Final)
+
+```
+Tier 1: SL Hard Stop         → CLOSE "sl_hit" (tidak berubah)
+Tier 2: TP Trigger Guardian  → SET tp_guardian_activated=True (TIDAK close)
+Tier 3: Guardian Early Exit  → HOLD / PARTIAL / FULL "guardian_exit"
+Tier 4: Guardian Momentum    → HOLD / PARTIAL / FULL "guardian_momentum_exit"
+Tier 5: Time Exit (24 bar)   → CLOSE "time_exit"
+```
+
+### Hasil Holdout — Baseline vs Guardian v3 (21 Koin, Mei 2025 – Apr 2026)
+
+| Metrik | Baseline (No Guardian) | Guardian v3 | Delta |
+|--------|----------------------|-------------|-------|
+| **Mean WR** | 82.03% | **88.93%** | +6.90pp |
+| **Mean DD** | 55.75% | **41.77%** | −13.98pp |
+| **Mean PF** | 8.41 | **10.05** | +1.64 |
+| **Mean Sharpe** | 25.75 | **38.32** | +12.57 |
+| **Mean Sortino** | 54.60 | **78.99** | +24.39 |
+| **Mean Calmar** | 127.1 | **237.0** | +109.9 |
+| **Max Cons Loss** | 9 | **7** | −2 |
+| **Total Trades** | 13,301 | **22,914** | +72% |
+| **Total PnL (5x)** | $113,802 | **$169,626** | **+$55,824 (+49%)** |
+
+### Perbandingan Guardian v2 vs v3
+
+| Metrik | Guardian v2 (Binary) | Guardian v3 (Multiclass) | Delta |
+|--------|---------------------|--------------------------|-------|
+| **Mean WR** | 90.88% | 88.93% | −1.95pp |
+| **Mean DD** | 38.06% | 41.77% | +3.71pp |
+| **Mean PF** | 14.05 | 10.05 | −4.00 |
+| **Mean Sharpe** | 33.24 | **38.32** | +5.08 |
+| **Total Trades** | 13,301 | **22,914** | +72% |
+| **Total PnL (5x)** | $107,875 | **$169,626** | **+$61,751 (+57%)** |
+
+### Analisis v2 → v3
+
+- **v3 sacrifices WR & PF for volume**: WR −2pp, PF −4.0, tapi trade +72%
+- **v3 Sharpe lebih tinggi** (38.3 vs 33.2): risk-adjusted return lebih baik meski WR lebih rendah
+- **v3 PnL +57% vs v2**: momentum mode + partial exit menghasilkan lebih banyak profit dari trade yang sama
+- **v2 conservative**: hanya exit saat yakin → fewer trades, higher WR, lower total PnL
+- **v3 aggressive**: partial exit lock profit, momentum ride ekstensi profit → more trades, more PnL
+
+### PnL Per Koin — Baseline vs Guardian v3
+
+```
+                Baseline     Guardian v3    Delta
+1000PEPE        $  7,529     $  9,760     +$2,230
+1000SHIB        $  4,918     $  8,154     +$3,236
+ADA             $  5,568     $  9,161     +$3,593
+ARB             $  7,089     $ 10,490     +$3,401
+AVAX            $  5,718     $  8,877     +$3,159
+BNB             $  3,597     $  4,732     +$1,135
+DOGE            $  6,947     $  9,309     +$2,363
+DOT             $  5,761     $  8,886     +$3,125
+ETH             $  4,566     $  5,886     +$1,319
+HBAR            $  5,996     $  8,510     +$2,514
+LINK            $  5,987     $  8,707     +$2,720
+NEAR            $  6,781     $ 11,042     +$4,261  ← tertinggi
+ONDO            $  6,677     $  9,733     +$3,056
+POL             $  6,700     $ 10,335     +$3,635
+SOL             $  5,448     $  8,366     +$2,917
+SUI             $  6,353     $ 10,430     +$4,077
+TAO             $  6,934     $ 10,941     +$4,007
+TON             $  4,543     $  6,879     +$2,336
+TRX             $  1,757     $  2,142     +$385
+XAUT            $     27     $     37     +$9
+XRP             $  4,906     $  7,253     +$2,346
+──────────────────────────────────────────────────
+TOTAL           $113,802     $169,626    +$55,824 (+49%)
+```
+
+**Semua 21 koin naik** — tidak ada yang turun. TRX terkecil (+$385), NEAR terbesar (+$4,261).
+
+### Run ID
+
+- Baseline: `models/runs/holdout_A_baseline`
+- Guardian v2: `models/runs/holdout_C_guardian_v2`
+- Guardian v3 (final): `models/runs/holdout_20260515_001906`
+
+### Commit Deploy (swint_tradev2)
+
+```
+b5c6c0b  feat(guardian): deploy Guardian v3 dynamic exit model
+b45c089  fix(registry): update model_registry to cascade_v3
+e15b491  fix(ui): rename cascade_v2 label to cascade_v3 in models page
+91564e2  feat(guardian): TP triggers Guardian momentum mode instead of closing
+3b3dedc  docs: update TP_SL_VERIFICATION with Guardian v3 integration notes
+```
+
+### Temuan Kunci
+
+1. **TP → momentum mode = game changer**: Trade naik 72% karena posisi tidak di-close prematur di TP
+2. **WR 88.9% stabil di temporal OOS**: Guardian genuine generalization, bukan overfitting
+3. **Guardian v3 PnL +49% vs baseline**: Guardian tidak hanya kurangi DD, tapi juga tambah profit via momentum ride
+4. **Guardian v3 Sharpe > v2**: Meski WR lebih rendah, risk-adjusted return lebih baik karena diversifikasi exit timing
+5. **Partial exit minority (4.5%)**: Masih perlu monitoring — apakah trigger cukup sering di production
+
+### Catatan
+
+- Mode MOMENTUM (Guardian ride past TP) belum punya data backtest formal terpisah — seluruh holdout mencakup kedua mode
+- Guardian dilatih dengan hard SL sebagai safety net. Tanpa SL → DD 318% (lihat sesi 1)
+- Jika Guardian disabled (`guardian.enabled = false`), sistem fallback ke TP/SL hard exit + time_exit
+- File terkait deployment: `app/services/guardian_service.py`, `app/services/paper_trading.py`, `app/models/trade.py`
+
+---
+
 ## Template — Cara Mencatat Eksperimen Baru
 
 ```markdown
