@@ -223,11 +223,21 @@ def hierarchical_predict(
             mask = regimes == rname
             if mask.sum() == 0:
                 continue
-            sub_cols = [c for c in valid_cols if c in df_slice.columns]
-            lgbm_proba[mask] = rmodel.predict_proba(df_slice[sub_cols].iloc[mask])
+            gbm_feats = rmodel.feature_name_
+            X_pred = np.zeros((n, len(gbm_feats)), dtype=np.float64)
+            for idx, col in enumerate(gbm_feats):
+                if col in df_slice.columns:
+                    X_pred[:, idx] = df_slice[col].values.astype(np.float64)
+            lgbm_proba[mask] = rmodel.predict_proba(X_pred[mask])
     else:
         # Standard: satu model untuk semua bar
-        lgbm_proba = lgbm_model.predict_proba(df_slice[valid_cols])
+        # Align feature order ke model, pad missing columns dengan nol
+        gbm_feats = lgbm_model.feature_name_
+        X_pred = np.zeros((n, len(gbm_feats)), dtype=np.float64)
+        for idx, col in enumerate(gbm_feats):
+            if col in df_slice.columns:
+                X_pred[:, idx] = df_slice[col].values.astype(np.float64)
+        lgbm_proba = lgbm_model.predict_proba(X_pred)
     # lgbm_proba: (N, 3) — col 0=SHORT, 1=FLAT, 2=LONG
 
     # STEP 2: LSTM probabilities (jika enabled)
@@ -350,3 +360,20 @@ def hierarchical_predict(
         )
 
     return y_pred, confidence
+
+
+def compute_guardian_static_array(
+    df: "pd.DataFrame",
+    guardian_feat_cols: list[str],
+) -> "np.ndarray":
+    """
+    Extract guardian static features from DataFrame as (N, n_features) array.
+    Uses exactly the columns in guardian_feat_cols — missing columns are
+    zero-filled to match the scaler's expected input dimensions.
+    """
+    n = len(df)
+    out = np.zeros((n, len(guardian_feat_cols)), dtype=np.float64)
+    for idx, col in enumerate(guardian_feat_cols):
+        if col in df.columns:
+            out[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
+    return out

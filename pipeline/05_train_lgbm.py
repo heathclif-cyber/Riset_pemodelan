@@ -26,12 +26,13 @@ import lightgbm as lgb
 import numpy as np
 import pandas as pd
 from sklearn.metrics import accuracy_score, confusion_matrix, f1_score
-from pipeline.shared import build_purged_folds
 
 warnings.filterwarnings("ignore")
 
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
+
+from pipeline.shared import build_purged_folds
 
 from config import (
     TRAINING_COINS, ALL_COINS, SYMBOL_MAP,
@@ -40,12 +41,13 @@ from config import (
     N_FOLDS, PURGE_GAP_BARS,
     LABEL_MAP, LABEL_MAP_INV, NUM_CLASSES,
     LGBM_CLASS_WEIGHTS,
+    FEATURE_COLS_V3, TRAIN_CUTOFF_DATE,
 )
 from core.utils import setup_logger
 
 logger = setup_logger("05_train_lgbm")
 
-NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
+NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low", "hmm_regime"}
 
 
 # ─── Data Loading ─────────────────────────────────────────────────────────────
@@ -63,6 +65,7 @@ def load_symbols(coins: list[str]) -> pd.DataFrame:
             df.index = pd.to_datetime(df.index, utc=True)
         if df.index.tz is None:
             df.index = df.index.tz_localize("UTC")
+        df = df[df.index < TRAIN_CUTOFF_DATE]  # HANYA data training, tidak boleh bocor ke holdout
         frames.append(df)
         logger.info(f"Loaded {sym}: {len(df):,} rows")
 

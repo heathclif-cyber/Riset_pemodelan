@@ -1,5 +1,5 @@
 """
-pipeline/11_param_test.py — Parameter Testing Matrix (Grup 1-5)
+pipeline/13_param_test.py — Parameter Testing Matrix (Grup 1-5)
 
 Menguji parameter dari Quality Check & Trade Analysis:
   Grup 1: RR Gate low-ATR (max_sl_atr, VolR conditional, SL% cap)
@@ -16,9 +16,9 @@ Metode:
   5. Bandingkan metrik: trade count, winrate, net PnL, max DD, profit factor
 
 Jalankan:
-  python pipeline/11_param_test.py
-  python pipeline/11_param_test.py --group 1
-  python pipeline/11_param_test.py --coins SOLUSDT ETHUSDT
+  python pipeline/13_param_test.py
+  python pipeline/13_param_test.py --group 1
+  python pipeline/13_param_test.py --coins SOLUSDT ETHUSDT
 """
 
 import argparse
@@ -56,7 +56,7 @@ from core.evaluator import simulate_trades_swing, full_trading_report
 from core.utils import setup_logger, ensure_utc_index
 from pipeline.backtest_utils import hierarchical_predict
 
-logger = setup_logger("11_param_test")
+logger = setup_logger("13_param_test")
 
 HOLDOUT_LABEL_DIR = ROOT / "data" / "holdout" / "labeled"
 REPORT_DIR        = ROOT / "reports" / "param_tests"

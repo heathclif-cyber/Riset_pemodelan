@@ -59,6 +59,7 @@ def parse_args():
     parser.add_argument("--evaluate",       action="store_true", help="Fase 07: Evaluation + SHAP")
     parser.add_argument("--backtest",       action="store_true", help="Fase 08: Walk-forward backtest")
     parser.add_argument("--holdout",        action="store_true", help="Fase 09: Hold-out backtest (OOS)")
+    parser.add_argument("--guardian",       action="store_true", help="Fase 15: Train exit guardian model")
     parser.add_argument("--all",            action="store_true", help="Semua fase wajib (01-03, 05-08) — skip 04")
     parser.add_argument("--all-coins",      action="store_true", help="Jalankan untuk semua koin")
     parser.add_argument("--run-id",         default=None,        help="Run ID untuk folder output")
@@ -110,9 +111,13 @@ def main():
     if args.holdout:
         run(["pipeline/09_holdout_backtest.py"] + coin_flag + run_flag)
 
+    # -- Fase 15: Guardian Training (tidak masuk --all, experimental) ----------
+    if args.guardian:
+        run(["pipeline/15_train_guardian.py"] + coin_flag + run_flag)
+
     if not any([do_all, args.fetch, args.clean, args.analyze_swing,
                 args.engineer, args.train, args.evaluate,
-                args.backtest, args.holdout]):
+                args.backtest, args.holdout, args.guardian]):
         print("Tidak ada fase yang dipilih. Gunakan --help untuk melihat opsi.")
 
 

@@ -2,11 +2,12 @@
 
 ## Project Overview
 
-Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **2-model cascade**:
-LGBM Classifier (entry signal) → LSTM Soft Confirmation → Swing/ATR Gate (TP/SL).
+Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **3-model cascade**:
+LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
 
 Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime, D1 untuk HTF context.
-20 koin: SOL, ETH, BNB, XRP, DOGE, TON, ADA, TRX, 1000SHIB, AVAX, LINK, DOT, SUI, POL, NEAR, 1000PEPE, TAO, ARB, XAUT, HBAR, ONDO.
+**TRAIN_CUTOFF_DATE = 2025-05-01** — training hanya di 2020-2025, holdout test di Mei 2025 – Apr 2026.
+21 koin: SOL, ETH, BNB, XRP, DOGE, TON, ADA, TRX, 1000SHIB, AVAX, LINK, DOT, SUI, POL, NEAR, 1000PEPE, TAO, ARB, XAUT, HBAR, ONDO.
 
 ## Architecture
 
@@ -21,7 +22,7 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
                                             ▼
                                     ┌──────────────┐
                                     │  RR Gate     │
-                                    │  min_rr=0.5  │
+                                    │  min_rr=1.0  │
                                     │  min_tp=1.2x │
                                     │  max_sl=4.0x │
                                     └──────┬───────┘
@@ -29,19 +30,26 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
                                     ┌──────────────┐
                                     │  EXECUTE     │
                                     │  max_hold=24 │
+                                    └──────┬───────┘
+                                           ▼
+                                    ┌──────────────┐
+                                    │ Guardian v3  │ ← per-bar dynamic exit
+                                    │ HOLD / PART  │    103 feat + 7 dynamic
+                                    │ / FULL EXIT  │    multiclass LGBM
                                     └──────────────┘
 ```
 
-- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), 103 features, cost-sensitive weights {0:3, 1:1.5, 2:3}
+- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), 104 features, cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL
 - **LSTM**: `ManualLSTMCell` custom (DirectML compatible), seq_len=16, hidden=128, 2-layer. Training via DirectML GPU, inference via CPU
-- **TP/SL**: Swing H4 structural levels + ATR fallback only. **NO ML, NO regime detection** — all approaches degraded performance
+- **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), 104 static + 7 dynamic features, GPU OpenCL. Partial exit = 50% posisi
+- **TP/SL**: Hybrid H4 Swing + ATR Fallback (non-ML). `TP_SL_HYBRID_MODE=True`
 
 ## Cascade Flow (detail)
 
 ```
 LGBM predict 3-class
   │
-  ├─ LGBM LONG/SHORT >= 0.62 → LSTM tiered adjustment → conf >= 0.62? → SIGNAL
+  ├─ LGBM LONG/SHORT >= 0.62 → LSTM tiered adjustment → conf >= 0.62? → ENTRY SIGNAL
   │                                                                FAIL → FLAT
   │
   └─ Keduanya < 0.62 (LGBM FLAT) → FLAT (selesai)
@@ -49,16 +57,49 @@ LGBM predict 3-class
        └─ FLAT REVIEW = DISABLED (LSTM_FLAT_REVIEW_ENABLED=False)
             Terbukti menambah 2,500+ trade dengan WR 39% — menurunkan WR dari 78% ke 57%.
             Detail: EXPERIMENTS.md § 2026-05-12
+
+ENTRY → Guardian v3 per-bar check (setelah 3 bar + 1×ATR move):
+  ├─ HOLD (0)          → lanjut scan
+  ├─ PARTIAL_EXIT (1)  → tutup 50% posisi, lanjut 50% sisanya
+  └─ FULL_EXIT (2)     → tutup seluruh posisi
 ```
 
-**Alur aktif**: LGBM entry signal → LSTM confirm/adjust → entry jika keduanya setuju.
-LSTM TIDAK bisa meng-override keputusan FLAT LGBM.
+**Alur aktif**: LGBM entry → LSTM confirm → Guardian v3 dynamic exit.
+TRAILING_STOP_ENABLED=False (Guardian solo beats trailing). LSTM TIDAK bisa meng-override FLAT.
+
+## Final Results (2026-05-14)
+
+### 08 Backtest — Walk-Forward Purged CV (2020-2025, 20 koin)
+
+| Metrik | Nilai |
+|--------|-------|
+| Mean WR | 91.15% |
+| Mean DD | 85.80% |
+| Mean PF | 13.31 |
+
+### 09 Holdout — Genuine Temporal OOS (Mei 2025 – Apr 2026, 21 koin, 8,027 bar/koin)
+
+| Metrik | Nilai |
+|--------|-------|
+| Mean WR | **88.93%** |
+| Mean DD | **41.77%** |
+| Mean PF | **10.05** |
+| Mean Sharpe | 38.32 |
+| Max Cons Loss | 7 |
+| Trades/bulan | 103.7 |
+| LONG WR | 87.8% |
+| SHORT WR | **90.3%** |
+
+SHORT > LONG +2.5% — bukan bias model, market structure bull market (koreksi tajam → SHORT TP cepat).
+
+Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)`
 
 ## Referensi Eksternal
 
 - **EXPERIMENTS.md** — Logbook perubahan parameter & temuan eksperimen. Baca sebelum mengubah parameter.
-- **Inference config**: `D:\Apps-Dev\swint_tradev2\models\inference_config.json` — setup produksi yang sudah tervalidasi. Parameter di config.py training HARUS konsisten dengan ini.
+- **Inference config**: `D:\Apps-Dev\swint_tradev2\models\inference_config.json` — setup produksi yang sudah tervalidasi.
 - **Model registry**: `models/model_registry.json` — model aktif & metrik baseline
+- **Holdout results**: `models/runs/holdout_20260514_223417/holdout_backtest_results.json`
 
 ## Key Files
 
@@ -66,32 +107,43 @@ LSTM TIDAK bisa meng-override keputusan FLAT LGBM.
 |------|------|
 | `config.py` | Semua parameter terpusat — **source of truth**, jangan diduplikasi |
 | `core/features.py` | Feature engineering + swing labeling v3 |
-| `core/models.py` | `TradingLSTM`, `_CellLSTM`, `_ManualLSTMCell`, `ProbabilityCalibrator` |
-| `core/evaluator.py` | `simulate_trades_swing()` + `full_trading_report()` — evaluasi training |
-| `core/utils.py` | Logger, device utils |
-| `core/fetchers.py` | Binance data fetch |
+| `core/models.py` | `TradingLSTM`, `_CellLSTM`, `_ManualLSTMCell` |
+| `core/evaluator.py` | `simulate_trades_swing()` + Guardian per-bar check + partial exit |
+| `core/utils.py` | Logger, device utils, `chunk_time_range()` |
+| `core/fetchers.py` | Binance data fetch (`KLINE_LIMIT=1000`) |
 | `core/binance_client.py` | HTTP client Binance |
 | `pipeline/01_fetch.py` | Fetch semua koin |
 | `pipeline/02_clean.py` | Clean + resample |
 | `pipeline/03_analyze_swing.py` | H4 swing detection analysis |
 | `pipeline/04_engineer.py` | Feature engineering pipeline |
-| `pipeline/05_train_lgbm.py` | LGBM entry model training |
-| `pipeline/06_train_lstm.py` | LSTM soft confirmation training |
+| `pipeline/05_train_lgbm.py` | LGBM entry model training (TRAIN_CUTOFF_DATE filter) |
+| `pipeline/06_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
 | `pipeline/07_evaluate.py` | Evaluasi cascade (SOLUSDT) |
-| `pipeline/08_backtest.py` | Walk-forward backtest |
-| `pipeline/09_holdout_backtest.py` | Genuine OOS holdout backtest |
+| `pipeline/08_backtest.py` | Walk-forward backtest (cascade_v3) |
+| `pipeline/09_holdout_backtest.py` | Genuine OOS holdout backtest (Mei 2025 – Apr 2026) |
 | `pipeline/10_visualize.py` | Visualisasi hasil |
 | `pipeline/shared.py` | `SequenceDataset` + `build_purged_folds()` |
-| `pipeline/backtest_utils.py` | `hierarchical_predict()` + `get_lstm_proba()` + `_lstm_adjustment()` |
-| `pipeline/test_inference_backtest.py` | **Backtest mandiri pakai inference config** — untuk uji parameter tanpa polusi pipeline training |
+| `pipeline/backtest_utils.py` | `hierarchical_predict()` + feature alignment via `feature_name_` |
+| `pipeline/15_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
 
 ## Pipeline Sequence (Order Matters)
 
 ```
-01_fetch → 02_clean → 03_analyze_swing → 04_engineer → 05_train_lgbm → 06_train_lstm → 07_evaluate → 08_backtest → 09_holdout_backtest → 10_visualize
+01_fetch → 02_clean → 03_analyze_swing → 04_engineer → 05_train_lgbm → 06_train_lstm → 15_train_guardian → 07_evaluate → 08_backtest → 09_holdout_backtest → 10_visualize
 ```
 
-## Key Learnings (What Failed & Why)
+**Data flow**: Semua training script filter `df.index < TRAIN_CUTOFF_DATE` (2025-05-01).
+Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
+
+## Key Learnings
+
+### Guardian v3 — SUCCESS (2026-05-14)
+
+- **103 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4) berkontribusi nyata
+- **WR 89% di temporal OOS**: Guardian genuine generalization, bukan overfitting
+- **Guardian > Trailing stop**: Guardian v3 mengalahkan trailing 2x ATR di semua metrik
+- **Feature alignment robust**: `model.feature_name_` + zero-fill mencegah mismatch kolom
+- **Partial exit belum optimal**: Minority class 4.5%, perlu monitoring lebih lanjut
 
 ### ML for TP/SL — ALL FAILED
 
@@ -100,22 +152,21 @@ LSTM TIDAK bisa meng-override keputusan FLAT LGBM.
 | TP/SL Regressor (LGBMRegressor) | WR 75%→37%, DD 64%→113% | SL R²=0.05 — entry bar has no signal for 24-bar ahead multiplier |
 | Safe SL Classifier (Binary) | AUC=0.62, never triggered | Cannot predict if structural level holds from 1 bar |
 | Regime Classifier (ML Binary) | Always predicts RANGING | Same problem — 1 bar can't predict 24-bar regime |
-| Rule-Based Regime | Trend%=0-3%, no effect | Thresholds too conservative, but at least doesn't degrade |
-
-**Root cause**: Entry bar features cannot predict what happens 24 bars ahead. Signal-to-noise ratio too low.
+| Rule-Based Regime | Trend%=0-3%, no effect | Thresholds too conservative |
 
 ### What Works
 
+- **Guardian v3** — dynamic exit, WR 89%, DD 42% di temporal OOS
 - **Swing/ATR gate** — structural levels are real, statistically meaningful
 - **Walk-forward purged CV** — prevents look-ahead leakage
-- **Confidence filter** — reduces noise trades (threshold 0.62, selaras dgn cascade internal)
-- **SHORT = LONG** — model tidak bias arah; WR kedua arah identik (~78% di holdout)
+- **Confidence filter** — reduces noise trades (threshold 0.62)
+- **SHORT ≈ LONG** — model tidak bias arah; SHORT sedikit lebih akurat (+2.5%) karena market structure
 
 ### What We Learned About LSTM (2026-05-12)
 
-- **LSTM FLAT review** menambah volume trade 2x tapi menurunkan WR dari 78% ke 57%. Zona LGBM FLAT adalah zona noise — LSTM tidak bisa memprediksi di sana.
-- **LSTM opposite penalty** yang terlalu keras (0.08) membunuh sinyal bagus. Diturunkan ke 0.04.
-- Detail di `EXPERIMENTS.md`
+- **LSTM FLAT review** menambah volume 2x tapi WR 39% — disabled
+- **LSTM opposite penalty** 0.08 → 0.04 — kurangi blocked trades
+- Detail: `EXPERIMENTS.md`
 
 ## Important Constraints
 
@@ -124,7 +175,9 @@ LSTM TIDAK bisa meng-override keputusan FLAT LGBM.
 - **Encoding**: Terminal is cp1252 — avoid unicode arrows (→) in logger messages
 - **LSTM**: Custom `ManualLSTMCell` for DirectML compatibility. Train on GPU, infer on CPU
 - **LGBM**: `device_type="gpu"` via OpenCL (compatible with AMD)
-- **Data**: 5 training coins (SOL, ETH, BNB, XRP, DOGE) + 15 holdout coins
-- **TP/SL regressor/classifier files DELETED** — do not re-implement without discussing why previous attempts failed
-- **Jangan duplikasi isi config.py** — baca langsung dari file. Duplikasi di doc akan stale.
+- **TRAIN_CUTOFF_DATE = 2025-05-01** — tidak boleh ada data testing bocor ke training
+- **KLINE_LIMIT = 1000** — Binance max 1000 klines per request (sebelumnya 1500 → gap 21 hari)
+- **TP/SL regressor/classifier files DELETED** — jangan re-implement tanpa diskusi
+- **Feature alignment via `model.feature_name_`** — mencegah mismatch fitur 103 vs 104
+- **Jangan duplikasi isi config.py** — baca langsung dari file
 - **Jangan tulis riwayat perubahan di sini** — gunakan `EXPERIMENTS.md`

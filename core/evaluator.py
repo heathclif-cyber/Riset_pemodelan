@@ -27,6 +27,11 @@ from config import (
     TP_SL_MAX_SL_PCT_ENABLED, TP_SL_MAX_SL_PCT,
     TP_SL_MAX_SWING_DEVIATION_PCT, TP_SL_INDIVIDUAL_SWING_FRESHNESS,
     TP_SL_SIZING_WITH_TREND_HALF,
+    GUARDIAN_ENABLED, GUARDIAN_EXIT_THRESHOLD, GUARDIAN_SL_EXIT_THRESHOLD,
+    GUARDIAN_SL_SAFETY_ATR, GUARDIAN_TP_ATR,
+    GUARDIAN_MIN_HOLD_BARS, GUARDIAN_ACTIVATION_ATR,
+    GUARDIAN_PARTIAL_EXIT_RATIO,
+    TRAILING_STOP_ENABLED, TRAILING_STOP_ATR, TRAILING_STOP_MIN_BARS,
 )
 from core.utils import setup_logger
 
@@ -209,6 +214,36 @@ def simulate_trades(
     }
 
 
+# ─── Guardian Helper ────────────────────────────────────────────────────────
+
+def _compute_guardian_dynamic(
+    bars_held: int, entry_price: float, current_price: float,
+    direction: int, atr_val: float, max_favorable_pnl: float,
+) -> np.ndarray:
+    """Compute 7 dynamic trade-context features for guardian per-bar check."""
+    pnl_pct = (current_price - entry_price) / entry_price
+    if direction == 0:  # SHORT
+        pnl_pct = -pnl_pct
+
+    bars_held_norm = bars_held / 24.0  # max_hold=24
+    current_pnl_atr = pnl_pct * entry_price / atr_val if atr_val > 0 else 0.0
+    dd_from_peak = (
+        (max_favorable_pnl - pnl_pct) / max_favorable_pnl
+        if max_favorable_pnl > 0.001 else 0.0
+    )
+    entry_ratio = entry_price / current_price if current_price > 0 else 1.0
+
+    return np.array([
+        bars_held_norm,
+        pnl_pct,
+        current_pnl_atr,
+        max_favorable_pnl,
+        dd_from_peak,
+        1.0 if direction == 2 else 0.0,  # direction: 1=LONG(2), 0=SHORT(0)
+        entry_ratio,
+    ], dtype=np.float64)
+
+
 # ─── ★ BARU v3: Simulasi Trade (Dinamis dari H4 Swing Points) ────────────────
 
 def simulate_trades_swing(
@@ -255,6 +290,21 @@ def simulate_trades_swing(
     # ── NEW: Grup 4 — Conditional Sizing ───────────────────────────────────
     h4_trend                   = None,  # np.ndarray — h4_trend untuk with-trend detection
     sizing_with_trend_half: bool = False,  # #21: half-size untuk with-trend (4b)
+    # ── Exit Guardian (3rd Model) ─────────────────────────────────────────
+    guardian_model            = None,
+    guardian_scaler           = None,
+    X_guardian                = None,
+    guardian_exit_threshold   = GUARDIAN_EXIT_THRESHOLD,
+    guardian_sl_exit_threshold = GUARDIAN_SL_EXIT_THRESHOLD,
+    guardian_sl_safety_atr    = GUARDIAN_SL_SAFETY_ATR,
+    guardian_tp_atr           = GUARDIAN_TP_ATR,
+    guardian_min_hold_bars    = GUARDIAN_MIN_HOLD_BARS,
+    guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
+    guardian_enabled          = GUARDIAN_ENABLED,
+    # ── Trailing Stop ─────────────────────────────────────────────────
+    trailing_stop_enabled     = TRAILING_STOP_ENABLED,
+    trailing_stop_atr         = TRAILING_STOP_ATR,
+    trailing_stop_min_bars    = TRAILING_STOP_MIN_BARS,
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis — 2-tier priority:
@@ -406,8 +456,10 @@ def simulate_trades_swing(
                 tp_dist  = price    - tp_price
                 sl_dist  = sl_price - price
 
+        # ── Guardian active flag (tidak override TP/SL — pakai swing H4 / ATR fallback)
+        guardian_active = guardian_enabled and guardian_model is not None and X_guardian is not None
+
         # Validasi R:R (GATE — gagal = trade di-skip)
-        # #4: RR Gate dapat dinonaktifkan via TP_SL_RR_GATE_ENABLED
         if TP_SL_RR_GATE_ENABLED:
             if tp_dist <= 0 or sl_dist <= 0:
                 equity_curve.append(equity)
@@ -446,54 +498,121 @@ def simulate_trades_swing(
 
         # ── Scan ke depan ─────────────────────────────────────────────────────
         outcome = "TIMEOUT"
-        # Default exit = entry price (no trade), will be overwritten if TP/SL hit
         raw_exit = price
+        mfe_pnl = 0.0  # max favorable excursion (PnL %)
+        best_price_trail = price  # trailing stop reference price
+        # Partial exit tracking
+        partial_bar = None
+        partial_price = None
+        partial_pnl = 0.0
+        position_remaining = 1.0  # 1.0 = full, 0.5 = half after partial
 
         end = min(i + max_hold, n)
         for j in range(i + 1, end):
             if np.isnan(close[j]):
                 continue
+
+            bars_held = j - i
+
+            # Track max favorable excursion
             if sig == LONG:
-                if high[j] >= tp_price:
-                    outcome    = "WIN";  raw_exit = tp_price; break
-                if sl_trigger_mode == "highlow":
-                    if low[j] <= sl_price:
-                        outcome = "LOSS"; raw_exit = sl_price; break
-                else:  # "close"
-                    if close[j] <= sl_price:
-                        outcome = "LOSS"; raw_exit = sl_price; break
+                mfe_pnl = max(mfe_pnl, (high[j] - price) / price)
+                tp_hit = high[j] >= tp_price
+                sl_hit = (low[j] <= sl_price) if sl_trigger_mode == "highlow" else (close[j] <= sl_price)
             else:
-                if low[j] <= tp_price:
-                    outcome    = "WIN";  raw_exit = tp_price; break
-                if sl_trigger_mode == "highlow":
-                    if high[j] >= sl_price:
-                        outcome = "LOSS"; raw_exit = sl_price; break
-                else:  # "close"
-                    if close[j] >= sl_price:
-                        outcome = "LOSS"; raw_exit = sl_price; break
+                mfe_pnl = max(mfe_pnl, (price - low[j]) / price)
+                tp_hit = low[j] <= tp_price
+                sl_hit = (high[j] >= sl_price) if sl_trigger_mode == "highlow" else (close[j] >= sl_price)
+
+            # ── Hard TP/SL exits ─────────────────────────────────────────
+            if tp_hit:
+                # Adjust exit price for remaining position
+                if partial_bar is not None:
+                    # Only remaining position exits at TP
+                    outcome = "WIN"; raw_exit = tp_price; break
+                else:
+                    outcome = "WIN"; raw_exit = tp_price; break
+            if sl_hit:
+                if partial_bar is not None:
+                    outcome = "LOSS"; raw_exit = sl_price; break
+                else:
+                    outcome = "LOSS"; raw_exit = sl_price; break
+
+            # ── Guardian Multiclass (3-class: 0=HOLD, 1=PARTIAL, 2=FULL) ──
+            if guardian_active and bars_held >= guardian_min_hold_bars and position_remaining > 0.5:
+                # Check activation: price must have moved 1x ATR from entry
+                price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else float("inf")
+                if price_moved_atr >= guardian_activation_atr:
+                    # Build guardian feature vector: static + dynamic
+                    g_static = X_guardian[j, :]
+                    g_dynamic = _compute_guardian_dynamic(
+                        bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                    )
+                    g_feat = np.concatenate([g_static, g_dynamic]).reshape(1, -1)
+                    g_feat_s = guardian_scaler.transform(g_feat)
+                    g_proba = guardian_model.predict_proba(g_feat_s)[0]  # [p_hold, p_partial, p_full]
+                    g_pred = int(g_proba.argmax())
+
+                    if g_pred == 2 and g_proba[2] >= guardian_exit_threshold:
+                        # FULL_EXIT — close entire remaining position
+                        if partial_bar is not None:
+                            outcome = "GUARDIAN_FULL"
+                        else:
+                            outcome = "GUARDIAN_EXIT"
+                        raw_exit = close[j]
+                        break
+                    elif g_pred == 1 and g_proba[1] >= guardian_exit_threshold and partial_bar is None:
+                        # PARTIAL_EXIT — close half, continue with rest
+                        partial_bar = j
+                        partial_price = close[j]
+                        # Calculate PnL for the exited half
+                        pct_partial = (partial_price - price) / price
+                        if sig == SHORT:
+                            pct_partial = -pct_partial
+                        gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
+                        fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
+                        partial_pnl = gross_partial - fee_partial
+                        position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
+                        # Continue scanning — do NOT break
+
+            # ── Trailing Stop ────────────────────────────────────────────
+            if trailing_stop_enabled and bars_held >= trailing_stop_min_bars:
+                if sig == LONG:
+                    best_price_trail = max(best_price_trail, high[j])
+                    trail_stop = best_price_trail - trailing_stop_atr * atr_i
+                    if low[j] <= trail_stop:
+                        outcome = "TRAILING_STOP"; raw_exit = trail_stop; break
+                else:
+                    best_price_trail = min(best_price_trail, low[j])
+                    trail_stop = best_price_trail + trailing_stop_atr * atr_i
+                    if high[j] >= trail_stop:
+                        outcome = "TRAILING_STOP"; raw_exit = trail_stop; break
 
         # Apply slippage on exit — LONG sell at bid, SHORT buy to cover at ask
         if slippage_enabled:
             if sig == LONG:
                 exit_price = raw_exit * (1.0 - slippage)
+                partial_exit_price_adj = (partial_price * (1.0 - slippage)) if partial_price else None
             else:
                 exit_price = raw_exit * (1.0 + slippage)
+                partial_exit_price_adj = (partial_price * (1.0 + slippage)) if partial_price else None
         else:
             exit_price = raw_exit
+            partial_exit_price_adj = partial_price
 
-        # ── Hitung PnL ────────────────────────────────────────────────────────
+        # ── Hitung PnL (remaining position) ──────────────────────────────
         pct_move = (exit_price - price) / price
         if sig == SHORT:
             pct_move = -pct_move
 
-        gross_pnl  = trade_modal * leverage * pct_move
-        fee_total  = trade_modal * leverage * fee_per_side * 2
-        net_pnl    = gross_pnl - fee_total
+        gross_pnl  = trade_modal * leverage * pct_move * position_remaining
+        fee_total  = trade_modal * leverage * fee_per_side * (1.0 + position_remaining)  # entry + remaining exit
+        net_pnl    = gross_pnl - fee_total + partial_pnl  # add partial exit PnL
 
         equity    += net_pnl
         equity_curve.append(equity)
 
-        trades.append({
+        trade_record = {
             "bar_in":    i,
             "bar_out":   j if outcome != "TIMEOUT" else end,
             "direction": "LONG" if sig == LONG else "SHORT",
@@ -505,7 +624,17 @@ def simulate_trades_swing(
             "outcome":   outcome,
             "net_pnl":   round(net_pnl, 4),
             "equity":    round(equity, 4),
-        })
+        }
+        if partial_bar is not None:
+            trade_record["partial_bar"] = partial_bar
+            trade_record["partial_price"] = round(partial_exit_price_adj, 6) if partial_exit_price_adj else None
+            trade_record["partial_pnl"] = round(partial_pnl, 4)
+            trade_record["partial_ratio"] = GUARDIAN_PARTIAL_EXIT_RATIO
+        else:
+            trade_record["partial_bar"] = None
+            trade_record["partial_pnl"] = 0.0
+
+        trades.append(trade_record)
 
         # ── #15 Cooldown ─────────────────────────────────────────────────
         if cooldown_enabled:
@@ -527,18 +656,23 @@ def simulate_trades_swing(
             "win_by_class": {"LONG": 0.0, "SHORT": 0.0}
         }
 
-    wins   = [t for t in trades if t["outcome"] == "WIN"]
-    losses = [t for t in trades if t["outcome"] == "LOSS"]
+    wins   = [t for t in trades if t["outcome"] == "WIN"
+              or (t["outcome"] in ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL", "TIMEOUT")
+                  and t["net_pnl"] > 0)]
+    losses = [t for t in trades if t["outcome"] == "LOSS"
+              or (t["outcome"] in ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL", "TIMEOUT")
+                  and t["net_pnl"] <= 0)]
     time_e = [t for t in trades if t["outcome"] == "TIMEOUT"]
 
     winrate    = len(wins) / len(trades) if trades else 0.0
     avg_win    = np.mean([t["net_pnl"] for t in wins])   if wins   else 0.0
     avg_loss   = np.mean([t["net_pnl"] for t in losses]) if losses else 0.0
-    
+
     profit_factor = 0.0
     sum_loss = abs(sum(t["net_pnl"] for t in losses))
+    sum_win  = abs(sum(t["net_pnl"] for t in wins))
     if sum_loss > 0:
-        profit_factor = abs(sum(t["net_pnl"] for t in wins)) / sum_loss
+        profit_factor = sum_win / sum_loss
 
     equity_arr   = np.array([e for e in equity_curve if not np.isnan(e)])
     peak         = np.maximum.accumulate(equity_arr)
@@ -729,11 +863,23 @@ def full_trading_report(
     sl_trigger_mode            = TP_SL_TRIGGER_MODE,
     sizing_mode                = TP_SL_SIZING_MODE,
     cooldown_enabled           = TP_SL_COOLDOWN_ENABLED,
+    # ── Exit Guardian ─────────────────────────────────────────────────
+    guardian_model            = None,
+    guardian_scaler           = None,
+    X_guardian                = None,
+    guardian_exit_threshold   = 0.60,
+    guardian_sl_exit_threshold = GUARDIAN_SL_EXIT_THRESHOLD,
+    guardian_sl_safety_atr    = GUARDIAN_SL_SAFETY_ATR,
+    guardian_tp_atr           = GUARDIAN_TP_ATR,
+    guardian_min_hold_bars    = GUARDIAN_MIN_HOLD_BARS,
+    guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
+    guardian_enabled          = GUARDIAN_ENABLED,
+    trailing_stop_enabled     = TRAILING_STOP_ENABLED,
+    trailing_stop_atr         = TRAILING_STOP_ATR,
+    trailing_stop_min_bars    = TRAILING_STOP_MIN_BARS,
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
-    Mendukung legacy fixed ATR (v2), dynamic H4 Swing (v3),
-    Dynamic TP/SL Regressor (Priority 1), dan Safe SL Classifier.
 
     Semua parameter TP/SL mengikuti config.py (TP_SL_*).
     """
@@ -773,6 +919,19 @@ def full_trading_report(
                 sizing_mode=sizing_mode,
                 cooldown_enabled=cooldown_enabled,
                 swing_sl_bumper_atr=swing_sl_bumper_atr,
+                guardian_model=guardian_model,
+                guardian_scaler=guardian_scaler,
+                X_guardian=X_guardian,
+                guardian_exit_threshold=guardian_exit_threshold,
+                guardian_sl_exit_threshold=guardian_sl_exit_threshold,
+                guardian_sl_safety_atr=guardian_sl_safety_atr,
+                guardian_tp_atr=guardian_tp_atr,
+                guardian_min_hold_bars=guardian_min_hold_bars,
+                guardian_activation_atr=guardian_activation_atr,
+                guardian_enabled=guardian_enabled,
+                trailing_stop_enabled=trailing_stop_enabled,
+                trailing_stop_atr=trailing_stop_atr,
+                trailing_stop_min_bars=trailing_stop_min_bars,
             )
         else:
             return simulate_trades(

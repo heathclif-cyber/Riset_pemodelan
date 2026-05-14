@@ -1,17 +1,17 @@
 """
-pipeline/03b_regime_hmm.py — Fase 03b: HMM Regime Label Generation
+pipeline/11_regime_hmm.py — Fase 11: HMM Regime Label Generation
 
 Fit GaussianHMM (walk-forward, leak-free) pada H4 data untuk setiap koin.
 Output: data/labeled/{coin}_regime_h1.parquet — kolom hmm_regime (string)
                                                  kolom hmm_regime_enc (int)
 
 Urutan pipeline:
-  02_clean.py → 03b_regime_hmm.py → 04_engineer.py → ...
+  02_clean.py → 11_regime_hmm.py → 04_engineer.py → ...
 
 Jalankan:
-  python pipeline/03b_regime_hmm.py               # training coins
-  python pipeline/03b_regime_hmm.py --all         # semua 20 koin
-  python pipeline/03b_regime_hmm.py --coins SOLUSDT XRPUSDT
+  python pipeline/11_regime_hmm.py               # training coins
+  python pipeline/11_regime_hmm.py --all         # semua 20 koin
+  python pipeline/11_regime_hmm.py --coins SOLUSDT XRPUSDT
 """
 
 import argparse
@@ -35,7 +35,7 @@ from config import (
 from core.regime import generate_oof_regime_labels, encode_regime
 from core.utils import setup_logger
 
-logger = setup_logger("03b_regime_hmm")
+logger = setup_logger("11_regime_hmm")
 
 
 # ─── H4 Extractor ────────────────────────────────────────────────────────────

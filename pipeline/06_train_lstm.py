@@ -53,6 +53,7 @@ from config import (
     LABEL_MAP, LABEL_MAP_INV, NUM_CLASSES,
     LSTM_SEQ_LEN, LSTM_HIDDEN, LSTM_LAYERS, LSTM_DROPOUT,
     LSTM_EPOCHS, LSTM_PATIENCE, LSTM_BATCH_SIZE, LSTM_LR,
+    FEATURE_COLS_V3, TRAIN_CUTOFF_DATE,
 )
 from core.models import TradingLSTM, save_lstm
 from core.utils import setup_logger, get_lstm_device
@@ -69,7 +70,7 @@ _fh.setLevel(logging.DEBUG)
 logger.addHandler(_fh)
 
 DEVICE = get_lstm_device()
-NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low"}
+NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low", "hmm_regime"}
 
 
 # ─── Data ────────────────────────────────────────────────────────────────────
@@ -86,6 +87,7 @@ def load_symbols(coins: list[str]) -> pd.DataFrame:
             df.index = pd.to_datetime(df.index, utc=True)
         if df.index.tz is None:
             df.index = df.index.tz_localize("UTC")
+        df = df[df.index < TRAIN_CUTOFF_DATE]  # HANYA data training
         if "OB_price" in df.columns:
             df.drop(columns=["OB_price"], inplace=True)
         frames.append(df)
@@ -149,7 +151,7 @@ def train_fold(
 
     train_loader = DataLoader(train_ds, batch_size=LSTM_BATCH_SIZE,
                               sampler=sampler, num_workers=0, pin_memory=False)
-    test_loader  = DataLoader(test_ds,  batch_size=LSTM_BATCH_SIZE * 2,
+    test_loader  = DataLoader(test_ds,  batch_size=LSTM_BATCH_SIZE,
                               shuffle=False, num_workers=0)
 
     n_features = X_tr.shape[1]

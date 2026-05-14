@@ -51,6 +51,9 @@ from config import (
     SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     FEATURE_COLS_V3, VP_WINDOW, VP_BINS,
     SWING_LOOKBACK, FVG_MIN_GAP_ATR,
+    GUARDIAN_ENABLED,
+    GUARDIAN_EXIT_THRESHOLD,
+    TRAILING_STOP_ENABLED, TRAILING_STOP_ATR, TRAILING_STOP_MIN_BARS,
 )
 from core.binance_client import BinanceClient
 from core.fetchers import fetch_coin, fetch_all_macro
@@ -304,6 +307,13 @@ def backtest_holdout_symbol(
     lgbm_model,
     lstm_model,
     lstm_scaler,
+    guardian_model    = None,
+    guardian_scaler   = None,
+    guardian_enabled  = False,
+    guardian_exit_threshold = 0.60,
+    trailing_stop_enabled   = False,
+    trailing_stop_atr       = 2.0,
+    trailing_stop_min_bars  = 2,
 ) -> dict | None:
     path = HOLDOUT_LABEL_DIR / f"{symbol}_features_v3.parquet"
     if not path.exists():
@@ -318,16 +328,18 @@ def backtest_holdout_symbol(
     df   = df[mask].copy()
     y    = df["label"].map(LABEL_MAP).values.astype(np.int64)
 
-    valid_cols = [c for c in feat_cols if c in df.columns]
-    df[valid_cols] = df[valid_cols].ffill().fillna(0)
-    X = df[valid_cols].values.astype(np.float64)
+    # Align kolom persis ke model LGBM — missing column di-fill 0
+    X = np.zeros((len(df), len(feat_cols)), dtype=np.float64)
+    for idx, col in enumerate(feat_cols):
+        if col in df.columns:
+            X[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
 
     logger.info(f"[{symbol}] Hold-out inference: {len(df):,} bars...")
 
     # 2-model cascade — predict seluruh hold-out (murni out-of-sample)
     y_pred, confidence = hierarchical_predict(
         None, lgbm_model, lstm_model, lstm_scaler,
-        X, valid_cols, [], df[valid_cols],
+        X, feat_cols, [], df,
     )
 
     # Confidence filter
@@ -343,6 +355,21 @@ def backtest_holdout_symbol(
     low_arr   = df["low"].values      if "low"        in df.columns else close_arr
     h4_sh_arr = df["h4_swing_high"].values if "h4_swing_high" in df.columns else None
     h4_sl_arr = df["h4_swing_low"].values  if "h4_swing_low"  in df.columns else None
+
+    # ── Guardian: pre-compute static feature array ──────────────────────────
+    X_guardian = None
+    if guardian_enabled and guardian_model is not None:
+        from pipeline.backtest_utils import compute_guardian_static_array
+        guardian_feat_path = MODEL_DIR / "guardian_feature_cols.json"
+        if guardian_feat_path.exists():
+            with open(guardian_feat_path) as f:
+                g_feat_cols = json.load(f)
+            g_static = [c for c in g_feat_cols if c not in [
+                "bars_held_norm", "current_pnl_pct", "current_pnl_atr",
+                "max_favorable_pnl_pct", "drawdown_from_peak_pct",
+                "direction", "entry_price_ratio",
+            ]]
+            X_guardian = compute_guardian_static_array(df, g_static)
 
     report = full_trading_report(
         y_pred         = y_pred_filtered,
@@ -364,6 +391,14 @@ def backtest_holdout_symbol(
         max_hold       = MAX_HOLDING_BARS,
         symbol         = symbol,
         confidence     = confidence,
+        guardian_model  = guardian_model,
+        guardian_scaler = guardian_scaler,
+        X_guardian      = X_guardian,
+        guardian_enabled = guardian_enabled,
+        guardian_exit_threshold = guardian_exit_threshold,
+        trailing_stop_enabled   = trailing_stop_enabled,
+        trailing_stop_atr       = trailing_stop_atr,
+        trailing_stop_min_bars  = trailing_stop_min_bars,
     )
     report["n_filtered_by_confidence"] = n_filtered
     return report
@@ -462,6 +497,19 @@ def main():
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
 
+    # ── Guardian model (optional — graceful fallback) ────────────────────────
+    guardian_model = None
+    guardian_scaler = None
+    guardian_enabled = GUARDIAN_ENABLED
+    guardian_path = MODEL_DIR / "guardian_best.pkl"
+    if guardian_path.exists() and guardian_enabled:
+        guardian_model = joblib.load(guardian_path)
+        guardian_scaler = joblib.load(MODEL_DIR / "guardian_scaler.pkl")
+        logger.info(f"Guardian model loaded: {guardian_path.name}")
+    elif guardian_enabled:
+        logger.warning("GUARDIAN_ENABLED=True but guardian model not found")
+        guardian_enabled = False
+
     logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)}")
 
     # ── Step 5: Backtest per symbol ───────────────────────────────────────────
@@ -473,6 +521,11 @@ def main():
             report = backtest_holdout_symbol(
                 symbol, feat_cols,
                 lgbm_model, lstm_model, lstm_scaler,
+                guardian_model, guardian_scaler, guardian_enabled,
+                guardian_exit_threshold=GUARDIAN_EXIT_THRESHOLD,
+                trailing_stop_enabled=TRAILING_STOP_ENABLED,
+                trailing_stop_atr=TRAILING_STOP_ATR,
+                trailing_stop_min_bars=TRAILING_STOP_MIN_BARS,
             )
             if report:
                 results[symbol] = report

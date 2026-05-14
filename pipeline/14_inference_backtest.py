@@ -1,5 +1,5 @@
 """
-pipeline/test_inference_backtest.py — Standalone Backtest pakai Inference Config
+pipeline/14_inference_backtest.py — Standalone Backtest pakai Inference Config
 
 Menggunakan:
   - inference_config.json (swint_tradev2) sebagai source parameter
@@ -8,9 +8,9 @@ Menggunakan:
   - Data holdout/labeled/*_features_v3.parquet
 
 Jalankan:
-  python pipeline/test_inference_backtest.py --threshold 0.62
-  python pipeline/test_inference_backtest.py --threshold 0.70
-  python pipeline/test_inference_backtest.py --compare   # bandingkan 0.62 vs 0.70
+  python pipeline/14_inference_backtest.py --threshold 0.62
+  python pipeline/14_inference_backtest.py --threshold 0.70
+  python pipeline/14_inference_backtest.py --compare   # bandingkan 0.62 vs 0.70
 """
 
 import argparse

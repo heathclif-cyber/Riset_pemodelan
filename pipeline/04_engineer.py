@@ -112,7 +112,7 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
             except Exception as e:
                 logger.warning(f"[{symbol}] HMM regime merge gagal: {e} — skip")
         else:
-            logger.info(f"[{symbol}] Regime file tidak ada — jalankan 03b_regime_hmm.py dulu")
+            logger.info(f"[{symbol}] Regime file tidak ada — jalankan 11_regime_hmm.py dulu")
 
         # Amankan kolom-kolom V3 yang valid + kolom label + swing levels + regime
         extra_cols = ["label", "h4_swing_high", "h4_swing_low"]

@@ -55,6 +55,8 @@ from config import (
     SIGNAL_FLIP_CONF_MIN, FLIP_CONFIRM_BARS, FLIP_COOLDOWN_SECS, SAME_DIR_COOLDOWN_HOURS,
     VCB_ENABLED, VCB_ATR_MULTIPLIER, VCB_LOOKBACK_BARS,
     MONITOR_POLL_INTERVAL_SECS,
+    GUARDIAN_ENABLED,
+    TRAILING_STOP_ENABLED, TRAILING_STOP_ATR, TRAILING_STOP_MIN_BARS,
     LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT, LSTM_CONFIRMATION_ENABLED,
     LSTM_ADJUST_MODE,
     LSTM_ADJUST_AGREE_BOOST, LSTM_ADJUST_NEUTRAL_PEN, LSTM_ADJUST_OPPOSITE_PEN,
@@ -508,13 +510,20 @@ def backtest_symbol(
     lgbm_model,
     lstm_model,
     lstm_scaler,
+    guardian_model    = None,
+    guardian_scaler   = None,
+    guardian_enabled  = False,
 ) -> dict | None:
     result = load_symbol(symbol, feat_cols)
     if result is None:
         return None
 
     df, y = result
-    X     = df[feat_cols].values.astype(np.float64)
+    # Align kolom persis ke model LGBM — missing column di-fill 0
+    X = np.zeros((len(df), len(feat_cols)), dtype=np.float64)
+    for idx, col in enumerate(feat_cols):
+        if col in df.columns:
+            X[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
     folds = build_purged_folds(len(df))
 
     oof_pred  = np.full(len(y), -1, dtype=np.int64)
@@ -556,6 +565,22 @@ def backtest_symbol(
     high_arr  = df_valid["high"].values if "high" in df_valid.columns else close_arr
     low_arr   = df_valid["low"].values if "low" in df_valid.columns else close_arr
 
+    # ── Guardian: pre-compute static feature array ──────────────────────────
+    X_guardian = None
+    if guardian_enabled and guardian_model is not None:
+        from pipeline.backtest_utils import compute_guardian_static_array
+        guardian_feat_path = MODEL_DIR / "guardian_feature_cols.json"
+        if guardian_feat_path.exists():
+            with open(guardian_feat_path) as f:
+                g_feat_cols = json.load(f)
+            # Filter to static features only (exclude dynamic)
+            g_static = [c for c in g_feat_cols if c not in [
+                "bars_held_norm", "current_pnl_pct", "current_pnl_atr",
+                "max_favorable_pnl_pct", "drawdown_from_peak_pct",
+                "direction", "entry_price_ratio",
+            ]]
+            X_guardian = compute_guardian_static_array(df_valid, g_static)
+
     report = full_trading_report(
         y_pred          = y_pred_filtered,
         y_actual        = y_valid,
@@ -576,6 +601,13 @@ def backtest_symbol(
         max_hold        = MAX_HOLDING_BARS,
         symbol          = symbol,
         confidence      = conf_filtered,
+        guardian_model  = guardian_model,
+        guardian_scaler = guardian_scaler,
+        X_guardian      = X_guardian,
+        guardian_enabled = guardian_enabled,
+        trailing_stop_enabled = TRAILING_STOP_ENABLED,
+        trailing_stop_atr     = TRAILING_STOP_ATR,
+        trailing_stop_min_bars = TRAILING_STOP_MIN_BARS,
     )
 
     report["n_filtered_by_confidence"] = n_filtered
@@ -636,7 +668,7 @@ def generate_inference_config(
     }
 
     return {
-        "model_version": "cascade_v2",
+        "model_version": "cascade_v3",
         "created_at":    datetime.now(timezone.utc).isoformat(),
         "training_period": {
             "start": str(TRAIN_START.date()),
@@ -814,6 +846,19 @@ def main():
     with open(MODEL_DIR / "feature_cols_v2.json") as f:
         feat_cols = json.load(f)
 
+    # ── Guardian model (optional — graceful fallback) ────────────────────────
+    guardian_model = None
+    guardian_scaler = None
+    guardian_enabled = GUARDIAN_ENABLED
+    guardian_path = MODEL_DIR / "guardian_best.pkl"
+    if guardian_path.exists() and guardian_enabled:
+        guardian_model = joblib.load(guardian_path)
+        guardian_scaler = joblib.load(MODEL_DIR / "guardian_scaler.pkl")
+        logger.info(f"Guardian model loaded: {guardian_path.name}")
+    elif guardian_enabled:
+        logger.warning("GUARDIAN_ENABLED=True but guardian model not found")
+        guardian_enabled = False
+
     logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)} | Coins: {coins}")
 
     # ── Backtest per symbol ───────────────────────────────────────────────────
@@ -825,6 +870,7 @@ def main():
             report = backtest_symbol(
                 symbol, feat_cols,
                 lgbm_model, lstm_model, lstm_scaler,
+                guardian_model, guardian_scaler, guardian_enabled,
             )
             if report:
                 results[symbol] = report
@@ -915,7 +961,7 @@ def main():
 
     # ── Update model registry ─────────────────────────────────────────────────
     update_model_metrics(
-        "cascade_v2",
+        "cascade_v3",
         winrate              = aggregate["mean_winrate"],
         trade_per_month      = aggregate["mean_trade_per_month"],
         pnl_lev5x            = aggregate["mean_pnl_lev5x"],

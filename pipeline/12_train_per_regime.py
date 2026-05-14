@@ -1,5 +1,5 @@
 """
-pipeline/05b_train_per_regime.py — Fase 05b: Per-Regime LGBM Training (B+)
+pipeline/12_train_per_regime.py — Fase 12: Per-Regime LGBM Training
 
 Train LGBM terpisah untuk setiap regime yang terdeteksi HMM.
 Ini adalah inti dari arsitektur B+ (meta-model regime switch).
@@ -14,10 +14,10 @@ Output:
   models/lgbm_regime_{REGIME_NAME}.pkl   — 1 model per regime
   models/regime_model_meta.json          — metadata (feature_cols, regime names, dll)
 
-Jalankan SETELAH 03b_regime_hmm.py + 04_engineer.py + 05_train_lgbm.py:
-  python pipeline/05b_train_per_regime.py
-  python pipeline/05b_train_per_regime.py --all
-  python pipeline/05b_train_per_regime.py --min-samples 500
+Jalankan SETELAH 11_regime_hmm.py + 04_engineer.py + 05_train_lgbm.py:
+  python pipeline/12_train_per_regime.py
+  python pipeline/12_train_per_regime.py --all
+  python pipeline/12_train_per_regime.py --min-samples 500
 """
 
 import argparse
@@ -51,7 +51,7 @@ from config import (
 from core.utils import setup_logger
 from pipeline.shared import build_purged_folds
 
-logger = setup_logger("05b_train_per_regime")
+logger = setup_logger("12_train_per_regime")
 
 NON_FEATURE_COLS = {"label", "h4_swing_high", "h4_swing_low", "hmm_regime", "hmm_regime_enc"}
 MIN_SAMPLES_DEFAULT = 300   # minimum samples per regime untuk training
@@ -233,7 +233,7 @@ def main():
     if "hmm_regime" not in df.columns:
         logger.error(
             "Kolom hmm_regime tidak ditemukan! "
-            "Jalankan 03b_regime_hmm.py + 04_engineer.py terlebih dahulu."
+            "Jalankan 11_regime_hmm.py + 04_engineer.py terlebih dahulu."
         )
         return
 

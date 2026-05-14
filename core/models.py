@@ -121,15 +121,17 @@ def save_lstm(model: TradingLSTM, path: Path) -> None:
 
 def load_lstm(
     path: Path,
-    n_features:  int   = len(FEATURE_COLS_V3),
+    n_features:  int | None = None,
     hidden_size: int   = 128,
     num_layers:  int   = 2,
     dropout:     float = 0.3,
     num_classes: int   = 3,
     device: str        = "cpu",
 ) -> TradingLSTM:
-    """Load LSTM dari state dict ke CPU. Caller yang handle .to(device)."""
+    """Load LSTM dari state dict ke CPU. Auto-detect n_features dari checkpoint."""
     state = torch.load(str(path), map_location="cpu", weights_only=False)
+    if n_features is None:
+        n_features = state["lstm.cells.0.W_ih"].shape[1]  # [4*hidden, n_features]
     model = TradingLSTM(n_features, hidden_size, num_layers, dropout, num_classes)
     model.load_state_dict(state)
     model.eval()

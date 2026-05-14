@@ -125,9 +125,11 @@ def run_inference(
     mask = df["label"].astype(str).isin(LABEL_MAP)
     df   = df[mask].copy()
 
-    valid_feat = [c for c in feat_cols if c in df.columns]
-    X_df = df[valid_feat].ffill().fillna(0)
-    X    = X_df.values.astype(np.float64)
+    # Align ke model: zero-fill kolom yang tidak ada di DataFrame
+    X = np.zeros((len(df), len(feat_cols)), dtype=np.float64)
+    for idx, col in enumerate(feat_cols):
+        if col in df.columns:
+            X[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
 
     # Hierarchical cascade prediction
     y_pred, confidence = hierarchical_predict(

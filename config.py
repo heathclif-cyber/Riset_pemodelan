@@ -41,6 +41,11 @@ TRAIN_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
 START_DATE = TRAIN_START
 END_DATE   = TRAIN_END
 
+# Cutoff untuk training — model HANYA dilatih di data sebelum tanggal ini.
+# Holdout testing pakai data setelah cutoff (via 09_holdout_backtest.py).
+# Ini memastikan TIDAK ADA data testing yang bocor ke training.
+TRAIN_CUTOFF_DATE = datetime(2025, 5, 1, tzinfo=timezone.utc)
+
 # ─── Binance API ─────────────────────────────────────────────────────────────
 BINANCE_BASE_URL       = "https://fapi.binance.com"
 SLEEP_BETWEEN_REQUESTS = 0.12
@@ -48,7 +53,7 @@ SLEEP_ON_RATE_LIMIT    = 60.0
 MAX_RETRIES            = 3
 RETRY_BACKOFF_BASE     = 2.0
 
-KLINE_LIMIT       = 1500
+KLINE_LIMIT       = 1000  # max Binance API per request
 OI_LIMIT          = 500
 FUNDING_LIMIT     = 1000
 TAKER_RATIO_LIMIT = 500
@@ -71,7 +76,7 @@ SWING_H4_LOOKBACK    = 5
 SWING_ROLLING_BARS   = 24     # 24 jam rolling swing
 
 # ─── HMM Regime Detection ─────────────────────────────────────────────────────
-# Dipakai oleh pipeline/03b_regime_hmm.py + core/regime.py
+# Dipakai oleh pipeline/11_regime_hmm.py + core/regime.py
 HMM_N_STATES  = 4      # 4 states: TRENDING_DOWN, RANGING_LOW_VOL, RANGING_HIGH_VOL, TRENDING_UP
 HMM_N_FOLDS   = 8      # walk-forward folds untuk OOF regime labels
 HMM_PURGE_H4  = 6      # purge gap (H4 bars) antara train/val ≈ 24 jam
@@ -445,6 +450,58 @@ TP_SL_INDIVIDUAL_SWING_FRESHNESS = False  # jika True, tolak jika salah satu swi
 
 # ─── #21: Conditional Sizing: Tiered + Half-Size for With-Trend (Grup 4b) ───
 TP_SL_SIZING_WITH_TREND_HALF = False  # half-size untuk with-trend trades (hanya di mode tiered)
+
+# ─── Exit Guardian (3rd Model — Dynamic Exit) ───────────────────────────────
+# Model ke-3: Binary LGBM classifier untuk per-bar HOLD/EXIT decision.
+# Aktif SETELAH entry — memonitor setiap bar dan menutup posisi saat momentum
+# berbalik atau profit sudah optimal.
+# Static TP/SL digantikan oleh guardian exit, dengan wide safety SL sebagai
+# circuit breaker (5x ATR — bukan exit strategy utama).
+GUARDIAN_ENABLED               = True   # master toggle — RUN C holdout
+GUARDIAN_EXIT_THRESHOLD        = 0.60   # min EXIT proba mid-level
+GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
+GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
+GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
+GUARDIAN_MIN_HOLD_BARS         = 3      # guardian tidak boleh exit di 3 bar pertama
+GUARDIAN_ACTIVATION_ATR        = 1.0    # guardian aktif setelah price bergerak 1x ATR
+
+# ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
+TRAILING_STOP_ENABLED          = False  # Guardian solo — RUN C holdout
+TRAILING_STOP_ATR              = 2.0    # jarak stop dari best price (× ATR)
+TRAILING_STOP_MIN_BARS         = 2      # min bars sebelum trailing aktif
+
+# Guardian static features — full FEATURE_COLS_V3 (103 fitur)
+# Sebelumnya subset 32 — dynamic features mendominasi karena static terlalu lemah.
+# Multiclass: 0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT
+GUARDIAN_STATIC_FEATURES = FEATURE_COLS_V3
+
+# Dynamic features — trade context (dihitung per bar saat simulasi)
+GUARDIAN_DYNAMIC_FEATURES = [
+    "bars_held_norm", "current_pnl_pct", "current_pnl_atr",
+    "max_favorable_pnl_pct", "drawdown_from_peak_pct",
+    "direction", "entry_price_ratio",
+]
+
+# Guardian LGBM training params (multiclass: 0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT)
+GUARDIAN_LGBM_PARAMS = {
+    "objective":          "multiclass",
+    "num_class":          3,
+    "n_estimators":       500,
+    "learning_rate":      0.05,
+    "max_depth":          6,
+    "num_leaves":         31,
+    "min_child_samples":  50,
+    "subsample":          0.8,
+    "colsample_bytree":   0.8,
+    "verbose":            -1,
+    "n_jobs":             -1,
+    "random_state":       42,
+}
+GUARDIAN_PARTIAL_EXIT_RATIO = 0.5  # % posisi ditutup saat PARTIAL_EXIT
+GUARDIAN_EARLY_STOPPING    = 50
+GUARDIAN_N_FOLDS           = 8
+GUARDIAN_PURGE_GAP_BARS    = 5
+GUARDIAN_MIN_SAMPLES_COIN  = 30  # min in-trade bars per coin untuk training
 
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
 MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)

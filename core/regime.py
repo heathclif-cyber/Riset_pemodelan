@@ -11,8 +11,8 @@ State canonical ordering (by mean_return ascending):
   3 → TRENDING_UP
 
 Digunakan oleh:
-  pipeline/03b_regime_hmm.py  — generate OOF regime labels
-  pipeline/05b_train_per_regime.py — per-regime LGBM training
+  pipeline/11_regime_hmm.py  — generate OOF regime labels
+  pipeline/12_train_per_regime.py — per-regime LGBM training
 """
 
 import numpy as np
