@@ -218,3 +218,27 @@ Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 - **Feature alignment via `model.feature_name_`** — mencegah mismatch fitur 103 vs 104
 - **Jangan duplikasi isi config.py** — baca langsung dari file
 - **Jangan tulis riwayat perubahan di sini** — gunakan `EXPERIMENTS.md`
+
+## Slash Commands
+
+### /trade-analysis
+
+Ketika user mengetik `/trade-analysis`, ikuti instruksi lengkap di `.claude/commands/trade-analysis.md`.
+
+Ringkasan alur:
+1. Parse argumen → jalankan `python tools/trade_analyzer.py`
+2. Baca CSV sendiri → analisis mendalam (loss streak, counter-trend, Guardian, anomali coin, open positions)
+3. Tampilkan: Scorecard → Temuan Kritis → Analisis Per Model → Rekomendasi
+4. Rekonstruksi dampak rekomendasi: simulasikan tiap rekomendasi ke data historis dengan script Python, tampilkan tabel proyeksi scorecard per skenario
+5. Evaluasi open positions risk
+6. Simpan report ke `reports/TRADE_ANALYSIS_REPORT.md`
+
+Contoh pemanggilan:
+```
+/trade-analysis                              → default livetrade.csv
+/trade-analysis path/to/file.csv             → file lain
+/trade-analysis vol=0.03 dev=0.10            → override threshold filter
+/trade-analysis no-filter                    → baseline saja
+```
+
+Default: `--file livetrade.csv`, `--p2 0.05`, `--p4 0.08`, `--output reports/TRADE_ANALYSIS_REPORT.md`
