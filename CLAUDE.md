@@ -110,12 +110,31 @@ v3 korbankan WR/PF demi volume 72% lebih banyak — Sharpe lebih tinggi, PnL +57
 
 Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)` dan `§ 2026-05-15`
 
-## Referensi Eksternal
+## Cross-Repo: Production (swint_tradev2)
+
+Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung dibaca:
+
+| File | Purpose |
+|------|---------|
+| `D:\Apps-Dev\swint_tradev2\CLAUDE.md` | Dokumentasi lengkap production system (Flask, scheduler, live trading) |
+| `D:\Apps-Dev\swint_tradev2\hasil_livetrading.csv` | Live trade history (102+ trades, cascade_v2/v3/lstm) |
+| `D:\Apps-Dev\swint_tradev2\TRADE_ANALYSIS_REPORT.md` | Laporan analisis trading terbaru oleh /analyze |
+| `D:\Apps-Dev\swint_tradev2\AUDIT_REPORT.md` | Laporan audit terbaru oleh /audit |
+| `D:\Apps-Dev\swint_tradev2\models\inference_config.json` | Konfigurasi inference production (parameter cascade, Guardian, filter) |
+| `D:\Apps-Dev\swint_tradev2\app\services\paper_trading.py` | Exit logic + Guardian v3 implementation (EARLY + MOMENTUM mode) |
+| `D:\Apps-Dev\swint_tradev2\app\services\signal_filter.py` | Filter chain (R1 counter-trend hard block, structural, VCB) |
+| `D:\Apps-Dev\swint_tradev2\app\services\inference.py` | Cascade v3 inference pipeline production |
+| `D:\Apps-Dev\swint_tradev2\app\services\guardian_service.py` | Guardian v3 dynamic exit service |
+| `D:\Apps-Dev\swint_tradev2\core\features.py` | Feature engineering production (104 feat, H4/D1 context) |
+
+**Konvensi**: Jika perlu membaca file dari repo production, gunakan absolute path `D:\Apps-Dev\swint_tradev2\...`.
+
+## Referensi Internal
 
 - **EXPERIMENTS.md** — Logbook perubahan parameter & temuan eksperimen. Baca sebelum mengubah parameter.
-- **Inference config**: `D:\Apps-Dev\swint_tradev2\models\inference_config.json` — setup produksi yang sudah tervalidasi.
 - **Model registry**: `models/model_registry.json` — model aktif & metrik baseline
 - **Holdout results**: `models/runs/holdout_20260515_001906/holdout_backtest_results.json`
+- **Reports**: `reports/TRADE_ANALYSIS_REPORT.md` — analisis trading dari production
 
 ## Key Files
 
