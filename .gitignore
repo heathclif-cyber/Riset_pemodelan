@@ -31,13 +31,15 @@ vantage_test/
 # Data — 500MB+, terlalu besar untuk git
 data/
 
-# Model binary & chart output — terlalu besar untuk git
-models/*.pkl
-models/*.pt
-models/*.bin
-models/*.joblib
-models/*.h5
-models/*.onnx
+# Model binary — terlalu besar untuk git (semua subdirektori)
+**/*.pkl
+**/*.pt
+**/*.bin
+**/*.joblib
+**/*.h5
+**/*.onnx
+
+# Chart output di models/
 models/**/*.svg
 models/**/*.png
 models/**/*.html
