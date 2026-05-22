@@ -1,0 +1,372 @@
+{
+  "run_id": "backtest_thresh062_20260512_221400",
+  "confidence_threshold": 0.62,
+  "coins": [
+    "SOLUSDT",
+    "ETHUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT",
+    "TONUSDT",
+    "ADAUSDT",
+    "TRXUSDT",
+    "1000SHIBUSDT",
+    "AVAXUSDT",
+    "LINKUSDT",
+    "DOTUSDT",
+    "SUIUSDT",
+    "POLUSDT",
+    "NEARUSDT",
+    "1000PEPEUSDT",
+    "TAOUSDT",
+    "ARBUSDT",
+    "XAUTUSDT",
+    "HBARUSDT",
+    "ONDOUSDT"
+  ],
+  "failed": [],
+  "mean_winrate": 0.6289,
+  "mean_long_wr": 0.6416380952380952,
+  "mean_short_wr": 0.6426047619047619,
+  "total_trades": 33385,
+  "total_pnl_lev5x": 167602.6242,
+  "total_filtered": 0,
+  "per_symbol": {
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "winrate": 0.6386,
+      "win_by_class": {
+        "LONG": 0.6585,
+        "SHORT": 0.625
+      },
+      "total_trades": 1807,
+      "pnl_lev5x": 7613.4658,
+      "max_drawdown_lev5x": 1.7511,
+      "sharpe_ratio": 18.637,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 736,
+      "n_short_raw": 1074
+    },
+    "ETHUSDT": {
+      "symbol": "ETHUSDT",
+      "winrate": 0.6949,
+      "win_by_class": {
+        "LONG": 0.6642,
+        "SHORT": 0.7289
+      },
+      "total_trades": 1049,
+      "pnl_lev5x": 5119.7024,
+      "max_drawdown_lev5x": 0.8368,
+      "sharpe_ratio": 18.5307,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 554,
+      "n_short_raw": 498
+    },
+    "BNBUSDT": {
+      "symbol": "BNBUSDT",
+      "winrate": 0.6355,
+      "win_by_class": {
+        "LONG": 0.7107,
+        "SHORT": 0.5906
+      },
+      "total_trades": 1602,
+      "pnl_lev5x": 4417.8793,
+      "max_drawdown_lev5x": 1.9476,
+      "sharpe_ratio": 17.3586,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 598,
+      "n_short_raw": 1006
+    },
+    "XRPUSDT": {
+      "symbol": "XRPUSDT",
+      "winrate": 0.6422,
+      "win_by_class": {
+        "LONG": 0.6058,
+        "SHORT": 0.6722
+      },
+      "total_trades": 1769,
+      "pnl_lev5x": 7441.5056,
+      "max_drawdown_lev5x": 1.3413,
+      "sharpe_ratio": 20.2869,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 802,
+      "n_short_raw": 973
+    },
+    "DOGEUSDT": {
+      "symbol": "DOGEUSDT",
+      "winrate": 0.6606,
+      "win_by_class": {
+        "LONG": 0.6149,
+        "SHORT": 0.7057
+      },
+      "total_trades": 1762,
+      "pnl_lev5x": 10383.3473,
+      "max_drawdown_lev5x": 1.6696,
+      "sharpe_ratio": 22.1574,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 877,
+      "n_short_raw": 891
+    },
+    "TONUSDT": {
+      "symbol": "TONUSDT",
+      "winrate": 0.6095,
+      "win_by_class": {
+        "LONG": 0.6087,
+        "SHORT": 0.6103
+      },
+      "total_trades": 1826,
+      "pnl_lev5x": 7046.8537,
+      "max_drawdown_lev5x": 1.5302,
+      "sharpe_ratio": 19.1118,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 855,
+      "n_short_raw": 981
+    },
+    "ADAUSDT": {
+      "symbol": "ADAUSDT",
+      "winrate": 0.6496,
+      "win_by_class": {
+        "LONG": 0.6135,
+        "SHORT": 0.6812
+      },
+      "total_trades": 1718,
+      "pnl_lev5x": 8969.5282,
+      "max_drawdown_lev5x": 1.4773,
+      "sharpe_ratio": 21.5364,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 804,
+      "n_short_raw": 917
+    },
+    "TRXUSDT": {
+      "symbol": "TRXUSDT",
+      "winrate": 0.6596,
+      "win_by_class": {
+        "LONG": 0.709,
+        "SHORT": 0.6203
+      },
+      "total_trades": 1704,
+      "pnl_lev5x": 2422.8231,
+      "max_drawdown_lev5x": 1.3369,
+      "sharpe_ratio": 14.4192,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 763,
+      "n_short_raw": 951
+    },
+    "1000SHIBUSDT": {
+      "symbol": "1000SHIBUSDT",
+      "winrate": 0.6294,
+      "win_by_class": {
+        "LONG": 0.5784,
+        "SHORT": 0.6761
+      },
+      "total_trades": 1549,
+      "pnl_lev5x": 7466.8586,
+      "max_drawdown_lev5x": 1.8173,
+      "sharpe_ratio": 18.736,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 742,
+      "n_short_raw": 810
+    },
+    "AVAXUSDT": {
+      "symbol": "AVAXUSDT",
+      "winrate": 0.6436,
+      "win_by_class": {
+        "LONG": 0.6186,
+        "SHORT": 0.6682
+      },
+      "total_trades": 1734,
+      "pnl_lev5x": 9334.4229,
+      "max_drawdown_lev5x": 0.845,
+      "sharpe_ratio": 22.0731,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 865,
+      "n_short_raw": 876
+    },
+    "LINKUSDT": {
+      "symbol": "LINKUSDT",
+      "winrate": 0.6355,
+      "win_by_class": {
+        "LONG": 0.5933,
+        "SHORT": 0.667
+      },
+      "total_trades": 1808,
+      "pnl_lev5x": 9035.8809,
+      "max_drawdown_lev5x": 1.8485,
+      "sharpe_ratio": 20.1795,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 777,
+      "n_short_raw": 1039
+    },
+    "DOTUSDT": {
+      "symbol": "DOTUSDT",
+      "winrate": 0.6336,
+      "win_by_class": {
+        "LONG": 0.5795,
+        "SHORT": 0.6773
+      },
+      "total_trades": 1812,
+      "pnl_lev5x": 8910.6642,
+      "max_drawdown_lev5x": 1.725,
+      "sharpe_ratio": 19.8247,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 816,
+      "n_short_raw": 1004
+    },
+    "SUIUSDT": {
+      "symbol": "SUIUSDT",
+      "winrate": 0.6405,
+      "win_by_class": {
+        "LONG": 0.5868,
+        "SHORT": 0.6815
+      },
+      "total_trades": 1783,
+      "pnl_lev5x": 9524.5302,
+      "max_drawdown_lev5x": 2.6149,
+      "sharpe_ratio": 19.6635,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 774,
+      "n_short_raw": 1018
+    },
+    "POLUSDT": {
+      "symbol": "POLUSDT",
+      "winrate": 0.6215,
+      "win_by_class": {
+        "LONG": 0.5639,
+        "SHORT": 0.6693
+      },
+      "total_trades": 1847,
+      "pnl_lev5x": 9061.1376,
+      "max_drawdown_lev5x": 1.3286,
+      "sharpe_ratio": 19.5787,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 840,
+      "n_short_raw": 1013
+    },
+    "NEARUSDT": {
+      "symbol": "NEARUSDT",
+      "winrate": 0.6352,
+      "win_by_class": {
+        "LONG": 0.6402,
+        "SHORT": 0.6307
+      },
+      "total_trades": 1801,
+      "pnl_lev5x": 10849.974,
+      "max_drawdown_lev5x": 2.0028,
+      "sharpe_ratio": 21.2091,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 858,
+      "n_short_raw": 946
+    },
+    "1000PEPEUSDT": {
+      "symbol": "1000PEPEUSDT",
+      "winrate": 0.6774,
+      "win_by_class": {
+        "LONG": 0.6196,
+        "SHORT": 0.7429
+      },
+      "total_trades": 1361,
+      "pnl_lev5x": 11007.1977,
+      "max_drawdown_lev5x": 2.2483,
+      "sharpe_ratio": 21.7179,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 725,
+      "n_short_raw": 639
+    },
+    "TAOUSDT": {
+      "symbol": "TAOUSDT",
+      "winrate": 0.6419,
+      "win_by_class": {
+        "LONG": 0.6061,
+        "SHORT": 0.6738
+      },
+      "total_trades": 1332,
+      "pnl_lev5x": 8976.8309,
+      "max_drawdown_lev5x": 2.1154,
+      "sharpe_ratio": 18.0679,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 635,
+      "n_short_raw": 708
+    },
+    "ARBUSDT": {
+      "symbol": "ARBUSDT",
+      "winrate": 0.6815,
+      "win_by_class": {
+        "LONG": 0.6757,
+        "SHORT": 0.6864
+      },
+      "total_trades": 1686,
+      "pnl_lev5x": 11545.04,
+      "max_drawdown_lev5x": 1.7853,
+      "sharpe_ratio": 23.5935,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 777,
+      "n_short_raw": 913
+    },
+    "XAUTUSDT": {
+      "symbol": "XAUTUSDT",
+      "winrate": 0.2973,
+      "win_by_class": {
+        "LONG": 1.0,
+        "SHORT": 0.1613
+      },
+      "total_trades": 37,
+      "pnl_lev5x": -24.2025,
+      "max_drawdown_lev5x": 0.4084,
+      "sharpe_ratio": -6.6723,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 6,
+      "n_short_raw": 31
+    },
+    "HBARUSDT": {
+      "symbol": "HBARUSDT",
+      "winrate": 0.6342,
+      "win_by_class": {
+        "LONG": 0.5985,
+        "SHORT": 0.6648
+      },
+      "total_trades": 1703,
+      "pnl_lev5x": 8334.7547,
+      "max_drawdown_lev5x": 1.9362,
+      "sharpe_ratio": 18.3943,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 789,
+      "n_short_raw": 919
+    },
+    "ONDOUSDT": {
+      "symbol": "ONDOUSDT",
+      "winrate": 0.6448,
+      "win_by_class": {
+        "LONG": 0.6285,
+        "SHORT": 0.6612
+      },
+      "total_trades": 1695,
+      "pnl_lev5x": 10164.4296,
+      "max_drawdown_lev5x": 1.5124,
+      "sharpe_ratio": 21.1423,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62,
+      "n_long_raw": 852,
+      "n_short_raw": 848
+    }
+  }
+}

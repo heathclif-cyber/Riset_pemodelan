@@ -25,7 +25,9 @@ from statistics import mean, stdev
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 
-DEFAULT_CSV    = "livetrade.csv"
+# Deteksi otomatis berkas live trading dari Web App Produksi (Zero-Copy Bridge)
+PRODUCTION_CSV = r"D:\Apps-Dev\swint_tradev2\hasil_livetrading.csv"
+DEFAULT_CSV    = PRODUCTION_CSV if os.path.exists(PRODUCTION_CSV) else "livetrade.csv"
 DEFAULT_REPORT = r"D:\Apps-Dev\Riset_pemodelan\reports\TRADE_ANALYSIS_REPORT.md"
 DEFAULT_P2     = 0.05   # min Vol Regime
 DEFAULT_P4     = 0.08   # max H4 swing deviation

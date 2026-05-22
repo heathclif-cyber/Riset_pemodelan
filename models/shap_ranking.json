@@ -1,0 +1,540 @@
+{
+  "model": "lgbm",
+  "symbol": "SOLUSDT",
+  "n_samples": 10000,
+  "n_features": 103,
+  "entry_metrics": {
+    "SHORT": {
+      "precision": 0.7113,
+      "recall": 0.7775,
+      "f1": 0.7429
+    },
+    "FLAT": {
+      "precision": 0.9514,
+      "recall": 0.9382,
+      "f1": 0.9448
+    },
+    "LONG": {
+      "precision": 0.7185,
+      "recall": 0.7475,
+      "f1": 0.7327
+    }
+  },
+  "shap_ranking": [
+    {
+      "rank": 1,
+      "feature": "ema_7_h4",
+      "mean_abs_shap": 1.2171666675555608
+    },
+    {
+      "rank": 2,
+      "feature": "price_in_range",
+      "mean_abs_shap": 1.0816433100131342
+    },
+    {
+      "rank": 3,
+      "feature": "dist_from_8h_high",
+      "mean_abs_shap": 0.32966467030883
+    },
+    {
+      "rank": 4,
+      "feature": "Buy_Liq",
+      "mean_abs_shap": 0.3092101141934903
+    },
+    {
+      "rank": 5,
+      "feature": "Sell_Liq",
+      "mean_abs_shap": 0.20591648348102734
+    },
+    {
+      "rank": 6,
+      "feature": "rsi_h4",
+      "mean_abs_shap": 0.1923359319655545
+    },
+    {
+      "rank": 7,
+      "feature": "rsi_slope_h4",
+      "mean_abs_shap": 0.18135685698197476
+    },
+    {
+      "rank": 8,
+      "feature": "ema_21_h4",
+      "mean_abs_shap": 0.17794031238115668
+    },
+    {
+      "rank": 9,
+      "feature": "ema_50_slope_d1",
+      "mean_abs_shap": 0.11619585424122729
+    },
+    {
+      "rank": 10,
+      "feature": "log_ret_5",
+      "mean_abs_shap": 0.09638632452645135
+    },
+    {
+      "rank": 11,
+      "feature": "absorption_at_swing",
+      "mean_abs_shap": 0.09557706815083493
+    },
+    {
+      "rank": 12,
+      "feature": "range_expansion_h4",
+      "mean_abs_shap": 0.09050600283222193
+    },
+    {
+      "rank": 13,
+      "feature": "swing_momentum",
+      "mean_abs_shap": 0.07857323793880056
+    },
+    {
+      "rank": 14,
+      "feature": "price_vs_ema_50_d1",
+      "mean_abs_shap": 0.07803953135711567
+    },
+    {
+      "rank": 15,
+      "feature": "time_to_funding_norm",
+      "mean_abs_shap": 0.0778052999863363
+    },
+    {
+      "rank": 16,
+      "feature": "stochrsi_d",
+      "mean_abs_shap": 0.07357898124867501
+    },
+    {
+      "rank": 17,
+      "feature": "ema_50_d1",
+      "mean_abs_shap": 0.07254378184156221
+    },
+    {
+      "rank": 18,
+      "feature": "ema_21_slope_h4",
+      "mean_abs_shap": 0.07202133453041593
+    },
+    {
+      "rank": 19,
+      "feature": "dist_swing_low",
+      "mean_abs_shap": 0.06363245837565108
+    },
+    {
+      "rank": 20,
+      "feature": "Fib_786",
+      "mean_abs_shap": 0.06197180081284076
+    },
+    {
+      "rank": 21,
+      "feature": "bars_since_BOS",
+      "mean_abs_shap": 0.053122149728783125
+    },
+    {
+      "rank": 22,
+      "feature": "price_vs_ema_50_h4",
+      "mean_abs_shap": 0.05072608798871692
+    },
+    {
+      "rank": 23,
+      "feature": "rsi_6",
+      "mean_abs_shap": 0.050551727044915507
+    },
+    {
+      "rank": 24,
+      "feature": "d1_trend_strength",
+      "mean_abs_shap": 0.0499783956504142
+    },
+    {
+      "rank": 25,
+      "feature": "fear_greed",
+      "mean_abs_shap": 0.04549587426821875
+    },
+    {
+      "rank": 26,
+      "feature": "ema_7_h1",
+      "mean_abs_shap": 0.04267474268277809
+    },
+    {
+      "rank": 27,
+      "feature": "ofi_h4_delta",
+      "mean_abs_shap": 0.03893783143852714
+    },
+    {
+      "rank": 28,
+      "feature": "atr_percent_h4",
+      "mean_abs_shap": 0.037509564148707125
+    },
+    {
+      "rank": 29,
+      "feature": "trend_strength",
+      "mean_abs_shap": 0.03727795436605489
+    },
+    {
+      "rank": 30,
+      "feature": "trend_accel_4h",
+      "mean_abs_shap": 0.03570050442551251
+    },
+    {
+      "rank": 31,
+      "feature": "d1_hh_hl_bias",
+      "mean_abs_shap": 0.035633386141577975
+    },
+    {
+      "rank": 32,
+      "feature": "PDL",
+      "mean_abs_shap": 0.03339254289311256
+    },
+    {
+      "rank": 33,
+      "feature": "ema_50_h4",
+      "mean_abs_shap": 0.03317765227657131
+    },
+    {
+      "rank": 34,
+      "feature": "hour_sin",
+      "mean_abs_shap": 0.03301323469910624
+    },
+    {
+      "rank": 35,
+      "feature": "absorption_z",
+      "mean_abs_shap": 0.030822966619076513
+    },
+    {
+      "rank": 36,
+      "feature": "ema_21_h1",
+      "mean_abs_shap": 0.03056071855942059
+    },
+    {
+      "rank": 37,
+      "feature": "log_ret_20",
+      "mean_abs_shap": 0.028620356026579155
+    },
+    {
+      "rank": 38,
+      "feature": "ema_50_slope_h4",
+      "mean_abs_shap": 0.02844206052772147
+    },
+    {
+      "rank": 39,
+      "feature": "PDH",
+      "mean_abs_shap": 0.028361699977651755
+    },
+    {
+      "rank": 40,
+      "feature": "dow_sin",
+      "mean_abs_shap": 0.028350697360640227
+    },
+    {
+      "rank": 41,
+      "feature": "dist_swing_high",
+      "mean_abs_shap": 0.027692215026015248
+    },
+    {
+      "rank": 42,
+      "feature": "stochrsi_k",
+      "mean_abs_shap": 0.027433281263892533
+    },
+    {
+      "rank": 43,
+      "feature": "SFP_sweep",
+      "mean_abs_shap": 0.027373759639168375
+    },
+    {
+      "rank": 44,
+      "feature": "ema_200_h4",
+      "mean_abs_shap": 0.024668557699568803
+    },
+    {
+      "rank": 45,
+      "feature": "atr_d1_percentile",
+      "mean_abs_shap": 0.024597423817036144
+    },
+    {
+      "rank": 46,
+      "feature": "PWL",
+      "mean_abs_shap": 0.02381485444250337
+    },
+    {
+      "rank": 47,
+      "feature": "dow_cos",
+      "mean_abs_shap": 0.022590815526488964
+    },
+    {
+      "rank": 48,
+      "feature": "VAH",
+      "mean_abs_shap": 0.02176327020434927
+    },
+    {
+      "rank": 49,
+      "feature": "long_short_ratio",
+      "mean_abs_shap": 0.020765410279957243
+    },
+    {
+      "rank": 50,
+      "feature": "log_ret_1",
+      "mean_abs_shap": 0.020557778386917903
+    },
+    {
+      "rank": 51,
+      "feature": "vol_ratio_20",
+      "mean_abs_shap": 0.019918520258313213
+    },
+    {
+      "rank": 52,
+      "feature": "cvd_slope_h4",
+      "mean_abs_shap": 0.019854057421831234
+    },
+    {
+      "rank": 53,
+      "feature": "hour_cos",
+      "mean_abs_shap": 0.019243197830334798
+    },
+    {
+      "rank": 54,
+      "feature": "d1_trend",
+      "mean_abs_shap": 0.01902006886283085
+    },
+    {
+      "rank": 55,
+      "feature": "VAL",
+      "mean_abs_shap": 0.018391762310585664
+    },
+    {
+      "rank": 56,
+      "feature": "atr_14_h1",
+      "mean_abs_shap": 0.0183150769601511
+    },
+    {
+      "rank": 57,
+      "feature": "market_session",
+      "mean_abs_shap": 0.017537800254012293
+    },
+    {
+      "rank": 58,
+      "feature": "rsi_divergence",
+      "mean_abs_shap": 0.017249885283606162
+    },
+    {
+      "rank": 59,
+      "feature": "FVG_up",
+      "mean_abs_shap": 0.01672683725841575
+    },
+    {
+      "rank": 60,
+      "feature": "ema_50_h1",
+      "mean_abs_shap": 0.016193674978205178
+    },
+    {
+      "rank": 61,
+      "feature": "FVG_down",
+      "mean_abs_shap": 0.016123584487780243
+    },
+    {
+      "rank": 62,
+      "feature": "atr_14_h4",
+      "mean_abs_shap": 0.015857706794518502
+    },
+    {
+      "rank": 63,
+      "feature": "effort_vs_result",
+      "mean_abs_shap": 0.014116143189831691
+    },
+    {
+      "rank": 64,
+      "feature": "ema_200_slope_d1",
+      "mean_abs_shap": 0.013897990718723574
+    },
+    {
+      "rank": 65,
+      "feature": "cvd_momentum_adv",
+      "mean_abs_shap": 0.013676480296991209
+    },
+    {
+      "rank": 66,
+      "feature": "PWH",
+      "mean_abs_shap": 0.01274881827071652
+    },
+    {
+      "rank": 67,
+      "feature": "open_interest",
+      "mean_abs_shap": 0.012478297980223114
+    },
+    {
+      "rank": 68,
+      "feature": "POC",
+      "mean_abs_shap": 0.011853023451990274
+    },
+    {
+      "rank": 69,
+      "feature": "ema_200_d1",
+      "mean_abs_shap": 0.01051889862170086
+    },
+    {
+      "rank": 70,
+      "feature": "ema_200_h1",
+      "mean_abs_shap": 0.010044639511158294
+    },
+    {
+      "rank": 71,
+      "feature": "ofi_z_score",
+      "mean_abs_shap": 0.010024068066798848
+    },
+    {
+      "rank": 72,
+      "feature": "vol_price_confirm",
+      "mean_abs_shap": 0.00822870614325464
+    },
+    {
+      "rank": 73,
+      "feature": "vol_efficiency",
+      "mean_abs_shap": 0.008225578232219448
+    },
+    {
+      "rank": 74,
+      "feature": "Fib_618",
+      "mean_abs_shap": 0.00798637024900744
+    },
+    {
+      "rank": 75,
+      "feature": "buy_volume",
+      "mean_abs_shap": 0.007360004592131264
+    },
+    {
+      "rank": 76,
+      "feature": "vwdp_smooth",
+      "mean_abs_shap": 0.00695395901436741
+    },
+    {
+      "rank": 77,
+      "feature": "low",
+      "mean_abs_shap": 0.006886006079656107
+    },
+    {
+      "rank": 78,
+      "feature": "cvd",
+      "mean_abs_shap": 0.006503021511151085
+    },
+    {
+      "rank": 79,
+      "feature": "vol_regime",
+      "mean_abs_shap": 0.0058837518948628076
+    },
+    {
+      "rank": 80,
+      "feature": "high",
+      "mean_abs_shap": 0.0057224548861006105
+    },
+    {
+      "rank": 81,
+      "feature": "MSB_BOS",
+      "mean_abs_shap": 0.005339937039588407
+    },
+    {
+      "rank": 82,
+      "feature": "spread_to_volume",
+      "mean_abs_shap": 0.005212108413280113
+    },
+    {
+      "rank": 83,
+      "feature": "open",
+      "mean_abs_shap": 0.005044121973852833
+    },
+    {
+      "rank": 84,
+      "feature": "ofi_acceleration",
+      "mean_abs_shap": 0.0050099675836964876
+    },
+    {
+      "rank": 85,
+      "feature": "close",
+      "mean_abs_shap": 0.004839111400875986
+    },
+    {
+      "rank": 86,
+      "feature": "volume_delta",
+      "mean_abs_shap": 0.004354565959272554
+    },
+    {
+      "rank": 87,
+      "feature": "sell_volume",
+      "mean_abs_shap": 0.003134962449925395
+    },
+    {
+      "rank": 88,
+      "feature": "wyckoff_phase",
+      "mean_abs_shap": 0.0026651518666213794
+    },
+    {
+      "rank": 89,
+      "feature": "volume",
+      "mean_abs_shap": 0.0021235666574639486
+    },
+    {
+      "rank": 90,
+      "feature": "spring_upthrust",
+      "mean_abs_shap": 0.002082197877878566
+    },
+    {
+      "rank": 91,
+      "feature": "cvd_div_h4",
+      "mean_abs_shap": 0.001940563634158656
+    },
+    {
+      "rank": 92,
+      "feature": "vwdp",
+      "mean_abs_shap": 0.0017089121748064546
+    },
+    {
+      "rank": 93,
+      "feature": "ultra_high_vol",
+      "mean_abs_shap": 0.0015126662188318706
+    },
+    {
+      "rank": 94,
+      "feature": "h4_trend",
+      "mean_abs_shap": 0.0014739820299887161
+    },
+    {
+      "rank": 95,
+      "feature": "htf_alignment",
+      "mean_abs_shap": 0.0013687118952035494
+    },
+    {
+      "rank": 96,
+      "feature": "no_demand",
+      "mean_abs_shap": 0.0012451864350592097
+    },
+    {
+      "rank": 97,
+      "feature": "ofi_raw",
+      "mean_abs_shap": 0.0012427895899285316
+    },
+    {
+      "rank": 98,
+      "feature": "CHoCH",
+      "mean_abs_shap": 0.000830774098917492
+    },
+    {
+      "rank": 99,
+      "feature": "no_supply",
+      "mean_abs_shap": 0.0004619180732227046
+    },
+    {
+      "rank": 100,
+      "feature": "hidden_divergence",
+      "mean_abs_shap": 8.504583597798625e-05
+    },
+    {
+      "rank": 101,
+      "feature": "btc_dominance",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "rank": 102,
+      "feature": "funding_rate",
+      "mean_abs_shap": 0.0
+    },
+    {
+      "rank": 103,
+      "feature": "funding_price_div",
+      "mean_abs_shap": 0.0
+    }
+  ]
+}

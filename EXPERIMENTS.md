@@ -560,7 +560,75 @@ e15b491  fix(ui): rename cascade_v2 label to cascade_v3 in models page
 
 ---
 
-## Template — Cara Mencatat Eksperimen Baru
+## 2026-05-22 — Retrain Tanpa D1 Features (cascade_v3_noD1)
+
+### Latar Belakang
+
+Live trading cascade_v3 menghasilkan LONG hanya 6.8% dari total sinyal (76 LONG vs 230 SHORT dari 1,110 sinyal). Analisis LGBM feature importance menunjukkan `ema_50_slope_d1` adalah fitur **#2 paling berpengaruh** (3.0% importance) — lebih tinggi dari hampir semua fitur H4. Karena D1 EMA50 slope berubah sangat lambat (mencerminkan tren bulanan), fitur ini secara sistematis menekan LONG signal saat market sedang recovery dari koreksi, meski H4 sudah bullish. Untuk swing trading berbasis H4 (hold 3–24 jam), konteks D1 timeframe terlalu lambat dan tidak relevan untuk timing entry.
+
+### Hipotesis
+
+Menghapus 10 fitur D1 + `hmm_regime_enc` (hardcoded 0, tidak ada nilai) akan:
+1. Memungkinkan LGBM output LONG lebih sering saat H4 bullish tanpa harus menunggu D1 confirm
+2. Mempertahankan WR di kisaran 88–91% (tidak signifikan turun karena D1 bukan top-5 feature)
+3. Menyeimbangkan rasio LONG/SHORT mendekati 1:1 seperti di holdout backtest
+
+### Fitur yang Dihapus (11 fitur: 103 → 92)
+
+| Fitur | Importance | Alasan |
+|-------|-----------|--------|
+| `ema_50_slope_d1` | 3.0% (#2 overall) | Terlalu lambat untuk swing entry — lag berminggu-minggu |
+| `price_vs_ema_50_d1` | 1.8% | Bersama ema_50_slope_d1 menekan LONG saat D1 masih bearish |
+| `ema_50_d1` | 1.7% | Nilai absolut EMA D1 tidak relevan untuk H4 swing |
+| `d1_trend_strength` | 1.8% | D1 trend strength tidak berubah saat H4 recovery |
+| `ema_200_slope_d1` | 1.3% | EMA200 D1 = position trading indicator, bukan swing |
+| `atr_d1_percentile` | 1.4% | Volatility percentile D1 kurang relevan vs ATR H1/H4 |
+| `ema_200_d1` | 1.1% | Sama seperti ema_200_slope_d1 |
+| `d1_hh_hl_bias` | 0.5% | Bias HH/HL di D1 terlalu macro untuk swing |
+| `d1_trend` | 0.2% | Sudah tercakup oleh h4_trend yang lebih relevan |
+| `htf_alignment` | 0.1% | Membutuhkan D1 UP + H4 UP — terlalu konservatif untuk early entry |
+| `hmm_regime_enc` | — | Hardcoded 0 sejak awal, tidak pernah diimplementasi |
+
+**Total D1 importance yang dihapus: ~13% dari total model**
+
+### Pipeline yang Dijalankan
+
+```
+config.py        → hapus 11 fitur dari FEATURE_COLS_V3 dan GUARDIAN_STATIC_FEATURES
+                   update n_features: 103 → 92
+pipeline/05      → retrain LGBM entry model (cascade)
+pipeline/06      → retrain LSTM confirmation (seq=16, features=92)
+pipeline/15      → retrain Guardian v3 (104 → 92 static + 7 dynamic = 99 total)
+pipeline/08      → walk-forward backtest — bandingkan vs baseline cascade_v3
+pipeline/09      → holdout backtest (Mei 2025 – Apr 2026) — target WR ≥ 86%
+```
+
+### Target Metrik (Holdout)
+
+| Metrik | Baseline cascade_v3 | Target cascade_v3_noD1 |
+|--------|--------------------|-----------------------|
+| Mean WR | 88.93% | ≥ 86% |
+| LONG WR | 87.8% | ≥ 85% |
+| SHORT WR | 90.3% | ≥ 88% |
+| LONG/SHORT ratio | 6.8% / 20.7% | mendekati 40%+ / 40%+ |
+| Mean PF | 10.05 | ≥ 8.0 |
+
+Jika WR turun > 3pp dari baseline (< 86%), D1 features memiliki nilai signifikan dan opsi lain perlu dipertimbangkan (misal: hanya hapus `ema_50_slope_d1` saja sebagai kompromi).
+
+### Perubahan di Production (swint_tradev2) Setelah Retrain
+
+Setelah holdout validated:
+1. Copy model files baru ke `models/` di production
+2. Update `feature_cols_v2.json` dengan 92 fitur
+3. Jalankan ModelMeta fix script (update n_features=92)
+4. Restart service — config_loader akan reload otomatis
+
+### Keputusan
+
+- [ ] Retrain selesai
+- [ ] Holdout WR ≥ 86% — lanjut deploy
+- [ ] Holdout WR < 86% — tinjau ulang, pertimbangkan hapus sebagian fitur D1 saja
+- [ ] LONG/SHORT ratio membaik — konfirmasi hipotesis benar
 
 ```markdown
 ## YYYY-MM-DD — Judul Singkat

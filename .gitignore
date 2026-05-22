@@ -21,16 +21,34 @@ wheels/
 .installed.cfg
 *.egg
 
-# Project specific
-data/
-models/
-reports/
-logs/
+# Environment
 .env
 .ipynb_checkpoints
 temp/
 vantage/
 vantage_test/
+
+# Data — 500MB+, terlalu besar untuk git
+data/
+
+# Model binary & chart output — terlalu besar untuk git
+models/*.pkl
+models/*.pt
+models/*.bin
+models/*.joblib
+models/*.h5
+models/*.onnx
+models/**/*.svg
+models/**/*.png
+models/**/*.html
+
+# Track semua metadata, config, dan hasil eksperimen
+# models/*.json   → TRACKED (cv_results, feature_cols, shap_ranking, registry, inference_config)
+# models/runs/    → TRACKED (holdout JSON results per run)
+
+# Logs
+logs/
+*.log
 
 # OS
 .DS_Store

@@ -1,0 +1,76 @@
+{
+  "run_id": "run_20260514_004845",
+  "coins": [
+    "SOLUSDT",
+    "DOGEUSDT"
+  ],
+  "success": [
+    "SOLUSDT",
+    "DOGEUSDT"
+  ],
+  "failed": [],
+  "n_coins": 2,
+  "confidence_threshold": 0.62,
+  "modal_per_trade": 100.0,
+  "leverage_sim": [
+    5.0
+  ],
+  "mean_winrate": 0.9173,
+  "std_winrate": 0.0,
+  "mean_trade_per_month": 58.18,
+  "mean_pnl_lev5x": 42710.15,
+  "mean_drawdown_lev5x": 2.1698,
+  "mean_sharpe": 17.0428,
+  "mean_sortino": 25.5618,
+  "mean_calmar": 47.7288,
+  "mean_profit_factor": 30.4629,
+  "max_consecutive_loss": 5,
+  "per_symbol": {
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "winrate": 0.9174,
+      "total_trades": 3402,
+      "wins": 3121,
+      "losses": 281,
+      "time_exits": 0,
+      "win_by_class": {
+        "LONG": 0.9147,
+        "SHORT": 0.9198
+      },
+      "trade_per_month": 55.5,
+      "max_consecutive_loss": 5,
+      "sharpe_ratio": 18.0097,
+      "sortino_ratio": 15.4651,
+      "calmar_ratio": 24.3757,
+      "profit_factor": 27.3127,
+      "pnl_lev5x": 39566.1223,
+      "max_drawdown_lev5x": 3.1772,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    },
+    "DOGEUSDT": {
+      "symbol": "DOGEUSDT",
+      "winrate": 0.9173,
+      "total_trades": 4053,
+      "wins": 3718,
+      "losses": 331,
+      "time_exits": 4,
+      "win_by_class": {
+        "LONG": 0.9088,
+        "SHORT": 0.9252
+      },
+      "trade_per_month": 60.86,
+      "max_consecutive_loss": 4,
+      "sharpe_ratio": 16.0759,
+      "sortino_ratio": 35.6586,
+      "calmar_ratio": 71.082,
+      "profit_factor": 33.6132,
+      "pnl_lev5x": 45854.1864,
+      "max_drawdown_lev5x": 1.1624,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    }
+  }
+}

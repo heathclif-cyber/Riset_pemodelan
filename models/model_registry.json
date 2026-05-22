@@ -1,0 +1,62 @@
+{
+  "active": "cascade_v3",
+  "architecture": "3-Model Cascade (LGBM \u2192 LSTM \u2192 Guardian v3) + Hybrid Swing/ATR TP/SL",
+  "confidence_threshold_entry": 0.62,
+  "models": {
+    "lgbm": {
+      "role": "Entry Signal Generator (3-class: SHORT/FLAT/LONG)",
+      "n_features": 103,
+      "threshold_long": 0.62,
+      "threshold_short": 0.62,
+      "class_weights": {
+        "SHORT": 3.0,
+        "FLAT": 1.5,
+        "LONG": 3.0
+      }
+    },
+    "lstm": {
+      "role": "Confirmation Vote (soft adjustment)",
+      "seq_len": 16,
+      "hidden": 128,
+      "layers": 2,
+      "adjust_mode": "tiered",
+      "agree_boost": 0.05,
+      "neutral_pen": 0.05,
+      "opposite_pen": 0.04
+    },
+    "guardian_v3": {
+      "role": "Dynamic Exit (per-bar: HOLD/PARTIAL_EXIT/FULL_EXIT)",
+      "features": "103 static + 7 dynamic",
+      "classes": "0=HOLD, 1=PARTIAL_EXIT(50%), 2=FULL_EXIT",
+      "threshold": 0.6,
+      "min_hold_bars": 3,
+      "activation_atr": 1.0
+    },
+    "cascade_v3": {
+      "status": "active",
+      "trained_date": null,
+      "winrate": 0.9115,
+      "trade_per_month": 56.9,
+      "pnl_lev5x": 27584.02,
+      "max_drawdown": 0.858,
+      "sharpe_ratio": 27.4825,
+      "sortino_ratio": 47.1672,
+      "calmar_ratio": 89.4688,
+      "profit_factor": 13.3123,
+      "max_consecutive_loss": 10
+    }
+  },
+  "tp_sl": {
+    "mode": "Hybrid H4 Swing + ATR Fallback (non-ML)",
+    "hybrid": true,
+    "tp_fallback_atr": 2.0,
+    "sl_fallback_atr": 1.5,
+    "min_rr": 1.0
+  },
+  "removed": [
+    "h4_lgbm (AUC 0.55, near-random)",
+    "stacked_ensemble (degradasi sinyal)",
+    "tp_sl_regressor (SL R\u00b2=0.05, all approaches degraded)",
+    "lstm_flat_review (WR 39%, killed 78%\u219257%)"
+  ]
+}

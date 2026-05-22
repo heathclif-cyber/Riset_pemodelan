@@ -1,0 +1,151 @@
+{
+  "run_id": "run_20260513_235542",
+  "coins": [
+    "SOLUSDT",
+    "ETHUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT"
+  ],
+  "success": [
+    "SOLUSDT",
+    "ETHUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT"
+  ],
+  "failed": [],
+  "n_coins": 5,
+  "confidence_threshold": 0.62,
+  "modal_per_trade": 100.0,
+  "leverage_sim": [
+    5.0
+  ],
+  "mean_winrate": 0.4388,
+  "std_winrate": 0.019,
+  "mean_trade_per_month": 59.73,
+  "mean_pnl_lev5x": 38316.96,
+  "mean_drawdown_lev5x": 0.2776,
+  "mean_sharpe": 26.9898,
+  "mean_sortino": 82.9013,
+  "mean_calmar": 278.5659,
+  "mean_profit_factor": 48.0286,
+  "max_consecutive_loss": 5,
+  "per_symbol": {
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "winrate": 0.4374,
+      "total_trades": 3402,
+      "wins": 1488,
+      "losses": 0,
+      "time_exits": 0,
+      "win_by_class": {
+        "LONG": 0.4399,
+        "SHORT": 0.4352
+      },
+      "trade_per_month": 55.5,
+      "max_consecutive_loss": 5,
+      "sharpe_ratio": 28.2985,
+      "sortino_ratio": 91.3848,
+      "calmar_ratio": 292.5839,
+      "profit_factor": 46.5153,
+      "pnl_lev5x": 39715.8009,
+      "max_drawdown_lev5x": 0.2657,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    },
+    "ETHUSDT": {
+      "symbol": "ETHUSDT",
+      "winrate": 0.4559,
+      "total_trades": 4126,
+      "wins": 1881,
+      "losses": 2,
+      "time_exits": 1,
+      "win_by_class": {
+        "LONG": 0.4294,
+        "SHORT": 0.4801
+      },
+      "trade_per_month": 61.96,
+      "max_consecutive_loss": 4,
+      "sharpe_ratio": 27.7849,
+      "sortino_ratio": 75.9499,
+      "calmar_ratio": 252.6865,
+      "profit_factor": 49.7136,
+      "pnl_lev5x": 34539.02,
+      "max_drawdown_lev5x": 0.2463,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    },
+    "BNBUSDT": {
+      "symbol": "BNBUSDT",
+      "winrate": 0.4086,
+      "total_trades": 4028,
+      "wins": 1646,
+      "losses": 3,
+      "time_exits": 1,
+      "win_by_class": {
+        "LONG": 0.3754,
+        "SHORT": 0.4372
+      },
+      "trade_per_month": 60.49,
+      "max_consecutive_loss": 3,
+      "sharpe_ratio": 25.6508,
+      "sortino_ratio": 48.4347,
+      "calmar_ratio": 124.9489,
+      "profit_factor": 40.3898,
+      "pnl_lev5x": 30406.4378,
+      "max_drawdown_lev5x": 0.4385,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    },
+    "XRPUSDT": {
+      "symbol": "XRPUSDT",
+      "winrate": 0.4304,
+      "total_trades": 3985,
+      "wins": 1715,
+      "losses": 2,
+      "time_exits": 1,
+      "win_by_class": {
+        "LONG": 0.4157,
+        "SHORT": 0.4427
+      },
+      "trade_per_month": 59.84,
+      "max_consecutive_loss": 4,
+      "sharpe_ratio": 25.8378,
+      "sortino_ratio": 98.8752,
+      "calmar_ratio": 384.3181,
+      "profit_factor": 50.3788,
+      "pnl_lev5x": 39819.759,
+      "max_drawdown_lev5x": 0.1867,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    },
+    "DOGEUSDT": {
+      "symbol": "DOGEUSDT",
+      "winrate": 0.4616,
+      "total_trades": 4053,
+      "wins": 1871,
+      "losses": 2,
+      "time_exits": 2,
+      "win_by_class": {
+        "LONG": 0.4485,
+        "SHORT": 0.4737
+      },
+      "trade_per_month": 60.86,
+      "max_consecutive_loss": 4,
+      "sharpe_ratio": 27.377,
+      "sortino_ratio": 99.862,
+      "calmar_ratio": 338.2919,
+      "profit_factor": 53.1454,
+      "pnl_lev5x": 47103.7885,
+      "max_drawdown_lev5x": 0.2509,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    }
+  }
+}

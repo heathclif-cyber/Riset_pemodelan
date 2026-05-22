@@ -1,0 +1,51 @@
+{
+  "run_id": "run_20260513_233436",
+  "coins": [
+    "SOLUSDT"
+  ],
+  "success": [
+    "SOLUSDT"
+  ],
+  "failed": [],
+  "n_coins": 1,
+  "confidence_threshold": 0.62,
+  "modal_per_trade": 100.0,
+  "leverage_sim": [
+    5.0
+  ],
+  "mean_winrate": 0.8286,
+  "std_winrate": 0.0,
+  "mean_trade_per_month": 55.5,
+  "mean_pnl_lev5x": 44997.76,
+  "mean_drawdown_lev5x": 0.8174,
+  "mean_sharpe": 25.8255,
+  "mean_sortino": 63.6575,
+  "mean_calmar": 107.7544,
+  "mean_profit_factor": 12.392,
+  "max_consecutive_loss": 7,
+  "per_symbol": {
+    "SOLUSDT": {
+      "symbol": "SOLUSDT",
+      "winrate": 0.8286,
+      "total_trades": 3402,
+      "wins": 2819,
+      "losses": 6,
+      "time_exits": 61,
+      "win_by_class": {
+        "LONG": 0.8217,
+        "SHORT": 0.8346
+      },
+      "trade_per_month": 55.5,
+      "max_consecutive_loss": 7,
+      "sharpe_ratio": 25.8255,
+      "sortino_ratio": 63.6575,
+      "calmar_ratio": 107.7544,
+      "profit_factor": 12.392,
+      "pnl_lev5x": 44997.7574,
+      "max_drawdown_lev5x": 0.8174,
+      "total_fee_lev5x": 0,
+      "n_filtered_by_confidence": 0,
+      "confidence_threshold": 0.62
+    }
+  }
+}
