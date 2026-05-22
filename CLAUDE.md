@@ -112,6 +112,15 @@ Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)` dan `§ 2026-05-15`
 
 ## Cross-Repo: Production (swint_tradev2)
 
+### 🎛️ Pusat Kendali Tunggal & Alur Kerja Satu Arah (One-Way Workflow)
+Repositori **`Riset_pemodelan`** bertindak sebagai **Pusat Kendali Tunggal** (satu-satunya tempat kerja aktif developer). Repositori **`swint_tradev2`** adalah **lingkungan eksekusi pasif (runtime target)**. 
+
+Seluruh aktivitas pengembangan, analisis, dan sinkronisasi bersifat **otomatis dan satu arah** dari repositori Riset ini:
+*   **Analisis Tanpa Copy (Zero-Copy)**: Script `tools/trade_analyzer.py` di repo ini membaca data live trading langsung dari `D:\Apps-Dev\swint_tradev2\hasil_livetrading.csv`. Developer **tidak perlu** menyalin file secara manual atau berpindah repositori untuk melakukan analisis.
+*   **Deployment Otomatis (Automated Handover)**: Pembaruan model, scaler, dan parameter dikirim secara otomatis ke produksi menggunakan `python tools/deploy_model.py` dari repo ini. Developer **tidak boleh** memodifikasi file atau parameter di repo produksi secara manual.
+
+Dengan alur ini, Anda **hanya perlu membuka dan menjalankan perintah dari repositori Riset (`Riset_pemodelan`)**. Repo produksi cukup berjalan pasif menerima hasil deployment.
+
 Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung dibaca:
 
 | File | Purpose |
@@ -131,10 +140,11 @@ Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung di
 
 ## Referensi Internal
 
+- **MODEL_DEPLOYMENT_BRIDGE.md** — Kontrak sinkronisasi parameter & model lintas repositori.
 - **EXPERIMENTS.md** — Logbook perubahan parameter & temuan eksperimen. Baca sebelum mengubah parameter.
 - **Model registry**: `models/model_registry.json` — model aktif & metrik baseline
 - **Holdout results**: `models/runs/holdout_20260515_001906/holdout_backtest_results.json`
-- **Reports**: `reports/TRADE_ANALYSIS_REPORT.md` — analisis trading dari production
+- **Database Eksperimen**: `reports/experiments/` — Laporan-laporan point-in-time historis yang tersusun secara kronologis.
 
 ## Key Files
 
