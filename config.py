@@ -16,18 +16,19 @@ MODEL_DIR  = ROOT_DIR / "models"
 REPORT_DIR = ROOT_DIR / "reports"
 
 # ─── Koin ────────────────────────────────────────────────────────────────────
+# TRAINING_COINS sekarang berisi 20 koin crypto aktif (XAUTUSDT dikeluarkan karena emas).
+# Untuk kemudahan, default training langsung mencakup semua koin aktif.
 TRAINING_COINS = [
     "SOLUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
-]
-
-NEW_COINS = [
     "TONUSDT", "ADAUSDT", "TRXUSDT", "1000SHIBUSDT", "AVAXUSDT",
     "LINKUSDT", "DOTUSDT", "SUIUSDT", "POLUSDT", "NEARUSDT",
-    "1000PEPEUSDT", "TAOUSDT", "ARBUSDT", "XAUTUSDT",
-    "HBARUSDT", "ONDOUSDT",
+    "1000PEPEUSDT", "TAOUSDT", "ARBUSDT", "HBARUSDT", "ONDOUSDT",
 ]
 
-ALL_COINS = TRAINING_COINS + NEW_COINS
+NEW_COINS = []
+
+ALL_COINS = TRAINING_COINS
+
 
 SYMBOL_MAP = {coin: i for i, coin in enumerate(ALL_COINS)}
 
@@ -138,98 +139,9 @@ LGBM_H4_PARAMS = {
     "random_state":      42,
 }
 
-# ─── H4 Model Parameters ──────────────────────────────────────────────────────
-# H4 menggunakan subset fitur dari FEATURE_COLS_V3 (30 fitur teratas)
-# yang relevan untuk regime detection di timeframe lebih tinggi
-H4_FEATURE_COLS = [
-    # OHLCV base
-    "open", "high", "low", "close", "volume",
-
-    # EMA H4 (sangat relevan untuk H4 regime)
-    "ema_7_h4", "ema_21_h4", "ema_50_h4", "ema_200_h4",
-
-    # ATR H4
-    "atr_14_h4",
-
-    # Volume flow
-    "cvd", "volume_delta",
-
-    # Market structure
-    "MSB_BOS", "CHoCH",
-
-    # Momentum H4
-    "rsi_h4", "rsi_divergence",
-
-    # Trend dynamics (slope-based)
-    "ema_21_slope_h4", "ema_50_slope_h4",
-    "price_vs_ema_50_h4",
-    "atr_percent_h4", "range_expansion_h4",
-    "rsi_slope_h4",
-
-    # Key levels
-    "PDH", "PDL", "PWH", "PWL",
-
-    # Market regime
-    "h4_trend", "trend_strength", "vol_regime",
-
-    # Higher Timeframe (D1) — trend makro, vol regime, alignment
-    "ema_50_d1", "ema_200_d1",
-    "ema_50_slope_d1", "ema_200_slope_d1",
-    "price_vs_ema_50_d1",
-    "atr_d1_percentile",
-    "d1_trend", "d1_trend_strength",
-    "htf_alignment",
-    "d1_hh_hl_bias",
-
-    # Smart money H4
-    "cvd_div_h4", "cvd_slope_h4",
-
-    # Macro
-    "btc_dominance", "fear_greed", "market_session",
-
-    # Returns
-    "log_ret_1", "log_ret_5",
-
-    # Open interest & funding
-    "open_interest", "funding_rate",
-]
-
-# H4 Labeling — TP/SL proportionally larger for H4 timeframe
-H4_SWING_LABEL_MIN_RR   = 0.6   # max theoretical RR = min_tp/max_sl = 2.0/3.0 ≈ 0.667
-H4_SWING_LABEL_MIN_TP   = 2.0   # vs 1.2 di H1
-H4_SWING_LABEL_MAX_SL   = 3.0   # sama dengan H1
-H4_SWING_LABEL_MAX_HOLD = 6     # bar H4 = 24 jam (setara MAX_HOLDING_BARS H1)
-
-# H4 CV — time-based boundaries (6 bar H4 purge ≈ 24 bar H1)
-H4_N_FOLDS        = 8
-H4_PURGE_GAP_BARS = 6   # 6 bar H4 ≈ 24 jam ≈ 24 bar H1
-
-# H4 Calibration — dimatikan karena isotonic collapse (P50=0.518→1.000)
-# Lihat AUDIT_REPORT.md § Isotonic Collapse
-H4_USE_CALIBRATION = False
-
-# ─── Hierarchical Decision Thresholds ─────────────────────────────────────────
-# H4 Binary thresholds — binary model output: [prob_SHORT, prob_LONG]
-# Distribusi probabilitas H4: P50≈0.506, P90≈0.572 → threshold 0.60 optimal.
-# Target pass_rate ~8-15% (sebelumnya 0.65 → hanya 1.4%).
-H4_BINARY_THRESHOLD_LONG  = 0.60  # diturunkan dari 0.65 (P90=0.572)
-H4_BINARY_THRESHOLD_SHORT = 0.60  # diturunkan dari 0.65 (P90=0.572)
-H4_BINARY_MARGIN          = 0.05  # bias hanya jika prob unggul >= margin atas lawan
-
-# H4 Soft Filter — dinonaktifkan (arsitektur 2 model: LGBM + LSTM)
-# H4 regime context kini ditangani langsung via fitur di LGBM:
-# htf_alignment, d1_trend, trend_accel_4h, vol_price_confirm, dll.
-H4_SOFT_FILTER_ENABLED      = False
-H4_SOFT_ALIGN_BOOST         = 0.04
-H4_SOFT_FLAT_PENALTY        = 0.015
-H4_SOFT_OPPOSITE_PENALTY    = 0.035
-
-# H4 Binary class weights — diturunkan dari 3.0 ke 1.5 (AUC rendah → overfit)
-H4_BINARY_CLASS_WEIGHTS  = {0: 1.5, 1: 1.5}  # SHORT=0, LONG=1 (sebelumnya 3.0)
-
 # H1 entry thresholds (3-class model tidak berubah)
-LGBM_THRESHOLD_LONG  = 0.62   # LGBM minimum confidence untuk entry LONG
-LGBM_THRESHOLD_SHORT = 0.62   # LGBM minimum confidence untuk entry SHORT
+LGBM_THRESHOLD_LONG  = 0.65   # LGBM minimum confidence untuk entry LONG
+LGBM_THRESHOLD_SHORT = 0.65   # LGBM minimum confidence untuk entry SHORT
 # FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
 # LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
 # Makin rendah → makin sering LSTM dipanggil → lebih banyak sinyal, lebih berat.
@@ -253,10 +165,10 @@ LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 #
 # Mode = "relative": original formula (0.05/0.05/0.15 × h1_conf) — dipertahankan
 # untuk kompatibilitas.
-LSTM_ADJUST_MODE         = "tiered"     # "relative" | "absolute" | "tiered"
+LSTM_ADJUST_MODE         = "hard_consensus"     # "relative" | "absolute" | "tiered"
 LSTM_ADJUST_AGREE_BOOST  = 0.05         # boost saat agree (mode relative/absolute)
-LSTM_ADJUST_NEUTRAL_PEN  = 0.05         # penalty saat LSTM FLAT
-LSTM_ADJUST_OPPOSITE_PEN = 0.04         # penalty saat LSTM opposite (0.15 asli -> 0.08 -> 0.04 — kurangi blocked trades)
+LSTM_ADJUST_NEUTRAL_PEN  = 0.00         # penalty saat LSTM FLAT
+LSTM_ADJUST_OPPOSITE_PEN = 0.99         # penalty saat LSTM opposite (0.15 asli -> 0.08 -> 0.04 — kurangi blocked trades)
 # Tiered multipliers (mode "tiered" only): penalty = pen × multiplier
 # margin < 0.05 → borderline, < 0.10 → moderate, else → confident
 LSTM_TIERED_MULTIPLIERS = [1.0, 0.5, 0.25]  # [borderline, moderate, confident] (was [1.5, 1.0, 0.5])
@@ -267,7 +179,7 @@ LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
 LSTM_EPOCHS     = 100
 LSTM_PATIENCE   = 5
-LSTM_BATCH_SIZE = 2048
+LSTM_BATCH_SIZE = 512
 LSTM_LR         = 0.001
 
 LABEL_MAP     = {"SHORT": 0, "FLAT": 1, "LONG": 2}
@@ -290,7 +202,10 @@ VCB_LOOKBACK_BARS          = 24
 
 MONITOR_POLL_INTERVAL_SECS = 300
 
-# ─── Feature Columns v3 (H1 Base - 103 fitur) ────────────────────────────────
+# ─── Feature Columns v3 (H1 Base - 93 fitur, cascade_v3_noD1) ───────────────
+# Catatan: 10 fitur D1 dihapus (cascade_v3_noD1) karena lag berminggu-minggu
+# dari slope EMA D1 menekan sinyal LONG saat H4 sudah bullish.
+# hmm_regime_enc juga dikecualikan via NON_FEATURE_COLS di pipeline 05/06 (hardcoded 0).
 FEATURE_COLS_V3 = [
     # OHLCV base
     "open", "high", "low", "close", "volume",
@@ -368,12 +283,6 @@ FEATURE_COLS_V3 = [
     # H4 dynamics — slope & volatility (sebelumnya hilang dari parquet, fix bug H4)
     "ema_21_slope_h4", "ema_50_slope_h4", "price_vs_ema_50_h4",
     "rsi_slope_h4", "atr_percent_h4", "range_expansion_h4",
-
-    # D1 higher timeframe context (HTF regime awareness, fix bug H4)
-    "ema_50_d1", "ema_200_d1",
-    "ema_50_slope_d1", "ema_200_slope_d1", "price_vs_ema_50_d1",
-    "atr_d1_percentile",
-    "d1_trend", "d1_trend_strength", "htf_alignment", "d1_hh_hl_bias",
 
     # Trend quality — correction detection
     "trend_accel_4h", "vol_price_confirm", "dist_from_8h_high",
@@ -508,7 +417,7 @@ MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.62     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
+CONFIDENCE_THRESHOLD_ENTRY = 0.65     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────

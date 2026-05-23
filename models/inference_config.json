@@ -1,12 +1,12 @@
 {
-  "model_version": "cascade_v3",
+  "model_version": "cascade_v3.1",
   "created_at": "2026-05-14T13:30:38.749405+00:00",
   "training_period": {
     "start": "2020-01-01",
     "end": "2026-04-01"
   },
   "inference": {
-    "confidence_threshold_entry": 0.62,
+    "confidence_threshold_entry": 0.65,
     "confidence_full_size": 0.75,
     "confidence_half_size": 0.6,
     "min_hold_bars": 2,
@@ -61,16 +61,10 @@
       "1000PEPEUSDT",
       "TAOUSDT",
       "ARBUSDT",
-      "XAUTUSDT",
       "HBARUSDT",
       "ONDOUSDT"
     ],
     "poll_interval_secs": 300
-  },
-  "labeling": {
-    "tp_atr_mult": 2.0,
-    "sl_atr_mult": 1.5,
-    "max_holding_bars": 24
   },
   "tp_sl": {
     "min_rr": 0.5,
@@ -86,13 +80,44 @@
     "slippage_per_side": 0.0005
   },
   "cascade": {
-    "lgbm_threshold_long": 0.62,
-    "lgbm_threshold_short": 0.62,
+    "lgbm_threshold_long": 0.65,
+    "lgbm_threshold_short": 0.65,
     "lstm_confirmation": true,
-    "lstm_adjust_mode": "tiered",
+    "lstm_adjust_mode": "hard_consensus",
     "lstm_adjust_agree_boost": 0.05,
-    "lstm_adjust_neutral_pen": 0.05,
-    "lstm_adjust_opposite_pen": 0.04
+    "lstm_adjust_neutral_pen": 0.00,
+    "lstm_adjust_opposite_pen": 0.99,
+    "flat_review_threshold": 0.00
+  },
+  "guardian": {
+    "enabled": true,
+    "exit_threshold": 0.60,
+    "min_hold_bars": 3,
+    "activation_atr": 1.0,
+    "partial_exit_ratio": 0.5,
+    "model_file": "guardian_best.pkl",
+    "scaler_file": "guardian_scaler.pkl",
+    "features_file": "guardian_feature_cols.json"
+  },
+  "rr_gate": {
+    "enabled": true,
+    "min_rr": 0.5,
+    "min_tp_atr": 1.2,
+    "max_sl_atr": 4.0,
+    "swing_bumper_atr": 0.5
+  },
+  "trend_alignment": {
+    "enabled": false,
+    "with_trend_penalty": 0.10,
+    "counter_trend_boost": 0.05,
+    "sideways_neutral": true
+  },
+  "structural_filter": {
+    "enabled": true,
+    "require_entry_in_swing_range": true,
+    "max_swing_deviation_pct": 0.15,
+    "swing_max_age_hours": 48,
+    "breakout_tolerance_pct": 0.03
   },
   "coins_validated": {
     "recommended": [],
@@ -380,10 +405,15 @@
     "features": "feature_cols_v2.json"
   },
   "model_architecture": {
-    "n_features": 104,
+    "n_features": 93,
     "lstm_hidden": 128,
     "lstm_layers": 2,
     "lstm_dropout": 0.3,
     "num_classes": 3
+  },
+  "fallback_tp_sl": {
+    "tp_atr_mult": 2.0,
+    "sl_atr_mult": 1.5,
+    "max_holding_bars": 24
   }
 }
