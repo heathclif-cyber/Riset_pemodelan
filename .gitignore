@@ -39,6 +39,13 @@ data/
 **/*.h5
 **/*.onnx
 
+# Allow tracking of core active production models for easy multi-device syncing
+!models/lgbm_baseline.pkl
+!models/lstm_best.pt
+!models/lstm_scaler.pkl
+!models/guardian_best.pkl
+!models/guardian_scaler.pkl
+
 # Chart output di models/
 models/**/*.svg
 models/**/*.png

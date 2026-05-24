@@ -1,4 +1,4 @@
-"""Trade history evaluator. Usage: python _analysis/evaluate.py <csv_path>"""
+"""Trade history evaluator. Usage: python analysis/evaluate.py <csv_path>"""
 import pandas as pd, numpy as np, sys
 
 path = sys.argv[1] if len(sys.argv) > 1 else 'reports/trade_history_holdout.csv'

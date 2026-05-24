@@ -89,18 +89,7 @@
   "rsi_slope_h4",
   "atr_percent_h4",
   "range_expansion_h4",
-  "ema_50_d1",
-  "ema_200_d1",
-  "ema_50_slope_d1",
-  "ema_200_slope_d1",
-  "price_vs_ema_50_d1",
-  "atr_d1_percentile",
-  "d1_trend",
-  "d1_trend_strength",
-  "htf_alignment",
-  "d1_hh_hl_bias",
   "trend_accel_4h",
   "vol_price_confirm",
-  "dist_from_8h_high",
-  "hmm_regime_enc"
+  "dist_from_8h_high"
 ]

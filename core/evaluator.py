@@ -982,6 +982,7 @@ def full_trading_report(
         "sortino_ratio":        risk["sortino_ratio"],
         "calmar_ratio":         risk["calmar_ratio"],
         "profit_factor":        risk["profit_factor"],
+        "trades":               base.get("trades") or base.get("trade_log") or [],
     }
 
     # PnL & Drawdown per leverage

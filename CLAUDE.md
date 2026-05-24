@@ -159,22 +159,24 @@ Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung di
 | `core/binance_client.py` | HTTP client Binance |
 | `pipeline/01_fetch.py` | Fetch semua koin |
 | `pipeline/02_clean.py` | Clean + resample |
-| `pipeline/03_analyze_swing.py` | H4 swing detection analysis |
-| `pipeline/04_engineer.py` | Feature engineering pipeline |
-| `pipeline/05_train_lgbm.py` | LGBM entry model training (TRAIN_CUTOFF_DATE filter) |
-| `pipeline/06_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
-| `pipeline/07_evaluate.py` | Evaluasi cascade (SOLUSDT) |
-| `pipeline/08_backtest.py` | Walk-forward backtest (cascade_v3) |
-| `pipeline/09_holdout_backtest.py` | Genuine OOS holdout backtest (Mei 2025 – Apr 2026) |
-| `pipeline/10_visualize.py` | Visualisasi hasil |
+| `pipeline/03_engineer.py` | Feature engineering & swing labeling pipeline |
+| `pipeline/04_train_lgbm.py` | LGBM entry model training (TRAIN_CUTOFF_DATE filter) |
+| `pipeline/05_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
+| `pipeline/06_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
+| `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest (Mei 2025 – Apr 2026) |
 | `pipeline/shared.py` | `SequenceDataset` + `build_purged_folds()` |
 | `pipeline/backtest_utils.py` | `hierarchical_predict()` + feature alignment via `feature_name_` |
-| `pipeline/15_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
+| `analysis/evaluate.py` | Penganalisis CSV hasil trading (Winrate, PF, streak, dll.) |
+| `analysis/analyze_min_hold.py` | Optimal `MIN_HOLD_BARS` finder (distribusi holding aktual) |
+| `analysis/compare_max_sl.py` | Tuning & perbandingan performa SL ATR 3.0 vs 4.0 |
+| `analysis/compare_hybrid_vs_pure.py` | Perbandingan mode Hybrid TP/SL vs Pure Tier |
+| `analysis/compare_aspects.py` | Pengujian 9 aspek arsitektural TP/SL di data holdout |
+| `analysis/visualize_aspects.py` | Visualisasi batang delta winrate & heatmap matriks korelasi aspek |
 
 ## Pipeline Sequence (Order Matters)
 
 ```
-01_fetch → 02_clean → 03_analyze_swing → 04_engineer → 05_train_lgbm → 06_train_lstm → 15_train_guardian → 07_evaluate → 08_backtest → 09_holdout_backtest → 10_visualize
+01_fetch → 02_clean → 03_engineer → 04_train_lgbm → 05_train_lstm → 06_train_guardian → 07_holdout_backtest
 ```
 
 **Data flow**: Semua training script filter `df.index < TRAIN_CUTOFF_DATE` (2025-05-01).

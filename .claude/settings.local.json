@@ -62,7 +62,16 @@
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe pipeline/10_visualize.py --all --holdout 2>&1)",
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe pipeline/09_holdout_backtest.py --all 2>&1)",
       "PowerShell(Get-ChildItem D:\\\\Apps-Dev\\\\swint_tradev2\\\\models\\\\ | Where-Object { $_.Name -match 'guardian|lstm|lgbm|feature_cols' } | Select-Object Name, Length, LastWriteTime)",
-      "PowerShell(git add *)"
+      "PowerShell(git add *)",
+      "PowerShell(Copy-Item *)",
+      "Bash(Select-Object -First 30)",
+      "PowerShell(if \\(Test-Path models\\\\runs\\) { Get-ChildItem -Path models\\\\runs -Directory | Sort-Object Name -Descending | Select-Object -First 5 | ForEach-Object { $_.Name } } else { Write-Output \"models/runs not found\" })",
+      "PowerShell(if \\(Test-Path models\\\\runs\\) { Get-ChildItem -Path models\\\\runs -Directory | Sort-Object Name | ForEach-Object { $_.Name } })",
+      "Bash(Select-Object Name, Mode, Length)",
+      "Bash(Format-Table -AutoSize)",
+      "Bash(Select-Object Name, FullName)",
+      "mcp__ide__executeCode",
+      "PowerShell(Write-Host \"=== Riset_pemodelan ===\"; Write-Host \".claude/commands/trade-analysis.md: $\\(Test-Path 'D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\.claude\\\\commands\\\\trade-analysis.md'\\)\"; Write-Host \"tools/trade_analyzer.py: $\\(Test-Path 'D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\tools\\\\trade_analyzer.py'\\)\"; Write-Host \"/trade-analysis in CLAUDE.md:\"; Select-String -Path \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\CLAUDE.md\" -Pattern \"/trade-analysis\" | ForEach-Object { \"  line $\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" }; Write-Host \"\"; Write-Host \"=== swint_tradev2 ===\"; Write-Host \".claude/commands/trade-analysis.md: $\\(Test-Path 'D:\\\\Apps-Dev\\\\swint_tradev2\\\\.claude\\\\commands\\\\trade-analysis.md'\\)\"; Write-Host \"tools/trade_analyzer.py: $\\(Test-Path 'D:\\\\Apps-Dev\\\\swint_tradev2\\\\tools\\\\trade_analyzer.py'\\)\"; Write-Host \"/trade-analysis in CLAUDE.md:\"; Select-String -Path \"D:\\\\Apps-Dev\\\\swint_tradev2\\\\CLAUDE.md\" -Pattern \"/trade-analysis\" | ForEach-Object { \"  line $\\($_.LineNumber\\): $\\($_.Line.Trim\\(\\)\\)\" })"
     ]
   }
 }

@@ -5,168 +5,160 @@
       "status": "success",
       "rows_output": 32397,
       "rows_dropped_nan": 13,
-      "columns": 108,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\SOLUSDT_features_v3.parquet"
+      "columns": 98,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\SOLUSDT_features_v3.parquet"
     },
     "ETHUSDT": {
       "symbol": "ETHUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ETHUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ETHUSDT_features_v3.parquet"
     },
     "BNBUSDT": {
       "symbol": "BNBUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\BNBUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\BNBUSDT_features_v3.parquet"
     },
     "XRPUSDT": {
       "symbol": "XRPUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 108,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\XRPUSDT_features_v3.parquet"
+      "columns": 98,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\XRPUSDT_features_v3.parquet"
     },
     "DOGEUSDT": {
       "symbol": "DOGEUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\DOGEUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\DOGEUSDT_features_v3.parquet"
     },
     "TONUSDT": {
       "symbol": "TONUSDT",
       "status": "success",
       "rows_output": 9901,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TONUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TONUSDT_features_v3.parquet"
     },
     "ADAUSDT": {
       "symbol": "ADAUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ADAUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ADAUSDT_features_v3.parquet"
     },
     "TRXUSDT": {
       "symbol": "TRXUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TRXUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TRXUSDT_features_v3.parquet"
     },
     "1000SHIBUSDT": {
       "symbol": "1000SHIBUSDT",
       "status": "success",
       "rows_output": 28864,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\1000SHIBUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\1000SHIBUSDT_features_v3.parquet"
     },
     "AVAXUSDT": {
       "symbol": "AVAXUSDT",
       "status": "success",
       "rows_output": 32755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\AVAXUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\AVAXUSDT_features_v3.parquet"
     },
     "LINKUSDT": {
       "symbol": "LINKUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\LINKUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\LINKUSDT_features_v3.parquet"
     },
     "DOTUSDT": {
       "symbol": "DOTUSDT",
       "status": "success",
       "rows_output": 33212,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\DOTUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\DOTUSDT_features_v3.parquet"
     },
     "SUIUSDT": {
       "symbol": "SUIUSDT",
       "status": "success",
       "rows_output": 17511,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\SUIUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\SUIUSDT_features_v3.parquet"
     },
     "POLUSDT": {
       "symbol": "POLUSDT",
       "status": "success",
       "rows_output": 9537,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\POLUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\POLUSDT_features_v3.parquet"
     },
     "NEARUSDT": {
       "symbol": "NEARUSDT",
       "status": "success",
       "rows_output": 32362,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\NEARUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\NEARUSDT_features_v3.parquet"
     },
     "1000PEPEUSDT": {
       "symbol": "1000PEPEUSDT",
       "status": "success",
       "rows_output": 17457,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\1000PEPEUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\1000PEPEUSDT_features_v3.parquet"
     },
     "TAOUSDT": {
       "symbol": "TAOUSDT",
       "status": "success",
       "rows_output": 11755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TAOUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\TAOUSDT_features_v3.parquet"
     },
     "ARBUSDT": {
       "symbol": "ARBUSDT",
       "status": "success",
       "rows_output": 17991,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ARBUSDT_features_v3.parquet"
-    },
-    "XAUTUSDT": {
-      "symbol": "XAUTUSDT",
-      "status": "success",
-      "rows_output": 117,
-      "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\XAUTUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ARBUSDT_features_v3.parquet"
     },
     "HBARUSDT": {
       "symbol": "HBARUSDT",
       "status": "success",
       "rows_output": 36755,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\HBARUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\HBARUSDT_features_v3.parquet"
     },
     "ONDOUSDT": {
       "symbol": "ONDOUSDT",
       "status": "success",
       "rows_output": 5993,
       "rows_dropped_nan": 13,
-      "columns": 106,
-      "output_file": "d:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ONDOUSDT_features_v3.parquet"
+      "columns": 96,
+      "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\labeled\\ONDOUSDT_features_v3.parquet"
     }
   }
 }

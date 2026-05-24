@@ -1,5 +1,5 @@
 """
-pipeline/analyze_min_hold.py — Analisis Optimal MIN_HOLD_BARS
+analysis/analyze_min_hold.py — Analisis Optimal MIN_HOLD_BARS
 =============================================================
 
 Logika:
@@ -10,9 +10,9 @@ Logika:
   - Plot distribusi holding time → rekomendasikan MIN_HOLD_BARS
 
 Jalankan:
-  python pipeline/analyze_min_hold.py
-  python pipeline/analyze_min_hold.py --coins SOLUSDT ETHUSDT
-  python pipeline/analyze_min_hold.py --save-plot
+  python analysis/analyze_min_hold.py
+  python analysis/analyze_min_hold.py --coins SOLUSDT ETHUSDT
+  python analysis/analyze_min_hold.py --save-plot
 """
 
 import argparse
