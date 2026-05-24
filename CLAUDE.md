@@ -15,14 +15,14 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
 ┌─────────┐    ┌──────────┐    ┌──────────────┐    ┌───────────────┐
 │  LGBM   │───▶│   LSTM   │───▶│  Confidence  │───▶│  Swing/ATR    │
 │ Classif │    │  Soft    │    │  Filter      │    │  TP/SL Gate   │
-│ 3-class │    │ Confirm  │    │  >= 0.62     │    │               │
+│ 3-class │    │ Confirm  │    │  >= 0.65     │    │               │
 └─────────┘    └──────────┘    └──────────────┘    └───────┬───────┘
                                                            │
                                             ┌──────────────┘
                                             ▼
                                     ┌──────────────┐
                                     │  RR Gate     │
-                                    │  min_rr=1.0  │
+                                    │  min_rr=0.5  │
                                     │  min_tp=1.2x │
                                     │  max_sl=4.0x │
                                     └──────┬───────┘
@@ -39,9 +39,9 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
                                     └──────────────┘
 ```
 
-- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), 104 features, cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL
+- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), **93 features** (`feature_cols_v2.json`), cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL
 - **LSTM**: `ManualLSTMCell` custom (DirectML compatible), seq_len=16, hidden=128, 2-layer. Training via DirectML GPU, inference via CPU
-- **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), 104 static + 7 dynamic features, GPU OpenCL. Partial exit = 50% posisi
+- **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), **93 static + 7 dynamic features**, GPU OpenCL. Partial exit = 50% posisi
 - **TP/SL**: Hybrid H4 Swing + ATR Fallback (non-ML). `TP_SL_HYBRID_MODE=True`
 
 ## Cascade Flow (detail)
@@ -49,12 +49,17 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
 ```
 LGBM predict 3-class
   │
-  ├─ LGBM LONG/SHORT >= 0.62 → LSTM tiered adjustment → conf >= 0.62? → ENTRY SIGNAL
-  │                                                                FAIL → FLAT
+  ├─ LGBM LONG/SHORT >= 0.65 → LSTM hard_consensus adjustment → conf >= 0.65? → ENTRY SIGNAL
+  │       (lgbm_threshold_long = lgbm_threshold_short = 0.65)              FAIL → FLAT
   │
-  └─ Keduanya < 0.62 (LGBM FLAT) → FLAT (selesai)
+  │   LSTM hard_consensus mode (lstm_adjust_mode="hard_consensus"):
+  │     agree    → +0.05 boost
+  │     neutral  → +0.00 (tidak ada penalty)
+  │     opposite → −0.99 penalty  ← efektif membunuh trade jika LSTM berlawanan
+  │
+  └─ Keduanya < 0.65 (LGBM FLAT) → FLAT (selesai)
        │
-       └─ FLAT REVIEW = DISABLED (LSTM_FLAT_REVIEW_ENABLED=False)
+       └─ FLAT REVIEW = DISABLED (flat_review_threshold=0.0)
             Terbukti menambah 2,500+ trade dengan WR 39% — menurunkan WR dari 78% ke 57%.
             Detail: EXPERIMENTS.md § 2026-05-12
 
@@ -131,12 +136,66 @@ Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung di
 | `D:\Apps-Dev\swint_tradev2\AUDIT_REPORT.md` | Laporan audit terbaru oleh /audit |
 | `D:\Apps-Dev\swint_tradev2\models\inference_config.json` | Konfigurasi inference production (parameter cascade, Guardian, filter) |
 | `D:\Apps-Dev\swint_tradev2\app\services\paper_trading.py` | Exit logic + Guardian v3 implementation (EARLY + MOMENTUM mode) |
-| `D:\Apps-Dev\swint_tradev2\app\services\signal_filter.py` | Filter chain (R1 counter-trend hard block, structural, VCB) |
-| `D:\Apps-Dev\swint_tradev2\app\services\inference.py` | Cascade v3 inference pipeline production |
+| `D:\Apps-Dev\swint_tradev2\app\services\signal_filter.py` | Filter chain (structural, VCB). R1 & R2 dihapus 2026-05-24. |
+| `D:\Apps-Dev\swint_tradev2\app\services\inference.py` | Cascade v3.1 inference pipeline production |
 | `D:\Apps-Dev\swint_tradev2\app\services\guardian_service.py` | Guardian v3 dynamic exit service |
-| `D:\Apps-Dev\swint_tradev2\core\features.py` | Feature engineering production (104 feat, H4/D1 context) |
+| `D:\Apps-Dev\swint_tradev2\core\features.py` | Feature engineering production (93 feat, H4 context) |
 
 **Konvensi**: Jika perlu membaca file dari repo production, gunakan absolute path `D:\Apps-Dev\swint_tradev2\...`.
+
+## Holdout Setup — Parameter Live Aktual (2026-05-24)
+
+Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `config.py` dan `evaluator.py`:
+
+### Entry Filter Chain
+| Parameter | Nilai Live | Catatan |
+|-----------|-----------|---------|
+| `lgbm_threshold_long` | **0.65** | |
+| `lgbm_threshold_short` | **0.65** | |
+| `confidence_threshold_entry` | **0.65** | Final threshold setelah LSTM adjustment |
+| `flat_review_threshold` | **0.0** | Disabled — FLAT tidak di-review LSTM |
+| R1 (SHORT block saat H4 UP) | **DIHAPUS** | Holdout 11 bulan: memblok 2,100+ SHORT profitable, WR 82-83%, rugi PnL ~$12,800 |
+| R2 (vol_regime transition block) | **DIHAPUS** | Sama, dihapus bersamaan dengan R1 |
+
+### LSTM Cascade Mode
+| Parameter | Nilai Live | Catatan |
+|-----------|-----------|---------|
+| `lstm_adjust_mode` | **"hard_consensus"** | |
+| `lstm_adjust_agree_boost` | **0.05** | LSTM searah → +0.05 |
+| `lstm_adjust_neutral_pen` | **0.0** | LSTM neutral → tidak ada penalty |
+| `lstm_adjust_opposite_pen` | **0.99** | LSTM berlawanan → −0.99 (efektif kill trade) |
+
+### Filter Chain
+| Filter | Status | Parameter |
+|--------|--------|-----------|
+| VCB | **enabled** | `atr_multiplier=3.0`, `lookback_bars=24` |
+| Structural filter | **enabled** | `max_swing_deviation_pct=0.15`, `swing_max_age_hours=48`, `breakout_tolerance_pct=0.03` |
+| Trend alignment | **disabled** | Double-counting H4 trend — menurunkan PnL |
+| Cooldown | **disabled** | Cooldown off: PnL 2× lebih tinggi |
+
+### RR Gate
+| Parameter | Nilai Live |
+|-----------|-----------|
+| `min_rr` | **0.5** |
+| `min_tp_atr` | **1.2** |
+| `max_sl_atr` | **4.0** |
+| `swing_bumper_atr` | **0.5** |
+
+### Guardian v3
+| Parameter | Nilai Live |
+|-----------|-----------|
+| `exit_threshold` | **0.60** |
+| `min_hold_bars` | **3** |
+| `activation_atr` | **1.0** |
+| `partial_exit_ratio` | **0.50** |
+
+### TP/SL Hybrid
+| Parameter | Nilai Live |
+|-----------|-----------|
+| `tp_atr_mult` | **2.0** (fallback) |
+| `sl_atr_mult` | **1.5** (fallback) |
+| `swing_bumper_atr` | **0.5** |
+| max holding | **24 bar** |
 
 ## Referensi Internal
 
