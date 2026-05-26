@@ -45,7 +45,7 @@ END_DATE   = TRAIN_END
 # Cutoff untuk training — model HANYA dilatih di data sebelum tanggal ini.
 # Holdout testing pakai data setelah cutoff (via 09_holdout_backtest.py).
 # Ini memastikan TIDAK ADA data testing yang bocor ke training.
-TRAIN_CUTOFF_DATE = datetime(2025, 5, 1, tzinfo=timezone.utc)
+TRAIN_CUTOFF_DATE = datetime(2025, 11, 1, tzinfo=timezone.utc)
 
 # ─── Binance API ─────────────────────────────────────────────────────────────
 BINANCE_BASE_URL       = "https://fapi.binance.com"
@@ -70,7 +70,7 @@ MAX_HOLDING_BARS = 24        # bar H1 = 24 jam (sebelumnya 48)
 
 # ── Swing-Based Labeling v3 ───────────────────────────────────────────────────
 SWING_LABEL_MAX_HOLD = 24     # bar H1 = 24 jam (sebelumnya 48) — lever utama kurangi FLAT
-SWING_LABEL_MIN_RR   = 0.5    # 0.5 = TP minimal setengah risiko (setelah Bumper SL)
+SWING_LABEL_MIN_RR   = 0.45    # 0.45 = TP minimal 45% risiko (setelah Bumper SL)
 SWING_LABEL_MIN_TP   = 1.2    # sebelumnya 1.5 — lever utama, TP lebih mudah tercapai
 SWING_LABEL_MAX_SL   = 4.0    # 3.0→4.0 (2026-05-10): +697 trades, +$220 PnL, WR +0.14pp — lihat reports/PARAMETER_TEST_REPORT.md
 SWING_H4_LOOKBACK    = 5
@@ -202,8 +202,8 @@ VCB_LOOKBACK_BARS          = 24
 
 MONITOR_POLL_INTERVAL_SECS = 300
 
-# ─── Feature Columns v3 (H1 Base - 93 fitur, cascade_v3_noD1) ───────────────
-# Catatan: 10 fitur D1 dihapus (cascade_v3_noD1) karena lag berminggu-minggu
+# ─── Feature Columns v3.1 (H1 Base - 93 fitur, cascade_v3.1_noD1) ─────────────
+# Catatan: 10 fitur D1 dihapus (cascade_v3.1_noD1) karena lag berminggu-minggu
 # dari slope EMA D1 menekan sinyal LONG saat H4 sudah bullish.
 # hmm_regime_enc juga dikecualikan via NON_FEATURE_COLS di pipeline 05/06 (hardcoded 0).
 FEATURE_COLS_V3 = [
@@ -301,7 +301,7 @@ TP_SL_SWING_FRESHNESS = True
 
 # #3: Structural Filter — entry harus dalam [H4 Low, H4 High]
 TP_SL_STRUCTURAL_FILTER = True
-TP_SL_STRUCTURAL_TOLERANCE = 0.04  # Toleransi breakout 4%
+TP_SL_STRUCTURAL_TOLERANCE = 0.03  # Toleransi breakout 3%
 
 # #4: RR Gate — validasi TP/SL sebelum entry
 TP_SL_RR_GATE_ENABLED = True  # False = skip semua validasi RR
@@ -367,20 +367,19 @@ TP_SL_SIZING_WITH_TREND_HALF = False  # half-size untuk with-trend trades (hanya
 # Static TP/SL digantikan oleh guardian exit, dengan wide safety SL sebagai
 # circuit breaker (5x ATR — bukan exit strategy utama).
 GUARDIAN_ENABLED               = True   # master toggle — RUN C holdout
-GUARDIAN_EXIT_THRESHOLD        = 0.60   # min EXIT proba mid-level
+GUARDIAN_EXIT_THRESHOLD        = 0.65   # min EXIT proba mid-level
 GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
 GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
 GUARDIAN_MIN_HOLD_BARS         = 3      # guardian tidak boleh exit di 3 bar pertama
-GUARDIAN_ACTIVATION_ATR        = 1.0    # guardian aktif setelah price bergerak 1x ATR
+GUARDIAN_ACTIVATION_ATR        = 1.5    # guardian aktif setelah price bergerak 1.5x ATR
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
 TRAILING_STOP_ENABLED          = False  # Guardian solo — RUN C holdout
 TRAILING_STOP_ATR              = 2.0    # jarak stop dari best price (× ATR)
 TRAILING_STOP_MIN_BARS         = 2      # min bars sebelum trailing aktif
 
-# Guardian static features — full FEATURE_COLS_V3 (103 fitur)
-# Sebelumnya subset 32 — dynamic features mendominasi karena static terlalu lemah.
+# Guardian static features — full FEATURE_COLS_V3 (93 fitur)
 # Multiclass: 0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT
 GUARDIAN_STATIC_FEATURES = FEATURE_COLS_V3
 
@@ -413,7 +412,7 @@ GUARDIAN_PURGE_GAP_BARS    = 5
 GUARDIAN_MIN_SAMPLES_COIN  = 30  # min in-trade bars per coin untuk training
 
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
-MODAL_PER_TRADE            = 100.0    # 100 USD per trade (sebelumnya 1000)
+MODAL_PER_TRADE            = 25.0    # 25 USD per trade (sesuai setting UI)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)

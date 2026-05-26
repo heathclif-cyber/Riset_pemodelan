@@ -313,15 +313,15 @@ Tidak ada model yang pernah melihat periode testing.
 ### Arsitektur Final
 
 ```
-ENTRY:  LGBM 3-class (104 feat, conf >= 0.62) → LSTM soft confirm (seq=16, tiered adj)
+ENTRY:  LGBM 3-class (93 feat, conf >= 0.65) → LSTM hard_consensus (seq=16)
 TP/SL:  Hybrid H4 Swing + ATR Fallback (non-ML)
-EXIT:   Guardian v3 (104 feat, multiclass: HOLD/PARTIAL_EXIT/FULL_EXIT)
+EXIT:   Guardian v3 (93 feat + 7 dynamic, multiclass: HOLD/PARTIAL_EXIT/FULL_EXIT)
         Aktif setelah 3 bar + 1x ATR move, threshold 0.60
 ```
 
 ### Training (Final)
 
-- Guardian dilatih ulang di **2020-2025** (TRAIN_CUTOFF_DATE = 2025-05-01)
+- Guardian dilatih ulang di **2020 – Okt 2025** (TRAIN_CUTOFF_DATE = 2025-11-01)
 - 19 koin (XAUT skip — data kosong), 409,381 samples, 111 fitur (104 static + 7 dynamic)
 - Label: HOLD=281K (68.7%), PARTIAL=18.6K (4.5%), FULL=109K (26.7%)
 - Purged CV 8 folds, best logloss=0.2962, F1_macro=0.863
@@ -410,8 +410,8 @@ TRX satu-satunya koin dengan LONG >> SHORT (91.0% vs 85.2%). Model TIDAK bias ar
 
 ### File Terkait
 
-- `config.py` — TRAIN_CUTOFF_DATE=2025-05-01, KLINE_LIMIT=1000, GUARDIAN_ENABLED=True
-- `pipeline/15_train_guardian.py` — Guardian v3 training (multiclass, 104 feat, TRAIN_CUTOFF_DATE)
+- `config.py` — TRAIN_CUTOFF_DATE=2025-11-01, KLINE_LIMIT=1000, GUARDIAN_ENABLED=True
+- `pipeline/15_train_guardian.py` — Guardian v3 training (multiclass, 93 feat + 7 dynamic, TRAIN_CUTOFF_DATE)
 - `core/evaluator.py` — Guardian per-bar check + partial exit + TIMEOUT fix
 - `pipeline/backtest_utils.py` — Feature alignment via `model.feature_name_` + zero-fill
 - `pipeline/08_backtest.py` — cascade_v3, zero-fill missing features
@@ -422,7 +422,7 @@ TRX satu-satunya koin dengan LONG >> SHORT (91.0% vs 85.2%). Model TIDAK bias ar
 ### Keputusan Final (Sesi 3)
 
 - [x] Guardian v3 = exit model terbaik — WR 88.9%, DD 41.8%, PF 10.1 di genuine temporal OOS
-- [x] TRAIN_CUTOFF_DATE = 2025-05-01 — tidak ada data testing bocor ke training
+- [x] TRAIN_CUTOFF_DATE = 2025-11-01 — tidak ada data testing bocor ke training
 - [x] KLINE_LIMIT = 1000 — data holdout clean tanpa gap
 - [x] Feature alignment via `model.feature_name_` + zero-fill — robust mismatch
 - [x] TIMEOUT trades masuk klasifikasi win/loss — metrik lebih akurat

@@ -2,11 +2,11 @@
 
 ## Project Overview
 
-Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **3-model cascade**:
+Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **3-model cascade v3.1**:
 LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
 
-Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime, D1 untuk HTF context.
-**TRAIN_CUTOFF_DATE = 2025-05-01** — training hanya di 2020-2025, holdout test di Mei 2025 – Apr 2026.
+Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime.
+**TRAIN_CUTOFF_DATE = 2025-11-01** — training hanya di 2020 – Okt 2025, holdout test di Nov 2025 – Apr 2026.
 21 koin: SOL, ETH, BNB, XRP, DOGE, TON, ADA, TRX, 1000SHIB, AVAX, LINK, DOT, SUI, POL, NEAR, 1000PEPE, TAO, ARB, XAUT, HBAR, ONDO.
 
 ## Architecture
@@ -34,7 +34,7 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
                                            ▼
                                     ┌──────────────┐
                                     │ Guardian v3  │ ← per-bar dynamic exit
-                                    │ HOLD / PART  │    104 feat + 7 dynamic
+                                    │ HOLD / PART  │    93 feat + 7 dynamic
                                     │ / FULL EXIT  │    multiclass LGBM
                                     └──────────────┘
 ```
@@ -176,7 +176,7 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 ### RR Gate
 | Parameter | Nilai Live |
 |-----------|-----------|
-| `min_rr` | **0.5** |
+| `min_rr` | **0.45** |
 | `min_tp_atr` | **1.2** |
 | `max_sl_atr` | **4.0** |
 | `swing_bumper_atr` | **0.5** |
@@ -184,9 +184,9 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 ### Guardian v3
 | Parameter | Nilai Live |
 |-----------|-----------|
-| `exit_threshold` | **0.60** |
+| `exit_threshold` | **0.65** |
 | `min_hold_bars` | **3** |
-| `activation_atr` | **1.0** |
+| `activation_atr` | **1.5** |
 | `partial_exit_ratio` | **0.50** |
 
 ### TP/SL Hybrid
@@ -222,7 +222,7 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 | `pipeline/04_train_lgbm.py` | LGBM entry model training (TRAIN_CUTOFF_DATE filter) |
 | `pipeline/05_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
 | `pipeline/06_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
-| `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest (Mei 2025 – Apr 2026) |
+| `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest (Nov 2025 – Apr 2026) |
 | `pipeline/shared.py` | `SequenceDataset` + `build_purged_folds()` |
 | `pipeline/backtest_utils.py` | `hierarchical_predict()` + feature alignment via `feature_name_` |
 | `analysis/evaluate.py` | Penganalisis CSV hasil trading (Winrate, PF, streak, dll.) |
@@ -238,14 +238,14 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 01_fetch → 02_clean → 03_engineer → 04_train_lgbm → 05_train_lstm → 06_train_guardian → 07_holdout_backtest
 ```
 
-**Data flow**: Semua training script filter `df.index < TRAIN_CUTOFF_DATE` (2025-05-01).
+**Data flow**: Semua training script filter `df.index < TRAIN_CUTOFF_DATE` (2025-11-01).
 Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 
 ## Key Learnings
 
 ### Guardian v3 — SUCCESS (2026-05-15)
 
-- **104 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4) berkontribusi nyata
+- **93 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4) berkontribusi nyata
 - **WR 89% di temporal OOS**: Guardian genuine generalization, bukan overfitting. Semua 21 koin PnL positif
 - **TP → momentum mode = game changer**: Trade +72%, PnL +57% vs Guardian v2 binary. TP tidak hard-close posisi
 - **Guardian > Trailing stop**: Guardian v3 mengalahkan trailing 2x ATR di semua metrik
@@ -283,7 +283,7 @@ Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 - **Encoding**: Terminal is cp1252 — avoid unicode arrows (→) in logger messages
 - **LSTM**: Custom `ManualLSTMCell` for DirectML compatibility. Train on GPU, infer on CPU
 - **LGBM**: `device_type="gpu"` via OpenCL (compatible with AMD)
-- **TRAIN_CUTOFF_DATE = 2025-05-01** — tidak boleh ada data testing bocor ke training
+- **TRAIN_CUTOFF_DATE = 2025-11-01** — tidak boleh ada data testing bocor ke training
 - **KLINE_LIMIT = 1000** — Binance max 1000 klines per request (sebelumnya 1500 → gap 21 hari)
 - **TP/SL regressor/classifier files DELETED** — jangan re-implement tanpa diskusi
 - **Feature alignment via `model.feature_name_`** — mencegah mismatch fitur 103 vs 104

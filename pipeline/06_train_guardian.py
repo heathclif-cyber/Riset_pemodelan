@@ -97,7 +97,7 @@ def generate_labels_for_coin(
         if col in df.columns:
             X[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
 
-    # Cascade signals (pakai feat_cols asli — 104 kolom, match dengan model)
+    # Cascade signals (pakai feat_cols asli — 93 kolom, match dengan model)
     y_pred, confidence = hierarchical_predict(
         None, lgbm_model, lstm_model, lstm_scaler,
         X, feat_cols, [], df,

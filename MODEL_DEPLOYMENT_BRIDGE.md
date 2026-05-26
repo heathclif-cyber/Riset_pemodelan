@@ -4,9 +4,9 @@ Dokumen kontrak sinkronisasi untuk memastikan parameter hasil riset pemodelan (`
 
 ---
 
-## 🚀 Active Model: Cascade v3 (Deployed: 2026-05-15)
+## 🚀 Active Model: Cascade v3.1 (Deployed: 2026-05-15)
 
-*   **Model Version:** `cascade_v3` (LGBM Entry → LSTM Confirmation → Guardian v3 Dynamic Exit)
+*   **Model Version:** `cascade_v3.1` (LGBM Entry → LSTM Confirmation → Guardian v3 Dynamic Exit)
 *   **Trained Date:** 2026-05-15
 *   **Active Run Folder (Riset):** `models/runs/holdout_20260515_001906/`
 *   **Target Web App Directory:** `D:\Apps-Dev\swint_tradev2\`
@@ -53,7 +53,7 @@ Sebelum menyalin file model baru, pastikan kode Web App (`swint_tradev2`) telah 
 
 ## 📅 Riwayat Update & Deployment
 
-*   **2026-05-15 (Cascade v3 Deploy):** Pengenalan Guardian v3 Multiclass + TP Momentum Mode. Trade bertambah +72%, Net PnL meroket +57% dibandingkan Guardian v2 Binary.
+*   **2026-05-15 (Cascade v3.1 Deploy):** Pengenalan Guardian v3 Multiclass + TP Momentum Mode. Trade bertambah +72%, Net PnL meroket +57% dibandingkan Guardian v2 Binary.
 *   **2026-05-14 (Temporal OOS Validation):** Validasi model temporal OOS (Genuine Out-of-Sample) pada data Mei 2025 – April 2026 selesai. Hasil stabil: Winrate 88.93%, Drawdown 41.77%, Profit Factor 10.05.
 *   **2026-05-12 (Sweet Spot LGBM+LSTM):** Penyesuaian `confidence_threshold_entry=0.62` dan menonaktifkan `LSTM_FLAT_REVIEW_ENABLED` guna memulihkan Winrate keseluruhan dari 57% kembali ke 78%.
 

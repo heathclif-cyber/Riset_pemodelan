@@ -264,8 +264,10 @@ def calc_liquidity_levels(
 ) -> tuple[pd.Series, pd.Series, pd.Series]:
     """Buy/Sell Liquidity jarak ke swing H/L terakhir + SFP sweep detection."""
     sh, sl   = detect_swing_highs_lows(high, low, lookback)
-    swing_hi = high.where(sh).ffill()
-    swing_lo = low.where(sl).ffill()
+    # shift(lookback): swing at bar i confirmed only after i+lookback bars pass.
+    # Without shift, features use future bars to confirm swings — look-ahead bias.
+    swing_hi = high.where(sh).ffill().shift(lookback)
+    swing_lo = low.where(sl).ffill().shift(lookback)
 
     atr_safe = atr.replace(0, np.nan)
     sell_liq = (swing_hi - close) / atr_safe
@@ -287,8 +289,10 @@ def calc_market_structure(
 ) -> tuple[pd.Series, pd.Series, pd.Series]:
     """Market Structure Break (BOS) dan Change of Character (CHoCH)."""
     sh, sl  = detect_swing_highs_lows(high, low, lookback)
-    prev_sh = high.where(sh).ffill().shift(1)
-    prev_sl = low.where(sl).ffill().shift(1)
+    # shift(lookback+1): swing at bar i confirmed at i+lookback; +1 so prev_sh
+    # at bar j reflects the last confirmed swing strictly before bar j.
+    prev_sh = high.where(sh).ffill().shift(lookback + 1)
+    prev_sl = low.where(sl).ffill().shift(lookback + 1)
 
     bos_bull = (close > prev_sh).astype(int)
     bos_bear = (close < prev_sl).astype(int) * -1
@@ -1049,8 +1053,8 @@ def swing_based_labeling(
 def structural_label_filter(
     labels:                  pd.Series,
     feat_df:                 pd.DataFrame,
-    long_max_price_in_range:  float = 0.8,
-    short_min_price_in_range: float = 0.2,
+    long_max_price_in_range:  float = 1.0,
+    short_min_price_in_range: float = 0.0,
 ) -> pd.Series:
     """
     Filter label berdasarkan posisi harga dalam range swing.
@@ -1091,8 +1095,8 @@ def engineer_features(
     min_rr:    float = 1.2,
     min_tp_atr: float = 1.2,
     max_sl_atr: float = 3.0,
-    long_max_price_in_range:  float = 0.8,
-    short_min_price_in_range: float = 0.2,
+    long_max_price_in_range:  float = 1.0,
+    short_min_price_in_range: float = 0.0,
     # Feature parameters (H1-adjusted)
     vp_window:      int   = 24,    # Volume Profile: 24 bar H1 = 24 jam
     vp_bins:        int   = 50,
@@ -1139,12 +1143,20 @@ def engineer_features(
     atr_h1   = calc_atr(h, l, c, 14)
     atr_safe = atr_h1.replace(0, np.nan)
 
-    # H4 OHLCV (untuk konteks trend dan swing)
-    h4_h = df.get("4h_high",  h)
-    h4_l = df.get("4h_low",   l)
-    h4_c = df.get("4h_close", c)
+    # H4 OHLCV — dua varian:
+    #   _closed : dari candle H4 yang sudah tutup (ffilled ke H1) — untuk swing & ATR
+    #   partial : expanding max/min dalam periode H4 berjalan — untuk trend & EMA & RSI
+    h4_h_closed = df.get("4h_high",  h)
+    h4_l_closed = df.get("4h_low",   l)
+    h4_c_closed = df.get("4h_close", c)
 
-    atr_h4_raw = calc_atr(h4_h, h4_l, h4_c, 14)
+    _h4_floor = df.index.floor("4h")
+    h4_h = h.groupby(_h4_floor).expanding().max().droplevel(0)
+    h4_l = l.groupby(_h4_floor).expanding().min().droplevel(0)
+    h4_c = c   # partial H4 close = current H1 close
+
+    # ATR H4 dari closed candles — ATR representatif periode penuh, bukan partial
+    atr_h4_raw = calc_atr(h4_h_closed, h4_l_closed, h4_c_closed, 14)
     atr_h4 = atr_h4_raw.reindex(
         atr_h4_raw.index.union(df.index)
     ).ffill().reindex(df.index)

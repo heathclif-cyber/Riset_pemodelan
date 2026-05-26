@@ -74,7 +74,7 @@
     "sl_atr_mult": 1.5
   },
   "risk": {
-    "modal_per_trade": 100.0,
+    "modal_per_trade": 26.0,
     "leverage_recommended": 5.0,
     "fee_per_side": 0.0004,
     "slippage_per_side": 0.0005
@@ -85,15 +85,15 @@
     "lstm_confirmation": true,
     "lstm_adjust_mode": "hard_consensus",
     "lstm_adjust_agree_boost": 0.05,
-    "lstm_adjust_neutral_pen": 0.00,
+    "lstm_adjust_neutral_pen": 0.05,
     "lstm_adjust_opposite_pen": 0.99,
     "flat_review_threshold": 0.00
   },
   "guardian": {
     "enabled": true,
-    "exit_threshold": 0.60,
+    "exit_threshold": 0.65,
     "min_hold_bars": 3,
-    "activation_atr": 1.0,
+    "activation_atr": 1.5,
     "partial_exit_ratio": 0.5,
     "model_file": "guardian_best.pkl",
     "scaler_file": "guardian_scaler.pkl",
@@ -101,7 +101,7 @@
   },
   "rr_gate": {
     "enabled": true,
-    "min_rr": 0.5,
+    "min_rr": 0.45,
     "min_tp_atr": 1.2,
     "max_sl_atr": 4.0,
     "swing_bumper_atr": 0.5

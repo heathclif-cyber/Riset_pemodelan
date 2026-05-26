@@ -39,8 +39,8 @@ from core.features import engineer_features
 logger = setup_logger("03_engineer")
 
 # Filter thresholds (disesuaikan jika belum ada di config)
-LONG_MAX_PRICE_IN_RANGE = 0.8
-SHORT_MIN_PRICE_IN_RANGE = 0.2
+LONG_MAX_PRICE_IN_RANGE = 1.0
+SHORT_MIN_PRICE_IN_RANGE = 0.0
 
 
 def validate_features(df: pd.DataFrame) -> list[str]:

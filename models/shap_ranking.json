@@ -2,7 +2,7 @@
   "model": "lgbm",
   "symbol": "SOLUSDT",
   "n_samples": 10000,
-  "n_features": 103,
+  "n_features": 93,
   "entry_metrics": {
     "SHORT": {
       "precision": 0.7113,

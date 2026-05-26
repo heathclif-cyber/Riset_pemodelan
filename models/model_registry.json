@@ -1,13 +1,13 @@
 {
-  "active": "cascade_v3",
+  "active": "cascade_v3.1",
   "architecture": "3-Model Cascade (LGBM \u2192 LSTM \u2192 Guardian v3) + Hybrid Swing/ATR TP/SL",
-  "confidence_threshold_entry": 0.62,
+  "confidence_threshold_entry": 0.65,
   "models": {
     "lgbm": {
       "role": "Entry Signal Generator (3-class: SHORT/FLAT/LONG)",
-      "n_features": 103,
-      "threshold_long": 0.62,
-      "threshold_short": 0.62,
+      "n_features": 93,
+      "threshold_long": 0.65,
+      "threshold_short": 0.65,
       "class_weights": {
         "SHORT": 3.0,
         "FLAT": 1.5,
@@ -19,20 +19,20 @@
       "seq_len": 16,
       "hidden": 128,
       "layers": 2,
-      "adjust_mode": "tiered",
+      "adjust_mode": "hard_consensus",
       "agree_boost": 0.05,
       "neutral_pen": 0.05,
-      "opposite_pen": 0.04
+      "opposite_pen": 0.99
     },
     "guardian_v3": {
       "role": "Dynamic Exit (per-bar: HOLD/PARTIAL_EXIT/FULL_EXIT)",
-      "features": "103 static + 7 dynamic",
+      "features": "93 static + 7 dynamic",
       "classes": "0=HOLD, 1=PARTIAL_EXIT(50%), 2=FULL_EXIT",
-      "threshold": 0.6,
+      "threshold": 0.65,
       "min_hold_bars": 3,
-      "activation_atr": 1.0
+      "activation_atr": 1.5
     },
-    "cascade_v3": {
+    "cascade_v3.1": {
       "status": "active",
       "trained_date": null,
       "winrate": 0.9115,
@@ -51,7 +51,7 @@
     "hybrid": true,
     "tp_fallback_atr": 2.0,
     "sl_fallback_atr": 1.5,
-    "min_rr": 1.0
+    "min_rr": 0.45
   },
   "removed": [
     "h4_lgbm (AUC 0.55, near-random)",
