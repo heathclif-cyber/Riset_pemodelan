@@ -41,6 +41,7 @@ from config import (
     REGIME_NAMES, MODEL_DIR,
     TREND_ALIGNMENT_ENABLED, WITH_TREND_PENALTY, COUNTER_TREND_BOOST,
     WITH_TREND_BLOCK_CONF,
+    CONFIDENCE_THRESHOLD_ENTRY,
 )
 from pipeline.shared import SequenceDataset
 from core.utils import get_lstm_device
@@ -322,11 +323,16 @@ def hierarchical_predict(
 
         _pass_rate["lgbm"] += 1
 
-        # STEP 3: LSTM soft adjustment (untuk LONG/SHORT path)
+        # STEP 3: LSTM hard_consensus — scalar clip (hardblock: opposite = no trade)
         adj_conf = lgbm_conf
         if lstm_proba is not None:
             lstm_dir = int(np.argmax(lstm_proba[i]))
-            adj      = _lstm_adjustment(adj_conf, lstm_dir, lgbm_dir)
+            if lstm_dir == lgbm_dir:
+                adj = LSTM_ADJUST_AGREE_BOOST
+            elif lstm_dir == 1:
+                adj = -LSTM_ADJUST_NEUTRAL_PEN
+            else:
+                adj = -LSTM_ADJUST_OPPOSITE_PEN
             adj_conf = float(np.clip(adj_conf + adj, 0.0, 1.0))
 
         # STEP 4: Trend Alignment (Grup 2) — after LSTM adjustment

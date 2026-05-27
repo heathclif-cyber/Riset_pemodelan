@@ -515,8 +515,8 @@ def parse_args():
     group  = parser.add_mutually_exclusive_group()
     group.add_argument("--all",   action="store_true")
     group.add_argument("--coins", nargs="+", metavar="SYMBOL")
-    parser.add_argument("--start", default="2025-05-01",
-                        help="Start date hold-out (default: 2025-05-01)")
+    parser.add_argument("--start", default="2025-11-01",
+                        help="Start date hold-out (default: 2025-11-01, match TRAIN_CUTOFF_DATE)")
     parser.add_argument("--end",   default="2026-04-01",
                         help="End date hold-out (default: 2026-04-01)")
     parser.add_argument("--skip-fetch",   action="store_true",

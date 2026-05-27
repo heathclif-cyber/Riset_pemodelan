@@ -305,6 +305,14 @@ def simulate_trades_swing(
     trailing_stop_enabled     = TRAILING_STOP_ENABLED,
     trailing_stop_atr         = TRAILING_STOP_ATR,
     trailing_stop_min_bars    = TRAILING_STOP_MIN_BARS,
+    # ── VCB (Volatility Circuit Breaker) ── match production signal_filter.py
+    vcb_enabled:          bool  = False,  # OFF — backtest benchmark
+    vcb_atr_multiplier:   float = 3.0,
+    vcb_lookback_bars:    int   = 24,
+    # ── Pyramiding ── match production signal_filter.py
+    pyramiding_enabled:     bool = True,
+    pyramiding_max_per_coin: int = 3,
+    pyramiding_same_dir:    bool = True,
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis — 2-tier priority:
@@ -335,9 +343,11 @@ def simulate_trades_swing(
     trades     = []
     equity     = modal
     equity_curve = [equity]
+    n_vcb_blocked = 0
 
     LONG, SHORT, FLAT = 2, 0, 1   # sesuai LABEL_MAP
     cooldown_until = -1            # #15: bar index sampai kapan skip entry
+    open_positions = []            # pyramiding: list of (bar_out, direction)
 
     for i in range(n - 1):
         sig = y_pred[i]
@@ -388,6 +398,18 @@ def simulate_trades_swing(
             equity_curve.append(equity)
             continue
 
+        # ── VCB (Volatility Circuit Breaker) ── match production signal_filter.py
+        if vcb_enabled and atr_i > 0:
+            vcb_start = max(0, i - vcb_lookback_bars)
+            vcb_window = atr[vcb_start:i+1]
+            vcb_valid = vcb_window[~np.isnan(vcb_window)]
+            if len(vcb_valid) >= vcb_lookback_bars:
+                vcb_mean = vcb_valid[-vcb_lookback_bars:].mean()
+                if atr_i > vcb_atr_multiplier * vcb_mean:
+                    n_vcb_blocked += 1
+                    equity_curve.append(equity)
+                    continue
+
         use_swing = not np.isnan(sh_i) and not np.isnan(sl_i)
 
         # ── #2 Swing Freshness Check ────────────────────────────────────
@@ -413,6 +435,22 @@ def simulate_trades_swing(
             if price > upper_bound or price < lower_bound:  # entry di luar [H4 Low, H4 High] + tolerance
                 equity_curve.append(equity)
                 continue
+
+        # ── Pyramiding check ── match production (Binance: akumulasi size) ──
+        # Hapus posisi yang sudah tutup (bar_out <= current bar)
+        open_positions = [p for p in open_positions if p[0] > i]
+        if pyramiding_enabled and open_positions:
+            existing_dir = "LONG" if open_positions[0][1] == LONG else "SHORT"
+            new_dir = "LONG" if sig == LONG else "SHORT"
+            if new_dir != existing_dir:
+                # Binance: tidak bisa buka arah berlawanan saat posisi masih ada
+                equity_curve.append(equity)
+                continue
+            # Same direction → akumulasi size, tidak buka posisi baru terpisah
+            if len(open_positions) >= pyramiding_max_per_coin:
+                equity_curve.append(equity)
+                continue
+            # Allow — modal akan diakumulasi ke posisi existing
 
         # ── Tentukan TP/SL — Gate: Swing/ATR ────────────────────────────
 
@@ -501,6 +539,7 @@ def simulate_trades_swing(
         raw_exit = price
         mfe_pnl = 0.0  # max favorable excursion (PnL %)
         best_price_trail = price  # trailing stop reference price
+        tp_touched = False  # TP momentum mode flag
         # Partial exit tracking
         partial_bar = None
         partial_price = None
@@ -524,56 +563,63 @@ def simulate_trades_swing(
                 tp_hit = low[j] <= tp_price
                 sl_hit = (high[j] >= sl_price) if sl_trigger_mode == "highlow" else (close[j] >= sl_price)
 
-            # ── Hard TP/SL exits ─────────────────────────────────────────
-            if tp_hit:
-                # Adjust exit price for remaining position
-                if partial_bar is not None:
-                    # Only remaining position exits at TP
-                    outcome = "WIN"; raw_exit = tp_price; break
-                else:
-                    outcome = "WIN"; raw_exit = tp_price; break
+            # ── SL hard exit ── match production paper_trading.py ────────
             if sl_hit:
-                if partial_bar is not None:
-                    outcome = "LOSS"; raw_exit = sl_price; break
-                else:
-                    outcome = "LOSS"; raw_exit = sl_price; break
+                outcome = "LOSS"; raw_exit = sl_price; break
+
+            # ── TP → momentum mode (match production) ──────────────────
+            # TP tidak hard-close — trigger Guardian momentum (bypass gates)
+            if tp_hit and not tp_touched and guardian_active:
+                tp_touched = True
+            elif tp_hit and not guardian_active:
+                # No Guardian → legacy hard TP close
+                outcome = "WIN"; raw_exit = tp_price; break
 
             # ── Guardian Multiclass (3-class: 0=HOLD, 1=PARTIAL, 2=FULL) ──
-            if guardian_active and bars_held >= guardian_min_hold_bars and position_remaining > 0.5:
-                # Check activation: price must have moved 1x ATR from entry
-                price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else float("inf")
-                if price_moved_atr >= guardian_activation_atr:
-                    # Build guardian feature vector: static + dynamic
-                    g_static = X_guardian[j, :]
-                    g_dynamic = _compute_guardian_dynamic(
-                        bars_held, price, close[j], sig, atr_i, mfe_pnl,
-                    )
-                    g_feat = np.concatenate([g_static, g_dynamic]).reshape(1, -1)
-                    g_feat_s = guardian_scaler.transform(g_feat)
-                    g_proba = guardian_model.predict_proba(g_feat_s)[0]  # [p_hold, p_partial, p_full]
-                    g_pred = int(g_proba.argmax())
+            # momentum_mode = tp_touched — bypasses min_hold + activation gates
+            guardian_momentum = tp_touched
+            if guardian_active and position_remaining > 0.5:
+                should_check = guardian_momentum or bars_held >= guardian_min_hold_bars
+                if should_check:
+                    price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else float("inf")
+                    bypass_gates = guardian_momentum
+                    if bypass_gates or price_moved_atr >= guardian_activation_atr:
+                        # Build guardian feature vector: static + dynamic
+                        g_static = X_guardian[j, :]
+                        g_dynamic = _compute_guardian_dynamic(
+                            bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                        )
+                        g_feat = np.concatenate([g_static, g_dynamic]).reshape(1, -1)
+                        g_feat_s = guardian_scaler.transform(g_feat)
+                        g_proba = guardian_model.predict_proba(g_feat_s)[0]  # [p_hold, p_partial, p_full]
+                        g_pred = int(g_proba.argmax())
 
-                    if g_pred == 2 and g_proba[2] >= guardian_exit_threshold:
-                        # FULL_EXIT — close entire remaining position
-                        if partial_bar is not None:
-                            outcome = "GUARDIAN_FULL"
-                        else:
-                            outcome = "GUARDIAN_EXIT"
-                        raw_exit = close[j]
-                        break
-                    elif g_pred == 1 and g_proba[1] >= guardian_exit_threshold and partial_bar is None:
-                        # PARTIAL_EXIT — close half, continue with rest
-                        partial_bar = j
-                        partial_price = close[j]
-                        # Calculate PnL for the exited half
-                        pct_partial = (partial_price - price) / price
-                        if sig == SHORT:
-                            pct_partial = -pct_partial
-                        gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
-                        fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
-                        partial_pnl = gross_partial - fee_partial
-                        position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
-                        # Continue scanning — do NOT break
+                        if g_pred == 2 and g_proba[2] >= guardian_exit_threshold:
+                            # FULL_EXIT — close entire remaining position
+                            if guardian_momentum:
+                                outcome = "GUARDIAN_MOMENTUM_EXIT"
+                            elif partial_bar is not None:
+                                outcome = "GUARDIAN_FULL"
+                            else:
+                                outcome = "GUARDIAN_EXIT"
+                            raw_exit = close[j]
+                            break
+                        elif g_pred == 1 and g_proba[1] >= guardian_exit_threshold and partial_bar is None:
+                            # PARTIAL_EXIT — close half, continue with rest
+                            if guardian_momentum:
+                                outcome = "GUARDIAN_MOMENTUM_PARTIAL"
+                            # (no break — continue scanning remaining position)
+                            partial_bar = j
+                            partial_price = close[j]
+                            # Calculate PnL for the exited half
+                            pct_partial = (partial_price - price) / price
+                            if sig == SHORT:
+                                pct_partial = -pct_partial
+                            gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
+                            fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
+                            partial_pnl = gross_partial - fee_partial
+                            position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
+                            # Continue scanning — do NOT break
 
             # ── Trailing Stop ────────────────────────────────────────────
             if trailing_stop_enabled and bars_held >= trailing_stop_min_bars:
@@ -621,7 +667,7 @@ def simulate_trades_swing(
             "tp":        tp_price,
             "sl":        sl_price,
             "rr":        round(rr, 2),
-            "outcome":   outcome,
+            "outcome":   ("TIMEOUT_MOMENTUM" if (outcome == "TIMEOUT" and tp_touched) else outcome),
             "net_pnl":   round(net_pnl, 4),
             "equity":    round(equity, 4),
         }
@@ -635,6 +681,10 @@ def simulate_trades_swing(
             trade_record["partial_pnl"] = 0.0
 
         trades.append(trade_record)
+
+        # Track open position untuk pyramiding
+        exit_bar = j if outcome != "TIMEOUT" else end
+        open_positions.append((exit_bar, sig))
 
         # ── #15 Cooldown ─────────────────────────────────────────────────
         if cooldown_enabled:
@@ -656,13 +706,14 @@ def simulate_trades_swing(
             "win_by_class": {"LONG": 0.0, "SHORT": 0.0}
         }
 
+    guardian_outcomes = ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL",
+                         "GUARDIAN_MOMENTUM_EXIT", "GUARDIAN_MOMENTUM_PARTIAL",
+                         "TIMEOUT", "TIMEOUT_MOMENTUM")
     wins   = [t for t in trades if t["outcome"] == "WIN"
-              or (t["outcome"] in ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL", "TIMEOUT")
-                  and t["net_pnl"] > 0)]
+              or (t["outcome"] in guardian_outcomes and t["net_pnl"] > 0)]
     losses = [t for t in trades if t["outcome"] == "LOSS"
-              or (t["outcome"] in ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL", "TIMEOUT")
-                  and t["net_pnl"] <= 0)]
-    time_e = [t for t in trades if t["outcome"] == "TIMEOUT"]
+              or (t["outcome"] in guardian_outcomes and t["net_pnl"] <= 0)]
+    time_e = [t for t in trades if t["outcome"] in ("TIMEOUT", "TIMEOUT_MOMENTUM")]
 
     winrate    = len(wins) / len(trades) if trades else 0.0
     avg_win    = np.mean([t["net_pnl"] for t in wins])   if wins   else 0.0
@@ -705,6 +756,7 @@ def simulate_trades_swing(
         "total_pnl":      round(total_net_pnl, 4),
         "wins":           len(wins),
         "losses":         len(losses),
+        "n_vcb_blocked":  n_vcb_blocked,
         "time_exits":     len(time_e),
         "win_by_class": {
             "LONG":  round(lw / lt, 4) if lt > 0 else 0.0,

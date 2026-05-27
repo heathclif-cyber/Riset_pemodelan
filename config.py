@@ -355,7 +355,7 @@ TP_SL_MAX_SWING_DEVIATION_PCT = 0.15  # max deviasi swing H4 dari entry (3b: uji
 # ─── #20: Individual Swing Freshness (Grup 3c) ───────────────────────────────
 # Cek freshness masing-masing swing (high dan low) secara individual.
 # Cegah TONUSDT-style leak — salah satu swing basi tetap lolos.
-TP_SL_INDIVIDUAL_SWING_FRESHNESS = False  # jika True, tolak jika salah satu swing dev > max
+TP_SL_INDIVIDUAL_SWING_FRESHNESS = False  # OFF — cek swing target saja (lebih longgar)
 
 # ─── #21: Conditional Sizing: Tiered + Half-Size for With-Trend (Grup 4b) ───
 TP_SL_SIZING_WITH_TREND_HALF = False  # half-size untuk with-trend trades (hanya di mode tiered)

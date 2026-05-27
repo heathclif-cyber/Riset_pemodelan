@@ -6,7 +6,7 @@ Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **3-model ca
 LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
 
 Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime.
-**TRAIN_CUTOFF_DATE = 2025-11-01** — training hanya di 2020 – Okt 2025, holdout test di Nov 2025 – Apr 2026.
+**TRAIN_CUTOFF_DATE = 2025-11-01** — training hanya di 2020 – Okt 2025. Holdout test di Nov 2025 – Apr 2026 (genuine temporal OOS, tanpa overlap).
 21 koin: SOL, ETH, BNB, XRP, DOGE, TON, ADA, TRX, 1000SHIB, AVAX, LINK, DOT, SUI, POL, NEAR, 1000PEPE, TAO, ARB, XAUT, HBAR, ONDO.
 
 ## Architecture
@@ -82,7 +82,7 @@ TRAILING_STOP_ENABLED=False (Guardian solo beats trailing). LSTM TIDAK bisa meng
 | Mean DD | 85.80% |
 | Mean PF | 13.31 |
 
-### 09 Holdout — Genuine Temporal OOS (Mei 2025 – Apr 2026, 21 koin, 8,027 bar/koin)
+### 09 Holdout — Genuine Temporal OOS (Nov 2025 – Apr 2026, 21 koin, 8,027 bar/koin)
 
 | Metrik | Guardian v3 | Baseline (no Guardian) | Delta |
 |--------|-------------|------------------------|-------|
