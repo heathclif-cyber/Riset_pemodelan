@@ -20,6 +20,7 @@ Jalankan:
 """
 
 import argparse, json, sys, warnings
+from datetime import datetime
 from pathlib import Path
 
 import joblib, numpy as np, pandas as pd
@@ -44,7 +45,7 @@ from config import (
     SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     TP_SL_FALLBACK_TP, TP_SL_FALLBACK_SL,
     LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT,
-    MODEL_DIR,
+    MODEL_DIR, LABEL_DIR,
 )
 from core.models import load_lstm
 from core.evaluator import simulate_trades_swing
@@ -54,7 +55,7 @@ from pipeline.shared import build_purged_folds
 
 logger = setup_logger("06_train_guardian")
 
-TRAIN_LABEL_DIR = ROOT / "data" / "labeled"
+TRAIN_LABEL_DIR = LABEL_DIR
 
 
 def load_models():
@@ -216,6 +217,7 @@ def generate_labels_for_coin(
 
             sample = {
                 **{c: X_static[j, idx] for idx, c in enumerate(g_static_cols)},
+                "timestamp": df.index[j],
                 "bars_held_norm": bars_held_norm,
                 "current_pnl_pct": current_pnl,
                 "current_pnl_atr": current_pnl_atr,
@@ -250,13 +252,13 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
         logger.error("Not enough training samples (< 100)")
         return None, None, None
 
-    n = len(X_all)
-    folds = build_purged_folds(n, GUARDIAN_N_FOLDS, GUARDIAN_PURGE_GAP_BARS)
+    folds = build_purged_folds(samples_df.index, GUARDIAN_N_FOLDS, GUARDIAN_PURGE_GAP_BARS)
     logger.info(f"Purged CV: {len(folds)} folds")
 
     best_score = float("inf")  # multi_logloss: lower is better
     best_model = None
     scaler = StandardScaler()
+    best_iters = []
 
     for fold_idx, (train_idx, test_idx) in enumerate(folds):
         if len(test_idx) < 10:
@@ -298,18 +300,46 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
 
         logger.info(f"  Fold {fold_idx+1}: logloss={logloss:.4f} Acc={acc:.3f} F1_macro={f1_macro:.3f} "
                     f"n_train={len(train_idx)} n_test={len(test_idx)}")
+        
+        best_iters.append(model.best_iteration_)
 
         if logloss < best_score:
             best_score = logloss
             best_model = model
-            scaler.fit(X_train)  # re-fit on full train set
 
-    if best_model is None:
-        logger.error("No model trained")
+    if not best_iters:
+        logger.error("No model trained successfully")
         return None, None, None
 
-    logger.info(f"Best logloss: {best_score:.4f}")
-    return best_model, scaler, all_feat_cols
+    avg_best_iter = int(np.mean(best_iters))
+    logger.info(f"CV complete. Best logloss: {best_score:.4f} | Average best_iteration: {avg_best_iter}")
+
+    # ── Final Scaler & Model Retraining ──────────────────────────────────────
+    # Fit scaler pada 100% data training (X_all)
+    logger.info(f"Fitting final Guardian scaler on all {len(X_all):,} samples...")
+    final_scaler = StandardScaler()
+    X_all_scaled = final_scaler.fit_transform(X_all)
+
+    # Class weight balancing untuk seluruh data training (100%)
+    n_hold_all = int((y_all == 0).sum())
+    n_partial_all = int((y_all == 1).sum())
+    n_full_all = int((y_all == 2).sum())
+    total_all = n_hold_all + n_partial_all + n_full_all
+    class_weight_all = {
+        0: total_all / (3 * max(n_hold_all, 1)),
+        1: total_all / (3 * max(n_partial_all, 1)),
+        2: total_all / (3 * max(n_full_all, 1)),
+    }
+
+    # Set parameters final dengan n_estimators = avg_best_iter
+    final_params = GUARDIAN_LGBM_PARAMS.copy()
+    final_params["n_estimators"] = avg_best_iter
+
+    logger.info(f"Retraining final Guardian model on 100% data with n_estimators={avg_best_iter}...")
+    final_model = lgb.LGBMClassifier(**final_params, class_weight=class_weight_all)
+    final_model.fit(X_all_scaled, y_all)
+
+    return final_model, final_scaler, all_feat_cols
 
 
 def main():
@@ -317,10 +347,14 @@ def main():
     parser.add_argument("--all", action="store_true", help="Use all 20 coins")
     parser.add_argument("--coins", nargs="+", default=None)
     parser.add_argument("--min-samples", type=int, default=GUARDIAN_MIN_SAMPLES_COIN)
+    parser.add_argument("--run-id", default=None, help="Custom run ID")
     args = parser.parse_args()
 
     coins = ALL_COINS if args.all else (args.coins or TRAINING_COINS)
-    logger.info(f"Coins: {len(coins)} — {coins}")
+    run_id = args.run_id or f"run_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_dir = MODEL_DIR / "runs" / run_id
+    run_dir.mkdir(parents=True, exist_ok=True)
+    logger.info(f"Coins: {len(coins)} — {coins} | Run ID: {run_id}")
 
     lgbm_model, lstm_model, lstm_scaler, feat_cols = load_models()
     logger.info("Models loaded")
@@ -339,25 +373,33 @@ def main():
         return
 
     df = pd.DataFrame(all_samples)
+    df = df.sort_values("timestamp")
+    df.set_index("timestamp", inplace=True)
     logger.info(f"Total labeled samples: {len(df)}")
 
     model, scaler, feat_cols_out = train_guardian(df, coins)
     if model is None:
         return
 
-    # Save
-    model_path = MODEL_DIR / "guardian_best.pkl"
-    scaler_path = MODEL_DIR / "guardian_scaler.pkl"
-    feat_path = MODEL_DIR / "guardian_feature_cols.json"
+    # Save to runs folder
+    model_path = run_dir / "guardian.pkl"
+    scaler_path = run_dir / "guardian_scaler.pkl"
+    feat_path = run_dir / "guardian_feature_cols.json"
 
     joblib.dump(model, model_path)
     joblib.dump(scaler, scaler_path)
     with open(feat_path, "w") as f:
         json.dump(feat_cols_out, f, indent=2)
 
-    logger.info(f"Saved: {model_path}")
-    logger.info(f"Saved: {scaler_path}")
-    logger.info(f"Saved: {feat_path}")
+    # Copy to root models/ for active inference
+    joblib.dump(model, MODEL_DIR / "guardian_best.pkl")
+    joblib.dump(scaler, MODEL_DIR / "guardian_scaler.pkl")
+    with open(MODEL_DIR / "guardian_feature_cols.json", "w") as f:
+        json.dump(feat_cols_out, f, indent=2)
+
+    logger.info(f"Saved: {model_path} and copied to root models/")
+    logger.info(f"Saved: {scaler_path} and copied to root models/")
+    logger.info(f"Saved: {feat_path} and copied to root models/")
 
     # Feature importance
     importance = sorted(zip(feat_cols_out, model.feature_importances_),

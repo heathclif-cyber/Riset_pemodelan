@@ -2,114 +2,158 @@
 pipeline/01_fetch.py — Fase 1: Fetch semua data dari Binance + Macro
 
 Jalankan:
-  python pipeline/01_fetch.py                    # fetch training coins (5 koin)
-  python pipeline/01_fetch.py --new              # fetch new coins (15 koin)
-  python pipeline/01_fetch.py --all              # fetch semua 20 koin
-  python pipeline/01_fetch.py --coins SOLUSDT ETHUSDT  # koin spesifik
+  python pipeline/01_fetch.py                          # fetch training coins (ke data/raw/)
+  python pipeline/01_fetch.py --all                    # fetch semua 20 koin (ke data/raw/)
+  python pipeline/01_fetch.py --all --holdout-test     # fetch holdout-test (ke data/holdout/raw/)
+  python pipeline/01_fetch.py --coins SOLUSDT          # koin spesifik (ke data/raw/)
+  python pipeline/01_fetch.py --coins SOLUSDT --holdout-test  # koin spesifik ke holdout-test
 
-Progress disimpan di data/raw/.fetch_progress.json (resume-capable).
+Periode:
+  Training     : TRAIN_START (2020-01-01) -> TRAIN_END (2025-11-01) -> data/raw/
+  Holdout-Test : OOS_START (2025-11-01)  -> OOS_END (2026-04-01)   -> data/holdout/raw/
+
+Progress disimpan terpisah:
+  Training     : data/raw/.fetch_progress.json
+  Holdout-Test : data/holdout/raw/.fetch_progress.json
 """
 
 import argparse
-import json
 import sys
-from datetime import datetime, timezone
 from pathlib import Path
 
-# ── Add project root ke sys.path ─────────────────────────────────────────────
+# ── Add project root ke sys.path ──────────────────────────────────────────────
 ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 from config import (
     TRAINING_COINS, NEW_COINS, ALL_COINS,
-    TRAIN_START, TRAIN_END,
-    KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT,
+    TRAIN_START, TRAIN_END, OOS_START, OOS_END,
+    KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT, OI_LIMIT, LONG_SHORT_LIMIT,
     BINANCE_BASE_URL, SLEEP_BETWEEN_REQUESTS,
     SLEEP_ON_RATE_LIMIT, MAX_RETRIES, RETRY_BACKOFF_BASE,
 )
 from core.binance_client import BinanceClient
 from core.fetchers import fetch_coin, fetch_all_macro
 from core.utils import setup_logger, load_progress, save_progress
-from config import RAW_DIR
+from config import RAW_DIR, HOLDOUT_DIR
 
 logger = setup_logger("01_fetch")
 
-PROGRESS_FILE = RAW_DIR / ".fetch_progress.json"
+TRAINING_PROGRESS_FILE  = RAW_DIR / ".fetch_progress.json"
+HOLDOUT_PROGRESS_FILE   = HOLDOUT_DIR / "raw" / ".fetch_progress.json"
+
+# Alias backward-compat
+PROGRESS_FILE = TRAINING_PROGRESS_FILE
 
 
 def parse_args():
-    parser = argparse.ArgumentParser(description="Fetch data dari Binance")
-    group  = parser.add_mutually_exclusive_group()
-    group.add_argument("--training", action="store_true",
-                       help=f"Fetch training coins: {TRAINING_COINS}")
-    group.add_argument("--new",  action="store_true",
+    parser = argparse.ArgumentParser(
+        description="Fetch data dari Binance",
+        formatter_class=argparse.RawDescriptionHelpFormatter,
+        epilog=(
+            "Contoh:\n"
+            "  # Fetch TRAINING (2020-01-01 -> 2025-11-01) ke data/raw/\n"
+            "  python pipeline/01_fetch.py --all\n\n"
+            "  # Fetch HOLDOUT-TEST (2025-11-01 -> 2026-04-01) ke data/holdout/raw/\n"
+            "  python pipeline/01_fetch.py --all --holdout-test\n"
+        ),
+    )
+    group = parser.add_mutually_exclusive_group()
+    group.add_argument("--new",   action="store_true",
                        help=f"Fetch new coins: {NEW_COINS}")
-    group.add_argument("--all",  action="store_true",
+    group.add_argument("--all",   action="store_true",
                        help="Fetch semua 20 koin")
     group.add_argument("--coins", nargs="+", metavar="SYMBOL",
-                       help="Fetch koin spesifik")
+                       help="Fetch koin spesifik (contoh: SOLUSDT ETHUSDT)")
+
+    parser.add_argument(
+        "--holdout-test", action="store_true", dest="holdout_test",
+        help=(
+            "Fetch HOLDOUT-TEST data (2025-11-01 -> 2026-04-01) "
+            "ke data/holdout/raw/. TERPISAH dari data training."
+        ),
+    )
     parser.add_argument("--reset", action="store_true",
                         help="Reset progress (fetch ulang dari awal)")
     return parser.parse_args()
 
 
-def _build_coin_schedule(args) -> tuple[list[tuple], str]:
+def _build_coin_schedule(args, is_holdout: bool) -> tuple[list[tuple], str]:
     """
     Kembalikan (coin_schedule, label).
     coin_schedule = [(symbol, start, end), ...]
 
-    Semua koin menggunakan periode yang sama: TRAIN_START → TRAIN_END.
+    Training (is_holdout=False)  : TRAIN_START (2020-01-01) -> TRAIN_END (2025-11-01) -> data/raw/
+    Holdout  (is_holdout=True)   : OOS_START   (2025-11-01) -> OOS_END (2026-04-01)   -> data/holdout/raw/
+
     Koin yang listing setelah 2020 (SUI, TON, PEPE, TAO, ARB) akan otomatis
-    mendapat data lebih pendek sesuai tanggal listing mereka di Binance —
-    fetch tidak error, hanya menghasilkan lebih sedikit baris.
+    mendapat data lebih pendek sesuai tanggal listing mereka di Binance.
     """
+    fetch_start = OOS_START   if is_holdout else TRAIN_START
+    fetch_end   = OOS_END     if is_holdout else TRAIN_END
+    mode_label  = "HOLDOUT-TEST" if is_holdout else "TRAINING"
+
     if args.new:
         coins = NEW_COINS
-        label = f"NEW COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+        label = f"{mode_label} | NEW COINS ({fetch_start.date()} -> {fetch_end.date()})"
     elif args.all:
         coins = ALL_COINS
-        label = f"ALL COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+        label = f"{mode_label} | ALL COINS ({fetch_start.date()} -> {fetch_end.date()})"
     elif args.coins:
         coins = [c.upper() for c in args.coins]
-        label = f"CUSTOM: {coins}"
+        label = f"{mode_label} | CUSTOM: {coins} ({fetch_start.date()} -> {fetch_end.date()})"
     else:
         coins = TRAINING_COINS
-        label = f"TRAINING COINS ({TRAIN_START.date()} → {TRAIN_END.date()})"
+        label = f"{mode_label} | TRAINING COINS ({fetch_start.date()} -> {fetch_end.date()})"
 
-    schedule = [(sym, TRAIN_START, TRAIN_END) for sym in coins]
+    schedule = [(sym, fetch_start, fetch_end) for sym in coins]
     return schedule, label
 
 
 def main():
-    args = parse_args()
+    args       = parse_args()
+    is_holdout = args.holdout_test
 
-    coin_schedule, label = _build_coin_schedule(args)
+    coin_schedule, label = _build_coin_schedule(args, is_holdout)
+
+    # Pilih direktori & progress file berdasarkan mode
+    if is_holdout:
+        output_dir    = HOLDOUT_DIR / "raw"
+        progress_file = HOLDOUT_PROGRESS_FILE
+    else:
+        output_dir    = RAW_DIR
+        progress_file = TRAINING_PROGRESS_FILE
+
+    output_dir.mkdir(parents=True, exist_ok=True)
 
     # Macro mencakup rentang terluas dari semua koin
     macro_start = min(s for _, s, _ in coin_schedule)
     macro_end   = max(e for _, _, e in coin_schedule)
 
-    logger.info("=" * 60)
+    sep = "=" * 60
+    logger.info(sep)
     logger.info(f"  FETCH DATA: {label}")
+    logger.info(f"  Mode    : {'HOLDOUT-TEST' if is_holdout else 'TRAINING'}")
+    logger.info(f"  Output  : {output_dir}")
     logger.info(f"  Koin    : {[sym for sym, _, _ in coin_schedule]}")
-    logger.info(f"  Macro   : {macro_start.date()} → {macro_end.date()}")
-    logger.info("=" * 60)
+    logger.info(f"  Macro   : {macro_start.date()} -> {macro_end.date()}")
+    logger.info(sep)
 
     # ── Load/reset progress ────────────────────────────────────────────────────
     if args.reset:
         progress = {}
         logger.info("Progress di-reset.")
     else:
-        progress = load_progress(PROGRESS_FILE)
+        progress = load_progress(progress_file)
         logger.info(f"Progress loaded: {len(progress)} keys selesai.")
 
-    # ── Init Binance client ───────────────────────────────────────────────────
+    # ── Init Binance client ────────────────────────────────────────────────────
     client = BinanceClient(
-        base_url        = BINANCE_BASE_URL,
-        sleep_between   = SLEEP_BETWEEN_REQUESTS,
-        sleep_rate_limit= SLEEP_ON_RATE_LIMIT,
-        max_retries     = MAX_RETRIES,
-        backoff_base    = RETRY_BACKOFF_BASE,
+        base_url         = BINANCE_BASE_URL,
+        sleep_between    = SLEEP_BETWEEN_REQUESTS,
+        sleep_rate_limit = SLEEP_ON_RATE_LIMIT,
+        max_retries      = MAX_RETRIES,
+        backoff_base     = RETRY_BACKOFF_BASE,
     )
 
     if not client.test_connection():
@@ -117,27 +161,30 @@ def main():
         sys.exit(1)
     logger.info("Koneksi Binance OK.")
 
-    # ── Fetch macro data (satu kali, rentang terluas) ─────────────────────────
+    # ── Fetch macro data ───────────────────────────────────────────────────────
     logger.info("\n--- FETCH MACRO DATA ---")
     fetch_all_macro(macro_start, macro_end, progress=progress)
-    save_progress(progress, PROGRESS_FILE)
+    save_progress(progress, progress_file)
 
-    # ── Fetch per koin (tiap koin bisa punya periode berbeda) ─────────────────
+    # ── Fetch per koin ─────────────────────────────────────────────────────────
     success = []
     failed  = []
 
     for i, (symbol, start, end) in enumerate(coin_schedule, 1):
-        logger.info(f"\n[{i}/{len(coin_schedule)}] Fetching {symbol} ({start.date()} → {end.date()})...")
+        logger.info(f"[{i}/{len(coin_schedule)}] Fetching {symbol} ({start.date()} -> {end.date()})...")
         try:
             results = fetch_coin(
-                client   = client,
-                symbol   = symbol,
-                start    = start,
-                end      = end,
-                intervals= KLINE_INTERVALS,
-                progress = progress,
-                kline_limit   = KLINE_LIMIT,
-                funding_limit = FUNDING_LIMIT,
+                client           = client,
+                symbol           = symbol,
+                start            = start,
+                end              = end,
+                intervals        = KLINE_INTERVALS,
+                progress         = progress,
+                raw_dir          = output_dir,   # <-- training: data/raw/, holdout: data/holdout/raw/
+                kline_limit      = KLINE_LIMIT,
+                funding_limit    = FUNDING_LIMIT,
+                oi_limit         = OI_LIMIT,
+                long_short_limit = LONG_SHORT_LIMIT,
             )
             if results:
                 success.append(symbol)
@@ -147,16 +194,16 @@ def main():
             logger.exception(f"[{symbol}] Error: {e}")
             failed.append(symbol)
         finally:
-            save_progress(progress, PROGRESS_FILE)
+            save_progress(progress, progress_file)
 
-    # ── Ringkasan ─────────────────────────────────────────────────────────────
-    sep = "=" * 60
+    # ── Ringkasan ──────────────────────────────────────────────────────────────
     print(f"\n{sep}")
-    print(f"  FETCH SELESAI")
-    print(f"{sep}")
+    print(f"  FETCH SELESAI — {'HOLDOUT-TEST' if is_holdout else 'TRAINING'}")
+    print(sep)
     print(f"  Berhasil : {len(success)} koin — {success}")
     print(f"  Gagal    : {len(failed)}  koin — {failed}")
-    print(f"  Progress : {PROGRESS_FILE}")
+    print(f"  Output   : {output_dir}")
+    print(f"  Progress : {progress_file}")
     print(f"{sep}\n")
 
 

@@ -7,18 +7,26 @@ from datetime import datetime, timezone
 from pathlib import Path
 
 # ─── Paths ───────────────────────────────────────────────────────────────────
-ROOT_DIR   = Path(__file__).parent
-DATA_DIR   = ROOT_DIR / "data"
-RAW_DIR    = DATA_DIR / "raw"
-PROC_DIR   = DATA_DIR / "processed"
-LABEL_DIR  = DATA_DIR / "labeled"
-MODEL_DIR  = ROOT_DIR / "models"
-REPORT_DIR = ROOT_DIR / "reports"
+ROOT_DIR         = Path(__file__).parent
+DATA_DIR         = ROOT_DIR / "data"
+
+# Training data (2020-01-01 -> 2025-11-01)
+TRAINING_DIR     = DATA_DIR / "training"          # root training
+RAW_DIR          = TRAINING_DIR                   # alias — titik simpan klines, macro, dll.
+PROC_DIR         = TRAINING_DIR / "processed"
+LABEL_DIR        = TRAINING_DIR / "labeled"
+
+# Holdout-test data (2025-11-01 -> 2026-04-01)
+HOLDOUT_DIR      = DATA_DIR / "holdout-test"      # root holdout-test
+
+MODEL_DIR        = ROOT_DIR / "models"
+REPORT_DIR       = ROOT_DIR / "reports"
 
 # ─── Koin ────────────────────────────────────────────────────────────────────
 # TRAINING_COINS sekarang berisi 20 koin crypto aktif (XAUTUSDT dikeluarkan karena emas).
 # Untuk kemudahan, default training langsung mencakup semua koin aktif.
 TRAINING_COINS = [
+    "BTCUSDT",
     "SOLUSDT", "ETHUSDT", "BNBUSDT", "XRPUSDT", "DOGEUSDT",
     "TONUSDT", "ADAUSDT", "TRXUSDT", "1000SHIBUSDT", "AVAXUSDT",
     "LINKUSDT", "DOTUSDT", "SUIUSDT", "POLUSDT", "NEARUSDT",
@@ -33,19 +41,32 @@ ALL_COINS = TRAINING_COINS
 SYMBOL_MAP = {coin: i for i, coin in enumerate(ALL_COINS)}
 
 # ─── Periode Data ─────────────────────────────────────────────────────────────
-# Semua koin — baik training maupun new coins — menggunakan periode yang sama.
+#
+# TRAINING DATA  : 2020-01-01 → TRAIN_CUTOFF_DATE (disimpan di data/raw/)
+# OOS HOLDOUT    : OOS_START  → OOS_END           (disimpan di data/holdout/raw/)
+#
+# Fetch training : python pipeline/01_fetch.py --all
+# Fetch OOS      : python pipeline/01_fetch.py --all --oos
+#
 # Koin yang listing setelah 2020 (SUI, TON, PEPE, TAO, ARB) akan otomatis
 # mendapat data lebih pendek sesuai tanggal listing mereka di Binance.
-TRAIN_START = datetime(2020, 1, 1, tzinfo=timezone.utc)
-TRAIN_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
 
-START_DATE = TRAIN_START
-END_DATE   = TRAIN_END
+# ── Training window ──────────────────────────────────────────────────────────
+TRAIN_START = datetime(2020, 1,  1,  tzinfo=timezone.utc)
 
 # Cutoff untuk training — model HANYA dilatih di data sebelum tanggal ini.
-# Holdout testing pakai data setelah cutoff (via 09_holdout_backtest.py).
-# Ini memastikan TIDAK ADA data testing yang bocor ke training.
+# Pastikan = OOS_START sehingga tidak ada overlap.
 TRAIN_CUTOFF_DATE = datetime(2025, 11, 1, tzinfo=timezone.utc)
+TRAIN_END         = TRAIN_CUTOFF_DATE   # alias — 01_fetch.py pakai TRAIN_END
+
+START_DATE = TRAIN_START
+END_DATE   = TRAIN_CUTOFF_DATE
+
+# ── OOS / Hold-Out window ────────────────────────────────────────────────────
+# Data ini di-fetch TERPISAH ke data/holdout/raw/ via --oos flag.
+# TIDAK BOLEH tumpang tindih dengan training.
+OOS_START = TRAIN_CUTOFF_DATE           # 2025-11-01 — sama persis dengan TRAIN_END
+OOS_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
 
 # ─── Binance API ─────────────────────────────────────────────────────────────
 BINANCE_BASE_URL       = "https://fapi.binance.com"
@@ -100,7 +121,7 @@ SYNTHETIC_OI_NORM_WINDOW = 168
 
 # ─── Training & Purging ───────────────────────────────────────────────────────
 N_FOLDS        = 8
-PURGE_GAP_BARS = 5
+PURGE_GAP_BARS = 24
 
 # LightGBM Params (H1)
 # device_type="gpu" → pakai OpenCL (kompatibel AMD/Intel/NVIDIA)
@@ -118,7 +139,7 @@ LGBM_PARAMS = {
     "verbose":           -1,
     "n_jobs":            -1,
     "random_state":      42,
-    "device_type":       "gpu",
+    "device_type":       "cpu",
     "gpu_platform_id":   0,
     "gpu_device_id":     0,
 }
@@ -140,8 +161,8 @@ LGBM_H4_PARAMS = {
 }
 
 # H1 entry thresholds (3-class model tidak berubah)
-LGBM_THRESHOLD_LONG  = 0.65   # LGBM minimum confidence untuk entry LONG
-LGBM_THRESHOLD_SHORT = 0.65   # LGBM minimum confidence untuk entry SHORT
+LGBM_THRESHOLD_LONG  = 0.75   # LGBM minimum confidence untuk entry LONG
+LGBM_THRESHOLD_SHORT = 0.60   # LGBM minimum confidence untuk entry SHORT
 # FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
 # LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
 # Makin rendah → makin sering LSTM dipanggil → lebih banyak sinyal, lebih berat.
@@ -218,7 +239,7 @@ FEATURE_COLS_V3 = [
     "FVG_up", "FVG_down", "Buy_Liq", "Sell_Liq", "SFP_sweep",
 
     # Open interest & funding
-    "open_interest", "funding_rate",
+    "open_interest", "dynamic_position_pressure", "funding_rate",
 
     # EMA H1
     "ema_7_h1", "ema_21_h1", "ema_50_h1", "ema_200_h1",
@@ -239,7 +260,7 @@ FEATURE_COLS_V3 = [
     "POC", "VAH", "VAL",
 
     # Macro
-    "btc_dominance", "fear_greed", "market_session",
+    "market_session", "btc_dominance", "fear_greed",
 
     # Returns & volume ratio
     "log_ret_1", "log_ret_5", "log_ret_20", "vol_ratio_20",
@@ -286,6 +307,18 @@ FEATURE_COLS_V3 = [
 
     # Trend quality — correction detection
     "trend_accel_4h", "vol_price_confirm", "dist_from_8h_high",
+
+    # Game Changer Features (v4.0)
+    "relative_strength_z", "relative_strength_momentum",
+    "dist_liq_50x_long", "dist_liq_20x_long",
+    "dist_liq_50x_short", "dist_liq_20x_short",
+    "whale_retail_divergence",
+
+    # Volatility Regime Features (v4.1) — Gejolak Market Detectors
+    # atr_zscore_20d     : ATR H1 vs mean 20-hari (spike = gejolak)
+    # atr_percentile_h1  : Volatility rank 30-hari (0=rendah, 1=tinggi)
+    # vol_spike_zscore   : Volume H1 z-score vs 48-bar (spike = event besar)
+    "atr_zscore_20d", "atr_percentile_h1", "vol_spike_zscore",
 ]
 
 # ─── TP/SL Architecture (Final — tested via ASPECT_COMPARISON.md) ───────────
@@ -343,10 +376,10 @@ TP_SL_MAX_SL_PCT         = 0.30   # max SL = 30% dari entry price
 # With-trend trades WR rendah (33.3%) → penalty untuk kurangi sinyal with-trend.
 # Counter-trend trades WR tinggi (77.8%) → boost untuk perlebar akses.
 # Trend determined by h4_trend feature (>0 = UP, <0 = DOWN, ≈0 = RANGING).
-TREND_ALIGNMENT_ENABLED  = False  # enable trend alignment adjustment
+TREND_ALIGNMENT_ENABLED  = True  # enable trend alignment adjustment
 WITH_TREND_PENALTY       = 0.10   # penalty subtracted from confidence (2a)
 COUNTER_TREND_BOOST      = 0.05   # boost added to confidence (2b)
-WITH_TREND_BLOCK_CONF    = 0.95   # block all with-trend if conf < this (2c, 0 = disable)
+WITH_TREND_BLOCK_CONF    = 0.00   # block all with-trend if conf < this (2c, 0 = disable)
 
 # ─── #19: Max Swing Deviation (Grup 3b) ─────────────────────────────────────
 # Tolak trade jika deviasi swing > threshold. Saat ini hardcoded 0.15.
@@ -371,8 +404,8 @@ GUARDIAN_EXIT_THRESHOLD        = 0.65   # min EXIT proba mid-level
 GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
 GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
-GUARDIAN_MIN_HOLD_BARS         = 3      # guardian tidak boleh exit di 3 bar pertama
-GUARDIAN_ACTIVATION_ATR        = 1.5    # guardian aktif setelah price bergerak 1.5x ATR
+GUARDIAN_MIN_HOLD_BARS         = 0      # guardian tidak boleh exit di 3 bar pertama
+GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif setelah price bergerak 1.5x ATR
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
 TRAILING_STOP_ENABLED          = False  # Guardian solo — RUN C holdout
@@ -416,7 +449,7 @@ MODAL_PER_TRADE            = 25.0    # 25 USD per trade (sesuai setting UI)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.65     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
+CONFIDENCE_THRESHOLD_ENTRY = 0.60     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────

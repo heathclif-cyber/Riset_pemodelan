@@ -1,29 +1,70 @@
 {
   "symbols": {
+    "BTCUSDT": {
+      "symbol": "BTCUSDT",
+      "klines": {
+        "1h": {
+          "status": "ok",
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
+          "nan_pct": 0.0
+        },
+        "4h": {
+          "status": "ok",
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
+          "nan_pct": 0.0
+        }
+      },
+      "auxiliary": {
+        "open_interest": {
+          "status": "missing"
+        },
+        "funding_rate": {
+          "status": "ok",
+          "rows": 6391,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
+          "status": "missing"
+        }
+      },
+      "macro": {
+        "btc_dominance": {
+          "status": "ok",
+          "rows": 2132
+        },
+        "fear_greed_index": {
+          "status": "ok",
+          "rows": 2132
+        }
+      },
+      "leakage_flagged": [],
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\BTCUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
+    },
     "SOLUSDT": {
       "symbol": "SOLUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 45766,
+          "start": "2020-08-11 06:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 10,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 11447,
+          "start": "2020-08-11 04:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -33,49 +74,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5696,
+          "start": "2020-09-13 16:00:00.004000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\SOLUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\SOLUSDT_clean.parquet",
+      "output_rows": 45766,
+      "output_columns": 25
     },
     "ETHUSDT": {
       "symbol": "ETHUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -84,49 +123,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6391,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\ETHUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\ETHUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "BNBUSDT": {
       "symbol": "BNBUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -135,49 +172,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6271,
+          "start": "2020-02-10 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\BNBUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\BNBUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "XRPUSDT": {
       "symbol": "XRPUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -186,49 +221,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6376,
+          "start": "2020-01-06 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\XRPUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\XRPUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "DOGEUSDT": {
       "symbol": "DOGEUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -237,48 +270,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5818,
+          "start": "2020-07-10 08:00:00.001000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\DOGEUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\DOGEUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "TONUSDT": {
       "symbol": "TONUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 10790,
+          "start": "2024-08-08 10:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 2698,
+          "start": "2024-08-08 08:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -288,49 +319,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 3652,
+          "start": "2024-03-01 08:00:00+00:00",
+          "end": "2025-10-31 20:00:00.001000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\TONUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\TONUSDT_clean.parquet",
+      "output_rows": 10790,
+      "output_columns": 25
     },
     "ADAUSDT": {
       "symbol": "ADAUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -339,49 +368,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6336,
+          "start": "2020-01-19 16:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\ADAUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\ADAUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "TRXUSDT": {
       "symbol": "TRXUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -390,48 +417,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6349,
+          "start": "2020-01-15 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\TRXUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\TRXUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "1000SHIBUSDT": {
       "symbol": "1000SHIBUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 39246,
+          "start": "2021-05-10 11:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 3,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 9814,
+          "start": "2021-05-10 08:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -441,48 +466,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 4905,
+          "start": "2021-05-10 16:00:00.013000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\1000SHIBUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\1000SHIBUSDT_clean.parquet",
+      "output_rows": 39246,
+      "output_columns": 25
     },
     "AVAXUSDT": {
       "symbol": "AVAXUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 44758,
+          "start": "2020-09-22 06:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 10,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 11195,
+          "start": "2020-09-22 04:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -492,49 +515,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5595,
+          "start": "2020-09-22 16:00:00.004000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\AVAXUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\AVAXUSDT_clean.parquet",
+      "output_rows": 44758,
+      "output_columns": 25
     },
     "LINKUSDT": {
       "symbol": "LINKUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -543,48 +564,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 6343,
+          "start": "2020-01-17 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\LINKUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\LINKUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "DOTUSDT": {
       "symbol": "DOTUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 45581,
+          "start": "2020-08-18 23:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 10,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 11401,
+          "start": "2020-08-18 20:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -594,48 +613,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5695,
+          "start": "2020-08-20 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\DOTUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\DOTUSDT_clean.parquet",
+      "output_rows": 45581,
+      "output_columns": 25
     },
     "SUIUSDT": {
       "symbol": "SUIUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 21900,
+          "start": "2023-05-03 12:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 5475,
+          "start": "2023-05-03 12:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -645,48 +662,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 2737,
+          "start": "2023-05-03 16:00:00.011000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\SUIUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\SUIUSDT_clean.parquet",
+      "output_rows": 21900,
+      "output_columns": 25
     },
     "POLUSDT": {
       "symbol": "POLUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 9926,
+          "start": "2024-09-13 10:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 2482,
+          "start": "2024-09-13 08:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -696,48 +711,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 2478,
+          "start": "2024-09-13 16:00:00.001000+00:00",
+          "end": "2025-10-31 20:00:00.001000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\POLUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\POLUSDT_clean.parquet",
+      "output_rows": 9926,
+      "output_columns": 25
     },
     "NEARUSDT": {
       "symbol": "NEARUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 44231,
+          "start": "2020-10-14 05:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 10,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 11063,
+          "start": "2020-10-14 04:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -747,48 +760,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5529,
+          "start": "2020-10-14 16:00:00.001000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\NEARUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\NEARUSDT_clean.parquet",
+      "output_rows": 44231,
+      "output_columns": 25
     },
     "1000PEPEUSDT": {
       "symbol": "1000PEPEUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 21846,
+          "start": "2023-05-05 18:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 5462,
+          "start": "2023-05-05 16:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -798,48 +809,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 2731,
+          "start": "2023-05-05 16:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\1000PEPEUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\1000PEPEUSDT_clean.parquet",
+      "output_rows": 21846,
+      "output_columns": 25
     },
     "TAOUSDT": {
       "symbol": "TAOUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 13644,
+          "start": "2024-04-11 12:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 3411,
+          "start": "2024-04-11 12:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -849,48 +858,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 3405,
+          "start": "2024-04-11 16:00:00+00:00",
+          "end": "2025-10-31 20:00:00.001000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\TAOUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\TAOUSDT_clean.parquet",
+      "output_rows": 13644,
+      "output_columns": 25
     },
     "ARBUSDT": {
       "symbol": "ARBUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 22880,
+          "start": "2023-03-23 15:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 5721,
+          "start": "2023-03-23 12:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -900,49 +907,47 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 2861,
+          "start": "2023-03-23 08:00:00.001000+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\ARBUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\ARBUSDT_clean.parquet",
+      "output_rows": 22880,
+      "output_columns": 25
     },
     "HBARUSDT": {
       "symbol": "HBARUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
-          "gaps": 0,
+          "rows": 51112,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
+          "gaps": 15,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
-          "gaps": 0,
+          "rows": 12785,
+          "start": "2020-01-01 00:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
+          "gaps": 1,
           "nan_pct": 0.0
         }
       },
@@ -951,48 +956,46 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 5068,
+          "start": "2021-03-17 08:00:00+00:00",
+          "end": "2025-10-31 16:00:00.007000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\HBARUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\HBARUSDT_clean.parquet",
+      "output_rows": 51112,
+      "output_columns": 25
     },
     "ONDOUSDT": {
       "symbol": "ONDOUSDT",
       "klines": {
         "1h": {
           "status": "ok",
-          "rows": 8040,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 23:00:00+00:00",
+          "rows": 4882,
+          "start": "2025-04-11 14:00:00+00:00",
+          "end": "2025-10-31 23:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         },
         "4h": {
           "status": "ok",
-          "rows": 2010,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 20:00:00+00:00",
-          "gaps": 0,
-          "nan_pct": 0.0
-        },
-        "1d": {
-          "status": "ok",
-          "rows": 335,
-          "start": "2025-05-01 00:00:00+00:00",
-          "end": "2026-03-31 00:00:00+00:00",
+          "rows": 1221,
+          "start": "2025-04-11 12:00:00+00:00",
+          "end": "2025-10-31 20:00:00+00:00",
           "gaps": 0,
           "nan_pct": 0.0
         }
@@ -1002,23 +1005,29 @@
           "status": "missing"
         },
         "funding_rate": {
+          "status": "ok",
+          "rows": 3899,
+          "start": "2024-01-20 16:00:00+00:00",
+          "end": "2025-10-31 20:00:00.001000+00:00"
+        },
+        "long_short_ratio": {
           "status": "missing"
         }
       },
       "macro": {
         "btc_dominance": {
-          "status": "missing",
-          "rows": 0
+          "status": "ok",
+          "rows": 2132
         },
         "fear_greed_index": {
           "status": "ok",
-          "rows": 302
+          "rows": 2132
         }
       },
       "leakage_flagged": [],
-      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\processed\\ONDOUSDT_clean.parquet",
-      "output_rows": 8040,
-      "output_columns": 29
+      "output": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\processed\\ONDOUSDT_clean.parquet",
+      "output_rows": 4882,
+      "output_columns": 25
     }
   }
 }

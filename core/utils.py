@@ -111,32 +111,42 @@ def ensure_utc_index(df: pd.DataFrame) -> pd.DataFrame:
 
 # ─── Path helpers ─────────────────────────────────────────────────────────────
 
-def get_raw_path(data_type: str, symbol: str, interval: str = None) -> Path:
+def get_raw_path(data_type: str, symbol: str, interval: str = None, base_dir: "Path | None" = None) -> "Path":
     """
-    Mapping data_type → path:
-      klines       → data/raw/klines/{symbol}/{interval}_all.parquet
-      funding_rate → data/raw/funding_rate/{symbol}_8h.parquet
-      open_interest→ data/raw/open_interest/{symbol}_1h.parquet
-      macro_btc_dom→ data/raw/macro/btc_dominance.parquet
-      macro_fear_greed → data/raw/macro/fear_greed_index.parquet
+    Mapping data_type -> path:
+      klines         -> {base_dir}/klines/{symbol}/{interval}_all.parquet
+      funding_rate   -> {base_dir}/funding_rate/{symbol}_8h.parquet
+      open_interest  -> {base_dir}/open_interest/{symbol}_1h.parquet
+      long_short_ratio -> {base_dir}/long_short_ratio/{symbol}_1h.parquet
+      macro_btc_dom  -> {base_dir}/macro/btc_dominance.parquet
+      macro_fear_greed -> {base_dir}/macro/fear_greed_index.parquet
+
+    base_dir default ke RAW_DIR jika tidak diberikan (backward compat).
+    Untuk OOS holdout, pass base_dir=HOLDOUT_DIR/'raw'.
     """
-    from config import RAW_DIR
+    try:
+        from config import RAW_DIR
+    except ImportError:
+        RAW_DIR = Path(__file__).parent.parent / "data" / "raw"
+    root = base_dir if base_dir is not None else RAW_DIR
     if data_type == "klines":
-        return RAW_DIR / "klines" / symbol / f"{interval}_all.parquet"
+        return root / "klines" / symbol / f"{interval}_all.parquet"
     elif data_type == "funding_rate":
-        return RAW_DIR / "funding_rate" / f"{symbol}_8h.parquet"
+        return root / "funding_rate" / f"{symbol}_8h.parquet"
     elif data_type == "open_interest":
-        return RAW_DIR / "open_interest" / f"{symbol}_1h.parquet"
+        return root / "open_interest" / f"{symbol}_1h.parquet"
+    elif data_type == "long_short_ratio":
+        return root / "long_short_ratio" / f"{symbol}_1h.parquet"
     elif data_type == "macro_btc_dom":
-        return RAW_DIR / "macro" / "btc_dominance.parquet"
+        return root / "macro" / "btc_dominance.parquet"
     elif data_type == "macro_fear_greed":
-        return RAW_DIR / "macro" / "fear_greed_index.parquet"
+        return root / "macro" / "fear_greed_index.parquet"
     else:
-        return RAW_DIR / data_type / f"{symbol}.parquet"
+        return root / data_type / f"{symbol}.parquet"
 
 # Alias untuk backward compat
-def get_filepath(data_type: str, symbol: str, interval: str = None) -> Path:
-    return get_raw_path(data_type, symbol, interval)
+def get_filepath(data_type: str, symbol: str, interval: str = None, base_dir: "Path | None" = None) -> "Path":
+    return get_raw_path(data_type, symbol, interval, base_dir=base_dir)
 
 
 # ─── Progress tracking ────────────────────────────────────────────────────────

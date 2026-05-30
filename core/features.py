@@ -24,7 +24,18 @@ import numpy as np
 import pandas as pd
 
 from core.utils import setup_logger, ensure_utc_index
-from config import SYNTHETIC_OI_CVD_WINDOW, SYNTHETIC_OI_NORM_WINDOW
+
+try:
+    from config import SYNTHETIC_OI_CVD_WINDOW, SYNTHETIC_OI_NORM_WINDOW
+except ImportError:
+    try:
+        from app.services.config_loader import get_feature_engineering_config as _get_fe_cfg
+        _fe = _get_fe_cfg()
+        SYNTHETIC_OI_CVD_WINDOW  = _fe.get("synthetic_oi_cvd_window",  24)
+        SYNTHETIC_OI_NORM_WINDOW = _fe.get("synthetic_oi_norm_window", 168)
+    except Exception:
+        SYNTHETIC_OI_CVD_WINDOW  = 24
+        SYNTHETIC_OI_NORM_WINDOW = 168
 
 logger = setup_logger("features")
 
@@ -1161,16 +1172,6 @@ def engineer_features(
         atr_h4_raw.index.union(df.index)
     ).ffill().reindex(df.index)
 
-    # ── D1 OHLCV (higher timeframe context) ──────────────────────────────────
-    d1_h = df.get("1d_high",  h)
-    d1_l = df.get("1d_low",   l)
-    d1_c = df.get("1d_close", c)
-
-    atr_d1_raw = calc_atr(d1_h, d1_l, d1_c, 14)
-    atr_d1 = atr_d1_raw.reindex(
-        atr_d1_raw.index.union(df.index)
-    ).ffill().reindex(df.index)
-
     # ── 3. Inisialisasi dict fitur ────────────────────────────────────────────
     feat: dict[str, pd.Series] = {}
 
@@ -1226,7 +1227,7 @@ def engineer_features(
     feat["SFP_sweep"] = sfp
 
     # ── 11. Open Interest ─────────────────────────────────────────────────────
-    oi_col = _col(df, "open_interest", "open_interest_openInterest")
+    oi_col = _col(df, "open_interest", "open_interest_open_interest", "open_interest_openInterest")
     if oi_col and not df[oi_col].isna().all():
         feat["open_interest"] = df[oi_col]
     else:
@@ -1237,8 +1238,15 @@ def engineer_features(
             norm_window = SYNTHETIC_OI_NORM_WINDOW,
         )
 
+    # ── 11b. Dynamic Position Pressure ────────────────────────────────────────
+    # Rasio dari delta CVD (tekanan taker) terhadap delta Open Interest (perubahan posisi).
+    # Menunjukkan apakah open interest baru didorong oleh taker agresif (buyer / seller).
+    cvd_delta = feat["volume_delta"]
+    oi_delta  = feat["open_interest"].diff().replace(0, np.nan)
+    feat["dynamic_position_pressure"] = (cvd_delta / oi_delta).ffill().fillna(0.0).clip(-10.0, 10.0)
+
     # ── 12. Funding Rate ──────────────────────────────────────────────────────
-    fr_col = _col(df, "funding_rate_fundingRate", "funding_rate")
+    fr_col = _col(df, "funding_rate_funding_rate", "funding_rate_fundingRate", "funding_rate")
     funding_rate = df[fr_col] if fr_col else pd.Series(0.0, index=df.index)
     feat["funding_rate"] = funding_rate
 
@@ -1262,23 +1270,6 @@ def engineer_features(
     feat["ema_21_slope_h4"]    = (ema_21_aligned - ema_21_aligned.shift(4)) / atr_safe
     feat["ema_50_slope_h4"]    = (ema_50_aligned - ema_50_aligned.shift(4)) / atr_safe
     feat["price_vs_ema_50_h4"] = (c - ema_50_aligned) / atr_safe
-
-    # ── 14c. D1 EMA (higher timeframe trend) ──────────────────────────────────
-    ema_d1_raw: dict[int, pd.Series] = {}
-    for span in (50, 200):
-        raw_ema       = calc_ema(d1_c, span)
-        aligned_ema   = raw_ema.reindex(
-            raw_ema.index.union(df.index)
-        ).ffill().reindex(df.index)
-        ema_d1_raw[span]         = aligned_ema
-        feat[f"ema_{span}_d1"]   = (aligned_ema - c) / atr_safe
-
-    # D1 EMA Slopes (4 bar = ~4 hari)
-    ema_50_d1  = ema_d1_raw[50]
-    ema_200_d1 = ema_d1_raw[200]
-    feat["ema_50_slope_d1"]    = (ema_50_d1 - ema_50_d1.shift(4)) / atr_safe
-    feat["ema_200_slope_d1"]   = (ema_200_d1 - ema_200_d1.shift(4)) / atr_safe
-    feat["price_vs_ema_50_d1"] = (c - ema_50_d1) / atr_safe
 
     # ── 15. RSI & StochRSI (H1) ───────────────────────────────────────────────
     feat["rsi_6"]          = calc_rsi(c, 6)
@@ -1327,7 +1318,7 @@ def engineer_features(
     # Gunakan data real jika tersedia dan memiliki variasi cukup (>10% non-NaN).
     # Fallback ke synthetic proxy jika data tidak ada atau semua 0/NaN —
     # mencegah feature distribution shift antara training dan inference.
-    ls_col = _col(df, "long_short_ratio", "globalLongShortAccountRatio")
+    ls_col = _col(df, "long_short_ratio", "long_short_ratio_long_short_ratio", "globalLongShortAccountRatio")
     real_ls = df[ls_col] if ls_col else None
     use_real = (
         real_ls is not None
@@ -1408,44 +1399,6 @@ def engineer_features(
     prev_range    = (h4_h - h4_l).shift(1)
     current_range = h4_h - h4_l
     feat["range_expansion_h4"] = current_range / prev_range.replace(0, np.nan)
-
-    # ── 27c. Higher Timeframe (D1) Features ──────────────────────────────────
-    # D1 ATR percentile — volatility regime (100 bar ~100 hari)
-    feat["atr_d1_percentile"] = atr_d1.rolling(100, min_periods=20).rank(pct=True)
-
-    # D1 trend direction — EMA7 vs EMA21 pada daily
-    ema7_d1_raw  = calc_ema(d1_c, 7)
-    ema21_d1_raw = calc_ema(d1_c, 21)
-    ema7_d1  = ema7_d1_raw.reindex(
-        ema7_d1_raw.index.union(df.index)
-    ).ffill().reindex(df.index)
-    ema21_d1 = ema21_d1_raw.reindex(
-        ema21_d1_raw.index.union(df.index)
-    ).ffill().reindex(df.index)
-
-    d1_trend = pd.Series(
-        np.where(ema7_d1 > ema21_d1, 1, np.where(ema7_d1 < ema21_d1, -1, 0)),
-        index=df.index,
-    )
-    feat["d1_trend"] = d1_trend
-
-    # Multi-timeframe alignment: H4 trend vs D1 trend
-    # 1 = align (sama-sama bullish/bearish), 0 = conflict
-    feat["htf_alignment"] = (
-        (feat["h4_trend"].fillna(0) == d1_trend.fillna(0)) & (d1_trend.fillna(0) != 0)
-    ).astype(int)
-
-    # D1 trend strength — EMA21 vs EMA50 gap (semakin lebar, semakin kuat)
-    ema50_d1_aligned = ema_d1_raw[50]
-    feat["d1_trend_strength"] = (ema21_d1 - ema50_d1_aligned) / atr_d1.replace(0, np.nan)
-
-    # D1 HH/HL structure bias — simple swing detection (5 bar lookback)
-    d1_swing_high = (d1_h.rolling(5, min_periods=3).max() == d1_h) & (d1_h > d1_h.shift(5))
-    d1_swing_low  = (d1_l.rolling(5, min_periods=3).min() == d1_l) & (d1_l < d1_l.shift(5))
-    feat["d1_hh_hl_bias"] = np.where(
-        d1_swing_high & ~d1_swing_low, 1,
-        np.where(~d1_swing_high & d1_swing_low, -1, 0)
-    )
 
     # ── Wyckoff Phase (bergantung pada fitur sebelumnya) ────────────────────────
     price_in_range_clean = feat["price_in_range"].fillna(0.5)
@@ -1534,6 +1487,74 @@ def engineer_features(
         atr_h1 = atr_h1,
         window = 8,
     )
+
+    # ── 28b. Game Changer Features (v4.0) ──────────────────────────────────────
+    # Feature 1: Altcoin Relative Strength (RS) & Weakness (RW) vs BTC
+    btc_close = df.get("btc_close", c)  # Fallback ke c jika btc_close tidak ada
+    alt_btc_ratio = c / btc_close.replace(0, np.nan)
+    alt_btc_ratio_sma24 = alt_btc_ratio.rolling(24, min_periods=5).mean()
+    alt_btc_ratio_std24 = alt_btc_ratio.rolling(24, min_periods=5).std()
+    
+    feat["relative_strength_z"] = ((alt_btc_ratio - alt_btc_ratio_sma24) / 
+                                   alt_btc_ratio_std24.replace(0, np.nan)).fillna(0.0).clip(-5.0, 5.0)
+    feat["relative_strength_momentum"] = feat["relative_strength_z"].diff(4).fillna(0.0)
+
+    # Feature 2: Liquidation Cascade Proxy
+    # Estimasi harga likuidasi untuk long leverage 50x dan 20x di bawah swing low
+    # Estimasi harga likuidasi untuk short leverage 50x dan 20x di atas swing high
+    liq_50x_long = h4_swing_lows * 0.98
+    liq_20x_long = h4_swing_lows * 0.95
+    liq_50x_short = h4_swing_highs * 1.02
+    liq_20x_short = h4_swing_highs * 1.05
+
+    feat["dist_liq_50x_long"]  = ((c - liq_50x_long) / atr_safe).fillna(0.0)
+    feat["dist_liq_20x_long"]  = ((c - liq_20x_long) / atr_safe).fillna(0.0)
+    feat["dist_liq_50x_short"] = ((liq_50x_short - c) / atr_safe).fillna(0.0)
+    feat["dist_liq_20x_short"] = ((liq_20x_short - c) / atr_safe).fillna(0.0)
+
+    # Feature 3: Whale vs Retail Divergence
+    # L/S ratio z-score vs CVD z-score divergence
+    ls_ratio = feat.get("long_short_ratio", pd.Series(1.0, index=df.index))
+    cvd_series = feat.get("cvd", pd.Series(0.0, index=df.index))
+    
+    ls_sma24 = ls_ratio.rolling(24, min_periods=5).mean()
+    ls_std24 = ls_ratio.rolling(24, min_periods=5).std().replace(0, np.nan)
+    ls_z = (ls_ratio - ls_sma24) / ls_std24
+    
+    cvd_sma24 = cvd_series.rolling(24, min_periods=5).mean()
+    cvd_std24 = cvd_series.rolling(24, min_periods=5).std().replace(0, np.nan)
+    cvd_z = (cvd_series - cvd_sma24) / cvd_std24
+    
+    feat["whale_retail_divergence"] = (cvd_z - ls_z).fillna(0.0).clip(-5.0, 5.0)
+
+    # Feature 4: ATR Z-Score (Volatility Spike Detector)
+    # Seberapa jauh ATR H1 saat ini dari rata-rata 20-hari (480 bar)?
+    # Nilai tinggi = gejolak/volatility spike. Seluruhnya backward-looking, zero leakage.
+    atr_mean_20d = atr_h1.rolling(480, min_periods=48).mean()
+    atr_std_20d  = atr_h1.rolling(480, min_periods=48).std().replace(0, np.nan)
+    feat["atr_zscore_20d"] = (
+        (atr_h1 - atr_mean_20d) / atr_std_20d
+    ).fillna(0.0).clip(-5.0, 5.0)
+
+    # Feature 5: ATR Percentile H1 (Relative Volatility Rank)
+    # Posisi ATR H1 saat ini dalam distribusi 30-hari (720 bar).
+    # 0.0=terendah, 1.0=tertinggi. Memberi konteks "lebih volatile dari biasanya?"
+    def _rolling_pct_rank(s: pd.Series, window: int) -> pd.Series:
+        return s.rolling(window, min_periods=24).apply(
+            lambda x: float((x[-1] > x[:-1]).mean()) if len(x) > 1 else 0.5,
+            raw=True,
+        ).fillna(0.5)
+
+    feat["atr_percentile_h1"] = _rolling_pct_rank(atr_h1, window=720)
+
+    # Feature 6: Volume Z-Score vs 48-bar baseline
+    # Continuous z-score volume sekarang vs distribusi 48 bar terakhir.
+    # Spike besar (>3) = kemungkinan kapitulasi, FOMO, atau liquidation cascade.
+    vol_mean_48 = v.rolling(48, min_periods=12).mean()
+    vol_std_48  = v.rolling(48, min_periods=12).std().replace(0, np.nan)
+    feat["vol_spike_zscore"] = (
+        (v - vol_mean_48) / vol_std_48
+    ).fillna(0.0).clip(-5.0, 5.0)
 
     # ── 29. Build DataFrame ───────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)

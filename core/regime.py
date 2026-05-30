@@ -220,7 +220,7 @@ def generate_oof_regime_labels(
 
     # ── Fill any remaining gaps (forward-fill then fallback) ──────────────────
     s = pd.Series(labels_out, index=df_h4.index)
-    s = s.replace("", np.nan).ffill().bfill().fillna(fallback)
+    s = s.replace("", np.nan).ffill().fillna(fallback)   # no bfill: ffill-only prevents look-ahead
 
     # Distribution log
     dist_final = s.value_counts(normalize=True).round(3).to_dict()

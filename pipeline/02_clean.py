@@ -31,8 +31,8 @@ from core.utils import setup_logger, ensure_utc_index
 logger = setup_logger("02_clean")
 
 # ── H1 Base Timeframe Update (M15 dihapus dari pipeline) ──
-INTERVALS      = ["1h", "4h", "1d"]
-INTERVAL_FREQ  = {"1h": "1h", "4h": "4h", "1d": "1D"}
+INTERVALS      = ["1h", "4h"]
+INTERVAL_FREQ  = {"1h": "1h", "4h": "4h"}
 LEAKAGE_WORDS  = ("future", "_fwd", "next_", "lead_", "label",
                   "barrier", "exit_time", "pnl", "ret_fwd")
 
@@ -133,6 +133,7 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
     aux_sources = {
         "open_interest":    RAW_DIR / "open_interest"    / f"{symbol}_1h.parquet",
         "funding_rate":     RAW_DIR / "funding_rate"     / f"{symbol}_8h.parquet",
+        "long_short_ratio": RAW_DIR / "long_short_ratio" / f"{symbol}_1h.parquet",
     }
     aux = {}
     for name, path in aux_sources.items():
@@ -170,14 +171,32 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
     master = base_h1.copy()
     master.columns = [f"1h_{c}" for c in master.columns]
 
-    # Join H4, D1 dengan ffill ke H1 grid
-    for tf in ("4h", "1d"):
+    # Join H4 dengan ffill ke H1 grid (SHIFT 1 untuk cegah look-ahead bias!)
+    for tf in ("4h",):
         df_tf = klines.get(tf)
         if df_tf is None:
             continue
+        # Geser 1 bar agar data lilin H4/D1 yang belum ditutup tidak bocor ke H1 master grid
+        df_tf = df_tf.shift(1)
         df_tf = df_tf.rename(columns={c: f"{tf}_{c}" for c in df_tf.columns})
         df_tf_h1 = df_tf.reindex(df_tf.index.union(master.index)).sort_index().ffill()
         master = master.join(df_tf_h1.reindex(master.index), how="left")
+
+    # Join BTC close price (untuk kalkulasi Relative Strength) jika bukan BTCUSDT sendiri
+    if symbol != "BTCUSDT":
+        btc_path = PROC_DIR / "BTCUSDT_clean.parquet"
+        if btc_path.exists():
+            try:
+                btc_df = pd.read_parquet(btc_path)
+                btc_close = btc_df["1h_close"].rename("btc_close")
+                master = master.join(btc_close, how="left").ffill()
+            except Exception as e:
+                logger.warning(f"[{symbol}] Gagal load BTCUSDT_clean.parquet: {e}")
+                master["btc_close"] = master["1h_close"]
+        else:
+            master["btc_close"] = master["1h_close"]
+    else:
+        master["btc_close"] = master["1h_close"]
 
     # Join auxiliary dengan ffill ke H1 grid
     for name, df_aux in aux.items():

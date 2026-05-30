@@ -13,7 +13,11 @@ from pathlib import Path
 import torch
 import torch.nn as nn
 
-from config import FEATURE_COLS_V3
+try:
+    from config import FEATURE_COLS_V3
+    DEFAULT_N_FEATURES = len(FEATURE_COLS_V3)
+except ImportError:
+    DEFAULT_N_FEATURES = 105  # Fallback to cascade_v4.1 feature count
 
 # ─── TradingLSTM ─────────────────────────────────────────────────────────────
 
@@ -87,7 +91,7 @@ class TradingLSTM(nn.Module):
 
     def __init__(
         self,
-        n_features:  int   = len(FEATURE_COLS_V3),
+        n_features:  int   = DEFAULT_N_FEATURES,
         hidden_size: int   = 128,
         num_layers:  int   = 2,
         dropout:     float = 0.3,

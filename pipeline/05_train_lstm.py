@@ -161,6 +161,7 @@ def train_fold(
     optimizer = torch.optim.Adam(model.parameters(), lr=LSTM_LR)
 
     best_f1, best_state, patience_count = -1.0, None, 0
+    best_epoch = 1
     for epoch in range(1, LSTM_EPOCHS + 1):
         model.train()
         for xb, yb in train_loader:
@@ -182,10 +183,11 @@ def train_fold(
         f1 = float(f1_score(all_labels, all_preds, average="macro", zero_division=0))
         if f1 > best_f1:
             best_f1, best_state, patience_count = f1, {k: v.cpu() for k, v in model.state_dict().items()}, 0
+            best_epoch = epoch
         else:
             patience_count += 1
             if patience_count >= LSTM_PATIENCE:
-                logger.info(f"[Fold {fold_num}] Early stop epoch {epoch} (best F1={best_f1:.4f})")
+                logger.info(f"[Fold {fold_num}] Early stop epoch {epoch} (best F1={best_f1:.4f} at epoch {best_epoch})")
                 break
 
         if epoch % 5 == 0 or epoch == 1:
@@ -203,6 +205,7 @@ def train_fold(
     f1_per = f1_score(all_labels, all_preds, average=None, zero_division=0, labels=[0, 1, 2])
     metrics = {
         "fold": fold_num, "n_train": len(X_tr), "n_test": len(X_te),
+        "best_epoch": best_epoch,
         "accuracy":    round(float(accuracy_score(all_labels, all_preds)), 4),
         "f1_macro":    round(best_f1, 4),
         "f1_weighted": round(float(f1_score(all_labels, all_preds, average="weighted", zero_division=0)), 4),
@@ -211,7 +214,7 @@ def train_fold(
         "f1_LONG":     round(float(f1_per[2]), 4),
         "confusion_matrix": confusion_matrix(all_labels, all_preds, labels=[0, 1, 2]).tolist(),
     }
-    logger.info(f"[Fold {fold_num}] F1-macro={best_f1:.4f} | LONG={f1_per[2]:.4f} SHORT={f1_per[0]:.4f}")
+    logger.info(f"[Fold {fold_num}] F1-macro={best_f1:.4f} | LONG={f1_per[2]:.4f} SHORT={f1_per[0]:.4f} | Best Epoch={best_epoch}")
     return model, scaler, metrics
 
 
@@ -222,6 +225,41 @@ def parse_args():
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--run-id", default=None)
     return parser.parse_args()
+
+
+def retrain_final_lstm(X_all: np.ndarray, y_all: np.ndarray, final_epochs: int, scaler: StandardScaler) -> TradingLSTM:
+    logger.info(f"Retraining final LSTM model on 100% training data ({len(X_all):,} samples) for {final_epochs} epochs...")
+    X_all_sc = scaler.transform(X_all)
+    
+    train_ds = SequenceDataset(X_all_sc, y_all)
+    sampler  = build_sampler(train_ds.get_labels())
+    
+    train_loader = DataLoader(train_ds, batch_size=LSTM_BATCH_SIZE,
+                              sampler=sampler, num_workers=0, pin_memory=False)
+                              
+    n_features = X_all.shape[1]
+    model = TradingLSTM(n_features, LSTM_HIDDEN, LSTM_LAYERS, LSTM_DROPOUT).to(DEVICE)
+    cw    = compute_class_weights(y_all)
+    criterion = nn.CrossEntropyLoss(weight=cw)
+    optimizer = torch.optim.Adam(model.parameters(), lr=LSTM_LR)
+    
+    for epoch in range(1, final_epochs + 1):
+        model.train()
+        epoch_loss = 0.0
+        for xb, yb in train_loader:
+            xb, yb = xb.to(DEVICE), yb.to(DEVICE)
+            optimizer.zero_grad()
+            loss = criterion(model(xb), yb)
+            loss.backward()
+            nn.utils.clip_grad_norm_(model.parameters(), 1.0)
+            optimizer.step()
+            epoch_loss += loss.item()
+        
+        if epoch % 5 == 0 or epoch == 1 or epoch == final_epochs:
+            logger.info(f"[Final Retrain] Epoch {epoch:>2}/{final_epochs} | Loss: {epoch_loss/len(train_loader):.4f}")
+            
+    model.eval()
+    return model
 
 
 def main():
@@ -237,7 +275,7 @@ def main():
     feat_cols = [c for c in df.columns if c not in NON_FEATURE_COLS]
     X = df[feat_cols].values.astype(np.float64)
 
-    folds       = build_purged_folds(len(df))
+    folds       = build_purged_folds(df.index)
     all_metrics = []
     best_model, best_scaler, best_f1, best_fold = None, None, -1.0, -1
 
@@ -249,15 +287,26 @@ def main():
         if metrics["f1_macro"] > best_f1:
             best_f1, best_model, best_scaler, best_fold = metrics["f1_macro"], model, scaler, fold_num
 
-    # Simpan
-    lstm_path   = run_dir / "lstm.pt"
+    # ── Final scaler — fit pada SELURUH training data ────────────────────────
     scaler_path = run_dir / "lstm_scaler.pkl"
-    save_lstm(best_model, lstm_path)
-    joblib.dump(best_scaler, scaler_path)
-    # Copy ke root models/
-    save_lstm(best_model, MODEL_DIR / "lstm_best.pt")
-    joblib.dump(best_scaler, MODEL_DIR / "lstm_scaler.pkl")
-    logger.info(f"Best model fold {best_fold} F1={best_f1:.4f} → {lstm_path}")
+    logger.info(f"Fitting final scaler pada {len(X):,} samples (full training set)...")
+    final_scaler = StandardScaler()
+    final_scaler.fit(X)
+    joblib.dump(final_scaler, scaler_path)
+    joblib.dump(final_scaler, MODEL_DIR / "lstm_scaler.pkl")
+    logger.info(f"Final scaler saved -> {scaler_path}")
+
+    # ── Full Retraining pada 100% Training Data ──────────────────────────────
+    avg_best_epoch = int(np.mean([m["best_epoch"] for m in all_metrics]))
+    logger.info(f"CV complete. Average best_epoch: {avg_best_epoch} | Best Fold: {best_fold} (F1={best_f1:.4f})")
+    
+    final_model = retrain_final_lstm(X, y, avg_best_epoch, final_scaler)
+
+    # ── Simpan model retrained final ──────────────────────────────────────────
+    lstm_path = run_dir / "lstm.pt"
+    save_lstm(final_model, lstm_path)
+    save_lstm(final_model, MODEL_DIR / "lstm_best.pt")
+    logger.info(f"Final retrained model saved -> {lstm_path} and copied to root models/lstm_best.pt")
 
     # ★ v2: simpan feature_cols_v2.json (selalu overwrite)
     feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
@@ -272,6 +321,7 @@ def main():
         "best_fold": best_fold, "best_f1_macro": round(best_f1, 4),
         "mean_f1_macro": round(float(np.mean(f1s)), 4),
         "std_f1_macro":  round(float(np.std(f1s)), 4),
+        "final_retrain_epochs": avg_best_epoch,
         "feature_cols":  feat_cols, "folds": all_metrics,
     }
     cv_path = run_dir / "lstm_cv_results.json"
@@ -287,7 +337,7 @@ def main():
     print(f"  Device     : {DEVICE}")
     print(f"  Best fold  : {best_fold} (F1-macro={best_f1:.4f})")
     print(f"  Mean F1    : {np.mean(f1s):.4f} ± {np.std(f1s):.4f}")
-    print(f"  Model      : {lstm_path}")
+    print(f"  Model      : {lstm_path} (retrained on 100% data, epochs={avg_best_epoch})")
     print(f"{sep}\n")
 
 

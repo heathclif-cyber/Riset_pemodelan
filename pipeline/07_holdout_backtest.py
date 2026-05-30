@@ -40,10 +40,10 @@ sys.path.insert(0, str(ROOT))
 
 from config import (
     TRAINING_COINS, ALL_COINS, SYMBOL_MAP,
-    RAW_DIR, MODEL_DIR, REPORT_DIR,
+    RAW_DIR, MODEL_DIR, REPORT_DIR, HOLDOUT_DIR,
     BINANCE_BASE_URL, SLEEP_BETWEEN_REQUESTS,
     SLEEP_ON_RATE_LIMIT, MAX_RETRIES, RETRY_BACKOFF_BASE,
-    KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT,
+    KLINE_INTERVALS, KLINE_LIMIT, FUNDING_LIMIT, OI_LIMIT, LONG_SHORT_LIMIT,
     LABEL_MAP, NUM_CLASSES, LSTM_SEQ_LEN,
     MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE, SLIPPAGE_PER_SIDE,
     MAX_HOLDING_BARS, CONFIDENCE_THRESHOLD_ENTRY,
@@ -67,8 +67,8 @@ logger = setup_logger("07_holdout_backtest")
 from core.utils import get_lstm_device
 DEVICE = torch.device("cpu")  # LSTM inference via CPU
 
-# ── Hold-out directories (terpisah dari training data) ────────────────────────
-HOLDOUT_DIR       = ROOT / "data" / "holdout"
+# ── Holdout-test directories (terpisah dari data/training/) ──────────────────
+# HOLDOUT_DIR = data/holdout-test/ (diimport dari config)
 HOLDOUT_RAW_DIR   = HOLDOUT_DIR / "raw"
 HOLDOUT_PROC_DIR  = HOLDOUT_DIR / "processed"
 HOLDOUT_LABEL_DIR = HOLDOUT_DIR / "labeled"
@@ -84,10 +84,13 @@ SHORT_MIN_PIR     = 0.2
 
 def fetch_holdout(coins: list[str], start: datetime, end: datetime) -> list[str]:
     """
-    Fetch data hold-out. Karena fetch_coin tidak support raw_dir, 
-    kita fetch ke RAW_DIR biasa lalu filter berdasarkan tanggal saat clean.
-    Data training (sebelum start) tidak akan terpengaruh karena clean_holdout_symbol
-    memfilter berdasarkan tanggal dan menyimpannya di holdout dir.
+    Fetch data hold-out LANGSUNG ke HOLDOUT_RAW_DIR (data/holdout/raw/).
+    Tidak lagi melalui RAW_DIR — data OOS sepenuhnya terpisah dari training.
+
+    PRASYARAT: Pastikan sudah menjalankan:
+        python pipeline/01_fetch.py --all --oos
+    untuk pre-fetch OOS data. Fungsi ini hanya dipakai jika belum ada data
+    atau ingin re-fetch ulang dari dalam pipeline 07.
     """
     client = BinanceClient(
         base_url         = BINANCE_BASE_URL,
@@ -99,6 +102,7 @@ def fetch_holdout(coins: list[str], start: datetime, end: datetime) -> list[str]
     if not client.test_connection():
         raise ConnectionError("Koneksi ke Binance gagal.")
     logger.info(f"Binance OK | Periode: {start.date()} - {end.date()}")
+    logger.info(f"Output   : {HOLDOUT_RAW_DIR}")
 
     # Fetch macro ke holdout raw (fear & greed, btc dominance)
     macro_holdout_dir = HOLDOUT_RAW_DIR / "macro"
@@ -107,40 +111,22 @@ def fetch_holdout(coins: list[str], start: datetime, end: datetime) -> list[str]
 
     success = []
     for i, symbol in enumerate(coins, 1):
-        logger.info(f"[{i}/{len(coins)}] Fetching {symbol} hold-out...")
+        logger.info(f"[{i}/{len(coins)}] Fetching {symbol} hold-out -> {HOLDOUT_RAW_DIR}...")
         try:
             result = fetch_coin(
-                client        = client,
-                symbol        = symbol,
-                start         = start,
-                end           = end,
-                intervals     = KLINE_INTERVALS,
-                progress      = {},
-                kline_limit   = KLINE_LIMIT,
-                funding_limit = FUNDING_LIMIT,
+                client           = client,
+                symbol           = symbol,
+                start            = start,
+                end              = end,
+                intervals        = KLINE_INTERVALS,
+                progress         = {},
+                kline_limit      = KLINE_LIMIT,
+                funding_limit    = FUNDING_LIMIT,
+                oi_limit         = OI_LIMIT,
+                long_short_limit = LONG_SHORT_LIMIT,
+                raw_dir          = HOLDOUT_RAW_DIR,  # <-- langsung ke holdout/raw/
             )
             if result:
-                # Simpan copy ke holdout dir dengan filter tanggal
-                for tf in KLINE_INTERVALS:
-                    src = RAW_DIR / "klines" / symbol / f"{tf}_all.parquet"
-                    dst = HOLDOUT_RAW_DIR / "klines" / symbol / f"{tf}_all.parquet"
-                    dst.parent.mkdir(parents=True, exist_ok=True)
-                    if src.exists():
-                        df_raw = pd.read_parquet(src)
-                        df_raw = ensure_utc_index(df_raw)
-                        df_raw = df_raw[df_raw.index >= start]  # ← filter tanggal
-                        _save_parquet(df_raw, dst)
-
-                # Funding rate
-                fr_src = RAW_DIR / "funding_rate" / f"{symbol}_8h.parquet"
-                fr_dst = HOLDOUT_RAW_DIR / "funding_rate" / f"{symbol}_8h.parquet"
-                fr_dst.parent.mkdir(parents=True, exist_ok=True)
-                if fr_src.exists():
-                    df_fr = pd.read_parquet(fr_src)
-                    df_fr = ensure_utc_index(df_fr)
-                    df_fr = df_fr[df_fr.index >= start]
-                    _save_parquet(df_fr, fr_dst)
-
                 success.append(symbol)
         except Exception as e:
             logger.error(f"[{symbol}] Fetch error: {e}")
@@ -182,8 +168,8 @@ def _fix_ohlc(df: pd.DataFrame) -> pd.DataFrame:
 
 def clean_holdout_symbol(symbol: str) -> bool:
     """Clean satu koin dari HOLDOUT_RAW_DIR - HOLDOUT_PROC_DIR."""
-    INTERVALS     = ["1h", "4h", "1d"]
-    INTERVAL_FREQ = {"1h": "1h", "4h": "4h", "1d": "1D"}
+    INTERVALS     = ["1h", "4h"]
+    INTERVAL_FREQ = {"1h": "1h", "4h": "4h"}
 
     klines = {}
     for tf in INTERVALS:
@@ -201,13 +187,31 @@ def clean_holdout_symbol(symbol: str) -> bool:
     master = base_h1.copy()
     master.columns = [f"1h_{c}" for c in master.columns]
 
-    for tf in ("4h", "1d"):
+    for tf in ("4h",):
         df_tf = klines.get(tf)
         if df_tf is None:
             continue
+        # Geser 1 bar agar data lilin H4/D1 yang belum ditutup tidak bocor ke H1 master grid
+        df_tf = df_tf.shift(1)
         df_tf = df_tf.rename(columns={c: f"{tf}_{c}" for c in df_tf.columns})
         df_tf_h1 = df_tf.reindex(df_tf.index.union(master.index)).sort_index().ffill()
         master = master.join(df_tf_h1.reindex(master.index), how="left")
+
+    # Join BTC close price (untuk kalkulasi Relative Strength) jika bukan BTCUSDT sendiri
+    if symbol != "BTCUSDT":
+        btc_path = HOLDOUT_PROC_DIR / "BTCUSDT_clean.parquet"
+        if btc_path.exists():
+            try:
+                btc_df = pd.read_parquet(btc_path)
+                btc_close = btc_df["1h_close"].rename("btc_close")
+                master = master.join(btc_close, how="left").ffill()
+            except Exception as e:
+                logger.warning(f"[{symbol}] Gagal load BTCUSDT_clean.parquet: {e}")
+                master["btc_close"] = master["1h_close"]
+        else:
+            master["btc_close"] = master["1h_close"]
+    else:
+        master["btc_close"] = master["1h_close"]
 
     # Funding rate
     fr_path = HOLDOUT_RAW_DIR / "funding_rate" / f"{symbol}_8h.parquet"
@@ -506,6 +510,248 @@ def backtest_holdout_symbol(
     return report
 
 
+def generate_markdown_report(aggregate, feat_cols, start, end, run_id, all_trades, run_dir):
+    logger.info("Generating comprehensive Markdown report...")
+    
+    n_coins = len(aggregate.get("success", []))
+    holdout_period = f"{start.date()} - {end.date()}"
+    
+    mean_winrate = float(aggregate.get("mean_winrate", 0.0))
+    mean_tpm = float(aggregate.get("mean_trade_per_month", 0.0))
+    mean_dd5x = float(aggregate.get("mean_drawdown_lev5x", 0.0))
+    mean_sharpe = float(aggregate.get("mean_sharpe", 0.0))
+    mean_sortino = float(aggregate.get("mean_sortino", 0.0))
+    mean_calmar = float(aggregate.get("mean_calmar", 0.0))
+    mean_pf = float(aggregate.get("mean_profit_factor", 0.0))
+    max_consec_loss = int(aggregate.get("max_consecutive_loss", 0))
+    worst_trade_pnl = float(aggregate.get("worst_single_trade_pnl", 0.0))
+    p95_trade_loss = float(aggregate.get("p95_single_trade_loss", 0.0))
+    
+    total_trades = len(all_trades)
+    long_count = 0
+    short_count = 0
+    long_wins = 0
+    short_wins = 0
+    total_pnl = 0.0
+    
+    avg_win_usd = 0.0
+    avg_loss_usd = 0.0
+    avg_win_pct = 0.0
+    avg_loss_pct = 0.0
+    
+    wins_usd = []
+    losses_usd = []
+    wins_pct = []
+    losses_pct = []
+    
+    exit_reasons = {}
+    monthly_perf = {}
+    
+    for t in all_trades:
+        direction = str(t.get("Direction", "")).upper()
+        pnl_usd = float(t.get("PnL ($)", 0.0))
+        pnl_pct = float(t.get("PnL (%)", 0.0))
+        opened = str(t.get("Opened", ""))
+        
+        is_win = pnl_usd > 0
+        total_pnl += pnl_usd
+        
+        if direction == "LONG":
+            long_count += 1
+            if is_win:
+                long_wins += 1
+        elif direction == "SHORT":
+            short_count += 1
+            if is_win:
+                short_wins += 1
+                
+        if is_win:
+            wins_usd.append(pnl_usd)
+            wins_pct.append(pnl_pct)
+        else:
+            losses_usd.append(pnl_usd)
+            losses_pct.append(pnl_pct)
+            
+        # Exit reason mapping
+        exit_r = t.get("Exit Reason") or t.get("Outcome") or "unknown"
+        exit_r = str(exit_r).lower()
+        if "tp" in exit_r or "win" in exit_r:
+            exit_r = "tp_hit"
+        elif "sl" in exit_r or "loss" in exit_r:
+            exit_r = "sl_hit"
+        elif "guardian" in exit_r:
+            if "momentum" in exit_r:
+                exit_r = "guardian_momentum_exit"
+            else:
+                exit_r = "guardian_exit"
+        elif "trailing" in exit_r:
+            exit_r = "trailing_stop"
+        elif "time" in exit_r or "timeout" in exit_r:
+            exit_r = "time_exit"
+            
+        if exit_r not in exit_reasons:
+            exit_reasons[exit_r] = {"count": 0, "wins": 0, "losses": 0, "pnl": 0.0}
+        exit_reasons[exit_r]["count"] += 1
+        exit_reasons[exit_r]["pnl"] += pnl_usd
+        if is_win:
+            exit_reasons[exit_r]["wins"] += 1
+        else:
+            exit_reasons[exit_r]["losses"] += 1
+            
+        # Monthly performance mapping
+        if opened and len(opened) >= 7:
+            month_str = opened[:7]
+            if month_str not in monthly_perf:
+                monthly_perf[month_str] = {"trades": 0, "wins": 0, "pnl": 0.0}
+            monthly_perf[month_str]["trades"] += 1
+            monthly_perf[month_str]["pnl"] += pnl_usd
+            if is_win:
+                monthly_perf[month_str]["wins"] += 1
+
+    long_winrate = (long_wins / long_count) if long_count > 0 else 0.0
+    short_winrate = (short_wins / short_count) if short_count > 0 else 0.0
+    
+    if wins_usd:
+        avg_win_usd = float(np.mean(wins_usd))
+        avg_win_pct = float(np.mean(wins_pct))
+    if losses_usd:
+        avg_loss_usd = float(np.mean(losses_usd))
+        avg_loss_pct = float(np.mean(losses_pct))
+        
+    portfolio_roi = (total_pnl / (100.0 * n_coins)) * 100 if n_coins > 0 else 0.0
+    trades_per_day = (mean_tpm * 12) / 365.25
+    
+    md = []
+    md.append(f"# 📊 Holdout Backtest Report: `{run_id}`")
+    md.append("")
+    md.append(f"**Tanggal Pembuatan**: {datetime.now().strftime('%Y-%m-%d %H:%M:%S')} UTC")
+    md.append(f"**Model Run ID**: `{run_id}`")
+    md.append(f"**Periode Pengujian (Temporal OOS)**: `{holdout_period}`")
+    md.append("")
+    
+    md.append("> [!NOTE]")
+    md.append("> **Ringkasan Portofolio Eksekutif**:")
+    md.append(f"> *   **Total Net Profit**: **${total_pnl:+,.2f} USD** (ROI Portofolio: **{portfolio_roi:+.2f}%**)")
+    md.append(f"> *   **Rata-rata Win Rate**: **{mean_winrate:.2%}** | Total Trades: **{total_trades:,}**")
+    md.append(f"> *   **Rata-rata Max Drawdown (5x)**: **{mean_dd5x:.2%}**")
+    md.append(f"> *   **Risk-Adjusted**: Sharpe: **{mean_sharpe:.2f}** | Sortino: **{mean_sortino:.2f}** | Calmar: **{mean_calmar:.2f}** | Profit Factor: **{mean_pf:.2f}**")
+    md.append("")
+    
+    md.append("## 📈 Performa Scorecard Portofolio")
+    md.append("")
+    md.append("| Metrik Utama | Nilai Portofolio | Catatan |")
+    md.append("|:---|:---:|:---|")
+    md.append(f"| **Total Net Profit ($)** | `${total_pnl:+,.2f}` | Akumulasi keuntungan bersih 5x leverage |")
+    md.append(f"| **Portfolio ROI (%)** | `{portfolio_roi:+.2f}%` | ROI berdasarkan kapital portofolio $100/koin |")
+    md.append(f"| **Overall Win Rate** | `{mean_winrate:.2%}` | Rasio kemenangan rata-rata seluruh aset |")
+    md.append(f"| **Total Trades** | `{total_trades:,}` | Jumlah total posisi yang dieksekusi |")
+    md.append(f"| **Rata-rata Trade / Bulan** | `{mean_tpm:.1f}` | Rata-rata frekuensi trade bulanan portofolio |")
+    md.append(f"| **Rata-rata Trade / Hari** | `{trades_per_day:.2f}` | Rata-rata frekuensi trade harian portofolio |")
+    md.append(f"| **Max Drawdown (5x)** | `{mean_dd5x:.2%}` | Rata-rata penurunan terdalam portofolio |")
+    md.append(f"| **Sharpe Ratio** | `{mean_sharpe:.2f}` | Efisiensi profit terhadap volatilitas portofolio |")
+    md.append(f"| **Sortino Ratio** | `{mean_sortino:.2f}` | Efisiensi profit terhadap downside deviation |")
+    md.append(f"| **Calmar Ratio** | `{mean_calmar:.2f}` | Rasio return tahunan terhadap drawdown |")
+    md.append(f"| **Profit Factor** | `{mean_pf:.2f}` | Rasio gross profit dibagi gross loss |")
+    md.append(f"| **Max Consecutive Loss** | `{max_consec_loss}` trades | Streak kekalahan beruntun terpanjang |")
+    md.append(f"| **Worst Single Trade PnL** | `{worst_trade_pnl:+.2f}%` | Kerugian terdalam dalam satu trade tunggal |")
+    md.append(f"| **95% Trades Loss Under** | `{abs(p95_trade_loss):.2f}%` | Nilai risiko (VaR P95) kerugian maksimal |")
+    md.append("")
+    
+    md.append("## ↕️ Analisis Arah Signal (LONG vs SHORT)")
+    md.append("")
+    md.append("| Arah Posisi | Jumlah Trade | Distribusi | Menang | Kalah | Win Rate | PnL Bersih ($) |")
+    md.append("|:---|:---:|:---:|:---:|:---:|:---:|:---:|")
+    long_dist = long_count / total_trades if total_trades > 0 else 0
+    short_dist = short_count / total_trades if total_trades > 0 else 0
+    md.append(f"| **LONG** | {long_count:,} | {long_dist:.1%} | {long_wins:,} | {long_count - long_wins:,} | {long_winrate:.2%} | {sum(t['PnL ($)'] for t in all_trades if t['Direction'] == 'LONG'):+,.2f} |")
+    md.append(f"| **SHORT** | {short_count:,} | {short_dist:.1%} | {short_wins:,} | {short_count - short_wins:,} | {short_winrate:.2%} | {sum(t['PnL ($)'] for t in all_trades if t['Direction'] == 'SHORT'):+,.2f} |")
+    md.append("")
+    
+    md.append("### Rincian Rata-rata Profitabilitas per Trade")
+    md.append("")
+    md.append("| Tipe Trade | PnL Rata-rata ($) | PnL Rata-rata (%) |")
+    md.append("|:---|:---:|:---:|")
+    md.append(f"| **Trade Menang (Wins)** | `${avg_win_usd:+,.4f}` | `{avg_win_pct:+.2f}%` |")
+    md.append(f"| **Trade Kalah (Losses)** | `${avg_loss_usd:+,.4f}` | `{avg_loss_pct:+.2f}%` |")
+    md.append("")
+    
+    if monthly_perf:
+        md.append("## 📅 Scorecard Bulanan Portofolio")
+        md.append("")
+        md.append("| Bulan | Total Trades | Wins | Losses | Win Rate | Net PnL ($) |")
+        md.append("|:---|:---:|:---:|:---:|:---:|:---:|")
+        for month_str in sorted(monthly_perf.keys()):
+            p = monthly_perf[month_str]
+            losses_count = p["trades"] - p["wins"]
+            wr = p["wins"] / p["trades"] if p["trades"] > 0 else 0.0
+            md.append(f"| {month_str} | {p['trades']} | {p['wins']} | {losses_count} | {wr:.2%} | ${p['pnl']:+,.2f} |")
+        md.append("")
+        
+    if exit_reasons:
+        md.append("## 🚪 Distribusi Alasan Keluar Posisi (Exit Reasons)")
+        md.append("")
+        md.append("| Alasan Exit | Jumlah | Persentase | Wins | Losses | Win Rate | PnL Bersih ($) |")
+        md.append("|:---|:---:|:---:|:---:|:---:|:---:|:---:|")
+        for exit_r, stats in sorted(exit_reasons.items(), key=lambda x: x[1]["count"], reverse=True):
+            pct = stats["count"] / total_trades if total_trades > 0 else 0
+            wr = stats["wins"] / stats["count"] if stats["count"] > 0 else 0.0
+            md.append(f"| `{exit_r}` | {stats['count']:,} | {pct:.1%} | {stats['wins']:,} | {stats['losses']:,} | {wr:.2%} | ${stats['pnl']:+,.2f} |")
+        md.append("")
+        
+    md.append("## 🪙 Scorecard Per Koin (Detailed Assets)")
+    md.append("")
+    md.append("| Token | Win Rate | Trades | LONG WR | SHORT WR | Net PnL ($) | Max DD | Sharpe | Sortino | Calmar | PF |")
+    md.append("|:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|")
+    
+    per_sym = aggregate.get("per_symbol", {})
+    for sym in sorted(per_sym.keys()):
+        s = per_sym[sym]
+        s_wr = float(s.get("winrate", 0.0))
+        s_tr = int(s.get("total_trades", 0))
+        s_pnl = float(s.get("pnl_lev5x", 0.0))
+        s_dd = float(s.get("max_drawdown_lev5x", 0.0))
+        s_sh = float(s.get("sharpe_ratio", 0.0))
+        s_so = float(s.get("sortino_ratio", 0.0))
+        s_ca = float(s.get("calmar_ratio", 0.0))
+        s_pf = float(s.get("profit_factor", 0.0))
+        
+        win_class = s.get("win_by_class", {})
+        l_wr = float(win_class.get("LONG", 0.0))
+        s_wr_class = float(win_class.get("SHORT", 0.0))
+        
+        md.append(f"| **{sym.replace('USDT','')}** | {s_wr:.2%} | {s_tr:,} | {l_wr:.1%} | {s_wr_class:.1%} | `${s_pnl:+,.2f}` | {s_dd:.2%} | {s_sh:.2f} | {s_so:.2f} | {s_ca:.2f} | {s_pf:.2f} |")
+    md.append("")
+    
+    md.append("## ⛓️ Daftar Fitur Aktif dalam Model")
+    md.append("")
+    md.append(f"Total terdapat **{len(feat_cols)} fitur aktif** yang digunakan oleh LightGBM entry, LSTM Soft Confirmation, dan Exit Guardian v3:")
+    md.append("")
+    md.append("<details>")
+    md.append("<summary>▶ Klik untuk melihat daftar lengkap fitur aktif</summary>")
+    md.append("")
+    for i, col in enumerate(feat_cols, 1):
+        md.append(f"{i}. `{col}`")
+    md.append("")
+    md.append("</details>")
+    md.append("")
+    
+    md_content = "\n".join(md)
+    
+    # 1. Save to reports/experiments/
+    exp_report_dir = ROOT / "reports" / "experiments"
+    exp_report_dir.mkdir(parents=True, exist_ok=True)
+    report_path = exp_report_dir / f"{run_id}_holdout_report.md"
+    with open(report_path, "w", encoding="utf-8") as f:
+        f.write(md_content)
+    logger.info(f"Markdown holdout report saved to: {report_path}")
+    
+    # 2. Save a copy to models/runs/{run_id}/
+    run_report_path = run_dir / "holdout_report.md"
+    with open(run_report_path, "w", encoding="utf-8") as f:
+        f.write(md_content)
+    logger.info(f"Markdown holdout report copy saved to: {run_report_path}")
+
+
 # ═══════════════════════════════════════════════════════════════════════════════
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
@@ -718,6 +964,9 @@ def main():
     # Re-save aggregate json with the new fields
     with open(out_path, "w") as f:
         json.dump(aggregate, f, indent=2, default=str)
+
+    # Generate Markdown Report automatically
+    generate_markdown_report(aggregate, feat_cols, start, end, run_id, all_trades, run_dir)
 
     # ── Print summary ─────────────────────────────────────────────────────────
     print(f"\n{sep}")

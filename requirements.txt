@@ -11,3 +11,4 @@ shap>=0.44
 matplotlib>=3.8
 python-dotenv>=1.0
 hmmlearn>=0.3.3
+websocket-client>=1.6.0

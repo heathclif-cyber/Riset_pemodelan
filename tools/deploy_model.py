@@ -22,7 +22,7 @@ from datetime import datetime
 SOURCE_REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TARGET_REPO_DIR = r"D:\Apps-Dev\swint_tradev2"
 
-# File model dan scaler yang akan disalin (source relative to SOURCE_REPO_DIR, target relative to TARGET_REPO_DIR)
+# File model, scaler, dan code yang akan disalin (source relative to SOURCE_REPO_DIR, target relative to TARGET_REPO_DIR)
 DEPLOY_MAPPING = {
     # 1. Models & Scalers (Source -> Target)
     "models/lgbm_baseline.pkl": "models/lgbm_baseline.pkl",
@@ -37,7 +37,13 @@ DEPLOY_MAPPING = {
     "models/inference_config.json": "models/inference_config.json",
     
     # 3. Communication Bridge Contract
-    "MODEL_DEPLOYMENT_BRIDGE.md": "MODEL_DEPLOYMENT_BRIDGE.md"
+    "MODEL_DEPLOYMENT_BRIDGE.md": "MODEL_DEPLOYMENT_BRIDGE.md",
+
+    # 4. Core Feature Engineering & Model Architecture Code
+    "core/features.py": "core/features.py",
+    "core/models.py": "core/models.py",
+    "core/utils.py": "core/utils.py",
+    "core/regime.py": "core/regime.py"
 }
 # =======================================================
 

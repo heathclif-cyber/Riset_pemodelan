@@ -101,7 +101,7 @@ def walk_forward_cv(X: pd.DataFrame, y: pd.Series, params: dict, n_splits: int =
     logger.info(f"Walk-Forward CV (n_splits={n_splits}, purge={purge} bars)...")
     logger.info(f"Class weights: SHORT={LGBM_CLASS_WEIGHTS[0]}x, FLAT={LGBM_CLASS_WEIGHTS[1]}x, LONG={LGBM_CLASS_WEIGHTS[2]}x")
 
-    folds = build_purged_folds(len(X), n_folds=n_splits, purge=purge)
+    folds = build_purged_folds(X.index, n_folds=n_splits, purge=purge)
 
     results = []
     for fold, (train_idx, val_idx) in enumerate(folds, 1):
@@ -190,13 +190,26 @@ def main():
         if metrics["f1_macro"] > best_f1:
             best_f1, best_model, best_fold = metrics["f1_macro"], model, metrics["fold"]
 
-    # Simpan model
+    # ── Full Retraining pada 100% Training Data ──────────────────────────────
+    # Hitung rata-rata best_iteration dari seluruh fold CV
+    avg_best_iter = int(np.mean([m["best_iteration"] for m in all_metrics]))
+    logger.info(f"CV complete. Average best_iteration: {avg_best_iter} | Best Fold: {best_fold} (F1={best_f1:.4f})")
+    logger.info(f"Retraining final LGBM model on 100% training data ({len(df_X):,} samples) with n_estimators={avg_best_iter}...")
+
+    final_params = LGBM_PARAMS.copy()
+    final_params["n_estimators"] = avg_best_iter
+
+    final_model = lgb.LGBMClassifier(**final_params)
+    full_sample_w = np.array([LGBM_CLASS_WEIGHTS[int(label)] for label in y], dtype=np.float32)
+    final_model.fit(df_X, y, sample_weight=full_sample_w)
+
+    # Simpan model hasil retrain final
     model_path = run_dir / "lgbm.pkl"
-    joblib.dump(best_model, model_path)
+    joblib.dump(final_model, model_path)
     # Juga update symlink ke models/ root untuk inference
     root_model = MODEL_DIR / "lgbm_baseline.pkl"
-    joblib.dump(best_model, root_model)
-    logger.info(f"Best model (fold {best_fold}, F1={best_f1:.4f}) → {model_path}")
+    joblib.dump(final_model, root_model)
+    logger.info(f"Final retrained model saved → {model_path} and copied to {root_model}")
 
     f1s  = [m["f1_macro"] for m in all_metrics]
     accs = [m["accuracy"] for m in all_metrics]
@@ -209,12 +222,13 @@ def main():
 
     cv_summary = {
         "run_id": run_id, "coins": coins,
-        "n_folds": N_FOLDS, "gap_bars": 24,
+        "n_folds": N_FOLDS, "gap_bars": PURGE_GAP_BARS,
         "best_fold": best_fold, "best_f1_macro": round(best_f1, 4),
         "mean_f1_macro": round(float(np.mean(f1s)), 4),
         "std_f1_macro":  round(float(np.std(f1s)), 4),
         "mean_accuracy": round(float(np.mean(accs)), 4),
-        "lgbm_params": LGBM_PARAMS, "feature_cols": feat_cols,
+        "lgbm_params": LGBM_PARAMS, "final_retrain_n_estimators": avg_best_iter,
+        "feature_cols": feat_cols,
         "folds": all_metrics,
     }
 
@@ -232,7 +246,7 @@ def main():
     print(f"  Best fold  : {best_fold} (F1-macro={best_f1:.4f})")
     print(f"  Mean F1    : {np.mean(f1s):.4f} ± {np.std(f1s):.4f}")
     print(f"  Mean Acc   : {np.mean(accs):.4f}")
-    print(f"  Model      : {model_path}")
+    print(f"  Final model: {model_path} (retrained on 100% data, n_estimators={avg_best_iter})")
     print(f"  CV results : {cv_path}")
     print(f"{sep}\n")
 

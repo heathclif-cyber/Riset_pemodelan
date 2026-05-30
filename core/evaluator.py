@@ -310,8 +310,8 @@ def simulate_trades_swing(
     vcb_atr_multiplier:   float = 3.0,
     vcb_lookback_bars:    int   = 24,
     # ── Pyramiding ── match production signal_filter.py
-    pyramiding_enabled:     bool = True,
-    pyramiding_max_per_coin: int = 3,
+    pyramiding_enabled:     bool = False,
+    pyramiding_max_per_coin: int = 1,
     pyramiding_same_dir:    bool = True,
 ) -> dict:
     """
@@ -590,8 +590,8 @@ def simulate_trades_swing(
                             bars_held, price, close[j], sig, atr_i, mfe_pnl,
                         )
                         g_feat = np.concatenate([g_static, g_dynamic]).reshape(1, -1)
-                        g_feat_s = guardian_scaler.transform(g_feat)
-                        g_proba = guardian_model.predict_proba(g_feat_s)[0]  # [p_hold, p_partial, p_full]
+                        g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
+                        g_proba = guardian_model._Booster.predict(g_feat_s)[0]  # [p_hold, p_partial, p_full]
                         g_pred = int(g_proba.argmax())
 
                         if g_pred == 2 and g_proba[2] >= guardian_exit_threshold:

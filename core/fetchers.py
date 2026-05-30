@@ -66,17 +66,20 @@ def fetch_klines(
     end: datetime,
     progress: dict = None,
     kline_limit: int = 1500,
+    raw_dir: "Path | None" = None,
 ) -> Optional[pd.DataFrame]:
-    """Fetch OHLCV data untuk satu koin satu interval. Resume-capable."""
+    """Fetch OHLCV data untuk satu koin satu interval. Resume-capable.
+    raw_dir: override direktori simpan (default: data/raw/).
+    """
     key = make_key("klines", symbol, interval)
     if progress and is_done(progress, key):
         logger.info(f"[{symbol}] {interval} klines sudah ada, skip.")
-        filepath = get_filepath("klines", symbol, interval)
+        filepath = get_filepath("klines", symbol, interval, base_dir=raw_dir)
         return load_df(filepath, logger)
 
     start_ms = to_ms(start)
     end_ms   = to_ms(end)
-    logger.info(f"[{symbol}] Fetching {interval} klines {start.date()} → {end.date()}")
+    logger.info(f"[{symbol}] Fetching {interval} klines {start.date()} -> {end.date()}")
 
     interval_ms  = interval_to_ms(interval)
     total_bars   = (end_ms - start_ms) // interval_ms
@@ -95,7 +98,7 @@ def fetch_klines(
         if not raw:
             logger.warning(
                 f"[{symbol}] {interval} chunk {chunk_num}/{total_chunks}: "
-                f"tidak ada data ({from_ms(chunk_start).date()} → {from_ms(chunk_end).date()})"
+                f"tidak ada data ({from_ms(chunk_start).date()} -> {from_ms(chunk_end).date()})"
             )
             continue
         df_chunk = _parse_klines(raw)
@@ -115,9 +118,9 @@ def fetch_klines(
     df = df[~df.index.duplicated(keep="first")].sort_index()
     validate_ohlcv(df, symbol, interval, logger)
 
-    filepath = get_filepath("klines", symbol, interval)
+    filepath = get_filepath("klines", symbol, interval, base_dir=raw_dir)
     if save_df(df, filepath, logger):
-        logger.info(f"[{symbol}] {interval}: {len(df):,} candle disimpan → {filepath}")
+        logger.info(f"[{symbol}] {interval}: {len(df):,} candle disimpan -> {filepath}")
         if progress is not None:
             mark_done(progress, key)
 
@@ -147,12 +150,13 @@ def fetch_funding_rate(
     end: datetime,
     progress: dict = None,
     funding_limit: int = 1000,
+    raw_dir: "Path | None" = None,
 ) -> Optional[pd.DataFrame]:
     """Fetch Funding Rate history (setiap 8 jam)."""
     key = make_key("funding_rate", symbol)
     if progress and is_done(progress, key):
         logger.info(f"[{symbol}] Funding rate sudah ada, skip.")
-        return load_df(get_filepath("funding_rate", symbol), logger)
+        return load_df(get_filepath("funding_rate", symbol, base_dir=raw_dir), logger)
 
     logger.info(f"[{symbol}] Fetching Funding Rate...")
 
@@ -189,9 +193,9 @@ def fetch_funding_rate(
     df = pd.concat(all_frames)
     df = df[~df.index.duplicated(keep="first")].sort_index()
 
-    filepath = get_filepath("funding_rate", symbol)
+    filepath = get_filepath("funding_rate", symbol, base_dir=raw_dir)
     if save_df(df, filepath, logger):
-        logger.info(f"[{symbol}] Funding Rate: {len(df):,} records disimpan → {filepath}")
+        logger.info(f"[{symbol}] Funding Rate: {len(df):,} records disimpan -> {filepath}")
         if progress is not None:
             mark_done(progress, key)
 
@@ -269,6 +273,7 @@ def fetch_btc_dominance(
     session = requests.Session()
     session.headers.update({"Accept": "application/json"})
 
+    df = None
     try:
         time.sleep(sleep_coingecko)
         resp = session.get(
@@ -277,45 +282,51 @@ def fetch_btc_dominance(
             timeout=60,
         )
         if resp.status_code in (401, 403):
-            return _fetch_btc_dom_proxy(start, end)
-        if resp.status_code == 429:
+            logger.warning(f"CoinGecko return status {resp.status_code} — menggunakan proxy Binance")
+            df = _fetch_btc_dom_proxy(start, end)
+        elif resp.status_code == 429:
             time.sleep(60)
             resp = session.get(
                 f"{coingecko_url}/coins/bitcoin/market_chart",
                 params={"vs_currency": "usd", "days": "max", "interval": "daily"},
                 timeout=60,
             )
-        resp.raise_for_status()
-        data     = resp.json()
-        mcap_data = data.get("market_caps", [])
+        
+        if df is None:
+            resp.raise_for_status()
+            data     = resp.json()
+            mcap_data = data.get("market_caps", [])
 
-        records = []
-        for ts_ms, btc_mc in mcap_data:
-            dt = datetime.fromtimestamp(int(ts_ms) / 1000, tz=timezone.utc)
-            if start <= dt <= end:
-                year = dt.year
-                dom  = {2020: 63.0, 2021: 45.0, 2022: 43.0, 2023: 47.0, 2024: 52.0, 2025: 58.0, 2026: 58.0}.get(year, 55.0)
-                records.append({"timestamp": dt, "btc_market_cap_usd": btc_mc,
-                                 "btc_dominance_pct": dom})
+            records = []
+            for ts_ms, btc_mc in mcap_data:
+                dt = datetime.fromtimestamp(int(ts_ms) / 1000, tz=timezone.utc)
+                if start <= dt <= end:
+                    year = dt.year
+                    dom  = {2020: 63.0, 2021: 45.0, 2022: 43.0, 2023: 47.0, 2024: 52.0, 2025: 58.0, 2026: 58.0}.get(year, 55.0)
+                    records.append({"timestamp": dt, "btc_market_cap_usd": btc_mc,
+                                     "btc_dominance_pct": dom})
 
-        if not records:
-            return _fetch_btc_dom_proxy(start, end)
+            if not records:
+                df = _fetch_btc_dom_proxy(start, end)
+            else:
+                df = pd.DataFrame(records).drop_duplicates(subset=["timestamp"])
+                df = df.sort_values("timestamp").set_index("timestamp")
+                df.index = pd.DatetimeIndex(df.index, tz=timezone.utc)
+                df = df.resample("1D").last().ffill()
 
-        df = pd.DataFrame(records).drop_duplicates(subset=["timestamp"])
-        df = df.sort_values("timestamp").set_index("timestamp")
-        df.index = pd.DatetimeIndex(df.index, tz=timezone.utc)
-        df = df.resample("1D").last().ffill()
+    except Exception as e:
+        logger.warning(f"CoinGecko error: {e} — menggunakan proxy Binance")
+        df = _fetch_btc_dom_proxy(start, end)
 
+    if df is not None:
         filepath = get_filepath("macro_btc_dom", "")
         if save_df(df, filepath, logger):
             logger.info(f"BTC Dominance disimpan: {len(df)} hari → {filepath}")
             if progress is not None:
                 mark_done(progress, key)
         return df
+    return None
 
-    except Exception as e:
-        logger.warning(f"CoinGecko error: {e} — menggunakan proxy Binance")
-        return _fetch_btc_dom_proxy(start, end)
 
 
 # ─── MACRO: FEAR & GREED ──────────────────────────────────────────────────────
@@ -342,7 +353,7 @@ def fetch_fear_greed(
         time.sleep(1)
         resp = session.get(
             fg_url,
-            params={"limit": days_needed, "format": "json"},
+            params={"limit": 0, "format": "json"},  # limit=0 = semua data historis (since 2018)
             timeout=30,
         )
         resp.raise_for_status()
@@ -410,6 +421,167 @@ def fetch_all_macro(
     return results
 
 
+# ─── OPEN INTEREST ────────────────────────────────────────────────────────────
+
+def _parse_open_interest(raw: list) -> pd.DataFrame:
+    records = []
+    for item in raw:
+        ts = int(item["timestamp"])
+        records.append({
+            "timestamp":         datetime.fromtimestamp(ts / 1000, tz=timezone.utc),
+            "open_interest":     _safe_float(item.get("sumOpenInterest"), 0.0),
+            "open_interest_usd": _safe_float(item.get("sumOpenInterestValue"), 0.0),
+        })
+    df = pd.DataFrame(records).set_index("timestamp")
+    df.index = pd.DatetimeIndex(df.index, tz=timezone.utc)
+    return df.sort_index()
+
+
+def fetch_open_interest_hist(
+    client: BinanceClient,
+    symbol: str,
+    start: datetime,
+    end: datetime,
+    progress: dict = None,
+    limit: int = 500,
+    raw_dir: "Path | None" = None,
+) -> Optional[pd.DataFrame]:
+    """Fetch Open Interest history (hourly, up to last 500 hours/limit)."""
+    key = make_key("open_interest", symbol)
+    if progress and is_done(progress, key):
+        logger.info(f"[{symbol}] Open Interest sudah ada, skip.")
+        return load_df(get_filepath("open_interest", symbol, base_dir=raw_dir), logger)
+
+    logger.info(f"[{symbol}] Fetching Open Interest...")
+
+    start_ms = to_ms(start)
+    end_ms   = to_ms(end)
+    step_per_chunk = 3600000 * limit
+
+    all_frames = []
+    current = start_ms
+
+    while current < end_ms:
+        chunk_end = min(current + step_per_chunk, end_ms)
+        try:
+            raw = client.get_open_interest_hist(
+                symbol=symbol,
+                period="1h",
+                start_time_ms=current,
+                end_time_ms=chunk_end - 1,
+                limit=limit,
+            )
+            if raw:
+                df_chunk = _parse_open_interest(raw)
+                all_frames.append(df_chunk)
+                if not df_chunk.empty:
+                    last_ts = int(df_chunk.index[-1].timestamp() * 1000)
+                    current = last_ts + 3600000
+                else:
+                    current = chunk_end
+            else:
+                current = chunk_end
+        except Exception as e:
+            logger.warning(f"[{symbol}] Gagal fetch Open Interest chunk: {e}")
+            current = chunk_end
+
+    if not all_frames:
+        logger.warning(f"[{symbol}] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)")
+        return None
+
+    df = pd.concat(all_frames)
+    df = df[~df.index.duplicated(keep="first")].sort_index()
+
+    filepath = get_filepath("open_interest", symbol, base_dir=raw_dir)
+    if save_df(df, filepath, logger):
+        logger.info(f"[{symbol}] Open Interest: {len(df):,} records disimpan -> {filepath}")
+        if progress is not None:
+            mark_done(progress, key)
+
+    return df
+
+
+# ─── GLOBAL LONG/SHORT RATIO ──────────────────────────────────────────────────
+
+def _parse_long_short_ratio(raw: list) -> pd.DataFrame:
+    records = []
+    for item in raw:
+        ts = int(item["timestamp"])
+        records.append({
+            "timestamp":        datetime.fromtimestamp(ts / 1000, tz=timezone.utc),
+            "long_short_ratio": _safe_float(item.get("longShortRatio"), 1.0),
+            "long_account":     _safe_float(item.get("longAccount"), 0.5),
+            "short_account":    _safe_float(item.get("shortAccount"), 0.5),
+        })
+    df = pd.DataFrame(records).set_index("timestamp")
+    df.index = pd.DatetimeIndex(df.index, tz=timezone.utc)
+    return df.sort_index()
+
+
+def fetch_long_short_ratio_hist(
+    client: BinanceClient,
+    symbol: str,
+    start: datetime,
+    end: datetime,
+    progress: dict = None,
+    limit: int = 500,
+    raw_dir: "Path | None" = None,
+) -> Optional[pd.DataFrame]:
+    """Fetch global Long/Short Account Ratio history (hourly, up to last 500 hours/limit)."""
+    key = make_key("long_short_ratio", symbol)
+    if progress and is_done(progress, key):
+        logger.info(f"[{symbol}] Long/Short Ratio sudah ada, skip.")
+        return load_df(get_filepath("long_short_ratio", symbol, base_dir=raw_dir), logger)
+
+    logger.info(f"[{symbol}] Fetching Long/Short Ratio...")
+
+    start_ms = to_ms(start)
+    end_ms   = to_ms(end)
+    step_per_chunk = 3600000 * limit
+
+    all_frames = []
+    current = start_ms
+
+    while current < end_ms:
+        chunk_end = min(current + step_per_chunk, end_ms)
+        try:
+            raw = client.get_global_long_short_ratio(
+                symbol=symbol,
+                period="1h",
+                start_time_ms=current,
+                end_time_ms=chunk_end - 1,
+                limit=limit,
+            )
+            if raw:
+                df_chunk = _parse_long_short_ratio(raw)
+                all_frames.append(df_chunk)
+                if not df_chunk.empty:
+                    last_ts = int(df_chunk.index[-1].timestamp() * 1000)
+                    current = last_ts + 3600000
+                else:
+                    current = chunk_end
+            else:
+                current = chunk_end
+        except Exception as e:
+            logger.warning(f"[{symbol}] Gagal fetch Long/Short Ratio chunk: {e}")
+            current = chunk_end
+
+    if not all_frames:
+        logger.warning(f"[{symbol}] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)")
+        return None
+
+    df = pd.concat(all_frames)
+    df = df[~df.index.duplicated(keep="first")].sort_index()
+
+    filepath = get_filepath("long_short_ratio", symbol, base_dir=raw_dir)
+    if save_df(df, filepath, logger):
+        logger.info(f"[{symbol}] Long/Short Ratio: {len(df):,} records disimpan -> {filepath}")
+        if progress is not None:
+            mark_done(progress, key)
+
+    return df
+
+
 # ─── FETCH SATU KOIN LENGKAP ──────────────────────────────────────────────────
 
 def fetch_coin(
@@ -421,36 +593,51 @@ def fetch_coin(
     progress: dict = None,
     kline_limit: int = 1500,
     funding_limit: int = 1000,
+    oi_limit: int = 500,
+    long_short_limit: int = 500,
+    raw_dir: "Path | None" = None,
 ) -> dict:
     """
-    Fetch OHLCV semua interval + funding rate untuk satu koin.
-    OI/taker/long-short ratio di-skip karena tidak reliable untuk history panjang.
-    Synthetic OI dihitung di pipeline/04_engineer.py dari CVD.
+    Fetch OHLCV semua interval + funding rate + open interest + long/short ratio untuk satu koin.
+    raw_dir: override direktori simpan (default: data/raw/ untuk training, data/holdout/raw/ untuk OOS).
+    OI dan Long/Short ratio ditarik dari REST API (terbatas pada histori jangka pendek, misal 500 jam / 30 hari).
     """
     if intervals is None:
         intervals = ["1h", "4h", "1d"]
 
-    logger.info(f"\n{'═'*55}")
+    logger.info(f"\n{'='*55}")
     logger.info(f"  FETCHING: {symbol}")
-    logger.info(f"  Periode: {start.date()} → {end.date()}")
-    logger.info(f"{'═'*55}")
+    logger.info(f"  Periode: {start.date()} -> {end.date()}")
+    if raw_dir:
+        logger.info(f"  Output : {raw_dir}")
+    logger.info(f"{'='*55}")
 
     results     = {}
     val_results = []
 
     for interval in intervals:
         df = fetch_klines(client, symbol, interval, start, end,
-                          progress=progress, kline_limit=kline_limit)
+                          progress=progress, kline_limit=kline_limit, raw_dir=raw_dir)
         if df is not None:
             results[f"klines_{interval}"] = df
             val_results.append(validate_ohlcv(df, symbol, interval))
         else:
             logger.error(f"[{symbol}] {interval} klines GAGAL")
 
-    df = fetch_funding_rate(client, symbol, start, end,
-                            progress=progress, funding_limit=funding_limit)
-    if df is not None:
-        results["funding_rate"] = df
+    df_fr = fetch_funding_rate(client, symbol, start, end,
+                               progress=progress, funding_limit=funding_limit)
+    if df_fr is not None:
+        results["funding_rate"] = df_fr
+
+    df_oi = fetch_open_interest_hist(client, symbol, start, end,
+                                     progress=progress, limit=oi_limit)
+    if df_oi is not None:
+        results["open_interest"] = df_oi
+
+    df_ls = fetch_long_short_ratio_hist(client, symbol, start, end,
+                                        progress=progress, limit=long_short_limit)
+    if df_ls is not None:
+        results["long_short_ratio"] = df_ls
 
     if val_results:
         print_summary(symbol, val_results, logger)
