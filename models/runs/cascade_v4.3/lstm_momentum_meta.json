@@ -1,0 +1,35 @@
+{
+  "model_type": "lstm_momentum_h1",
+  "seq_len": 32,
+  "n_features": 12,
+  "feature_order": [
+    "h1_return",
+    "volume",
+    "volume_delta",
+    "rsi_6",
+    "stochrsi_k",
+    "h4_trend",
+    "trend_strength",
+    "ema_21_slope_h4",
+    "MSB_BOS",
+    "bars_since_BOS",
+    "atr_14_h1",
+    "atr_percent_h4"
+  ],
+  "label_map": {
+    "SHORT": 0,
+    "FLAT": 1,
+    "LONG": 2
+  },
+  "fusion_weight_lstm": 0.35,
+  "fusion_weight_lgbm": 0.65,
+  "fixes_applied": [
+    "no_weighted_sampler",
+    "patience_10",
+    "h1_scale_aligned",
+    "fold_scaler",
+    "weight_decay_1e4"
+  ],
+  "run_id": "cascade_v4.3",
+  "trained_at": "2026-05-30T21:24:29.742901"
+}

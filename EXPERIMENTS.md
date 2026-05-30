@@ -923,3 +923,204 @@ Keempat fitur yang sebelumnya dicurigai "dead" ternyata **dapat diperbaiki melal
 - [x] Re-run pipeline/03_engineer.py --all dengan data yang sudah diperbaiki
 - [x] Re-run cascade_v4.1 (LGBM + LSTM + Guardian + Backtest)
 - [x] SHORT F1 dan performa Februari tervalidasi — volatility detectors mengenali regime chaos
+
+---
+
+## 2026-05-30 — LSTM Momentum Detector H4: Percobaan Pertama & Rencana Perbaikan
+
+### Latar Belakang
+
+LGBM terbukti terlalu flat saat momentum bullish kuat (contoh: HBARUSDT naik konsisten berhari-hari tapi LGBM output FLAT dengan F%=94%). Analisis livesignal.csv menunjukkan LSTM lama selalu output LSTM_F%=100% untuk semua bar — tidak berkontribusi sama sekali ke keputusan entry.
+
+Root cause: kedua model (LGBM dan LSTM lama) dilatih pada swing labels yang sama (81% FLAT). Mereka belajar hal identik — tidak ada kolaborasi nyata.
+
+Solusi yang dicoba: retrain LSTM dengan **momentum labels** (N=8 bar H1 ke depan, majority direction + magnitude filter) menggunakan **H4 sequence** (16 bar × 8 fitur) sebagai input, bukan H1 flat features.
+
+### Yang Diimplementasikan
+
+| File | Fungsi |
+|------|--------|
+| `pipeline/05a_generate_momentum_labels.py` | Generate momentum labels: LONG jika ≥5/8 bar naik DAN total_ret > 0.4×ATR |
+| `pipeline/05b_build_h4_sequences.py` | Build H4 sequence dataset (16 bar × 8 fitur, pre-built per H1 bar) |
+| `pipeline/05c_train_lstm_momentum.py` | Training LSTM dengan momentum labels + purged walk-forward CV |
+| `pipeline/archive/05_train_lstm.py` | Diarsipkan — superseded |
+| `pipeline/archive/05_train_lstm_seq_sweep.py` | Diarsipkan — superseded |
+
+### Temuan Penting saat Training (cascade_v4.2, run 2026-05-30)
+
+#### Distribusi Label Momentum (jauh lebih baik dari swing labels)
+
+| Label | Swing Labels (lama) | Momentum Labels (baru) |
+|-------|--------------------|-----------------------|
+| LONG  | 9.7%               | 25.5%                 |
+| FLAT  | 80.2%              | 48.0%                 |
+| SHORT | 9.9%               | 26.5%                 |
+
+#### Hasil CV per Fold
+
+| Fold | Train Size | F1 Macro | FLAT F1 | Keterangan |
+|------|-----------|----------|---------|------------|
+| 1    | 51K       | 0.3324   | 0.3988  | OK |
+| 2    | 123K      | 0.3207   | 0.3456  | OK |
+| 3    | 202K      | 0.2371   | **0.0000** | COLLAPSE — early stop epoch 6 |
+| 4    | 281K      | 0.2343   | **0.0000** | COLLAPSE — early stop epoch 7 |
+| 5    | 361K      | 0.2976   | 0.2396  | Recover sebagian |
+| 6–8  | 455K–665K | —        | —       | Masih berjalan |
+
+Random baseline F1 macro ≈ 0.33. Fold 1–2 di level random, fold 3–4 di bawah random.
+
+#### Bug yang Ditemukan dan Diperbaiki selama Pembangunan
+
+| Bug | Lokasi | Fix |
+|-----|--------|-----|
+| H4 look-ahead: bar H4 yang belum closed masuk sequence (75.1% bars terdampak) | `05b` line 164 | Floor H1 ke batas 4h sebelum searchsorted |
+| Timestamp tersimpan dalam milliseconds bukan nanoseconds | `05b` line 182 | `astype("datetime64[ns]").astype(np.int64)` |
+
+### Root Cause Masalah F1 Rendah
+
+**1. Double weighting (penyebab FLAT collapse)**
+
+`WeightedRandomSampler` + `CrossEntropyLoss(weight=...)` aktif bersamaan. Keduanya mendorong model ke LONG/SHORT, sehingga di fold 3–4 (periode bear market 2022, distribusi label berbeda dari training) model tidak pernah prediksi FLAT.
+
+**2. Task terlalu sulit / label terlalu noisy**
+
+Return 8 jam H1 crypto ke depan adalah sinyal yang sangat lemah. Autocorrelation label lag=1 memang 72%, tapi ini hanya berarti momentum persisten — bukan bahwa H4 context 3 hari cukup untuk memprediksinya. Signal-to-noise sangat rendah.
+
+**3. Distribusi shift bear market**
+
+Fold 3 (Des 2021–Agt 2022) dan Fold 4 (Agt 2022–Apr 2023) adalah periode crypto winter. Training set hanya melihat sedikit data dari regime ini di awal training → distribusi mismatch.
+
+---
+
+### Rencana Perbaikan (cascade_v4.3 LSTM)
+
+#### Fix 1: Hapus Double Weighting — Prioritas Tinggi
+
+Gunakan **salah satu saja**, bukan keduanya:
+
+```python
+# OPSI A (direkomendasikan): class weights di loss saja, hapus sampler
+criterion = nn.CrossEntropyLoss(weight=compute_class_weights(y_tr))
+# loader tanpa WeightedRandomSampler, shuffle=True saja
+
+# OPSI B: sampler saja, loss tanpa weight
+criterion = nn.CrossEntropyLoss()  # equal weights
+# loader dengan WeightedRandomSampler seperti sekarang
+```
+
+Opsi A lebih stabil karena class weights di loss bersifat smooth, tidak seagresif oversampling.
+
+#### Fix 2: Panjangkan Horizon N — Prioritas Tinggi
+
+N=8 H1 bar (8 jam) terlalu noisy untuk diprediksi dari H4 context 3 hari. Coba:
+
+| N | Coverage | Trade-off |
+|---|----------|-----------|
+| 8  | 8 jam  | Sekarang — terlalu noisy |
+| 12 | 12 jam | Lebih smooth, masih causal |
+| 16 | 16 jam | Setara 4 H4 bars — lebih aligned dengan H4 sequence |
+| 24 | 1 hari | Sangat smooth tapi kehilangan responsivitas |
+
+Rekomendasi: coba **N=12** dan **N=16** sebagai perbandingan.
+
+#### Fix 3: Naikkan LSTM_PATIENCE — Prioritas Sedang
+
+`LSTM_PATIENCE=5` terlalu agresif untuk dataset besar. Fold 3 & 4 early stop di epoch 6–7 karena F1 tidak naik dalam 5 epoch pertama, padahal model mungkin butuh lebih banyak waktu untuk stabil.
+
+```python
+LSTM_PATIENCE = 10  # dari 5
+```
+
+#### Fix 4: Evaluasi Alternatif Arsitektur — Prioritas Rendah (research)
+
+Jika F1 setelah fix 1–3 masih di level random, pertimbangkan pendekatan berbeda:
+
+| Alternatif | Deskripsi | Effort |
+|------------|-----------|--------|
+| LSTM sebagai binary classifier | Prediksi hanya LONG vs non-LONG (biner), lebih sederhana | Rendah |
+| Momentum regression | Prediksi return magnitude, bukan arah. Threshold di inference | Sedang |
+| TCN (Temporal Conv Net) | Non-recurrent, parallelizable, bisa lebih ekspresif | Sedang |
+| LSTM hidden state sebagai fitur LGBM | Joint training, tidak independent | Tinggi |
+
+### Keputusan Sementara
+
+- [x] Run pertama cascade_v4.2 selesai (atau dalam proses) — hasil tidak memuaskan (F1 ≈ random)
+- [x] Retrain dengan Fix 1 (hapus double weighting) + Fix 2 (patience=15) + Fix 3 (weight_decay=1e-4) + Fix 4 (fold scaler) → **cascade_v4.3 selesai 2026-05-30**
+- [x] F1 mean = 0.3339 ≈ random (0.333) — tidak mencapai target >0.38
+- [ ] Retrain cascade_v4.4 dengan fitur trajectory baru (05b diupdate) + N=12 labels (05a)
+
+---
+
+## 2026-05-30 — cascade_v4.3: Hasil Training H1 LSTM + Rencana cascade_v4.4
+
+### Hasil cascade_v4.3 (H1 Sequence, Fitur Lama)
+
+**Config:**
+- Sequence: 32 H1 bars × 12 fitur (h1_return, volume, volume_delta, rsi_6, stochrsi_k, h4_trend, trend_strength, ema_21_slope_h4, MSB_BOS, bars_since_BOS, atr_14_h1, atr_percent_h4)
+- Labels: N=8, min_move=0.4×ATR
+- Batch: 1024, LR: 0.001 (run dimulai sebelum LR diubah ke 0.0014), Patience: 15
+- Fix applied: no_weighted_sampler, fold_scaler, weight_decay_1e4, patience_15
+
+**CV Results (8 folds, purge=24):**
+
+| Fold | Train | Best F1 | Epoch | LONG | FLAT | SHORT |
+|------|-------|---------|-------|------|------|-------|
+| 1 | 51K | 0.3411 | 2 | 0.3535 | 0.4053 | 0.2644 |
+| 2 | 123K | 0.3419 | 54 | 0.2895 | 0.4612 | 0.2749 |
+| 3 | 202K | 0.3323 | 2 | 0.2310 | 0.4205 | 0.3454 |
+| 4 | 281K | 0.3361 | 1 | 0.3220 | 0.4718 | 0.2147 |
+| 5 | 361K | 0.3355 | 4 | 0.2665 | 0.3659 | 0.3742 |
+| 6 | 456K | 0.3415 | 5 | 0.3173 | 0.3521 | 0.3553 |
+| 7 | 554K | 0.3176 | 14 | 0.3279 | 0.2867 | 0.3383 |
+| 8 | 666K | 0.3253 | 10 | 0.3496 | 0.3497 | 0.2764 |
+| **Mean** | | **0.3339 ± 0.0081** | **11** | | | |
+
+**Final retrain:** 784K samples, 11 epoch, loss 1.0999 → 1.0919
+
+**Temuan:**
+1. Mean F1 = 0.3339 vs random baseline 0.333 → hanya +0.001 di atas random. Model nyaris tidak belajar.
+2. FLAT collapse tidak terjadi (fix double weighting berhasil) — FLAT di fold 5-8 turun ke 0.29-0.37.
+3. Pola "best di epoch 1-2" di fold 1,3,4 = temporal regime shift (train & val di market regime berbeda), bukan classical overfitting.
+4. Fold 2 (epoch 54) mendistorsi avg_epochs → final retrain hanya 11 epoch untuk 784K samples (underfitting).
+5. Fitur H4 (h4_trend, trend_strength, ema_21_slope_h4) hampir tidak berubah dalam 32 H1 bars → sequence variation rendah → LSTM tidak bisa belajar pola temporal.
+
+**Root cause F1 ≈ random:** Fitur snapshot H4 tidak memberikan variasi sequence yang cukup untuk LSTM belajar temporal patterns. Bukan bug pipeline — tidak ada data leakage (konfirmasi dari audit menyeluruh).
+
+---
+
+### Rencana cascade_v4.4 — Trajectory Features
+
+**Perubahan utama:**
+
+1. **Fitur LSTM baru (05b diupdate)** — hapus fitur snapshot H4, ganti dengan fitur trajectory H1:
+
+| Dihapus (snapshot, lambat berubah) | Diganti (trajectory, berubah tiap H1 bar) |
+|------------------------------------|------------------------------------------|
+| volume | log_ret_5 |
+| h4_trend | log_ret_20 |
+| trend_strength | ofi_raw |
+| ema_21_slope_h4 | ofi_acceleration |
+| MSB_BOS | vwdp_smooth |
+| atr_percent_h4 | vol_ratio_20 |
+
+Fitur tetap: h1_return, volume_delta, rsi_6, stochrsi_k, atr_14_h1, bars_since_BOS
+
+**Logika:** LGBM melihat fitur sebagai snapshot di waktu t. LSTM seharusnya melihat TRAJEKTORI — bagaimana fitur berevolusi selama 32 jam. Fitur H4 hampir flat dalam window H1 → tidak informatif untuk LSTM.
+
+2. **Labels N=12** (05a dengan `--n 12`) — horizon lebih panjang = label lebih decisive, FLAT turun dari 48% ke ~40%.
+
+3. **LR = 0.0014** (batch 1024, sqrt scaling rule dari 0.001)
+
+4. **Penalti LSTM FLAT = 0.03** (dari 0.0) — LSTM netral tidak lagi memberi LGBM free pass.
+
+**Urutan run cascade_v4.4:**
+```
+python pipeline/05a_generate_momentum_labels.py --all --n 12
+python pipeline/05b_build_h1_sequences.py --all
+python pipeline/05c_train_lstm_h1.py --all --run-id cascade_v4.4
+```
+
+**Target:** F1 > 0.36 (lebih bermakna di atas random). Jika masih ≤ 0.35, evaluasi alternatif arsitektur (binary classifier atau regression).
+
+**File model:** `models/runs/cascade_v4.3/lstm_momentum.pt` (tersimpan, bisa dipakai sebagai baseline)
+

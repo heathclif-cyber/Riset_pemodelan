@@ -4,9 +4,9 @@
 
 Sistem trading kripto berbasis ML untuk Binance Futures.
 *   **Active Production Version**: **`cascade_v4.1`** (104 fitur, FEATURE_COLS_V3 + 3 Volatility Spike Detectors).
-*   **Active Research Version**: **`cascade_v4.1`** — optimalisasi asymmetric thresholds, trend gating, dan exit Guardian (min_hold=0, activation_atr=0.0).
+*   **Active Research Version**: **`cascade_v4.3`** — LSTM Momentum Detector (H1 sequence, momentum labels, weighted fusion dengan LGBM).
 
-Arsitektur: LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
+Arsitektur: LGBM Classifier (entry) + LSTM Momentum Detector (weighted fusion) → **Guardian v3 (dynamic exit)**.
 
 Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime.
 **TRAIN_CUTOFF_DATE = 2025-11-01** — training hanya di 2020 – Okt 2025. Holdout test di Nov 2025 – Apr 2026 (genuine temporal OOS, tanpa overlap).
@@ -43,7 +43,7 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
 ```
 
 - **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), **104 features** (`feature_cols_v2.json`), cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL. Asymmetric threshold: LONG ≥0.75, SHORT ≥0.60
-- **LSTM**: `ManualLSTMCell` custom (DirectML compatible), seq_len=16, hidden=128, 2-layer. Training via DirectML GPU, inference via CPU
+- **LSTM Momentum Detector** (cascade_v4.3): `ManualLSTMCell` custom (DirectML compatible), seq_len=32 H1 bars, 12 fitur, hidden=128, 2-layer. Input: H1 sequence, Target: momentum labels N=8. Weighted fusion: `combined = 0.65×lgbm + 0.35×lstm`. Training via DirectML GPU, inference via CPU
 - **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), **104 static + 7 dynamic features**, GPU OpenCL. Partial exit = 50% posisi. min_hold_bars=0, activation_atr=0.0 (instant activation, tidak ada zona buta)
 - **TP/SL**: Hybrid H4 Swing + ATR Fallback (non-ML). `TP_SL_HYBRID_MODE=True`
 
@@ -119,15 +119,31 @@ v3 korbankan WR/PF demi volume 72% lebih banyak — Sharpe lebih tinggi, PnL +57
 
 Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)` dan `§ 2026-05-15`
 
-### 💡 Research State: Cascade v4.1 (Volatility-Aware + Asymmetric Entry + Instant Guardian)
-*   **Status**: Active — deployed to production via `tools/deploy_model.py`.
+### Cascade v4.1 (Production — Volatility-Aware + Asymmetric Entry + Instant Guardian)
+*   **Status**: Production — deployed via `tools/deploy_model.py`.
 *   **Training Date**: 2026-05-29
 *   **Fitur**: **104 kolom** — FEATURE_COLS_V3 lengkap: H1/H4 EMA, Smart Money v3/v4 (OFI, VWDP, CVD, VSA), Game Changer v4.0 (Relative Strength, Liquidation Levels, Whale/Retail Divergence), dan Volatility Spike Detectors v4.1 (`atr_zscore_20d`, `atr_percentile_h1`, `vol_spike_zscore`).
-*   **4 fitur yang sebelumnya "dead" telah DIPERBAIKI** (bukan dihapus): `funding_rate`, `funding_price_div`, `btc_dominance`, `fear_greed` — semuanya kini memiliki data valid 100% nonnull via perbaikan di `core/fetchers.py`.
 *   **Training & Holdout OOS Setup**:
     *   **Training Period**: 2020-01-01 s/d 2025-11-01 (`TRAIN_CUTOFF_DATE = 2025-11-01`).
     *   **Holdout Temporal OOS**: 2025-11-01 s/d 2026-04-01.
     *   **Model Runs Path**: `models/runs/cascade_v4.1/`
+
+### cascade_v4.3 (LSTM H1 Sequence — Selesai 2026-05-30)
+*   **Status**: Selesai. Mean F1 = 0.3339 ≈ random baseline 0.333. Model tersimpan tapi tidak deploy.
+*   **Fixes applied**: no_weighted_sampler, fold_scaler, weight_decay=1e-4, patience=15
+*   **Root cause F1 rendah**: Fitur H4 (h4_trend, trend_strength, ema_21_slope_h4) hampir flat dalam 32 H1 bars → LSTM tidak bisa belajar pola temporal. Bukan leakage (sudah diaudit).
+*   **Model Runs Path**: `models/runs/cascade_v4.3/`
+
+### 💡 Research State: Cascade v4.4 (LSTM Trajectory Features — Next Run)
+*   **Status**: Siap dijalankan setelah restart.
+*   **Perubahan utama dari v4.3**:
+    *   Fitur LSTM baru — hapus snapshot H4, ganti trajectory H1: `log_ret_5`, `log_ret_20`, `ofi_raw`, `ofi_acceleration`, `vwdp_smooth`, `vol_ratio_20`
+    *   Labels N=12 (dari N=8) — horizon lebih panjang, label lebih decisive, FLAT turun ~48% → ~40%
+    *   LR=0.001, batch_size=512 (dikembalikan ke default — 0.0014/1024 terlalu tinggi)
+    *   Penalti LSTM FLAT = 0.03 (dari 0.0) — LGBM tidak bebas saat LSTM netral
+*   **Pipeline**: `05a --n 12 → 05b → 05c --run-id cascade_v4.4`
+*   **Model Runs Path**: `models/runs/cascade_v4.4/` (setelah retrain)
+*   **Target F1**: > 0.36. Jika masih ≤ 0.35, evaluasi alternatif arsitektur.
 
 
 ## Cross-Repo: Production (swint_tradev2)
@@ -235,7 +251,9 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 | `pipeline/02_clean.py` | Clean + resample |
 | `pipeline/03_engineer.py` | Feature engineering & swing labeling pipeline |
 | `pipeline/04_train_lgbm.py` | LGBM entry model training (TRAIN_CUTOFF_DATE filter) |
-| `pipeline/05_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
+| `pipeline/05a_generate_momentum_labels.py` | Generate momentum labels H1 (N=8, majority direction + magnitude filter) |
+| `pipeline/05b_build_h1_sequences.py` | Build H1 sequence dataset (32 bar × 12 fitur) untuk LSTM momentum |
+| `pipeline/05c_train_lstm_h1.py` | **LSTM Momentum Detector training** — H1 sequence, momentum labels, no double-weighting |
 | `pipeline/06_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
 | `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest (Nov 2025 – Apr 2026) |
 | `tools/generate_report.py` | **Retrospective Report Generator** — Merekonstruksi laporan Markdown premium komprehensif dari run historis (misal: `cascade_v3.1`) |
@@ -252,8 +270,23 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 ## Pipeline Sequence (Order Matters)
 
 ```
-01_fetch → 02_clean → 03_engineer → 04_train_lgbm → 05_train_lstm → 06_train_guardian → 07_holdout_backtest
+01_fetch → 02_clean → 03_engineer → 04_train_lgbm
+                                   → 05a_generate_momentum_labels
+                                   → 05b_build_h1_sequences
+                                   → 05c_train_lstm_h1
+                                   → 06_train_guardian → 07_holdout_backtest
 ```
+
+**LSTM Pipeline (05a → 05b → 05c)** — dijalankan paralel setelah 03_engineer, sebelum 06:
+- `05a`: generate momentum labels dari parquet existing (N=8 H1, tidak perlu re-fetch)
+- `05b`: build H1 sequence dataset (32 bar × 12 fitur, sliding window)
+- `05c`: training LSTM dengan momentum labels, tanpa WeightedRandomSampler, patience=10
+
+**Arsip** (tidak dipakai lagi, ada di `pipeline/archive/`):
+- `05_train_lstm.py` — H1 flat features + swing labels (always output FLAT)
+- `05_train_lstm_seq_sweep.py` — sweep variant H1
+- `05b_build_h4_sequences.py` — H4 sequence (skala tidak selaras dengan target H1)
+- `05c_train_lstm_momentum.py` — H4 LSTM training (double weighting, F1 ≈ random)
 
 **Data flow**: Semua training script filter `df.index < TRAIN_CUTOFF_DATE` (2025-11-01).
 Holdout test menggunakan data setelah cutoff — genuine temporal OOS.

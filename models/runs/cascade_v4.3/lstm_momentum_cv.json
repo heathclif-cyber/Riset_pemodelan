@@ -1,0 +1,247 @@
+{
+  "run_id": "cascade_v4.3",
+  "model_type": "lstm_momentum_h1",
+  "seq_len": 32,
+  "n_features": 12,
+  "patience": 15,
+  "weighted_sampler": false,
+  "mean_f1_macro": 0.3339,
+  "std_f1_macro": 0.0081,
+  "best_fold": 2,
+  "best_f1_macro": 0.3419,
+  "final_epochs": 11,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 51284,
+      "n_val": 71613,
+      "best_epoch": 2,
+      "accuracy": 0.3541,
+      "f1_macro": 0.3411,
+      "f1_weighted": 0.3581,
+      "f1_SHORT": 0.2644,
+      "f1_FLAT": 0.4053,
+      "f1_LONG": 0.3535,
+      "confusion_matrix": [
+        [
+          4439,
+          5538,
+          6814
+        ],
+        [
+          8280,
+          12055,
+          14834
+        ],
+        [
+          4066,
+          6721,
+          8866
+        ]
+      ]
+    },
+    {
+      "fold": 2,
+      "n_train": 123113,
+      "n_val": 78607,
+      "best_epoch": 54,
+      "accuracy": 0.3647,
+      "f1_macro": 0.3419,
+      "f1_weighted": 0.3686,
+      "f1_SHORT": 0.2749,
+      "f1_FLAT": 0.4612,
+      "f1_LONG": 0.2895,
+      "confusion_matrix": [
+        [
+          5745,
+          9103,
+          5695
+        ],
+        [
+          10289,
+          16702,
+          10959
+        ],
+        [
+          5223,
+          8667,
+          6224
+        ]
+      ]
+    },
+    {
+      "fold": 3,
+      "n_train": 202008,
+      "n_val": 79100,
+      "best_epoch": 2,
+      "accuracy": 0.351,
+      "f1_macro": 0.3323,
+      "f1_weighted": 0.3532,
+      "f1_SHORT": 0.3454,
+      "f1_FLAT": 0.4205,
+      "f1_LONG": 0.231,
+      "confusion_matrix": [
+        [
+          9446,
+          7970,
+          4449
+        ],
+        [
+          15443,
+          14128,
+          8220
+        ],
+        [
+          7946,
+          7305,
+          4193
+        ]
+      ]
+    },
+    {
+      "fold": 4,
+      "n_train": 281444,
+      "n_val": 79239,
+      "best_epoch": 1,
+      "accuracy": 0.3695,
+      "f1_macro": 0.3361,
+      "f1_weighted": 0.3677,
+      "f1_SHORT": 0.2147,
+      "f1_FLAT": 0.4718,
+      "f1_LONG": 0.322,
+      "confusion_matrix": [
+        [
+          3696,
+          9939,
+          7583
+        ],
+        [
+          6721,
+          17672,
+          14988
+        ],
+        [
+          2802,
+          7929,
+          7909
+        ]
+      ]
+    },
+    {
+      "fold": 5,
+      "n_train": 360995,
+      "n_val": 94362,
+      "best_epoch": 4,
+      "accuracy": 0.3449,
+      "f1_macro": 0.3355,
+      "f1_weighted": 0.3456,
+      "f1_SHORT": 0.3742,
+      "f1_FLAT": 0.3659,
+      "f1_LONG": 0.2665,
+      "confusion_matrix": [
+        [
+          12993,
+          6728,
+          5954
+        ],
+        [
+          21626,
+          13477,
+          12208
+        ],
+        [
+          9144,
+          6153,
+          6079
+        ]
+      ]
+    },
+    {
+      "fold": 6,
+      "n_train": 455669,
+      "n_val": 98301,
+      "best_epoch": 5,
+      "accuracy": 0.3427,
+      "f1_macro": 0.3415,
+      "f1_weighted": 0.3439,
+      "f1_SHORT": 0.3553,
+      "f1_FLAT": 0.3521,
+      "f1_LONG": 0.3173,
+      "confusion_matrix": [
+        [
+          11598,
+          6095,
+          8291
+        ],
+        [
+          18394,
+          12771,
+          15717
+        ],
+        [
+          9313,
+          6800,
+          9322
+        ]
+      ]
+    },
+    {
+      "fold": 7,
+      "n_train": 554354,
+      "n_val": 110978,
+      "best_epoch": 14,
+      "accuracy": 0.318,
+      "f1_macro": 0.3176,
+      "f1_weighted": 0.3118,
+      "f1_SHORT": 0.3383,
+      "f1_FLAT": 0.2867,
+      "f1_LONG": 0.3279,
+      "confusion_matrix": [
+        [
+          12763,
+          5583,
+          12440
+        ],
+        [
+          20466,
+          10413,
+          20385
+        ],
+        [
+          11440,
+          5378,
+          12110
+        ]
+      ]
+    },
+    {
+      "fold": 8,
+      "n_train": 665716,
+      "n_val": 117837,
+      "best_epoch": 10,
+      "accuracy": 0.3298,
+      "f1_macro": 0.3253,
+      "f1_weighted": 0.3295,
+      "f1_SHORT": 0.2764,
+      "f1_FLAT": 0.3497,
+      "f1_LONG": 0.3496,
+      "confusion_matrix": [
+        [
+          8830,
+          9140,
+          14450
+        ],
+        [
+          14613,
+          15191,
+          24101
+        ],
+        [
+          8033,
+          8636,
+          14843
+        ]
+      ]
+    }
+  ]
+}
