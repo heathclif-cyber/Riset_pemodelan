@@ -1113,6 +1113,15 @@ Fitur tetap: h1_return, volume_delta, rsi_6, stochrsi_k, atr_14_h1, bars_since_B
 
 4. **Penalti LSTM FLAT = 0.03** (dari 0.0) — LSTM netral tidak lagi memberi LGBM free pass.
 
+**Config cascade_v4.4 (final, setelah restart):**
+
+| Parameter | Nilai | Catatan |
+|-----------|-------|---------|
+| `LSTM_BATCH_SIZE` | 512 | Dikembalikan ke default (1024 terlalu besar untuk fold kecil) |
+| `LSTM_LR` | 0.001 | Dikembalikan ke default (0.0014 terlalu tinggi) |
+| `PATIENCE` | 15 | Tetap dari v4.3 |
+| Log interval | tiap 5 epoch | Dari 10 → 5 untuk monitoring lebih detail |
+
 **Urutan run cascade_v4.4:**
 ```
 python pipeline/05a_generate_momentum_labels.py --all --n 12
