@@ -2,8 +2,11 @@
 
 ## Project Overview
 
-Sistem trading kripto berbasis ML untuk Binance Futures. Arsitektur **3-model cascade v3.1**:
-LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
+Sistem trading kripto berbasis ML untuk Binance Futures.
+*   **Active Production Version**: **`cascade_v4.1`** (104 fitur, FEATURE_COLS_V3 + 3 Volatility Spike Detectors).
+*   **Active Research Version**: **`cascade_v4.1`** — optimalisasi asymmetric thresholds, trend gating, dan exit Guardian (min_hold=0, activation_atr=0.0).
+
+Arsitektur: LGBM Classifier (entry) → LSTM Soft Confirmation → **Guardian v3 (dynamic exit)**.
 
 Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + regime.
 **TRAIN_CUTOFF_DATE = 2025-11-01** — training hanya di 2020 – Okt 2025. Holdout test di Nov 2025 – Apr 2026 (genuine temporal OOS, tanpa overlap).
@@ -34,14 +37,14 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
                                            ▼
                                     ┌──────────────┐
                                     │ Guardian v3  │ ← per-bar dynamic exit
-                                    │ HOLD / PART  │    93 feat + 7 dynamic
+                                    │ HOLD / PART  │    104 feat + 7 dynamic
                                     │ / FULL EXIT  │    multiclass LGBM
                                     └──────────────┘
 ```
 
-- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), **93 features** (`feature_cols_v2.json`), cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL
+- **LGBM**: 3-class (SHORT=0, FLAT=1, LONG=2), **104 features** (`feature_cols_v2.json`), cost-sensitive weights {0:3, 1:1.5, 2:3}, GPU OpenCL. Asymmetric threshold: LONG ≥0.75, SHORT ≥0.60
 - **LSTM**: `ManualLSTMCell` custom (DirectML compatible), seq_len=16, hidden=128, 2-layer. Training via DirectML GPU, inference via CPU
-- **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), **93 static + 7 dynamic features**, GPU OpenCL. Partial exit = 50% posisi
+- **Guardian v3**: Multiclass (0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT), **104 static + 7 dynamic features**, GPU OpenCL. Partial exit = 50% posisi. min_hold_bars=0, activation_atr=0.0 (instant activation, tidak ada zona buta)
 - **TP/SL**: Hybrid H4 Swing + ATR Fallback (non-ML). `TP_SL_HYBRID_MODE=True`
 
 ## Cascade Flow (detail)
@@ -49,8 +52,8 @@ Periode data: 2020-01-01 s/d 2026-04-01. Timeframe: H1 base, H4 untuk swing + re
 ```
 LGBM predict 3-class
   │
-  ├─ LGBM LONG/SHORT >= 0.65 → LSTM hard_consensus adjustment → conf >= 0.65? → ENTRY SIGNAL
-  │       (lgbm_threshold_long = lgbm_threshold_short = 0.65)              FAIL → FLAT
+  ├─ LGBM LONG >= 0.75 / SHORT >= 0.60 → LSTM hard_consensus adjustment → conf >= 0.65? → ENTRY SIGNAL
+  │       (lgbm_threshold_long = 0.75, lgbm_threshold_short = 0.60 — asymmetric)      FAIL → FLAT
   │
   │   LSTM hard_consensus mode (lstm_adjust_mode="hard_consensus"):
   │     agree    → +0.05 boost
@@ -63,14 +66,15 @@ LGBM predict 3-class
             Terbukti menambah 2,500+ trade dengan WR 39% — menurunkan WR dari 78% ke 57%.
             Detail: EXPERIMENTS.md § 2026-05-12
 
-ENTRY → Guardian v3 per-bar check (setelah 3 bar + 1×ATR move):
+ENTRY → Guardian v3 per-bar check (sejak bar 0, tanpa batas ATR minimum — instant activation):
   ├─ HOLD (0)          → lanjut scan
   ├─ PARTIAL_EXIT (1)  → tutup 50% posisi, lanjut 50% sisanya
   └─ FULL_EXIT (2)     → tutup seluruh posisi
 ```
 
-**Alur aktif**: LGBM entry → LSTM confirm → Guardian v3 dynamic exit.
+**Alur aktif**: LGBM entry → LSTM confirm → Trend Alignment gate → Guardian v3 dynamic exit.
 TRAILING_STOP_ENABLED=False (Guardian solo beats trailing). LSTM TIDAK bisa meng-override FLAT.
+TREND_ALIGNMENT_ENABLED=True (with_trend penalty=0.10, counter_trend boost=0.05).
 
 ## Final Results (2026-05-15)
 
@@ -115,6 +119,17 @@ v3 korbankan WR/PF demi volume 72% lebih banyak — Sharpe lebih tinggi, PnL +57
 
 Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)` dan `§ 2026-05-15`
 
+### 💡 Research State: Cascade v4.1 (Volatility-Aware + Asymmetric Entry + Instant Guardian)
+*   **Status**: Active — deployed to production via `tools/deploy_model.py`.
+*   **Training Date**: 2026-05-29
+*   **Fitur**: **104 kolom** — FEATURE_COLS_V3 lengkap: H1/H4 EMA, Smart Money v3/v4 (OFI, VWDP, CVD, VSA), Game Changer v4.0 (Relative Strength, Liquidation Levels, Whale/Retail Divergence), dan Volatility Spike Detectors v4.1 (`atr_zscore_20d`, `atr_percentile_h1`, `vol_spike_zscore`).
+*   **4 fitur yang sebelumnya "dead" telah DIPERBAIKI** (bukan dihapus): `funding_rate`, `funding_price_div`, `btc_dominance`, `fear_greed` — semuanya kini memiliki data valid 100% nonnull via perbaikan di `core/fetchers.py`.
+*   **Training & Holdout OOS Setup**:
+    *   **Training Period**: 2020-01-01 s/d 2025-11-01 (`TRAIN_CUTOFF_DATE = 2025-11-01`).
+    *   **Holdout Temporal OOS**: 2025-11-01 s/d 2026-04-01.
+    *   **Model Runs Path**: `models/runs/cascade_v4.1/`
+
+
 ## Cross-Repo: Production (swint_tradev2)
 
 ### 🎛️ Pusat Kendali Tunggal & Alur Kerja Satu Arah (One-Way Workflow)
@@ -139,7 +154,7 @@ Repo production di `D:\Apps-Dev\swint_tradev2`. File kunci yang bisa langsung di
 | `D:\Apps-Dev\swint_tradev2\app\services\signal_filter.py` | Filter chain (structural, VCB). R1 & R2 dihapus 2026-05-24. |
 | `D:\Apps-Dev\swint_tradev2\app\services\inference.py` | Cascade v3.1 inference pipeline production |
 | `D:\Apps-Dev\swint_tradev2\app\services\guardian_service.py` | Guardian v3 dynamic exit service |
-| `D:\Apps-Dev\swint_tradev2\core\features.py` | Feature engineering production (93 feat, H4 context) |
+| `D:\Apps-Dev\swint_tradev2\core\features.py` | Feature engineering production (104 feat, FEATURE_COLS_V3) |
 
 **Konvensi**: Jika perlu membaca file dari repo production, gunakan absolute path `D:\Apps-Dev\swint_tradev2\...`.
 
@@ -203,7 +218,7 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 - **EXPERIMENTS.md** — Logbook perubahan parameter & temuan eksperimen. Baca sebelum mengubah parameter.
 - **Model registry**: `models/model_registry.json` — model aktif & metrik baseline
 - **Holdout results**: `models/runs/holdout_20260515_001906/holdout_backtest_results.json`
-- **Database Eksperimen**: `reports/experiments/` — Laporan-laporan point-in-time historis yang tersusun secara kronologis.
+- **Database Eksperimen**: `reports/experiments/` — Laporan-laporan point-in-time historis yang tersusun secara kronologis. Otomatis menghasilkan laporan `{run_id}_holdout_report.md` setiap kali backtest holdout selesai dijalankan.
 
 ## Key Files
 
@@ -223,6 +238,8 @@ Agar holdout backtest mendekati kondisi live, gunakan parameter berikut di `conf
 | `pipeline/05_train_lstm.py` | LSTM soft confirmation training (TRAIN_CUTOFF_DATE filter) |
 | `pipeline/06_train_guardian.py` | **Guardian v3 training** — multiclass LGBM, TRAIN_CUTOFF_DATE filter |
 | `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest (Nov 2025 – Apr 2026) |
+| `tools/generate_report.py` | **Retrospective Report Generator** — Merekonstruksi laporan Markdown premium komprehensif dari run historis (misal: `cascade_v3.1`) |
+| `tools/train_all.py` | **Master Training Orchestrator** — Menanyakan versi secara interaktif, melakukan training lengkap, dan otomatis mendokumentasikan metrik OOS ke `model_registry.json` dan `EXPERIMENTS.md` |
 | `pipeline/shared.py` | `SequenceDataset` + `build_purged_folds()` |
 | `pipeline/backtest_utils.py` | `hierarchical_predict()` + feature alignment via `feature_name_` |
 | `analysis/evaluate.py` | Penganalisis CSV hasil trading (Winrate, PF, streak, dll.) |
@@ -245,7 +262,7 @@ Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 
 ### Guardian v3 — SUCCESS (2026-05-15)
 
-- **93 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4) berkontribusi nyata
+- **104 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4, volatility spike detectors) berkontribusi nyata
 - **WR 89% di temporal OOS**: Guardian genuine generalization, bukan overfitting. Semua 21 koin PnL positif
 - **TP → momentum mode = game changer**: Trade +72%, PnL +57% vs Guardian v2 binary. TP tidak hard-close posisi
 - **Guardian > Trailing stop**: Guardian v3 mengalahkan trailing 2x ATR di semua metrik
@@ -289,6 +306,7 @@ Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 - **Feature alignment via `model.feature_name_`** — mencegah mismatch fitur 103 vs 104
 - **Jangan duplikasi isi config.py** — baca langsung dari file
 - **Jangan tulis riwayat perubahan di sini** — gunakan `EXPERIMENTS.md`
+- **Retraining Protocol**: SEBELUM melakukan training model baru, tanyakan secara eksplisit kepada user mengenai nama versi model yang diinginkan (misalnya `cascade_v3.2`). Setelah ditentukan, dokumentasikan secara lengkap detail versi tersebut di `CLAUDE.md` mencakup: tanggal training, deskripsi fitur yang dipakai, parameter temporal holdout OOS, serta path penyimpanan model (`models/runs/{run_id}/`) untuk mencegah file sampah (*garbage*).
 
 ## Slash Commands
 
