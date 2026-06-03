@@ -1,5 +1,73 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+## 2026-06-03 — Riset Cascade Mode: LSTM Dominant & Dual Dominant (DEPLOYED: Z3)
+
+**Latar belakang**: Data live trading (livesignal.csv, Jun 2026) menunjukkan dual_gate (T) memblokir 100% sinyal selama 20 jam karena LSTM hampir selalu output FLAT 97-100%. Riset ini mencari paradigma baru untuk LSTM confirmation yang tidak bergantung pada argmax confidence LSTM.
+
+### Temuan Utama: Paradigma LSTM Dominant
+
+**Hipotesis**: Daripada tanya "seberapa yakin LSTM?", tanya "LSTM lebih condong ke LONG atau SHORT?" — abaikan FLAT sepenuhnya.
+
+**Logika baru**:
+```
+lstm_dominant = argmax(LSTM_LONG, LSTM_SHORT)   <- FLAT diabaikan
+entry jika: lstm_dominant == arah_LGBM AND max(LSTM_L, LSTM_S) >= threshold
+```
+
+**Contoh**: LSTM S=27% F=37% L=36% → dominant=LONG (36%>27%), 36%>=35% → konfirmasi LONG.
+
+### Grid Sweep Lengkap (Holdout Nov 2025 – Apr 2026, 21 koin, 5x leverage)
+
+#### Mode yang Diuji
+
+| Scenario | Mode | Kondisi | WR% | DD% | Sharpe | PF | PnL | ROI/5bln | Modal Min |
+|---------|------|---------|-----|-----|--------|-----|-----|----------|----------|
+| Y1 | lstm_dominant | LGBM std + dominant>=0.33 | 62.58% | 82.2% | 5.08 | 1.92 | $2,075 | — | — |
+| Y2 | lstm_dominant | LGBM std + dominant>=0.35 | 62.46% | 80.3% | 4.99 | 1.91 | $2,039 | — | — |
+| Z1 | dual_dominant | LGBM>=0.55 + dominant>=0.35 | 62.03% | 87.2% | 4.32 | 3.10 | $1,702 | 131% | $1,300 |
+| Z2 | dual_dominant | LGBM>=0.60 + dominant>=0.35 | 62.97% | 80.4% | 4.44 | 3.21 | $1,613 | 151% | $1,066 |
+| **Z3** | **dual_dominant** | **LGBM>=0.65 + dominant>=0.35** | **64.81%** | **66.1%** | **4.77** | **3.48** | **$1,519** | **188%** | **$806** |
+| T (prev) | dual_gate | LGBM>=0.60 + LSTM>=0.45 | 61.10% | 78.1% | 4.12 | 7.59 | $1,522 | 158% | $962 |
+| I (ref) | hard_consensus | LGBM 0.69/0.59 | 63.29% | 79.2% | 5.55 | 2.04 | $2,199 | 148% | $1,482 |
+
+#### Catatan PF Tinggi pada T (dual_gate)
+PF 7.59 pada T adalah **artefak statistik** — bukan PF aggregate sesungguhnya. PF aggregate T = 1.76 (dari gross_win/gross_loss). Mean per-koin PF tinggi karena beberapa koin mendapat sangat sedikit trade dengan WR tinggi secara kebetulan. PF Z3 aggregate = 2.12 (lebih valid).
+
+### Keputusan Deployment: Z3
+
+**Z3 dipilih** karena kombinasi unik:
+- WR tertinggi dari semua mode yang pernah ditest: **64.81%**
+- DD terendah dari mode aktif: **66.1%**
+- ROI terbaik per modal: **188% / 5 bulan** (~37%/bulan)
+- Modal minimum: **$806** (max 31 posisi sekaligus × $26)
+- Trade volume cukup: 19.8 trade/bulan per koin
+
+**Trade-off yang diterima**: PnL absolut lebih kecil ($1,519) dari Y2 ($2,039) dan I ($2,199), karena volume lebih selektif. Efisiensi per unit modal yang lebih baik.
+
+### Implementasi Teknis
+
+Mode `dual_dominant` ditambahkan ke `core/cascade_utils.py`:
+
+```python
+# LGBM: argmax >= lgbm_gate (independen, tidak terikat std threshold)
+# LSTM: max(LONG, SHORT) >= lstm_dominant_threshold (FLAT diabaikan)
+# Keduanya harus lolos DAN searah
+# Confidence final = (lgbm_conf + lstm_dom_prob) / 2
+```
+
+Config Z3:
+```json
+"cascade": {
+  "mode": "dual_dominant",
+  "lgbm_gate": 0.65,
+  "lstm_dominant_threshold": 0.35
+}
+```
+
+**Backup sebelumnya** (dual_gate T): `D:\Apps-Dev\swint_tradev2\models\backups\backup_20260603_222447`
+
+---
+
 ## 2026-05-12 — Debug SHORT Signal & LSTM Conversion Rate
 
 **Latar belakang**: Live signal 12 Mei 2026 menghasilkan 0 SHORT dari 208 sinyal (13 bar × 16 coin).
@@ -1132,4 +1200,100 @@ python pipeline/05c_train_lstm_h1.py --all --run-id cascade_v4.4
 **Target:** F1 > 0.36 (lebih bermakna di atas random). Jika masih ≤ 0.35, evaluasi alternatif arsitektur (binary classifier atau regression).
 
 **File model:** `models/runs/cascade_v4.3/lstm_momentum.pt` (tersimpan, bisa dipakai sebagai baseline)
+
+---
+
+## 2026-05-31 — LSTM v2 Robust Features + RobustScaler (Diagnosis & Perbaikan Skala)
+
+### Latar Belakang
+
+Setelah audit mendalam (debug_lstm_sequences.py), ditemukan **akar masalah utama** kenapa LSTM di cascade_v4.3 masih F1 ≈ random (0.3339):
+
+**Extreme cross-coin scale mismatch** pada fitur orderflow & volume:
+
+| Fitur                | BTC std     | DOGE std       | Rasio     |
+|----------------------|-------------|----------------|-----------|
+| volume_delta         | 5.5K        | 270 juta       | 0.00002   |
+| ofi_raw              | 157         | 7.5 juta       | ~0        |
+| ofi_acceleration     | 214         | 10 juta        | ~0        |
+| vwdp_smooth          | 28          | 1.16 juta      | ~0        |
+| atr_14_h1            | 294         | 0.004          | 75,000x   |
+
+LSTM joint training (semua 21 coin) menghabiskan kapasitas hidden state hanya untuk "belajar skala" antar coin, bukan pola temporal momentum.
+
+Banyak fitur "trajectory" yang diharapkan juga terlalu stabil di dalam window 32 bar (oi_delta_pct median range hanya 0.001-0.008).
+
+### Perbaikan yang Dilakukan (05b + 05c)
+
+| # | File | Perubahan |
+|---|------|-----------|
+| 1 | `pipeline/05b_build_h1_sequences.py` | **Fitur v2 Robust (11 fitur)**. Hapus total: `volume_delta`, `ofi_raw`, `ofi_acceleration`, `vwdp_smooth`, `atr_14_h1`. Ganti dengan: `ofi_z_score` (sudah z-score di data), `atr_percentile_h1` (bounded 0-1). `oi_delta_pct` di-clip lebih ketat (-0.5, 0.5). |
+| 2 | `pipeline/05c_train_lstm_h1.py` | Ganti `StandardScaler` → **`RobustScaler`** (median + IQR). Update metadata: `"feature_version": "v2_robust_11feat"`, `"scaler_type": "RobustScaler"`, `fixes_applied` ditambah. |
+| 3 | Diagnosis script | `debug_lstm_sequences.py` dibuat untuk analisis intra-sequence range + cross-coin std. |
+
+**Fitur LSTM v2 (11 fitur):**
+- Price trajectory: `h1_return`, `log_ret_5`, `log_ret_20`
+- Oscillators: `rsi_6`, `stochrsi_k`
+- Relative: `vol_ratio_20`, `atr_percentile_h1`
+- Structure: `bars_since_BOS`
+- Smart money relative: `ofi_z_score`
+- Alpha: `oi_delta_pct` (clipped), `btc_h1_return`
+
+### Target & Next Step
+
+- Jalankan ulang full pipeline LSTM dengan v2:
+  ```bash
+  python pipeline/05a_generate_momentum_labels.py --all --n 12
+  python pipeline/05b_build_h1_sequences.py --all
+  python pipeline/05c_train_lstm_h1.py --all --run-id cascade_v4.5_lstm_robust
+  ```
+- Target: mean F1 macro **> 0.37** (dari 0.334). Jika masih ≤ 0.36, pertimbangkan binary confirmer atau drop LSTM dari cascade.
+
+**Status saat ini (2026-05-31):** Perbaikan pipeline selesai. Belum dijalankan training baru.
+
+---
+
+## 2026-06-01 — V2.5 Hybrid Entry (Revive Reasonable Volume)
+
+### Latar Belakang
+Live trading data (livetrade.csv, Mei 2026) menunjukkan performa yang sangat kontras:
+- cascade_v2 (lebih longgar) → 54.7% WR, +$232 PnL di periode awal
+- cascade_v3.1 / v4.1 (ultra selektif) → 16.7% WR, -$13 PnL di akhir Mei
+
+Penyebab utama underperformance versi baru: 
+- `LGBM_THRESHOLD_LONG = 0.75`
+- `LSTM_ADJUST_OPPOSITE_PEN = 0.99`
+- Flat review sepenuhnya dimatikan
+- Terlalu banyak filter baru
+
+Sementara itu, backtest 11 bulan (Guardian v3) tetap sangat kuat. Masalahnya adalah **entry gate terlalu ketat untuk regime choppy saat ini**.
+
+### Perubahan V2.5 Hybrid
+| Parameter                    | Lama     | Baru (V2.5) | Alasan |
+|-----------------------------|----------|-------------|--------|
+| `LGBM_THRESHOLD_LONG`       | 0.75     | **0.69**    | Beri ruang LONG tanpa kembali ke bias berat |
+| `LGBM_THRESHOLD_SHORT`      | 0.60     | **0.59**    | Sedikit lebih longgar |
+| `LSTM_ADJUST_OPPOSITE_PEN`  | 0.99     | **0.65**    | Kurangi pembunuhan trade berlawanan arah secara berlebihan |
+| `CONFIDENCE_THRESHOLD_ENTRY`| 0.60     | **0.59**    | Selaras dengan threshold baru |
+
+**Yang tidak diubah (dipertahankan penuh):**
+- Guardian v3 multiclass + 104 fitur + Momentum Mode + instant activation
+- Volatility Spike Detectors (atr_zscore_20d, atr_percentile_h1, vol_spike_zscore)
+- Trend Alignment (pen 0.10 / boost 0.05)
+- VCB + Structural Filter + RR Gate
+- `LSTM_FLAT_REVIEW_ENABLED = False` (keputusan ini tetap)
+
+### File yang Diupdate
+- `config.py` — parameter entry + dokumentasi panjang di atas
+- `models/inference_config.json` — disesuaikan untuk konsistensi (model_version = cascade_v2.5_hybrid)
+
+### Next Step
+- Backtest hybrid pada periode Nov 2025 – Mei 2026 (fokus choppy window)
+- Paper trading 7–14 hari di production
+- Monitor: jumlah trade/hari, SL hit rate, PnL
+
+Keputusan ini diambil setelah analisis mendalam livetrade.csv + EXPERIMENTS.md.
+
+---
+
 

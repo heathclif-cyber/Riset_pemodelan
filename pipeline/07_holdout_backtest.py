@@ -756,6 +756,516 @@ def generate_markdown_report(aggregate, feat_cols, start, end, run_id, all_trade
 # MAIN
 # ═══════════════════════════════════════════════════════════════════════════════
 
+SCENARIO_PARAMS = {
+    "A": {
+        # cascade_v2.5_hybrid original — LGBM selektif, LSTM modifier bukan gatekeeper
+        "lgbm_threshold_long":  0.69,
+        "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen":     0.00,
+        "lstm_opposite_pen":    0.65,
+        "lstm_agree_boost":     0.05,
+        "confidence_entry":     0.59,
+        "desc": "v2.5hybrid original (LGBM 0.69/0.59, LSTM neutral=0.0)",
+    },
+    "B": {
+        # Relaxed LGBM threshold — LSTM sebagai filter yang lebih aktif
+        "lgbm_threshold_long":  0.60,
+        "lgbm_threshold_short": 0.55,
+        "lstm_neutral_pen":     0.10,
+        "lstm_opposite_pen":    0.55,
+        "lstm_agree_boost":     0.10,
+        "confidence_entry":     0.59,
+        "desc": "relaxed threshold (LGBM 0.60/0.55, LSTM neutral=-0.10)",
+    },
+    "C": {
+        # LGBM longgar, LSTM strict gatekeeper, conf rendah
+        # Hipotesis: LSTM jadi penentu utama, volume tinggi, kualitas bergantung LSTM
+        "lgbm_threshold_long":  0.45,
+        "lgbm_threshold_short": 0.45,
+        "lstm_neutral_pen":     0.99,
+        "lstm_opposite_pen":    0.99,
+        "lstm_agree_boost":     0.20,
+        "confidence_entry":     0.59,
+        "desc": "LGBM gate=0.45, LSTM strict gatekeeper (neutral=0.99), conf=0.59",
+    },
+    "D": {
+        # Sama seperti C tapi conf_entry dinaikkan ke 0.65
+        # Hipotesis: lebih sedikit trade tapi LSTM + conf bar = quality lebih tinggi
+        "lgbm_threshold_long":  0.45,
+        "lgbm_threshold_short": 0.45,
+        "lstm_neutral_pen":     0.99,
+        "lstm_opposite_pen":    0.99,
+        "lstm_agree_boost":     0.20,
+        "confidence_entry":     0.65,
+        "desc": "LGBM gate=0.45, LSTM strict (neutral=0.99), conf=0.65",
+    },
+    "E": {
+        # Production v3.1 exact — LGBM 0.45, boost 0.25, conf 0.65
+        "lgbm_threshold_long":  0.45,
+        "lgbm_threshold_short": 0.45,
+        "lstm_neutral_pen":     0.99,
+        "lstm_opposite_pen":    0.99,
+        "lstm_agree_boost":     0.25,
+        "confidence_entry":     0.65,
+        "desc": "production v3.1 exact (LGBM 0.45, boost=0.25, conf=0.65)",
+    },
+    "F": {
+        # LGBM longgar, LSTM partial filter — neutral dibiarkan, hanya opposite yang diblok
+        # Hipotesis: volume lebih tinggi dari C/D tapi tetap blok sinyal berlawanan
+        "lgbm_threshold_long":  0.45,
+        "lgbm_threshold_short": 0.45,
+        "lstm_neutral_pen":     0.30,
+        "lstm_opposite_pen":    0.99,
+        "lstm_agree_boost":     0.20,
+        "confidence_entry":     0.59,
+        "desc": "LGBM gate=0.45, LSTM blok opposite saja (neutral=0.30), conf=0.59",
+    },
+    "G": {
+        # LGBM sedikit lebih tinggi (0.55), LSTM strict gatekeeper
+        # Hipotesis: sweet spot antara A dan C — LGBM pre-filter + LSTM strict
+        "lgbm_threshold_long":  0.55,
+        "lgbm_threshold_short": 0.55,
+        "lstm_neutral_pen":     0.99,
+        "lstm_opposite_pen":    0.99,
+        "lstm_agree_boost":     0.20,
+        "confidence_entry":     0.59,
+        "desc": "LGBM gate=0.55, LSTM strict gatekeeper (neutral=0.99), conf=0.59",
+    },
+    "H": {
+        # Scenario A + LSTM Momentum Rescue
+        # Masalah: saat pump/dump, LGBM bisa 0.55-0.68 (below 0.69 threshold)
+        # tapi LSTM mendeteksi momentum kuat dari sequence 16 bar terakhir.
+        # Fix: turunkan LSTM_OVERRIDE_THRESHOLD dari 0.70 ke 0.60 supaya
+        # LSTM bisa rescue trade yang ditolak LGBM karena sedikit di bawah threshold.
+        # LGBM directional review aktif untuk score > 0.45 (lebih tinggi dari default 0.35
+        # untuk menghindari noise — hanya LGBM yang punya conviction cukup).
+        "lgbm_threshold_long":        0.69,
+        "lgbm_threshold_short":       0.59,
+        "lstm_neutral_pen":           0.00,
+        "lstm_opposite_pen":          0.65,
+        "lstm_agree_boost":           0.05,
+        "confidence_entry":           0.59,
+        "lstm_flat_review_enabled":   True,
+        "lstm_directional_threshold": 0.45,
+        "lstm_override_threshold":    0.60,
+        "desc": "Scenario A + momentum rescue (LSTM override thr=0.60, dir review > 0.45)",
+    },
+    "I": {
+        # Scenario A + Dynamic Threshold berbasis vol_spike_zscore
+        # vol_spike >= 2.0 → threshold turun 0.04 (misal 0.69 → 0.65)
+        # vol_spike >= 3.0 → threshold turun 0.07 (misal 0.69 → 0.62)
+        # Hipotesis: saat volume spike ekstrem, pasar sedang dalam momentum
+        # kuat — threshold lebih rendah valid karena LGBM mungkin sedikit lag.
+        "lgbm_threshold_long":              0.69,
+        "lgbm_threshold_short":             0.59,
+        "lstm_neutral_pen":                 0.00,
+        "lstm_opposite_pen":                0.65,
+        "lstm_agree_boost":                 0.05,
+        "confidence_entry":                 0.59,
+        "momentum_dynamic_threshold":       True,
+        "momentum_spike_l1":                2.0,
+        "momentum_spike_l2":                3.0,
+        "momentum_reduce_l1":               0.04,
+        "momentum_reduce_l2":               0.07,
+        "desc": "Scenario A + dynamic threshold (vol_spike>=2→-0.04, >=3→-0.07)",
+    },
+    "J": {
+        # Scenario I + Trend Score Asymmetric Threshold
+        # Uptrend kuat  (h4_trend=1, trend_strength>2.0, ema_21_slope>0)
+        #   → LONG threshold turun 0.05 (0.69→0.64), SHORT tidak berubah
+        # Downtrend kuat (h4_trend=-1, trend_strength<-2.0, ema_21_slope<0)
+        #   → SHORT threshold turun 0.05 (0.59→0.54), LONG tidak berubah
+        # NOTE: Holdout Nov2025-Mar2026 = mixed/corrective period.
+        # Hasil mungkin CONSERVATIVE — di bull market full benefit lebih besar.
+        "lgbm_threshold_long":              0.69,
+        "lgbm_threshold_short":             0.59,
+        "lstm_neutral_pen":                 0.00,
+        "lstm_opposite_pen":                0.65,
+        "lstm_agree_boost":                 0.05,
+        "confidence_entry":                 0.59,
+        "momentum_dynamic_threshold":       True,
+        "momentum_spike_l1":                2.0,
+        "momentum_spike_l2":                3.0,
+        "momentum_reduce_l1":               0.04,
+        "momentum_reduce_l2":               0.07,
+        "trend_dynamic_threshold":          True,
+        "trend_strength_min":               2.0,
+        "trend_reduce_amount":              0.05,
+        "desc": "Scenario I + trend score asymmetric (uptrend→LONG-0.05, downtrend→SHORT-0.05)",
+    },
+    "K": {
+        # Dual-Path: LGBM jalur structural + LSTM jalur momentum independen.
+        # Saat LGBM di bawah threshold, LSTM bisa masuk sendiri jika confidence >= 0.65.
+        # Murni output model — tidak ada filter teknikal tambahan.
+        # Tujuan: tangkap momentum pump/dump yang LGBM belum cukup yakin,
+        # tapi LSTM sudah deteksi lewat sequence 16 bar.
+        "lgbm_threshold_long":       0.69,
+        "lgbm_threshold_short":      0.59,
+        "lstm_neutral_pen":          0.10,
+        "lstm_opposite_pen":         0.85,
+        "lstm_agree_boost":          0.05,
+        "confidence_entry":          0.59,
+        "lstm_standalone_enabled":   True,
+        "lstm_standalone_threshold": 0.65,
+        "desc": "Dual-Path: LGBM structural + LSTM momentum standalone (conf >= 0.65, no extra filters)",
+    },
+
+    # ── Smart Entry Experiments ───────────────────────────────────────────────
+    # Kedua model berkontribusi bersamaan ke setiap bar.
+    # LGBM tidak lagi gatekeeper tunggal.
+
+    "L": {
+        # Soft Vote 60/40, threshold 0.45
+        # LGBM dominan tapi LSTM punya suara nyata
+        "lgbm_threshold_long":  0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "soft_vote", "smart_entry_lgbm_w": 0.60,
+        "smart_entry_threshold": 0.45,
+        "desc": "Smart: Soft Vote 60/40, combined_thr=0.45",
+    },
+    "M": {
+        # Soft Vote 50/50 — suara setara
+        "lgbm_threshold_long":  0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "soft_vote", "smart_entry_lgbm_w": 0.50,
+        "smart_entry_threshold": 0.45,
+        "desc": "Smart: Soft Vote 50/50, combined_thr=0.45",
+    },
+    "N": {
+        # Soft Vote 60/40, threshold lebih tinggi (0.52) — lebih selektif
+        "lgbm_threshold_long":  0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "soft_vote", "smart_entry_lgbm_w": 0.60,
+        "smart_entry_threshold": 0.52,
+        "desc": "Smart: Soft Vote 60/40, combined_thr=0.52",
+    },
+    "O": {
+        # Geometric Mean — strict consensus, crash protection kuat
+        "lgbm_threshold_long":  0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "geometric", "smart_entry_lgbm_w": 0.60,
+        "smart_entry_threshold": 0.38,
+        "desc": "Smart: Geometric Mean, combined_thr=0.38",
+    },
+    "P": {
+        # Dynamic Weight — model lebih yakin dapat bobot lebih
+        "lgbm_threshold_long":  0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dynamic_weight", "smart_entry_lgbm_w": 0.60,
+        "smart_entry_threshold": 0.48,
+        "desc": "Smart: Dynamic Weight (conf-proportional), combined_thr=0.48",
+    },
+
+    "Q": {
+        # mutual_agree 60/40 — LGBM+LSTM bersama, LSTM punya veto
+        # Saat LSTM netral (<38%): entry diblokir, exhaustion protection aktif
+        # Saat LSTM agree (>=38%): combined score menentukan
+        # LGBM tidak bisa masuk sendiri tanpa LSTM berkontribusi
+        "lgbm_threshold_long":       0.69,
+        "lgbm_threshold_short":      0.59,
+        "lstm_neutral_pen":          0.10,
+        "lstm_opposite_pen":         0.85,
+        "lstm_agree_boost":          0.05,
+        "confidence_entry":          0.59,
+        "smart_entry_mode":          "mutual_agree",
+        "smart_entry_lgbm_w":        0.60,
+        "smart_entry_threshold":     0.50,
+        "smart_entry_lstm_min":      0.38,
+        "desc": "Smart mutual_agree 60/40: LSTM veto bila netral, combined>=0.50",
+    },
+    "R": {
+        # mutual_agree 50/50 — suara benar-benar setara
+        # LSTM dan LGBM punya bobot sama, LSTM tetap punya veto
+        "lgbm_threshold_long":       0.69,
+        "lgbm_threshold_short":      0.59,
+        "lstm_neutral_pen":          0.10,
+        "lstm_opposite_pen":         0.85,
+        "lstm_agree_boost":          0.05,
+        "confidence_entry":          0.59,
+        "smart_entry_mode":          "mutual_agree",
+        "smart_entry_lgbm_w":        0.50,
+        "smart_entry_threshold":     0.50,
+        "smart_entry_lstm_min":      0.38,
+        "desc": "Smart mutual_agree 50/50: suara setara, LSTM veto bila netral",
+    },
+
+    "S": {
+        # Dual Hard Gate — LGBM dan LSTM masing-masing punya threshold sendiri
+        # Keduanya harus lolos secara INDEPENDEN dan arah SAMA
+        # LGBM gate diturunkan ke 0.55 (lebih banyak kandidat)
+        # tapi LSTM harus agree 0.42+ (di atas random 0.333)
+        # True paralel — tidak ada yang bisa bypass yang lain
+        "lgbm_threshold_long":     0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen":        0.10, "lstm_opposite_pen":    0.85,
+        "lstm_agree_boost":        0.05, "confidence_entry":     0.59,
+        "smart_entry_mode":        "dual_gate",
+        "smart_entry_lgbm_gate":   0.55,   # LGBM harus >= 55% untuk arahnya
+        "smart_entry_lstm_gate":   0.42,   # LSTM harus >= 42% untuk arah SAMA
+        "desc": "Dual Hard Gate: LGBM>=0.55 AND LSTM>=0.42, arah sama — true paralel",
+    },
+    "T": {
+        # Dual Hard Gate — lebih ketat, gate lebih tinggi
+        # LGBM 0.60 + LSTM 0.45 = lebih selektif
+        "lgbm_threshold_long":     0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen":        0.10, "lstm_opposite_pen":    0.85,
+        "lstm_agree_boost":        0.05, "confidence_entry":     0.59,
+        "smart_entry_mode":        "dual_gate",
+        "smart_entry_lgbm_gate":   0.60,   # lebih ketat
+        "smart_entry_lstm_gate":   0.45,   # lebih ketat
+        "desc": "Dual Hard Gate: LGBM>=0.60 AND LSTM>=0.45 — lebih selektif",
+    },
+
+    # ── Tweaking Scenario T ───────────────────────────────────────────────────
+    "T1": {
+        # Longgarkan LSTM gate saja: 0.45 → 0.43
+        # LGBM tetap ketat 0.60, LSTM lebih sering lolos
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.43,
+        "desc": "T tweak: LGBM>=0.60 AND LSTM>=0.43",
+    },
+    "T2": {
+        # Longgarkan LGBM gate saja: 0.60 → 0.58
+        # LSTM tetap ketat 0.45
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.58, "smart_entry_lstm_gate": 0.45,
+        "desc": "T tweak: LGBM>=0.58 AND LSTM>=0.45",
+    },
+    "T3": {
+        # Longgarkan keduanya sedikit: 0.60/0.45 → 0.58/0.43
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.58, "smart_entry_lstm_gate": 0.43,
+        "desc": "T tweak: LGBM>=0.58 AND LSTM>=0.43",
+    },
+    "T4": {
+        # Longgarkan LSTM lebih agresif: 0.45 → 0.40
+        # Test apakah PF masih terjaga di gate LSTM lebih rendah
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.40,
+        "desc": "T tweak: LGBM>=0.60 AND LSTM>=0.40",
+    },
+    "T5": {
+        # LSTM gate sangat longgar 0.35 — hampir semua sinyal LSTM lolos
+        # LGBM tetap 0.60, test apakah LGBM strict cukup untuk jaga kualitas
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.35,
+        "desc": "T5: LGBM>=0.60 AND LSTM>=0.35",
+    },
+    "T6": {
+        # LGBM lebih longgar + LSTM 0.35
+        "lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+        "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+        "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+        "smart_entry_mode": "dual_gate",
+        "smart_entry_lgbm_gate": 0.58, "smart_entry_lstm_gate": 0.35,
+        "desc": "T6: LGBM>=0.58 AND LSTM>=0.35",
+    },
+    "T7": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.50,
+           "desc": "T7: LGBM>=0.60 AND LSTM>=0.50"},
+    "T8": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.58, "smart_entry_lstm_gate": 0.50,
+           "desc": "T8: LGBM>=0.58 AND LSTM>=0.50"},
+    "T9": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.55, "smart_entry_lstm_gate": 0.50,
+           "desc": "T9: LGBM>=0.55 AND LSTM>=0.50"},
+    # ── Soft Gate: LGBM gates, LSTM hanya blok jika kuat berlawanan ──────────
+    "U":  {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "soft_gate",
+           "smart_entry_lgbm_gate": 0.60,
+           "lstm_soft_gate_opp_max": 0.35,
+           "desc": "U: Soft Gate — LGBM>=0.60, LSTM_opp<0.35 (tanpa argmax match)"},
+    # ── Dual Gate Sweep: LGBM [0.40,0.50,0.60] x LSTM [0.37,0.39,0.41] ──────
+    "V1": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.40, "smart_entry_lstm_gate": 0.37,
+           "desc": "V1: dual_gate LGBM>=0.40 AND LSTM>=0.37"},
+    "V2": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.40, "smart_entry_lstm_gate": 0.39,
+           "desc": "V2: dual_gate LGBM>=0.40 AND LSTM>=0.39"},
+    "V3": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.40, "smart_entry_lstm_gate": 0.41,
+           "desc": "V3: dual_gate LGBM>=0.40 AND LSTM>=0.41"},
+    "V4": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.50, "smart_entry_lstm_gate": 0.37,
+           "desc": "V4: dual_gate LGBM>=0.50 AND LSTM>=0.37"},
+    "V5": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.50, "smart_entry_lstm_gate": 0.39,
+           "desc": "V5: dual_gate LGBM>=0.50 AND LSTM>=0.39"},
+    "V6": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.50, "smart_entry_lstm_gate": 0.41,
+           "desc": "V6: dual_gate LGBM>=0.50 AND LSTM>=0.41"},
+    "V7": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.37,
+           "desc": "V7: dual_gate LGBM>=0.60 AND LSTM>=0.37"},
+    "V8": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.39,
+           "desc": "V8: dual_gate LGBM>=0.60 AND LSTM>=0.39"},
+    "V9": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_gate",
+           "smart_entry_lgbm_gate": 0.60, "smart_entry_lstm_gate": 0.41,
+           "desc": "V9: dual_gate LGBM>=0.60 AND LSTM>=0.41"},
+    # ── Ratio Gate: direktional >= N× lawan di kedua model ───────────────────
+    # W: tanpa floor — hanya arsip (terlalu banyak noise trade)
+    "W":  {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.0,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0,
+           "desc": "W: Ratio Gate 2x tanpa floor (arsip — terlalu noise)"},
+    # W2: ratio_gate + minimum LGBM floor 0.35
+    "W2": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.35,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0,
+           "desc": "W2: Ratio Gate 2x + conf_entry>=0.35 (filter noise)"},
+    # W3: ratio_gate + floor 0.40
+    "W3": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.40,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0,
+           "desc": "W3: Ratio Gate 2x + conf_entry>=0.40"},
+    # W4: ratio_gate + floor 0.45
+    "W4": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.45,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0,
+           "desc": "W4: Ratio Gate 2x + conf_entry>=0.45"},
+    # W5: ratio 2x + FLAT < 0.70
+    "W5": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.0,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0, "ratio_flat_max": 0.70,
+           "desc": "W5: Ratio Gate 2x + FLAT<0.70 (noise filter murni)"},
+    # W6: ratio 2x + FLAT < 0.60
+    "W6": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.0,
+           "smart_entry_mode": "ratio_gate",
+           "ratio_multiplier": 2.0, "ratio_flat_max": 0.60,
+           "desc": "W6: Ratio Gate 2x + FLAT<0.60 (lebih ketat)"},
+    # ── LSTM Ratio Gate: LGBM standard threshold, LSTM pakai ratio 2x ─────────
+    "X1": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_ratio",
+           "ratio_multiplier": 2.0, "ratio_flat_max": 0.70,
+           "desc": "X1: LGBM std threshold + LSTM ratio 2x + FLAT<0.70"},
+    "X2": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_ratio",
+           "ratio_multiplier": 2.0, "ratio_flat_max": 0.60,
+           "desc": "X2: LGBM std threshold + LSTM ratio 2x + FLAT<0.60"},
+    "X3": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_ratio",
+           "ratio_multiplier": 2.0, "ratio_flat_max": 0.50,
+           "desc": "X3: LGBM std threshold + LSTM ratio 2x + FLAT<0.50 (LSTM direktional > FLAT)"},
+    # ── LSTM Dominant Gate: LGBM standard, LSTM dominant dir >= threshold ─────
+    "Y1": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_dominant",
+           "lstm_dominant_threshold": 0.33,
+           "desc": "Y1: LSTM dominant >= 0.33 (sedikit di atas random 1/3)"},
+    "Y2": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_dominant",
+           "lstm_dominant_threshold": 0.35,
+           "desc": "Y2: LSTM dominant >= 0.35 (threshold user)"},
+    "Y3": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "lstm_dominant",
+           "lstm_dominant_threshold": 0.40,
+           "desc": "Y3: LSTM dominant >= 0.40 (lebih ketat)"},
+    # ── Dual Dominant: dual gate struktur + LSTM dominant logic ──────────────
+    "Z1": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_dominant",
+           "smart_entry_lgbm_gate": 0.55,
+           "lstm_dominant_threshold": 0.35,
+           "desc": "Z1: dual_dominant LGBM>=0.55 + LSTM max(L,S)>=0.35"},
+    "Z2": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_dominant",
+           "smart_entry_lgbm_gate": 0.60,
+           "lstm_dominant_threshold": 0.35,
+           "desc": "Z2: dual_dominant LGBM>=0.60 + LSTM max(L,S)>=0.35"},
+    "Z3": {"lgbm_threshold_long": 0.69, "lgbm_threshold_short": 0.59,
+           "lstm_neutral_pen": 0.10, "lstm_opposite_pen": 0.85,
+           "lstm_agree_boost": 0.05, "confidence_entry": 0.59,
+           "smart_entry_mode": "dual_dominant",
+           "smart_entry_lgbm_gate": 0.65,
+           "lstm_dominant_threshold": 0.35,
+           "desc": "Z3: dual_dominant LGBM>=0.65 + LSTM max(L,S)>=0.35"},
+}
+
+
 def parse_args():
     parser = argparse.ArgumentParser(description="Hold-Out Backtest Pipeline")
     group  = parser.add_mutually_exclusive_group()
@@ -771,7 +1281,11 @@ def parse_args():
                         help="Skip cleaning")
     parser.add_argument("--skip-engineer", action="store_true",
                         help="Skip feature engineering")
-    parser.add_argument("--run-id", default=None)
+    parser.add_argument("--run-id", default=None,
+                        help="Run ID untuk load model dari models/runs/{run_id}/")
+    parser.add_argument("--scenario", choices=list(SCENARIO_PARAMS.keys()), default=None,
+                        help="A=v2.5hybrid original, B=relaxed threshold. "
+                             "Suffix _scenario_X ditambahkan ke output run_id.")
     return parser.parse_args()
 
 
@@ -782,7 +1296,8 @@ def main():
     )
     start = datetime.strptime(args.start, "%Y-%m-%d").replace(tzinfo=timezone.utc)
     end   = datetime.strptime(args.end,   "%Y-%m-%d").replace(tzinfo=timezone.utc)
-    run_id  = args.run_id or f"holdout_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    base_id = args.run_id or f"holdout_{datetime.now().strftime('%Y%m%d_%H%M%S')}"
+    run_id  = f"{base_id}_scenario_{args.scenario}" if args.scenario else base_id
     run_dir = MODEL_DIR / "runs" / run_id
     run_dir.mkdir(parents=True, exist_ok=True)
 
@@ -828,35 +1343,121 @@ def main():
 
     # ── Step 4: Load models (2-model cascade: LGBM + LSTM) ───────────────────
     logger.info("=== STEP 4: BACKTEST (2-Model Cascade) ===")
-    required_models = [
-        (MODEL_DIR / "lgbm_baseline.pkl",    "LightGBM"),
-        (MODEL_DIR / "lstm_best.pt",         "LSTM"),
-        (MODEL_DIR / "lstm_scaler.pkl",      "LSTM Scaler"),
-        (MODEL_DIR / "feature_cols_v2.json", "Feature cols"),
-    ]
-    for path, name in required_models:
+
+    # Resolusi path model — prioritaskan run directory jika ada
+    def _resolve(run_fname: str, root_fname: str) -> Path:
+        if args.run_id:
+            p = MODEL_DIR / "runs" / args.run_id / run_fname
+            if p.exists():
+                return p
+        return MODEL_DIR / root_fname
+
+    lgbm_path        = _resolve("lgbm.pkl",                    "lgbm_baseline.pkl")
+    lstm_path        = _resolve("lstm_v2_style.pt",            "lstm_best.pt")
+    lstm_scaler_path = _resolve("lstm_v2_style_scaler.pkl",    "lstm_scaler.pkl")
+    feat_path        = _resolve("feature_cols_v2.json",        "feature_cols_v2.json")
+    guardian_path    = _resolve("guardian.pkl",                "guardian_best.pkl")
+    g_scaler_path    = _resolve("guardian_scaler.pkl",         "guardian_scaler.pkl")
+
+    for path, name in [
+        (lgbm_path,        "LightGBM"),
+        (lstm_path,        "LSTM"),
+        (lstm_scaler_path, "LSTM Scaler"),
+        (feat_path,        "Feature cols"),
+    ]:
         if not path.exists():
             raise FileNotFoundError(f"{name} tidak ditemukan: {path}")
 
-    lgbm_model    = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
-    lstm_model  = load_lstm(MODEL_DIR / "lstm_best.pt", device=str(DEVICE)).to(DEVICE)
-    lstm_scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
+    lgbm_model  = joblib.load(lgbm_path)
+    lstm_model  = load_lstm(lstm_path, device=str(DEVICE)).to(DEVICE)
+    lstm_scaler = joblib.load(lstm_scaler_path)
 
-    with open(MODEL_DIR / "feature_cols_v2.json") as f:
+    with open(feat_path) as f:
         feat_cols = json.load(f)
+
+    logger.info(f"LGBM   : {lgbm_path} ({len(lgbm_model.feature_name_)} fitur)")
+    logger.info(f"LSTM   : {lstm_path}")
+    logger.info(f"Feats  : {feat_path} ({len(feat_cols)} fitur)")
 
     # ── Guardian model (optional — graceful fallback) ────────────────────────
     guardian_model = None
     guardian_scaler = None
     guardian_enabled = GUARDIAN_ENABLED
-    guardian_path = MODEL_DIR / "guardian_best.pkl"
     if guardian_path.exists() and guardian_enabled:
-        guardian_model = joblib.load(guardian_path)
-        guardian_scaler = joblib.load(MODEL_DIR / "guardian_scaler.pkl")
-        logger.info(f"Guardian model loaded: {guardian_path.name}")
+        guardian_model  = joblib.load(guardian_path)
+        guardian_scaler = joblib.load(g_scaler_path)
+        logger.info(f"Guardian: {guardian_path}")
     elif guardian_enabled:
         logger.warning("GUARDIAN_ENABLED=True but guardian model not found")
         guardian_enabled = False
+
+    # ── Scenario parameter override ──────────────────────────────────────────
+    import pipeline.backtest_utils as _bu
+    global CONFIDENCE_THRESHOLD_ENTRY
+    if args.scenario:
+        sc = SCENARIO_PARAMS[args.scenario]
+        _bu.LGBM_THRESHOLD_LONG      = sc["lgbm_threshold_long"]
+        _bu.LGBM_THRESHOLD_SHORT     = sc["lgbm_threshold_short"]
+        _bu.LSTM_ADJUST_NEUTRAL_PEN  = sc["lstm_neutral_pen"]
+        _bu.LSTM_ADJUST_OPPOSITE_PEN = sc["lstm_opposite_pen"]
+        _bu.LSTM_ADJUST_AGREE_BOOST  = sc["lstm_agree_boost"]
+        CONFIDENCE_THRESHOLD_ENTRY   = sc["confidence_entry"]
+        if "lstm_flat_review_enabled" in sc:
+            _bu.LSTM_FLAT_REVIEW_ENABLED          = sc["lstm_flat_review_enabled"]
+            _bu.LSTM_DIRECTIONAL_REVIEW_THRESHOLD = sc["lstm_directional_threshold"]
+            _bu.LSTM_OVERRIDE_THRESHOLD           = sc["lstm_override_threshold"]
+            logger.info(f"  LSTM rescue: flat_review={sc['lstm_flat_review_enabled']} "
+                        f"dir_thr={sc['lstm_directional_threshold']} "
+                        f"override_thr={sc['lstm_override_threshold']}")
+        if sc.get("momentum_dynamic_threshold"):
+            _bu.MOMENTUM_DYNAMIC_THRESHOLD_ENABLED = True
+            _bu.MOMENTUM_SPIKE_L1  = sc.get("momentum_spike_l1",  2.0)
+            _bu.MOMENTUM_SPIKE_L2  = sc.get("momentum_spike_l2",  3.0)
+            _bu.MOMENTUM_REDUCE_L1 = sc.get("momentum_reduce_l1", 0.04)
+            _bu.MOMENTUM_REDUCE_L2 = sc.get("momentum_reduce_l2", 0.07)
+            logger.info(f"  Momentum dynamic threshold: "
+                        f"L1={_bu.MOMENTUM_SPIKE_L1}→-{_bu.MOMENTUM_REDUCE_L1}, "
+                        f"L2={_bu.MOMENTUM_SPIKE_L2}→-{_bu.MOMENTUM_REDUCE_L2}")
+        else:
+            _bu.MOMENTUM_DYNAMIC_THRESHOLD_ENABLED = False
+
+        # LSTM Standalone (Dual-Path)
+        if sc.get("lstm_standalone_enabled"):
+            _bu.LSTM_STANDALONE_ENABLED   = True
+            _bu.LSTM_STANDALONE_THRESHOLD = sc.get("lstm_standalone_threshold", 0.65)
+            logger.info(f"  LSTM standalone enabled: threshold={_bu.LSTM_STANDALONE_THRESHOLD}")
+        else:
+            _bu.LSTM_STANDALONE_ENABLED = False
+
+        # Smart Entry (Simultaneous Fusion)
+        _bu.SMART_ENTRY_MODE      = sc.get("smart_entry_mode", "disabled")
+        _bu.SMART_ENTRY_LGBM_W    = sc.get("smart_entry_lgbm_w", 0.60)
+        _bu.SMART_ENTRY_THRESHOLD = sc.get("smart_entry_threshold", 0.45)
+        _bu.SMART_ENTRY_LSTM_MIN  = sc.get("smart_entry_lstm_min", 0.38)
+        _bu.SMART_ENTRY_LGBM_GATE = sc.get("smart_entry_lgbm_gate", 0.55)
+        _bu.SMART_ENTRY_LSTM_GATE = sc.get("smart_entry_lstm_gate", 0.42)
+        _bu.LSTM_SOFT_GATE_OPP_MAX = sc.get("lstm_soft_gate_opp_max", 0.35)
+        _bu.RATIO_MULTIPLIER         = sc.get("ratio_multiplier", 2.0)
+        _bu.RATIO_FLAT_MAX           = sc.get("ratio_flat_max", 0.70)
+        _bu.LSTM_DOMINANT_THRESHOLD  = sc.get("lstm_dominant_threshold", 0.35)
+        if _bu.SMART_ENTRY_MODE != "disabled":
+            logger.info(
+                f"  Smart Entry: mode={_bu.SMART_ENTRY_MODE} "
+                f"lgbm_w={_bu.SMART_ENTRY_LGBM_W} "
+                f"threshold={_bu.SMART_ENTRY_THRESHOLD}"
+            )
+        if sc.get("trend_dynamic_threshold"):
+            _bu.TREND_DYNAMIC_THRESHOLD_ENABLED = True
+            _bu.TREND_STRENGTH_MIN  = sc.get("trend_strength_min",  2.0)
+            _bu.TREND_REDUCE_AMOUNT = sc.get("trend_reduce_amount", 0.05)
+            logger.info(f"  Trend dynamic threshold: strength_min={_bu.TREND_STRENGTH_MIN}, "
+                        f"reduce={_bu.TREND_REDUCE_AMOUNT} (LONG searah uptrend, SHORT searah downtrend)")
+        else:
+            _bu.TREND_DYNAMIC_THRESHOLD_ENABLED = False
+        logger.info(f"Scenario {args.scenario}: {sc['desc']}")
+        logger.info(f"  LGBM thr LONG={sc['lgbm_threshold_long']} SHORT={sc['lgbm_threshold_short']}")
+        logger.info(f"  LSTM neutral_pen={sc['lstm_neutral_pen']} opposite_pen={sc['lstm_opposite_pen']} agree_boost={sc['lstm_agree_boost']}")
+        logger.info(f"  Confidence entry={sc['confidence_entry']}")
 
     logger.info(f"Models loaded | Device: {DEVICE} | Features: {len(feat_cols)}")
 
@@ -969,25 +1570,38 @@ def main():
     generate_markdown_report(aggregate, feat_cols, start, end, run_id, all_trades, run_dir)
 
     # ── Print summary ─────────────────────────────────────────────────────────
+    n_coins              = len(success)
+    mean_tpm             = aggregate["mean_trade_per_month"]
+    total_trades_per_month = mean_tpm * n_coins
+    total_trades_per_day   = total_trades_per_month / 30.44
+    total_pnl            = sum(float(t.get("PnL ($)", 0.0)) for t in all_trades)
+    n_months             = max((end - start).days / 30.44, 1)
+
     print(f"\n{sep}")
     print(f"  HOLD-OUT BACKTEST SELESAI — {run_id}")
     print(f"  Periode  : {start.date()} - {end.date()}")
     print(f"{sep}")
-    print(f"  {'Metric':<28}  {'Value':>10}")
-    print(f"  {'-'*28}  {'-'*10}")
-    print(f"  {'Mean Winrate':<28}  {aggregate['mean_winrate']:>10.2%}")
-    print(f"  {'Mean Trade/Bulan':<28}  {aggregate['mean_trade_per_month']:>10.1f}")
-    print(f"  {'Worst Single-Trade Loss':<28}  {worst_trade_pnl:>10.1f}%")
-    print(f"  {'95% Trades Loss Under':<28}  {abs(p95_trade_loss):>10.1f}%")
-    print(f"  {'Mean Max DD (Portfolio)':<28}  {aggregate['mean_drawdown_lev5x']:>10.2%}")
-    print(f"  {'Mean Sharpe Ratio':<28}  {aggregate['mean_sharpe']:>10.2f}")
-    print(f"  {'Mean Profit Factor':<28}  {aggregate['mean_profit_factor']:>10.2f}")
-    print(f"  {'Max Consecutive Loss':<28}  {aggregate['max_consecutive_loss']:>10}")
+    print(f"  {'Metric':<36}  {'Value':>12}")
+    print(f"  {'-'*36}  {'-'*12}")
+    print(f"  {'Win Rate (mean per koin)':<36}  {aggregate['mean_winrate']:>11.2%}")
+    print(f"  {'Total PnL (semua koin, 5x)':<36}  ${total_pnl:>+10,.2f}")
+    print(f"  {'Trade/Bulan (per koin, mean)':<36}  {mean_tpm:>12.1f}")
+    print(f"  {'Trade/Bulan (semua koin total)':<36}  {total_trades_per_month:>12.0f}")
+    print(f"  {'Trade/Hari (semua koin total)':<36}  {total_trades_per_day:>12.1f}")
+    print(f"  {'Mean Sharpe Ratio':<36}  {aggregate['mean_sharpe']:>12.2f}")
+    print(f"  {'Mean Profit Factor':<36}  {aggregate['mean_profit_factor']:>12.2f}")
+    print(f"  {'Mean Max DD (per koin)':<36}  {aggregate['mean_drawdown_lev5x']:>11.2%}")
+    print(f"  {'Max Consecutive Loss':<36}  {aggregate['max_consecutive_loss']:>12}")
+    print(f"  {'Worst Single-Trade Loss':<36}  {worst_trade_pnl:>11.1f}%")
+    print(f"  {'95% Trades Loss Under':<36}  {abs(p95_trade_loss):>11.1f}%")
     print(f"{sep}")
-    print(f"\n  Per-symbol winrate:")
+    print(f"\n  Per-koin: WR | Trade/Bulan | PnL (5x)")
+    print(f"  {'-'*52}")
     for sym, r in results.items():
+        coin_tpm = r["trade_per_month"]
+        coin_pnl = r.get("pnl_lev5x", 0.0)
         bar = "#" * int(r["winrate"] * 20)
-        print(f"  {sym:<14} {r['winrate']:.2%}  {bar}")
+        print(f"  {sym:<16} {r['winrate']:>6.2%}  {coin_tpm:>6.1f}/bln  ${coin_pnl:>+8,.2f}  {bar}")
     print(f"\n  Output: {out_path}")
     print(f"{sep}\n")
 

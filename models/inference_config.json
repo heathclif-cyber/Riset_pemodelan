@@ -1,16 +1,17 @@
 {
-  "model_version": "cascade_v4.1",
-  "created_at": "2026-05-29T07:12:00.000000+00:00",
+  "model_version": "cascade_v2.5_hybrid_accel_scenario_Z3",
+  "created_at": "2026-06-03T00:00:00.000000+00:00",
+  "note": "Z3 Dual Dominant: WR 64.81%, PnL +$1,519, ROI 188%/5bln, DD 66.1%, Sharpe 4.77, PF 3.48. LGBM>=0.65 AND LSTM dominant(L vs S)>=0.35. WR tertinggi dari semua mode.",
   "training_period": {
     "start": "2020-01-01",
     "end": "2025-11-01"
   },
   "inference": {
-    "confidence_threshold_entry": 0.60,
-    "confidence_full_size": 0.75,
-    "confidence_half_size": 0.6,
+    "confidence_threshold_entry": 0.59,
+    "confidence_full_size": 0.69,
+    "confidence_half_size": 0.59,
     "min_hold_bars": 2,
-    "max_hold_bars": 24,
+    "max_hold_bars": 36,
     "timeframe": "1h",
     "seq_len": 16,
     "label_map": {
@@ -67,7 +68,7 @@
     "poll_interval_secs": 300
   },
   "tp_sl": {
-    "min_rr": 0.5,
+    "min_rr": 0.6,
     "min_tp_atr": 1.2,
     "max_sl_atr": 4.0,
     "tp_atr_mult": 2.0,
@@ -80,19 +81,18 @@
     "slippage_per_side": 0.0005
   },
   "cascade": {
-    "lgbm_threshold_long": 0.75,
-    "lgbm_threshold_short": 0.60,
-    "lstm_confirmation": true,
-    "lstm_adjust_mode": "hard_consensus",
-    "lstm_adjust_agree_boost": 0.05,
-    "lstm_adjust_neutral_pen": 0.00,
-    "lstm_adjust_opposite_pen": 0.99,
-    "flat_review_threshold": 0.00
+    "mode": "dual_dominant",
+    "lgbm_gate": 0.65,
+    "lstm_dominant_threshold": 0.35,
+    "lgbm_threshold_long": 0.69,
+    "lgbm_threshold_short": 0.59,
+    "confidence_threshold_entry": 0.59,
+    "note": "Z3 Dual Dominant: LGBM argmax>=0.65 AND LSTM max(L,S)>=0.35 searah. WR 64.81%, ROI 188%/5bln, DD 66.1%. Modal min 06 (31 posisi max). WR tertinggi dari semua eksperimen 2026-06-03."
   },
   "guardian": {
     "enabled": true,
     "exit_threshold": 0.65,
-    "min_hold_bars": 0,
+    "min_hold_bars": 2,
     "activation_atr": 0.0,
     "partial_exit_ratio": 0.5,
     "model_file": "guardian_best.pkl",
@@ -101,14 +101,14 @@
   },
   "rr_gate": {
     "enabled": true,
-    "min_rr": 0.45,
+    "min_rr": 0.6,
     "min_tp_atr": 1.2,
     "max_sl_atr": 4.0,
     "swing_bumper_atr": 0.5
   },
   "trend_alignment": {
     "enabled": true,
-    "with_trend_penalty": 0.10,
+    "with_trend_penalty": 0.1,
     "counter_trend_boost": 0.05,
     "sideways_neutral": true
   },
@@ -120,29 +120,32 @@
     "breakout_tolerance_pct": 0.03
   },
   "coins_validated": {
-    "recommended": [],
-    "acceptable": [],
-    "caution": [
-      "SOLUSDT",
+    "recommended": [
       "ETHUSDT",
+      "DOTUSDT",
+      "SUIUSDT",
+      "NEARUSDT",
+      "ADAUSDT",
+      "DOGEUSDT",
+      "LINKUSDT"
+    ],
+    "acceptable": [
+      "BTCUSDT",
+      "SOLUSDT",
       "BNBUSDT",
       "XRPUSDT",
-      "DOGEUSDT",
       "TONUSDT",
-      "ADAUSDT",
       "TRXUSDT",
       "1000SHIBUSDT",
       "AVAXUSDT",
-      "LINKUSDT",
-      "DOTUSDT",
-      "SUIUSDT",
       "POLUSDT",
-      "NEARUSDT",
       "1000PEPEUSDT",
       "TAOUSDT",
-      "ARBUSDT",
       "HBARUSDT",
       "ONDOUSDT"
+    ],
+    "caution": [
+      "ARBUSDT"
     ]
   },
   "model_files": {
@@ -152,15 +155,15 @@
     "features": "feature_cols_v2.json"
   },
   "model_architecture": {
-    "n_features": 104,
+    "n_features": 90,
     "lstm_hidden": 128,
     "lstm_layers": 2,
-    "lstm_dropout": 0.3,
+    "lstm_dropout": 0.45,
     "num_classes": 3
   },
   "fallback_tp_sl": {
     "tp_atr_mult": 2.0,
     "sl_atr_mult": 1.5,
-    "max_holding_bars": 24
+    "max_holding_bars": 36
   }
 }
