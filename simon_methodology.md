@@ -645,6 +645,121 @@ Layer 5 independen dari entry:
 
 ---
 
+## Adopsi Simons sebagai Retail Quant Trader
+
+### Keunggulan Struktural yang RenTech Tidak Punya
+
+Sebelum bicara adopsi, pahami posisi retail quant:
+
+| Aspek | RenTech | Retail Quant |
+|-------|---------|--------------|
+| Kapasitas | Masalah besar — strategi mati kalau terlalu besar | **Tidak ada masalah kapasitas** |
+| Tekanan investor | LP redemption, quarterly reporting | **Tidak ada** |
+| Pasar kecil | Tidak bisa — akan gerakkan harga sendiri | **Bisa masuk yang RenTech tidak bisa** |
+| Iterasi | Butuh committee approval | **Deploy besok kalau mau** |
+| Insentif | Fee-based | **100% uang sendiri — alignment sempurna** |
+| Tim | 300+ PhD | Solo — tapi AI bisa jadi peer reviewer |
+
+Kecil itu **keunggulan struktural**, bukan kelemahan.
+
+---
+
+### Adaptasi untuk Retail
+
+**Kualitas di atas kuantitas sinyal**
+
+```
+RenTech : 500 sinyal × edge 0.1% masing-masing
+Retail  : 10–15 sinyal × edge 1–2% masing-masing
+
+Total expected value bisa setara.
+Lebih mudah dikelola, divalidasi, dan diperbaiki.
+```
+
+**Manfaatkan kecepatan iterasi**
+
+```
+RenTech butuh bulan untuk deploy perubahan.
+Retail bisa:
+  Senin : temukan sinyal baru
+  Selasa: IC test
+  Rabu  : backtest purged CV
+  Kamis : holdout validation
+  Jumat : deploy (kalau lolos semua gate)
+```
+
+Kecepatan tanpa proses = gambling. Kecepatan dengan proses = keunggulan.
+
+**Gunakan AI sebagai "tim"**
+
+```
+AI untuk review kode       → second opinion sebelum deploy
+AI untuk brainstorm sinyal → hipotesis yang belum terpikirkan
+AI untuk debug logic       → cegah bias konfirmasi
+AI untuk dokumentasi       → semua keputusan tercatat dengan alasan
+```
+
+Ini cara retail quant mengimplementasikan "culture of peer review" ala RenTech.
+
+**Position sizing lebih kritis dari entry signal**
+
+```
+Kelly Criterion (simplified):
+  f* = edge / variance
+
+  edge     = win_rate × avg_win - loss_rate × avg_loss
+  variance = standar deviasi P&L
+
+  Bet tidak pernah melebihi f* dari portfolio
+
+Drawdown rule:
+  Portfolio turun 15% dari peak → reduce position size 50%
+  Portfolio turun 25% dari peak → stop trading, review sistem
+  Tidak pernah average down pada sistem yang sedang drawdown
+```
+
+---
+
+### Manifesto Retail Quant — 10 Prinsip Simons
+
+```
+① Tidak ada sinyal tanpa IC test. Tidak ada pengecualian.
+
+② Tidak ada model baru tanpa marginal IC test terhadap ensemble.
+
+③ Tidak ada training tanpa validasi label terlebih dahulu.
+
+④ Model adalah otoritas tertinggi.
+   Override hanya untuk anomali teknis — bukan opini pasar.
+
+⑤ Position size ditentukan formula, bukan perasaan.
+
+⑥ Drawdown limit ditentukan sebelum trading, ditaati saat trading.
+
+⑦ Setiap keputusan riset didokumentasikan dengan justifikasi data.
+   (EXPERIMENTS.md adalah implementasi dari prinsip ini)
+
+⑧ Kompound dulu, withdraw belakangan.
+
+⑨ Hanya deploy apa yang bisa dijalankan 5 tahun ke depan.
+
+⑩ Review IC decay setiap kuartal — pensiun sinyal yang melemah.
+```
+
+---
+
+### Satu Hal yang Membedakan Retail Quant Sukses
+
+Bukan kecerdasan algoritma. Bukan akses data eksklusif.
+
+> **Disiplin untuk tidak melakukan apa yang tidak didukung data.**
+
+Sebagian besar retail trader gagal bukan karena sistemnya buruk — tapi karena override sistem saat drawdown, menambah fitur karena panik, atau mengubah parameter setelah satu minggu yang buruk.
+
+Simons berhasil karena seluruh organisasinya dibangun untuk mencegah hal itu. Sebagai retail quant, kamu harus membangun hal yang sama — di dalam dirimu sendiri.
+
+---
+
 ## Roadmap IC Test per Model
 
 | Model | Status | Fitur | Next Step |
