@@ -471,6 +471,166 @@ tapi meta-labeling melatihnya secara eksplisit sebagai model terpisah.
 
 ---
 
+## Ensemble Model — Cara Simons Merakit Semua Komponen
+
+### Apa itu Ensemble?
+
+Kombinasi beberapa model di mana hasilnya lebih baik dari model manapun secara individual.
+
+```
+Model A benar 70% — salah di kondisi volatilitas tinggi
+Model B benar 65% — salah di kondisi ranging market
+Model C benar 68% — salah di kondisi news spike
+
+Saat A salah → B dan C kemungkinan benar
+Saat B salah → A dan C kemungkinan benar
+→ Ensemble benar lebih sering dari 70%
+```
+
+Kuncinya bukan seberapa akurat setiap model — tapi **seberapa berbeda kesalahan yang mereka buat**.
+Model yang selalu salah bersamaan tidak membantu satu sama lain.
+
+---
+
+### Bagaimana Simons Merakit Ensemble
+
+**Langkah 1 — Setiap model harus lolos gate IC dulu**
+
+```
+Marginal IC model baru terhadap ensemble yang sudah ada ≥ 0.01
+  → sinyal ini unik, belum ditangkap komponen lain → masuk
+
+Marginal IC ≈ 0
+  → menduplikasi yang sudah ada → tidak masuk,
+    tidak peduli seberapa akurat standalone-nya
+```
+
+**Langkah 2 — Bobot ditentukan marginal IC, bukan intuisi**
+
+```
+Bobot LGBM = f(marginal IC LGBM)
+Bobot LSTM = f(marginal IC LSTM | LGBM sudah ada)
+Bobot HMM  = f(marginal IC HMM  | LGBM + LSTM sudah ada)
+
+Semakin besar kontribusi unik → semakin besar bobot
+```
+
+Bukan 0.65/0.35 karena "kelihatannya masuk akal" — tapi karena data berkata demikian.
+
+**Langkah 3 — Bobot berubah per regime**
+
+```
+HMM tentukan: "market sedang di state mana?"
+
+State trending : w_lgbm=0.60  w_lstm=0.35  w_hmm=0.05
+State ranging  : w_lgbm=0.70  w_lstm=0.15  w_hmm=0.15
+State crisis   : w_lgbm=0.30  w_lstm=0.10  w_hmm=0.60
+```
+
+---
+
+### Tiga Jenis Ensemble Simons
+
+**1. Signal-Level Ensemble** — ratusan sinyal kecil independen
+
+```
+Sinyal RSI reversal      bobot = 0.003
+Sinyal volume spike      bobot = 0.002
+Sinyal OI divergence     bobot = 0.004
+... (ratusan sinyal lagi)
+```
+
+Tidak ada single point of failure. Satu sinyal gagal, ratusan lainnya jalan.
+
+**2. Model-Level Ensemble** — algoritma berbeda saling melengkapi
+
+```
+Linear model   → pola linear yang stabil
+Tree model     → non-linearitas dan interaksi fitur
+HMM            → regime dan state pasar
+Sequence model → pola temporal
+```
+
+Setiap algoritma punya blind spot berbeda. Kombinasinya saling menutupi.
+
+**3. Regime-Conditional Ensemble** — bobot dinamis per kondisi pasar
+
+HMM menentukan state → bobot ensemble disesuaikan otomatis per state.
+
+---
+
+### Model Final Ensemble untuk Sistem Ini
+
+Kalau Simons membangun ulang dari awal:
+
+```
+┌──────────────────────────────────────────────────────┐
+│                  ENSEMBLE FINAL                       │
+│                                                       │
+│  Layer 1 — Linear Baseline                            │
+│  Logistic Regression (5 fitur KEEP)                   │
+│  "Batas bawah" — sinyal paling stabil dan reliable    │
+│  Gate: kalau layer ini tidak bisa → sinyal tidak ada  │
+│                                                       │
+│  Layer 2 — Non-Linear Entry                           │
+│  LGBM (PCA-reduced, IC-filtered)                      │
+│  Tangkap interaksi fitur yang linear tidak bisa       │
+│  Bobot: marginal IC vs Layer 1                        │
+│                                                       │
+│  Layer 3 — Temporal Momentum                          │
+│  LSTM (5 fitur KEEP, bukan 12)                        │
+│  Tangkap pola sequential H1                           │
+│  Bobot: marginal IC vs Layer 1+2                      │
+│                                                       │
+│  Layer 4 — Regime Context                             │
+│  HMM (unsupervised, belajar state dari data)          │
+│  Atur bobot Layer 1-3 secara dinamis                  │
+│  Gate tambahan: state crisis → tahan entry            │
+│                                                       │
+│  Layer 5 — Exit Timing (Guardian)                     │
+│  Survival Analysis (Cox Hazard) + LGBM hybrid         │
+│  Time-to-event problem, bukan klasifikasi             │
+│  Pipeline terpisah dari entry, metric berbeda         │
+└──────────────────────────────────────────────────────┘
+```
+
+**Kenapa urutan ini?**
+
+```
+Layer 1 wajib ada dulu:
+  F1 > random → ada sinyal → lanjut ke Layer 2
+  F1 ≈ random → sinyal tidak ada → stop, jangan lanjut
+
+Layer 2 diuji marginal IC vs Layer 1:
+  Tidak tambah apapun → tidak perlu
+
+Layer 3 diuji marginal IC vs Layer 1+2:
+  Snapshot sudah cukup → LSTM tidak perlu
+
+Layer 4 bukan diuji IC biasa:
+  HMM adalah meta-component yang mengatur bobot layer lain
+  Dievaluasi dari: apakah IC ensemble lebih stabil lintas regime?
+
+Layer 5 independen dari entry:
+  Dievaluasi dengan metric berbeda — holding time, P&L distribution
+```
+
+---
+
+### Perbandingan Ensemble Saat Ini vs Simons
+
+| Aspek | Sekarang | Simons |
+|-------|----------|--------|
+| Jumlah komponen | 2 (LGBM + LSTM) | 5 layer terstruktur |
+| Bobot ditentukan | Intuisi (0.65/0.35) | Marginal IC |
+| Bobot berubah? | Tidak | Ya — per regime via HMM |
+| Gate masuk ensemble | Tidak ada | Marginal IC ≥ 0.01 |
+| Linear baseline | Tidak ada | Selalu ada sebagai anchor |
+| Regime awareness | Partial (trend alignment) | Eksplisit via HMM state |
+| Exit model | LGBM multiclass | Survival Analysis + LGBM |
+
+---
+
 ## Prinsip Simons
 
 > *"If you're adding a feature because it makes intuitive sense, you're not doing science."*
@@ -480,6 +640,8 @@ tapi meta-labeling melatihnya secara eksplisit sebagai model terpisah.
 > *"Each new signal must improve the ensemble. Standalone performance is irrelevant."*
 
 > *"The label is your most important decision. A perfect model trained on the wrong label is perfectly wrong."*
+
+> *"We're right 50.75% of the time, but we're right 50.75% of the time ALL THE TIME."*
 
 ---
 
