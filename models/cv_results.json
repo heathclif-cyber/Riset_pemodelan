@@ -1,5 +1,5 @@
 {
-  "run_id": "cascade_v4.1",
+  "run_id": "ic32_regime_v1",
   "coins": [
     "BTCUSDT",
     "SOLUSDT",
@@ -24,12 +24,12 @@
     "ONDOUSDT"
   ],
   "n_folds": 8,
-  "gap_bars": 24,
-  "best_fold": 6,
-  "best_f1_macro": 0.6232,
-  "mean_f1_macro": 0.5991,
-  "std_f1_macro": 0.0245,
-  "mean_accuracy": 0.8125,
+  "gap_bars": 20,
+  "best_fold": 8,
+  "best_f1_macro": 0.6085,
+  "mean_f1_macro": 0.5911,
+  "std_f1_macro": 0.0147,
+  "mean_accuracy": 0.7602,
   "lgbm_params": {
     "objective": "multiclass",
     "num_class": 3,
@@ -47,343 +47,320 @@
     "gpu_platform_id": 0,
     "gpu_device_id": 0
   },
-  "final_retrain_n_estimators": 802,
+  "final_retrain_n_estimators": 909,
   "feature_cols": [
-    "open",
-    "high",
-    "low",
-    "close",
-    "volume",
-    "volume_delta",
-    "cvd",
-    "buy_volume",
-    "sell_volume",
-    "MSB_BOS",
-    "CHoCH",
-    "bars_since_BOS",
-    "FVG_up",
-    "FVG_down",
-    "Buy_Liq",
-    "Sell_Liq",
-    "SFP_sweep",
-    "open_interest",
-    "dynamic_position_pressure",
-    "funding_rate",
-    "ema_7_h1",
-    "ema_21_h1",
-    "ema_50_h1",
-    "ema_200_h1",
-    "ema_7_h4",
-    "ema_21_h4",
-    "ema_50_h4",
-    "ema_200_h4",
-    "rsi_6",
-    "stochrsi_k",
-    "stochrsi_d",
-    "atr_14_h1",
-    "atr_14_h4",
-    "PDH",
-    "PDL",
-    "PWH",
-    "PWL",
-    "Fib_618",
-    "Fib_786",
-    "POC",
-    "VAH",
-    "VAL",
-    "market_session",
-    "btc_dominance",
-    "fear_greed",
-    "log_ret_1",
-    "log_ret_5",
-    "log_ret_20",
-    "vol_ratio_20",
-    "hour_sin",
-    "hour_cos",
-    "dow_sin",
-    "dow_cos",
-    "time_to_funding_norm",
-    "long_short_ratio",
-    "dist_swing_high",
-    "dist_swing_low",
-    "price_in_range",
-    "swing_momentum",
-    "h4_trend",
-    "trend_strength",
-    "vol_regime",
-    "cvd_div_h4",
-    "cvd_slope_h4",
-    "vol_efficiency",
-    "absorption_z",
-    "funding_price_div",
-    "rsi_h4",
-    "rsi_divergence",
-    "wyckoff_phase",
-    "spring_upthrust",
-    "ofi_raw",
-    "ofi_acceleration",
-    "ofi_z_score",
-    "ofi_h4_delta",
-    "vwdp",
-    "vwdp_smooth",
-    "hidden_divergence",
-    "cvd_momentum_adv",
-    "absorption_at_swing",
-    "spread_to_volume",
-    "ultra_high_vol",
-    "no_demand",
-    "no_supply",
-    "effort_vs_result",
-    "ema_21_slope_h4",
-    "ema_50_slope_h4",
-    "price_vs_ema_50_h4",
-    "rsi_slope_h4",
-    "atr_percent_h4",
-    "range_expansion_h4",
-    "trend_accel_4h",
-    "vol_price_confirm",
     "dist_from_8h_high",
-    "relative_strength_z",
-    "relative_strength_momentum",
+    "rsi_6",
+    "swing_momentum",
+    "rsi_h4",
+    "stochrsi_k",
     "dist_liq_50x_long",
-    "dist_liq_20x_long",
+    "trend_accel_4h",
+    "rsi_slope_h4",
+    "Fib_786",
+    "Fib_618",
+    "stochrsi_d",
+    "ofi_h4_delta",
     "dist_liq_50x_short",
-    "dist_liq_20x_short",
+    "Buy_Liq",
+    "relative_strength_z",
+    "dist_liq_20x_long",
+    "cvd_momentum_adv",
+    "Sell_Liq",
+    "long_short_ratio",
+    "cvd_slope_h4",
+    "ema_21_slope_h4",
+    "ema_50_h1",
+    "h4_trend",
+    "log_ret_20",
     "whale_retail_divergence",
-    "atr_zscore_20d",
-    "atr_percentile_h1",
-    "vol_spike_zscore"
+    "dist_liq_20x_short",
+    "vol_price_confirm",
+    "ema_50_slope_h4",
+    "MSB_BOS",
+    "cvd",
+    "ofi_acceleration",
+    "cvd_div_h4",
+    "hmm_regime_enc"
   ],
   "folds": [
     {
       "fold": 1,
-      "n_train": 51317,
-      "n_val": 71671,
-      "best_iteration": 275,
-      "accuracy": 0.7909,
-      "f1_macro": 0.5522,
-      "f1_weighted": 0.7893,
-      "f1_SHORT": 0.3996,
-      "f1_FLAT": 0.8988,
-      "f1_LONG": 0.3582,
+      "n_train": 51361,
+      "n_val": 71715,
+      "best_iteration": 488,
+      "train_accuracy": 0.8831,
+      "train_f1_macro": 0.825,
+      "train_f1_weighted": 0.884,
+      "train_f1_SHORT": 0.763,
+      "train_f1_FLAT": 0.9283,
+      "train_f1_LONG": 0.7837,
+      "accuracy": 0.7457,
+      "f1_macro": 0.5598,
+      "f1_weighted": 0.742,
+      "f1_SHORT": 0.3767,
+      "f1_FLAT": 0.8702,
+      "f1_LONG": 0.4325,
       "confusion_matrix": [
         [
-          3290,
-          2710,
-          1193
+          3457,
+          3677,
+          2259
         ],
         [
-          3675,
-          50995,
-          1927
+          3148,
+          45669,
+          3082
         ],
         [
-          2310,
-          3171,
-          2400
+          2357,
+          3716,
+          4350
         ]
       ]
     },
     {
       "fold": 2,
-      "n_train": 123204,
-      "n_val": 78670,
-      "best_iteration": 244,
-      "accuracy": 0.7948,
-      "f1_macro": 0.5676,
-      "f1_weighted": 0.7972,
-      "f1_SHORT": 0.3105,
-      "f1_FLAT": 0.8981,
-      "f1_LONG": 0.4941,
+      "n_train": 123256,
+      "n_val": 78722,
+      "best_iteration": 800,
+      "train_accuracy": 0.8594,
+      "train_f1_macro": 0.7823,
+      "train_f1_weighted": 0.8605,
+      "train_f1_SHORT": 0.7013,
+      "train_f1_FLAT": 0.9172,
+      "train_f1_LONG": 0.7283,
+      "accuracy": 0.7573,
+      "f1_macro": 0.5828,
+      "f1_weighted": 0.7567,
+      "f1_SHORT": 0.4035,
+      "f1_FLAT": 0.8756,
+      "f1_LONG": 0.4692,
       "confusion_matrix": [
         [
-          1877,
-          3169,
-          3069
+          3965,
+          3919,
+          2931
         ],
         [
-          1521,
-          55056,
-          6125
+          2971,
+          50248,
+          4219
         ],
         [
-          579,
-          1680,
-          5594
+          1904,
+          3165,
+          5400
         ]
       ]
     },
     {
       "fold": 3,
-      "n_train": 202162,
-      "n_val": 79156,
-      "best_iteration": 910,
-      "accuracy": 0.8144,
-      "f1_macro": 0.6074,
-      "f1_weighted": 0.8175,
-      "f1_SHORT": 0.4429,
-      "f1_FLAT": 0.9108,
-      "f1_LONG": 0.4685,
+      "n_train": 202218,
+      "n_val": 79212,
+      "best_iteration": 995,
+      "train_accuracy": 0.8452,
+      "train_f1_macro": 0.7558,
+      "train_f1_weighted": 0.8468,
+      "train_f1_SHORT": 0.6664,
+      "train_f1_FLAT": 0.9114,
+      "train_f1_LONG": 0.6898,
+      "accuracy": 0.7561,
+      "f1_macro": 0.5974,
+      "f1_weighted": 0.7601,
+      "f1_SHORT": 0.4547,
+      "f1_FLAT": 0.8745,
+      "f1_LONG": 0.4631,
       "confusion_matrix": [
         [
-          3582,
-          2520,
-          1921
+          5105,
+          3160,
+          2690
         ],
         [
-          2937,
-          56815,
-          3182
+          3988,
+          49544,
+          3882
         ],
         [
-          1635,
-          2495,
-          4069
+          2408,
+          3188,
+          5247
         ]
       ]
     },
     {
       "fold": 4,
-      "n_train": 281654,
-      "n_val": 79314,
+      "n_train": 281710,
+      "n_val": 79370,
       "best_iteration": 1000,
-      "accuracy": 0.7972,
-      "f1_macro": 0.6058,
-      "f1_weighted": 0.8034,
-      "f1_SHORT": 0.4634,
-      "f1_FLAT": 0.8993,
-      "f1_LONG": 0.4548,
+      "train_accuracy": 0.8283,
+      "train_f1_macro": 0.7259,
+      "train_f1_weighted": 0.8302,
+      "train_f1_SHORT": 0.6274,
+      "train_f1_FLAT": 0.904,
+      "train_f1_LONG": 0.6463,
+      "accuracy": 0.7448,
+      "f1_macro": 0.5903,
+      "f1_weighted": 0.7502,
+      "f1_SHORT": 0.4798,
+      "f1_FLAT": 0.8657,
+      "f1_LONG": 0.4254,
       "confusion_matrix": [
         [
-          4414,
-          2788,
-          1978
+          6042,
+          3337,
+          2395
         ],
         [
-          3621,
-          54782,
-          3624
+          4554,
+          48495,
+          4044
         ],
         [
-          1836,
-          2236,
-          4035
+          2814,
+          3112,
+          4577
         ]
       ]
     },
     {
       "fold": 5,
-      "n_train": 361280,
-      "n_val": 94468,
-      "best_iteration": 994,
-      "accuracy": 0.8009,
-      "f1_macro": 0.5965,
-      "f1_weighted": 0.8049,
+      "n_train": 361340,
+      "n_val": 94528,
+      "best_iteration": 1000,
+      "train_accuracy": 0.8147,
+      "train_f1_macro": 0.7032,
+      "train_f1_weighted": 0.8168,
+      "train_f1_SHORT": 0.6016,
+      "train_f1_FLAT": 0.8977,
+      "train_f1_LONG": 0.6103,
+      "accuracy": 0.7517,
+      "f1_macro": 0.5844,
+      "f1_weighted": 0.7563,
       "f1_SHORT": 0.4526,
-      "f1_FLAT": 0.9021,
-      "f1_LONG": 0.4347,
+      "f1_FLAT": 0.8738,
+      "f1_LONG": 0.4269,
       "confusion_matrix": [
         [
-          5019,
-          3414,
-          2294
+          6370,
+          3981,
+          3177
         ],
         [
-          4329,
-          66392,
-          3680
+          5095,
+          59331,
+          4461
         ],
         [
-          2105,
-          2982,
-          4253
+          3157,
+          3596,
+          5360
         ]
       ]
     },
     {
       "fold": 6,
-      "n_train": 456060,
-      "n_val": 98378,
-      "best_iteration": 999,
-      "accuracy": 0.8289,
-      "f1_macro": 0.6232,
-      "f1_weighted": 0.8294,
-      "f1_SHORT": 0.4853,
-      "f1_FLAT": 0.9173,
-      "f1_LONG": 0.4671,
+      "n_train": 456128,
+      "n_val": 98446,
+      "best_iteration": 996,
+      "train_accuracy": 0.806,
+      "train_f1_macro": 0.6864,
+      "train_f1_weighted": 0.8082,
+      "train_f1_SHORT": 0.5825,
+      "train_f1_FLAT": 0.8942,
+      "train_f1_LONG": 0.5826,
+      "accuracy": 0.768,
+      "f1_macro": 0.5996,
+      "f1_weighted": 0.7692,
+      "f1_SHORT": 0.4638,
+      "f1_FLAT": 0.8819,
+      "f1_LONG": 0.4533,
       "confusion_matrix": [
         [
-          4994,
-          3361,
-          1762
+          6389,
+          4343,
+          2722
         ],
         [
-          3413,
-          72141,
-          3211
+          4594,
+          63457,
+          4185
         ],
         [
-          2056,
-          3031,
-          4409
+          3115,
+          3879,
+          5762
         ]
       ]
     },
     {
       "fold": 7,
-      "n_train": 554822,
-      "n_val": 111090,
-      "best_iteration": 999,
-      "accuracy": 0.836,
-      "f1_macro": 0.6222,
-      "f1_weighted": 0.8363,
-      "f1_SHORT": 0.4811,
-      "f1_FLAT": 0.9229,
-      "f1_LONG": 0.4627,
+      "n_train": 554894,
+      "n_val": 111162,
+      "best_iteration": 995,
+      "train_accuracy": 0.8009,
+      "train_f1_macro": 0.6752,
+      "train_f1_weighted": 0.8032,
+      "train_f1_SHORT": 0.565,
+      "train_f1_FLAT": 0.8926,
+      "train_f1_LONG": 0.568,
+      "accuracy": 0.7753,
+      "f1_macro": 0.6056,
+      "f1_weighted": 0.7785,
+      "f1_SHORT": 0.4752,
+      "f1_FLAT": 0.8881,
+      "f1_LONG": 0.4536,
       "confusion_matrix": [
         [
-          5262,
-          3632,
-          2482
+          7275,
+          4375,
+          3519
         ],
         [
-          3318,
-          82755,
-          3651
+          4957,
+          72413,
+          4995
         ],
         [
-          1920,
           3217,
-          4853
+          3916,
+          6495
         ]
       ]
     },
     {
       "fold": 8,
-      "n_train": 666296,
-      "n_val": 117929,
+      "n_train": 666376,
+      "n_val": 118009,
       "best_iteration": 1000,
-      "accuracy": 0.8371,
-      "f1_macro": 0.6181,
-      "f1_weighted": 0.8385,
-      "f1_SHORT": 0.4955,
-      "f1_FLAT": 0.922,
-      "f1_LONG": 0.4368,
+      "train_accuracy": 0.7981,
+      "train_f1_macro": 0.6671,
+      "train_f1_weighted": 0.8005,
+      "train_f1_SHORT": 0.5574,
+      "train_f1_FLAT": 0.8922,
+      "train_f1_LONG": 0.5517,
+      "accuracy": 0.7825,
+      "f1_macro": 0.6085,
+      "f1_weighted": 0.7849,
+      "f1_SHORT": 0.4853,
+      "f1_FLAT": 0.8903,
+      "f1_LONG": 0.4499,
       "confusion_matrix": [
         [
-          6076,
-          3657,
-          1793
+          7847,
+          4600,
+          2868
         ],
         [
-          4453,
-          88342,
-          3443
+          5660,
+          78201,
+          4691
         ],
         [
-          2472,
-          3390,
-          4303
+          3516,
+          4328,
+          6298
         ]
       ]
     }

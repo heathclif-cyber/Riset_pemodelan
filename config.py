@@ -3,6 +3,43 @@ config.py — Sentralisasi semua parameter proyek
 Edit file ini untuk mengubah parameter training, fetch, atau feature engineering.
 """
 
+# =============================================================================
+# V2.5 HYBRID MODE — AKTIF (Decision Juni 2026)
+# =============================================================================
+# Tujuan hybrid ini: Mengatasi under-trading parah di live trading Mei 2026
+# yang disebabkan oleh konfigurasi ultra-selektif (cascade_v3.1 / v4.1).
+#
+# Bukti utama:
+#   - cascade_v2 (lebih agresif) secara konsisten lebih profit di livetrade.csv
+#     selama periode choppy (54.7% WR, +$232 di early May vs -13 di late May).
+#   - Perubahan besar setelah 12-15 Mei (matikan FLAT review + LONG 0.75 +
+#     opposite penalty 0.99 + banyak filter baru) menyebabkan volume anjlok.
+#
+# Filosofi V2.5:
+#   - Pertahankan 100% kekuatan modern:
+#       • Guardian v3 multiclass (104 fitur + 7 dynamic)
+#       • TP → Momentum Mode
+#       • Instant Guardian activation (min_hold=0, activation_atr=0)
+#       • Volatility Spike Detectors (v4.1)
+#       • Trend Alignment + VCB + Structural Filter
+#   - Longgarkan hanya gerbang ENTRY secara moderat agar sistem bisa
+#     menangkap lebih banyak opportunity di regime sulit tanpa mengulang
+#     kesalahan besar FLAT review.
+#
+# Parameter yang diubah di V2.5 Hybrid (lihat detail di bawah):
+#   - LGBM_THRESHOLD_LONG          : 0.75  → 0.69
+#   - LGBM_THRESHOLD_SHORT         : 0.60  → 0.59
+#   - LSTM_ADJUST_OPPOSITE_PEN     : 0.99  → 0.65
+#   - CONFIDENCE_THRESHOLD_ENTRY   : 0.60  → 0.59
+#
+# Parameter yang DIJAGA KETAT (jangan diubah tanpa bukti kuat):
+#   - LSTM_FLAT_REVIEW_ENABLED = True + LSTM_DIRECTIONAL_REVIEW_THRESHOLD = 0.35 (eksperimen baru)
+#   - Semua Guardian v3 settings
+#   - Semua Volatility + Game Changer features
+#
+# Cara revert cepat: kembalikan 4 nilai di atas ke setting sebelum Juni 2026.
+# =============================================================================
+
 from datetime import datetime, timezone
 from pathlib import Path
 
@@ -87,11 +124,11 @@ KLINE_INTERVALS = ["1h", "4h", "1d"]
 # ─── Feature Engineering ──────────────────────────────────────────────────────
 TP_ATR_MULT      = 2.0       # TP untuk legacy path (non-swing)
 SL_ATR_MULT      = 1.5       # SL untuk legacy path (non-swing)
-MAX_HOLDING_BARS = 24        # bar H1 = 24 jam (sebelumnya 48)
+MAX_HOLDING_BARS = 36        # bar H1 = 36 jam — sync dengan SWING_LABEL_MAX_HOLD
 
 # ── Swing-Based Labeling v3 ───────────────────────────────────────────────────
-SWING_LABEL_MAX_HOLD = 24     # bar H1 = 24 jam (sebelumnya 48) — lever utama kurangi FLAT
-SWING_LABEL_MIN_RR   = 0.45    # 0.45 = TP minimal 45% risiko (setelah Bumper SL)
+SWING_LABEL_MAX_HOLD = 36     # bar H1 = 36 jam — lebih panjang untuk capture momentum kuat
+SWING_LABEL_MIN_RR   = 0.60    # 0.60 — dinaikkan dari 0.45: hapus label negatif EV
 SWING_LABEL_MIN_TP   = 1.2    # sebelumnya 1.5 — lever utama, TP lebih mudah tercapai
 SWING_LABEL_MAX_SL   = 4.0    # 3.0→4.0 (2026-05-10): +697 trades, +$220 PnL, WR +0.14pp — lihat reports/PARAMETER_TEST_REPORT.md
 SWING_H4_LOOKBACK    = 5
@@ -121,7 +158,15 @@ SYNTHETIC_OI_NORM_WINDOW = 168
 
 # ─── Training & Purging ───────────────────────────────────────────────────────
 N_FOLDS        = 8
-PURGE_GAP_BARS = 24
+
+# PURGE_GAP_BARS untuk entry model (LGBM + LSTM v2-style)
+# Sebelumnya 24 (sama dengan SWING_LABEL_MAX_HOLD).
+# Diubah ke 16 bar (2026-05-31) untuk mengurangi pemborosan data di fold boundary
+# sambil tetap memberikan buffer terhadap horizon labeling 24 bar.
+# Catatan: Guardian menggunakan GUARDIAN_PURGE_GAP_BARS = 5 (terpisah).
+PURGE_GAP_BARS = 20   # min safe = ceil(SWING_LABEL_MAX_HOLD/2) = 18 → pakai 20 untuk buffer
+                      # Dengan max_hold=36: last label forward reach = T_fold-20+35 = T_fold+15
+                      # Test fold starts = T_fold+20 → buffer 5 bar ✓
 
 # LightGBM Params (H1)
 # device_type="gpu" → pakai OpenCL (kompatibel AMD/Intel/NVIDIA)
@@ -161,14 +206,43 @@ LGBM_H4_PARAMS = {
 }
 
 # H1 entry thresholds (3-class model tidak berubah)
-LGBM_THRESHOLD_LONG  = 0.75   # LGBM minimum confidence untuk entry LONG
-LGBM_THRESHOLD_SHORT = 0.60   # LGBM minimum confidence untuk entry SHORT
+# ─── V2.5 Hybrid Entry (2026-06 decision) ─────────────────────────────────────
+# Tujuan: Mengembalikan sebagian volume entry yang hilang di regime choppy Mei 2026,
+#         tanpa mengorbankan kekuatan Guardian v3 + Momentum Mode + Volatility Detectors.
+#
+# Bukti:
+#   - cascade_v2 (lebih longgar) menghasilkan PnL jauh lebih baik di live May 2026.
+#   - Ultra-selective config (LONG 0.75 + opposite_pen 0.99) menyebabkan under-trading.
+#
+# Prinsip V2.5 Hybrid:
+#   - Pertahankan semua kekuatan exit (Guardian v3 multiclass 104 feat + instant + momentum).
+#   - Longgarkan entry gate secara moderat agar sistem bisa "bernafas" di pasar sulit.
+#   - JANGAN hidupkan kembali FLAT_REVIEW_ENABLED (terbukti buruk di EXPERIMENTS 2026-05-12).
+#
+# Nilai ini adalah sweet spot awal. Perlu diuji di backtest recent choppy period + paper trading.
+LGBM_THRESHOLD_LONG  = 0.69   # V2.5 Hybrid: turun dari 0.75 (terlalu matikan LONG)
+LGBM_THRESHOLD_SHORT = 0.59   # V2.5 Hybrid: sedikit lebih longgar dari 0.60
+# ──────────────────────────────────────────────────────────────────────────────
 # FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
 # LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
 # Makin rendah → makin sering LSTM dipanggil → lebih banyak sinyal, lebih berat.
 LGBM_FLAT_REVIEW_THRESHOLD = 0.90  # threshold untuk trigger FLAT review (hanya relevan jika FLAT_REVIEW_ENABLED)
-LSTM_FLAT_REVIEW_ENABLED   = False # False = disable LSTM override FLAT (WR 78.8% vs 57.9%. Lihat EXPERIMENTS.md 2026-05-12)
-LSTM_OVERRIDE_THRESHOLD    = 0.70  # minimum LSTM confidence untuk override FLAT
+
+# ─── LSTM Review Activation (V2.5 Hybrid Experiment) ─────────────────────────
+# LSTM_FLAT_REVIEW_ENABLED = True  → LSTM "hidup" untuk mereview / adjust keputusan LGBM
+#
+# Kondisi baru (per 2026-06):
+#   LSTM akan aktif (direview) ketika:
+#     - LGBM LONG score > LSTM_DIRECTIONAL_REVIEW_THRESHOLD (0.35), ATAU
+#     - LGBM SHORT score > LSTM_DIRECTIONAL_REVIEW_THRESHOLD (0.35)
+#
+# Ini berbeda dari versi lama (hanya review ketika LGBM FLAT + max_conf rendah).
+# Tujuannya: memberi LSTM kesempatan lebih besar untuk mengoreksi / menguatkan
+# sinyal directional yang sedang "sedang-sedang saja" (>0.35), bukan hanya menyelamatkan FLAT.
+LSTM_FLAT_REVIEW_ENABLED         = True
+LSTM_DIRECTIONAL_REVIEW_THRESHOLD = 0.35   # Threshold baru untuk mengaktifkan LSTM review pada sinyal directional
+
+LSTM_OVERRIDE_THRESHOLD    = 0.70  # minimum LSTM confidence untuk override FLAT (masih dipakai di jalur lama)
 LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)
@@ -189,19 +263,81 @@ LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
 LSTM_ADJUST_MODE         = "hard_consensus"     # "relative" | "absolute" | "tiered"
 LSTM_ADJUST_AGREE_BOOST  = 0.05         # boost saat agree (mode relative/absolute)
 LSTM_ADJUST_NEUTRAL_PEN  = 0.00         # penalty saat LSTM FLAT
-LSTM_ADJUST_OPPOSITE_PEN = 0.99         # penalty saat LSTM opposite (0.15 asli -> 0.08 -> 0.04 — kurangi blocked trades)
+LSTM_ADJUST_OPPOSITE_PEN = 0.65         # V2.5 Hybrid: turun dari 0.99 (terlalu sering membunuh trade bagus di live)
+                                           # Nilai 0.65 masih cukup keras untuk membatasi kasus berlawanan arah,
+                                           # tapi memberi ruang lebih besar dibanding 0.99.
 # Tiered multipliers (mode "tiered" only): penalty = pen × multiplier
 # margin < 0.05 → borderline, < 0.10 → moderate, else → confident
 LSTM_TIERED_MULTIPLIERS = [1.0, 0.5, 0.25]  # [borderline, moderate, confident] (was [1.5, 1.0, 0.5])
+
+# ─── New Momentum Gate Fusion (Corrector + Booster mode, 2026-06) ─────────────
+LSTM_FUSION_MODE = "hard_consensus"   # "hard_consensus" | "momentum_gate"
+LSTM_CORRECTION_POWER = 0.35          # seberapa kuat LSTM boleh mengoreksi (0.0 - 1.0)
+LSTM_BOOST_MULTIPLIER = 0.80          # seberapa kuat boost ketika aligned
+LSTM_MIN_SCORE_TO_CORRECT = 0.65      # skor minimum LSTM agar diizinkan mengoreksi/boost
+LSTM_MAX_PROB_SHIFT = 0.45            # batas maksimal pergeseran probabilitas oleh LSTM
 # LSTM Params
 LSTM_SEQ_LEN    = 16   # diturunkan dari 32 — lebih reaktif ke koreksi (32 jam → 16 jam)
 LSTM_HIDDEN     = 128
 LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
 LSTM_EPOCHS     = 100
-LSTM_PATIENCE   = 5
+LSTM_PATIENCE   = 10
 LSTM_BATCH_SIZE = 512
 LSTM_LR         = 0.001
+
+# ─── LSTM v2-style (khusus cascade_v2.5_hybrid_pruned) - Regularisasi ──────────
+# Digunakan HANYA oleh pipeline/05_train_lstm_v2_style.py
+#
+# Riwayat probe (5 coin diagnostic):
+#   Round 1 (original)  : Hidden=128, Dropout=0.3, WD=0      → Gap +0.42 ~ +0.49 (overfit berat)
+#   Round 2 (medium)    : Hidden=96,  Dropout=0.4, WD=1e-4   → Gap +0.36 ~ +0.40 (terbaik sejauh ini)
+#   Round 3 (terlalu agresif): Hidden=64, Dropout=0.5, WD=5e-4 → Val F1 hancur (0.16-0.20)
+#   Round 4 (light Round 2): Hidden=96, Dropout=0.45, WD=2e-4, LR=0.0007  ← sekarang
+#
+# Tujuan: mencari sweet spot di sekitar Round 2 yang lebih stabil.
+LSTM_V2_HIDDEN       = 96
+LSTM_V2_LAYERS       = 2
+LSTM_V2_DROPOUT      = 0.45
+LSTM_V2_WEIGHT_DECAY = 2e-4
+LSTM_V2_LR           = 0.0007
+
+# ─── LSTM Momentum Detector Features (Central Source of Truth) ────────────────
+# 18 fitur fokus akumulasi/flow (CVD, OFI variants, volume_delta, absorption, dynamic pressure, dll)
+# + price trajectory (log_ret) + struktur sederhana. LSTM lebih kuat menangkap pola temporal
+# akumulasi seiring waktu dibanding LGBM.
+# Digunakan oleh: pipeline/05b_build_h1_sequences.py dan pipeline/05c_train_lstm_h1.py
+# JANGAN duplikasi list fitur ini di dalam script pipeline manapun.
+LSTM_MOMENTUM_FEATURES = [
+    # === Akumulasi / Flow (Prioritas Tertinggi) ===
+    "volume_delta",
+    "cvd",
+    "buy_volume",
+    "sell_volume",
+    "ofi_raw",
+    "ofi_z_score",
+    "ofi_acceleration",
+    "cvd_momentum_adv",
+    "dynamic_position_pressure",
+    "absorption_z",
+
+    # === Price Trajectory + Momentum yang evolve ===
+    "log_ret_1",
+    "log_ret_5",
+    "log_ret_20",
+    "rsi_6",
+    "rsi_slope_h4",
+
+    # === Structure sederhana ===
+    "bars_since_BOS",
+    "swing_momentum",
+
+    # === Cross-market context ===
+    "btc_h1_return",
+]
+
+# Alias untuk kompatibilitas
+LSTM_SEQ_FEATURES = LSTM_MOMENTUM_FEATURES
 
 LABEL_MAP     = {"SHORT": 0, "FLAT": 1, "LONG": 2}
 LABEL_MAP_INV = {v: k for k, v in LABEL_MAP.items()}
@@ -319,6 +455,25 @@ FEATURE_COLS_V3 = [
     # atr_percentile_h1  : Volatility rank 30-hari (0=rendah, 1=tinggi)
     # vol_spike_zscore   : Volume H1 z-score vs 48-bar (spike = event besar)
     "atr_zscore_20d", "atr_percentile_h1", "vol_spike_zscore",
+
+    # Momentum Acceleration Features (v4.2) — Pump/Dump Early Detection
+    # price_accel_1h    : 2nd derivative log return — perubahan kecepatan harga
+    # ofi_momentum_ratio: OFI 3-bar vs 24-bar — order flow surge vs baseline
+    # vol_accel_3h      : perubahan vol_ratio_20 dalam 3 bar — volume acceleration
+    "price_accel_1h", "ofi_momentum_ratio", "vol_accel_3h",
+
+    # Kronos-mini Foundation Model Features (v4.3) — predict_len=36H = max_hold
+    # kronos_pred_return_1h  : expected return 1H ke depan
+    # kronos_pred_return_36h : expected return kumulatif 36H (match SWING_LABEL_MAX_HOLD)
+    # kronos_direction       : arah trend 36H (-1/0/+1)
+    # kronos_momentum        : slope linear prediksi
+    # kronos_volatility      : uncertainty model
+    # kronos_bull_prob       : probabilitas naik > 0.5% di t+36
+    # kronos_range_ratio     : (pred_high - pred_low) / price
+    # kronos_confidence      : 1 - CV (makin tinggi = makin yakin)
+    "kronos_pred_return_1h", "kronos_pred_return_36h",
+    "kronos_direction", "kronos_momentum", "kronos_volatility",
+    "kronos_bull_prob", "kronos_range_ratio", "kronos_confidence",
 ]
 
 # ─── TP/SL Architecture (Final — tested via ASPECT_COMPARISON.md) ───────────
@@ -404,8 +559,8 @@ GUARDIAN_EXIT_THRESHOLD        = 0.65   # min EXIT proba mid-level
 GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
 GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
-GUARDIAN_MIN_HOLD_BARS         = 0      # guardian tidak boleh exit di 3 bar pertama
-GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif setelah price bergerak 1.5x ATR
+GUARDIAN_MIN_HOLD_BARS         = 2      # guardian tidak boleh exit di 2 bar pertama
+GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif instant (tanpa ATR minimum)
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
 TRAILING_STOP_ENABLED          = False  # Guardian solo — RUN C holdout
@@ -427,19 +582,21 @@ GUARDIAN_DYNAMIC_FEATURES = [
 GUARDIAN_LGBM_PARAMS = {
     "objective":          "multiclass",
     "num_class":          3,
-    "n_estimators":       500,
-    "learning_rate":      0.05,
+    "n_estimators":       2000,       # dinaikkan dari 500 — fold 4-8 mentok di batas lama
+    "learning_rate":      0.02,       # diturunkan dari 0.05 — langkah lebih presisi
     "max_depth":          6,
-    "num_leaves":         31,
-    "min_child_samples":  50,
+    "num_leaves":         63,         # dinaikkan dari 31 — pohon lebih ekspresif
+    "min_child_samples":  30,         # diturunkan dari 50 — split lebih granular
     "subsample":          0.8,
     "colsample_bytree":   0.8,
+    "lambda_l1":          0.1,        # L1 regularization — cegah overfit saat model makin kompleks
+    "lambda_l2":          0.1,        # L2 regularization
     "verbose":            -1,
     "n_jobs":             -1,
     "random_state":       42,
 }
 GUARDIAN_PARTIAL_EXIT_RATIO = 0.5  # % posisi ditutup saat PARTIAL_EXIT
-GUARDIAN_EARLY_STOPPING    = 50
+GUARDIAN_EARLY_STOPPING    = 100   # dinaikkan dari 50 — kasih lebih banyak kesempatan konvergen
 GUARDIAN_N_FOLDS           = 8
 GUARDIAN_PURGE_GAP_BARS    = 5
 GUARDIAN_MIN_SAMPLES_COIN  = 30  # min in-trade bars per coin untuk training
@@ -449,7 +606,7 @@ MODAL_PER_TRADE            = 25.0    # 25 USD per trade (sesuai setting UI)
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)
-CONFIDENCE_THRESHOLD_ENTRY = 0.60     # threshold entry disamakan dengan LGBM_THRESHOLD (tadinya 0.70 — SHORT killed di gap 0.62-0.69)
+CONFIDENCE_THRESHOLD_ENTRY = 0.59     # V2.5 Hybrid: diselaraskan dengan threshold baru (0.69/0.59)
 MIN_HOLD_BARS              = 2        # bar H1 = 2 jam minimum hold
 
 # ─── LGBM Class Weights (Cost-Sensitive Learning) ────────────────────────────

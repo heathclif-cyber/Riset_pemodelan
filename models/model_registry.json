@@ -60,5 +60,7 @@
     "stacked_ensemble (degradasi sinyal)",
     "tp_sl_regressor (SL R\u00b2=0.05, all approaches degraded)",
     "lstm_flat_review (WR 39%, killed 78%\u219257%)"
-  ]
+  ],
+  "active_research": "cascade_v2.5_hybrid",
+  "last_updated": "2026-06-01"
 }

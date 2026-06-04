@@ -328,6 +328,18 @@ def backtest_holdout_symbol(
     df = ensure_utc_index(df)
     df = df.sort_index()
 
+    # Merge HMM regime labels jika tersedia
+    regime_path = HOLDOUT_LABEL_DIR / f"{symbol}_regime_h1.parquet"
+    if regime_path.exists():
+        try:
+            reg = pd.read_parquet(regime_path)
+            if "hmm_regime_enc" in df.columns:
+                df = df.drop(columns=["hmm_regime_enc"])
+            df = df.join(reg[["hmm_regime_enc"]], how="left")
+            df["hmm_regime_enc"] = df["hmm_regime_enc"].fillna(1).astype("int32")
+        except Exception:
+            pass
+
     mask = df["label"].astype(str).isin(LABEL_MAP)
     df   = df[mask].copy()
     y    = df["label"].map(LABEL_MAP).values.astype(np.int64)

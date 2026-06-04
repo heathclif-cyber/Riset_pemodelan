@@ -43,7 +43,8 @@ DEPLOY_MAPPING = {
     "core/features.py": "core/features.py",
     "core/models.py": "core/models.py",
     "core/utils.py": "core/utils.py",
-    "core/regime.py": "core/regime.py"
+    "core/regime.py": "core/regime.py",
+    "core/cascade_utils.py": "core/cascade_utils.py"
 }
 # =======================================================
 
