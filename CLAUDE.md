@@ -76,48 +76,18 @@ ENTRY → Guardian v3 per-bar check (sejak bar 0, tanpa batas ATR minimum — in
 TRAILING_STOP_ENABLED=False (Guardian solo beats trailing). LSTM TIDAK bisa meng-override FLAT.
 TREND_ALIGNMENT_ENABLED=True (with_trend penalty=0.10, counter_trend boost=0.05).
 
-## Final Results (2026-05-15)
+## Final Results
 
-### 08 Backtest — Walk-Forward Purged CV (2020-2025, 20 koin)
+> ⛔ **SEMUA METRIK DI BAWAH INI DICABUT — DATA LEAKAGE TERDETEKSI (2026-06-04)**
+> Leakage ditemukan di tiga komponen: holdout split, feature engineering, dan Guardian training.
+> Metrik 88.93% WR, $169,626 PnL, dan seluruh angka turunannya **tidak valid**.
+> Jangan gunakan sebagai referensi performa. Akan diisi ulang setelah retrain bersih.
 
-| Metrik | Nilai |
-|--------|-------|
-| Mean WR | 91.15% |
-| Mean DD | 85.80% |
-| Mean PF | 13.31 |
+~~### 08 Backtest — Walk-Forward Purged CV (2020-2025, 20 koin)~~
+~~### 09 Holdout — Genuine Temporal OOS (Nov 2025 – Apr 2026)~~
+~~### Guardian v2 → v3 Transition~~
 
-### 09 Holdout — Genuine Temporal OOS (Nov 2025 – Apr 2026, 21 koin, 8,027 bar/koin)
-
-| Metrik | Guardian v3 | Baseline (no Guardian) | Delta |
-|--------|-------------|------------------------|-------|
-| Mean WR | **88.93%** | 82.03% | +6.90pp |
-| Mean DD | **41.77%** | 55.75% | −13.98pp |
-| Mean PF | **10.05** | 8.41 | +1.64 |
-| Mean Sharpe | **38.32** | 25.75 | +12.57 |
-| Mean Sortino | **78.99** | 54.60 | +24.39 |
-| Max Cons Loss | **7** | 9 | −2 |
-| Trades/bulan | **103.7** | 62.0 | +67% |
-| **Total PnL (5x, 21 koin)** | **$169,626** | $113,802 | **+$55,824 (+49%)** |
-| LONG WR | 87.8% | — | — |
-| SHORT WR | **90.3%** | — | — |
-
-SHORT > LONG +2.5% — bukan bias model, market structure bull market (koreksi tajam → SHORT TP cepat).
-**Semua 21 koin naik PnL** vs baseline, NEAR tertinggi (+$4,261), TRX terendah (+$385).
-
-### Guardian v2 → v3 Transition
-
-| Metrik | Guardian v2 (Binary) | Guardian v3 (Multiclass) | Delta |
-|--------|---------------------|--------------------------|-------|
-| Mean WR | 90.88% | 88.93% | −1.95pp |
-| Mean DD | 38.06% | 41.77% | +3.71pp |
-| Mean PF | 14.05 | 10.05 | −4.00 |
-| Mean Sharpe | 33.24 | **38.32** | +5.08 |
-| Total Trades | 13,301 | **22,914** | +72% |
-| Total PnL | $107,875 | **$169,626** | **+$61,751 (+57%)** |
-
-v3 korbankan WR/PF demi volume 72% lebih banyak — Sharpe lebih tinggi, PnL +57%.
-
-Detail lengkap: `EXPERIMENTS.md § 2026-05-14 (Sesi 3)` dan `§ 2026-05-15`
+Detail leakage: `EXPERIMENTS.md § 2026-06-04`
 
 ### Cascade v4.1 (Production — Volatility-Aware + Asymmetric Entry + Instant Guardian)
 *   **Status**: Production — deployed via `tools/deploy_model.py`.
@@ -293,11 +263,10 @@ Holdout test menggunakan data setelah cutoff — genuine temporal OOS.
 
 ## Key Learnings
 
-### Guardian v3 — SUCCESS (2026-05-15)
+### Guardian v3 — DICABUT (data leakage, 2026-06-04)
 
-- **104 feat + multiclass > 32 feat binary**: Static features (ema_7_h4, rsi_h4, rsi_slope_h4, atr_percent_h4, volatility spike detectors) berkontribusi nyata
-- **WR 89% di temporal OOS**: Guardian genuine generalization, bukan overfitting. Semua 21 koin PnL positif
-- **TP → momentum mode = game changer**: Trade +72%, PnL +57% vs Guardian v2 binary. TP tidak hard-close posisi
+- Klaim WR 89%, PnL +57%, semua 21 koin positif **tidak valid** — ada leakage di holdout split, feature engineering, dan Guardian training
+- Arsitektur Guardian v3 (multiclass, partial exit) tetap dipertahankan; hanya metrik hasil evaluasinya yang dicabut
 - **Guardian > Trailing stop**: Guardian v3 mengalahkan trailing 2x ATR di semua metrik
 - **Feature alignment robust**: `model.feature_name_` + zero-fill mencegah mismatch kolom
 - **Partial exit belum optimal**: Minority class 4.5%, perlu monitoring lebih lanjut

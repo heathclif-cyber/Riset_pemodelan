@@ -33,17 +33,19 @@
       "activation_atr": 1.5
     },
     "cascade_v3.1": {
-      "status": "active",
+      "status": "REVOKED",
+      "revoked_date": "2026-06-04",
+      "revoke_reason": "Data leakage terdeteksi: holdout split, feature engineering, Guardian training",
       "trained_date": null,
-      "winrate": 0.9115,
-      "trade_per_month": 56.9,
-      "pnl_lev5x": 27584.02,
-      "max_drawdown": 0.858,
-      "sharpe_ratio": 27.4825,
-      "sortino_ratio": 47.1672,
-      "calmar_ratio": 89.4688,
-      "profit_factor": 13.3123,
-      "max_consecutive_loss": 10
+      "winrate": null,
+      "trade_per_month": null,
+      "pnl_lev5x": null,
+      "max_drawdown": null,
+      "sharpe_ratio": null,
+      "sortino_ratio": null,
+      "calmar_ratio": null,
+      "profit_factor": null,
+      "max_consecutive_loss": null
     }
   },
   "tp_sl": {

@@ -63,11 +63,7 @@
       "PowerShell(.\\\\.venv\\\\Scripts\\\\python.exe pipeline/09_holdout_backtest.py --all 2>&1)",
       "PowerShell(Get-ChildItem D:\\\\Apps-Dev\\\\swint_tradev2\\\\models\\\\ | Where-Object { $_.Name -match 'guardian|lstm|lgbm|feature_cols' } | Select-Object Name, Length, LastWriteTime)",
       "PowerShell(git add *)",
-      "PowerShell(Copy-Item *)",
-      "Bash(Select-Object -First 30)",
-      "PowerShell(if \\(Test-Path models\\\\runs\\) { Get-ChildItem -Path models\\\\runs -Directory | Sort-Object Name -Descending | Select-Object -First 5 | ForEach-Object { $_.Name } } else { Write-Output \"models/runs not found\" })",
-      "PowerShell(if \\(Test-Path models\\\\runs\\) { Get-ChildItem -Path models\\\\runs -Directory | Sort-Object Name | ForEach-Object { $_.Name } })",
-      "Bash(Select-Object Name, Mode, Length)",
+      "Bash(Select-Object FullName, Length, LastWriteTime)",
       "Bash(Format-Table -AutoSize)",
       "Bash(Select-Object Name, FullName)",
       "mcp__ide__executeCode",
@@ -80,7 +76,24 @@
       "Bash(python3 -c \"import sqlite3; conn=sqlite3.connect\\('D:/Apps-Dev/Riset_pemodelan/instance/app.db'\\); c=conn.cursor\\(\\); c.execute\\(\\\\\"SELECT name FROM sqlite_master WHERE type='table'\\\\\"\\); print\\(c.fetchall\\(\\)\\); conn.close\\(\\)\")",
       "Bash(python3 -c \"import json; d=json.load\\(open\\('D:/Apps-Dev/Riset_pemodelan/reports/regime_hmm_report.json'\\)\\); print\\(json.dumps\\({k:str\\(v\\)[:100] for k,v in d.items\\(\\)}, indent=2\\)\\)\")",
       "PowerShell(Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\runs\" -Directory | Select-Object Name | Sort-Object Name | ForEach-Object { $_.Name })",
-      "PowerShell(Write-Output \"=== models/runs/ ===\"; Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\runs\" -Directory | Select-Object Name | Sort-Object Name | ForEach-Object { \"  \" + $_.Name }; Write-Output \"\"; Write-Output \"=== analysis/ ===\"; Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\analysis\" -File | Select-Object Name | ForEach-Object { \"  \" + $_.Name }; Write-Output \"\"; Write-Output \"=== docs/ ===\"; if \\(Test-Path \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\docs\"\\) { Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\docs\" -File | Select-Object Name | ForEach-Object { \"  \" + $_.Name } } else { \"  \\(empty or gone\\)\" })"
+      "PowerShell(Write-Output \"=== models/runs/ ===\"; Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\runs\" -Directory | Select-Object Name | Sort-Object Name | ForEach-Object { \"  \" + $_.Name }; Write-Output \"\"; Write-Output \"=== analysis/ ===\"; Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\analysis\" -File | Select-Object Name | ForEach-Object { \"  \" + $_.Name }; Write-Output \"\"; Write-Output \"=== docs/ ===\"; if \\(Test-Path \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\docs\"\\) { Get-ChildItem \"D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\docs\" -File | Select-Object Name | ForEach-Object { \"  \" + $_.Name } } else { \"  \\(empty or gone\\)\" })",
+      "PowerShell(python D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\_analysis\\\\_test_html_gen.py)",
+      "Bash(start *)",
+      "PowerShell(python D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\run_pipeline.py --report D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\_analysis\\\\_test_data.json)",
+      "PowerShell(Get-Item *)",
+      "PowerShell(python D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\_analysis\\\\_live_analyze.py)",
+      "PowerShell(python D:\\\\Apps-Dev\\\\Riset_pemodelan\\\\_analysis\\\\_overfit_check.py)",
+      "Bash(git checkout *)",
+      "Bash(ls \"D:\\\\Apps-Dev\\\\swint_tradev2\" 2>/dev/null || echo \"Directory not found\")",
+      "Read(//d/Apps-Dev/**)",
+      "PowerShell($items = Get-ChildItem \"d:\\\\Apps-Dev\\\\Riset_pemodelan\\\\data\\\\labeled\" -ErrorAction SilentlyContinue; if \\($items\\) { $items | Select-Object -First 5 -ExpandProperty Name; \"Total: $\\($items.Count\\)\" } else { \"Empty or not found\" })",
+      "PowerShell($r = \"d:\\\\Apps-Dev\\\\Riset_pemodelan\\\\models\\\\runs\\\\holdout_20260523_131710\\\\holdout_backtest_results.json\"; \\(Get-Content $r -Raw | ConvertFrom-Json\\) | Get-Member -MemberType NoteProperty | Select-Object -First 5 Name)",
+      "PowerShell(python -c \"import json; d=json.load\\(open\\('models/runs/holdout_20260523_131710/holdout_backtest_results.json'\\)\\); print\\(list\\(d.keys\\(\\)\\)[:10]\\)\" 2>&1)",
+      "PowerShell(head -5)",
+      "PowerShell($f = \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Apps-Dev-Riset-pemodelan\\\\4dd34df9-82ed-4f65-afba-f205b9df4926\\\\tasks\\\\bkq5yi24d.output\"; $lines = Get-Content $f; $total = $lines.Count; $lines | Select-Object -Last 30 | Where-Object { $_ -match \"INFO|ERROR|WARNING|Fetch|Clean|Engineer|Backtest|STEP|Experiment|min_hold\" })",
+      "PowerShell($f = \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Apps-Dev-Riset-pemodelan\\\\4dd34df9-82ed-4f65-afba-f205b9df4926\\\\tasks\\\\bkq5yi24d.output\"; \\(Get-Content $f -Tail 20\\) | Where-Object { $_ -notmatch \"UnicodeEncodeError|charmap|Traceback|CallStack|call stack|File|__init__|handlers|logging|emit\" })",
+      "PowerShell($f = \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Apps-Dev-Riset-pemodelan\\\\4dd34df9-82ed-4f65-afba-f205b9df4926\\\\tasks\\\\bkq5yi24d.output\"; $lines = Get-Content $f; \"Total lines: $\\($lines.Count\\)\"; $lines | Select-Object -Last 5)",
+      "PowerShell($f = \"C:\\\\Users\\\\user\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\d--Apps-Dev-Riset-pemodelan\\\\4dd34df9-82ed-4f65-afba-f205b9df4926\\\\tasks\\\\bkq5yi24d.output\"; $lines = Get-Content $f; $start_idx = \\($lines | Select-String \"EXPERIMENT: GUARDIAN_MIN_HOLD_BARS\" | Select-Object -First 1\\).LineNumber - 1; $lines[$start_idx..\\($lines.Count - 1\\)] -join \"`n\")"
     ]
   }
 }

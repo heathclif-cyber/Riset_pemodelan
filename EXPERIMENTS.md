@@ -1,6 +1,28 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+## 2026-06-04 — PENCABUTAN METRIK: Data Leakage Terdeteksi
+
+> ⛔ **SEMUA HASIL BACKTEST DAN HOLDOUT SEBELUM TANGGAL INI DICABUT.**
+
+Leakage ditemukan di tiga komponen sekaligus:
+1. **Holdout split** — data pembagi tidak bersih, ada overlap atau kontaminasi
+2. **Feature engineering** — fitur yang di-compute menggunakan data yang melampaui cutoff
+3. **Guardian training** — label atau fitur Guardian mengandung informasi dari periode holdout
+
+Metrik yang tidak valid dan tidak boleh dirujuk:
+- WR 88.93% (Holdout Guardian v3, 2026-05-15)
+- WR 91.15% (Walk-Forward CV, 2026-05-15)
+- PnL $169,626 (Holdout 21 koin, 5x leverage)
+- Seluruh tabel Guardian v2 → v3 transition
+- Metrik cascade_v3.1 di `model_registry.json` (winrate 0.9115, dll.)
+
+**Status**: Perlu audit kode pipeline (feature engineering + holdout split + Guardian labeling) dan retrain bersih sebelum ada evaluasi baru yang valid.
+
+---
+
 ## 2026-06-03 — Riset Cascade Mode: LSTM Dominant & Dual Dominant (DEPLOYED: Z3)
+
+> **⚠️ TEST-SET SELECTION BIAS** — Grid sweep di bawah (Y1, Y2, Z1, Z2, Z3, T, I) seluruhnya dijalankan pada holdout Nov 2025 – Apr 2026. Mode Z3 dipilih karena metriknya terbaik di data tersebut. Tidak ada validation set independen — performa Z3 di live belum tentu mencerminkan metrik holdout ini.
 
 **Latar belakang**: Data live trading (livesignal.csv, Jun 2026) menunjukkan dual_gate (T) memblokir 100% sinyal selama 20 jam karena LSTM hampir selalu output FLAT 97-100%. Riset ini mencari paradigma baru untuk LSTM confirmation yang tidak bergantung pada argmax confidence LSTM.
 
@@ -700,6 +722,12 @@ Setelah holdout validated:
 
 ## 2026-05-27 — Optimasi Gate Exit Guardian v3 (Min Hold & Activation ATR)
 
+> **⚠️ PERINGATAN: DATA LEAKAGE / TEST-SET OVERFITTING**
+>
+> Seluruh Sesi 1–5 tanggal 2026-05-27 melakukan parameter sweep pada **data holdout yang sama** (Nov 2025 – Mar 2026). Memilih parameter "terbaik" dari hasil sweep di test set adalah overfitting terhadap holdout — bukan genuine OOS. **Terbukti**: live trading Jun 2026 dengan parameter "Masterpiece" (LONG=0.75, SHORT=0.60) hanya menghasilkan WR **16.7%** (lihat 2026-06-01 V2.5 Hybrid). Semua metrik di Sesi 1–5 harus dibaca sebagai **in-sample tuning result**, bukan estimasi performa generalisasi.
+>
+> **Inkonsistensi baseline**: WR 42.15% di sesi ini tidak konsisten dengan Guardian v3 yang tervalidasi (88.93% di 2026-05-15). Penyebab yang paling mungkin: LGBM cascade_v4.1 (104 fitur baru) dikombinasikan dengan Guardian lama yang **belum diretrain** untuk fitur yang sama → feature mismatch menekan WR secara artifisial.
+
 ### Latar Belakang
 Analisis performa Out-of-Sample (OOS) periode November 2025 – Maret 2026 menunjukkan kebocoran profit yang sangat besar akibat trade yang langsung menghantam Stop Loss struktural (SL hit sebanyak 467 kali atau 40% dari total trade) sebelum Exit Guardian v3 sempat aktif. Hipotesis: Aturan `GUARDIAN_MIN_HOLD_BARS = 3` (kunci 3 jam pertama) dan `GUARDIAN_ACTIVATION_ATR = 1.5` (jarak pergerakan minimal) menciptakan "zona buta" di mana trade gagal langsung mati sebelum diselamatkan.
 
@@ -736,6 +764,8 @@ Analisis performa Out-of-Sample (OOS) periode November 2025 – Maret 2026 menun
 ---
 
 ## 2026-05-27 (Sesi 2) — Asymmetric Entry Threshold (LONG vs SHORT)
+
+> **⚠️ DATA LEAKAGE** — Lihat peringatan di Sesi 1. Parameter LONG=0.75, SHORT=0.60 dipilih dari sweep pada holdout data yang sama. Tidak valid sebagai OOS estimate.
 
 ### Latar Belakang
 Data training (2020-2025) didominasi oleh bull market, menyebabkan model LightGBM mengalami bias LONG yang parah (1.058 LONG vs 124 SHORT) dan winrate LONG rendah (45.18%) di pasar OOS yang sebenarnya bearish/choppy. Sebaliknya, SHORT sangat akurat (70.97%). Hipotesis: Menaikkan threshold masuk LONG secara asimetris (`LGBM_THRESHOLD_LONG` 0.65 -> 0.70/0.72/0.75) akan memangkas trade LONG berkualitas rendah, menyeimbangkan rasio arah, dan mendongkrak profitabilitas bersih.
@@ -774,6 +804,8 @@ Data training (2020-2025) didominasi oleh bull market, menyebabkan model LightGB
 
 ## 2026-05-27 (Sesi 3) — Optimasi Asymmetric SHORT Threshold
 
+> **⚠️ DATA LEAKAGE** — Lihat peringatan di Sesi 1. SHORT=0.60 dipilih dari sweep pada holdout yang sama. Tidak valid sebagai OOS estimate.
+
 ### Latar Belakang
 Setelah keberhasilan menyeimbangkan bias LONG di threshold `0.75` (Sesi 2), kita ingin memaksimalkan potensi profit di pasar holdout yang bearish/choppy dengan menyapu gerbang SHORT (`LGBM_THRESHOLD_SHORT` untuk nilai `[0.55, 0.60, 0.65, 0.70]`). Hipotesis: Di pasar bearish, melonggarkan SHORT sedikit akan menyerap lebih banyak profit SHORT tanpa merusak kestabilan keseluruhan, sementara memperketatnya ke `0.70` mungkin terlalu konservatif.
 
@@ -809,9 +841,11 @@ Setelah keberhasilan menyeimbangkan bias LONG di threshold `0.75` (Sesi 2), kita
 
 #### Lampiran: Scorecard Bulanan Masterpiece Final (Nov 2025 – Mar 2026)
 
+> ⚠️ Label "OOS" di bawah MENYESATKAN — ini adalah **in-sample tuning result** karena parameter dipilih dari data yang sama. Metrik aktual live trading sangat berbeda (lihat 2026-06-01).
+
 ```
 ==================================================
-  FINAL MASTERPIECE SCORECARD (OOS)
+  FINAL MASTERPIECE SCORECARD (BUKAN genuine OOS — lihat warning di atas)
 ==================================================
   Total Trades         : 507
   Overall Win Rate     : 55.03%
@@ -844,6 +878,8 @@ Setelah keberhasilan menyeimbangkan bias LONG di threshold `0.75` (Sesi 2), kita
 ---
 
 ## 2026-05-27 (Sesi 4) — Optimasi H4 Trend Gating (Regime-Aware Gating)
+
+> **⚠️ DATA LEAKAGE** — Lihat peringatan di Sesi 1. Trend Alignment (Pen=0.10, Boost=0.05) dipilih dari sweep pada holdout yang sama. "Lompatan Profit All-Time High" adalah selection bias dari multiple testing, bukan genuine improvement.
 
 ### Latar Belakang
 Setelah keberhasilan menyeimbangkan bias masuk ganda di LONG (0.75) dan SHORT (0.60) (Sesi 3), kita ingin menyelaraskan arah trade terhadap kekuatan tren H4 makro guna mengatasi sisa-sisa noise trade. Hipotesis: Mengaktifkan `TREND_ALIGNMENT_ENABLED` dengan penalti searah tren H4 (`WITH_TREND_PENALTY`) dan dorongan berlawanan arah (`COUNTER_TREND_BOOST`) akan memangkas trade rentan selama regime transisi, dan mendongkrak profitabilitas bersih.
@@ -883,6 +919,8 @@ Setelah keberhasilan menyeimbangkan bias masuk ganda di LONG (0.75) dan SHORT (0
 ---
 
 ## 2026-05-27 (Sesi 5) — Sensitivitas Bobot Trend Gating (WITH_TREND_PENALTY & COUNTER_TREND_BOOST)
+
+> **⚠️ DATA LEAKAGE** — Lihat peringatan di Sesi 1. "Masterpiece V3.1 Terbukti Sweet Spot Mutlak" adalah kesimpulan yang tidak valid — konfirmasi dilakukan pada data yang sama yang digunakan untuk memilih parameter tersebut (circular validation).
 
 ### Latar Belakang
 Setelah mengidentifikasi H4 Trend Alignment (Skenario 2 pada Sesi 4) sebagai masterpiece sweet spot, kita melakukan pengujian sensitivitas mendalam terhadap variabel penalti (`WITH_TREND_PENALTY`) dan dorongan (`COUNTER_TREND_BOOST`) untuk memvalidasi apakah ada kombinasi parameter yang lebih optimal, atau apakah konfigurasi `Pen=0.10, Boost=0.05` benar-benar merupakan sweet spot mutlak.
