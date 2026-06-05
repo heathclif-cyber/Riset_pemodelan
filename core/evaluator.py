@@ -817,17 +817,126 @@ def calc_risk_metrics(
     modal:           float,
     index:           pd.DatetimeIndex,
     max_drawdown_pct: float,
+    equity_curve:    list = None,
     rfr:             float = 0.0,
 ) -> dict:
-    """Hitung Sharpe, Sortino, Calmar, dan Profit Factor dari trade list."""
+    """
+    Hitung Sharpe, Sortino, Calmar, dan Profit Factor dari trade list.
+
+    Metodologi (standard industry):
+      - Sharpe/Sortino: dibangun dari daily equity curve → daily returns → annualized.
+        Ini menggantikan metode per-trade IID lama yang meng-inflate metrik 2-4x.
+        Annualization factor = sqrt(365) untuk crypto (trading 365 hari/tahun).
+      - Calmar: annualized return / |max drawdown|.
+      - Profit Factor: gross profit / gross loss (tetap — ini metrik trade-level).
+
+    Jika equity_curve tidak diberikan, fallback ke metode per-trade lama
+    (backward compatibility untuk pemanggil yang belum di-update).
+    """
+    # ── Profit Factor (trade-level, always computed the same way) ────────────
+    wins_sum = sum(p for p in pnl_per_trade if p > 0)
+    loss_sum = abs(sum(p for p in pnl_per_trade if p < 0))
+    profit_factor = (wins_sum / loss_sum) if loss_sum > 0 else 0.0
+
     if len(pnl_per_trade) < 2:
         return {
             "sharpe_ratio":  0.0,
             "sortino_ratio": 0.0,
             "calmar_ratio":  0.0,
-            "profit_factor": 0.0,
+            "profit_factor": round(profit_factor, 4),
         }
 
+    # ── Daily equity curve method (preferred) ───────────────────────────────
+    if equity_curve is not None and len(equity_curve) > 1 and len(index) > 1:
+        try:
+            return _calc_risk_metrics_daily(
+                pnl_per_trade, modal, index, max_drawdown_pct,
+                equity_curve, rfr, profit_factor,
+            )
+        except Exception:
+            # Fall through ke metode per-trade jika daily gagal
+            pass
+
+    # ── Fallback: per-trade IID method (backward compat) ────────────────────
+    return _calc_risk_metrics_per_trade(
+        pnl_per_trade, modal, index, max_drawdown_pct, rfr, profit_factor,
+    )
+
+
+def _calc_risk_metrics_daily(
+    pnl_per_trade:   list,
+    modal:           float,
+    index:           pd.DatetimeIndex,
+    max_drawdown_pct: float,
+    equity_curve:    list,
+    rfr:             float,
+    profit_factor:   float,
+) -> dict:
+    """
+    Hitung Sharpe/Sortino/Calmar dari daily equity curve.
+
+    Alur:
+      1. Build portfolio value = modal + equity_curve (per H1 bar)
+      2. Resample ke daily: ambil nilai terakhir setiap hari
+      3. Daily returns = pct_change portfolio value harian
+      4. Annualize dengan sqrt(365) untuk crypto
+    """
+    ANNUAL_TRADING_DAYS = 365  # crypto — 24/7/365
+
+    eq_arr   = np.asarray(equity_curve, dtype=np.float64)
+    port_val = modal + eq_arr                                   # portfolio value per bar
+    eq_series = pd.Series(port_val, index=index)
+
+    # Resample ke daily — ambil nilai penutupan hari (bar terakhir setiap UTC day)
+    daily_eq = eq_series.resample("D").last().dropna()
+    if len(daily_eq) < 2:
+        raise ValueError("Insufficient daily data points")
+
+    daily_rets = daily_eq.pct_change().dropna()
+    if len(daily_rets) < 2:
+        raise ValueError("Insufficient daily returns")
+
+    # ── Sharpe Ratio ───────────────────────────────────────────────────────
+    mean_ret  = float(daily_rets.mean())
+    std_ret   = float(daily_rets.std(ddof=1))
+    ann_factor = np.sqrt(ANNUAL_TRADING_DAYS)
+    sharpe = (mean_ret / std_ret * ann_factor) if std_ret > 1e-10 else 0.0
+
+    # ── Sortino Ratio ──────────────────────────────────────────────────────
+    downside = daily_rets[daily_rets < 0]
+    if len(downside) > 1:
+        std_down = float(downside.std(ddof=1))
+        sortino = (mean_ret / std_down * ann_factor) if std_down > 1e-10 else 0.0
+    else:
+        sortino = 0.0
+
+    # ── Calmar Ratio ───────────────────────────────────────────────────────
+    # annualized return = CAGR dari daily equity
+    total_return = (port_val[-1] - modal) / modal          # total period return
+    n_days = max((index[-1] - index[0]).days, 1)
+    ann_return = (1 + total_return) ** (ANNUAL_TRADING_DAYS / n_days) - 1
+    calmar = (ann_return / abs(max_drawdown_pct)) if abs(max_drawdown_pct) > 1e-9 else 0.0
+
+    return {
+        "sharpe_ratio":  round(sharpe, 4),
+        "sortino_ratio": round(sortino, 4),
+        "calmar_ratio":  round(calmar, 4),
+        "profit_factor": round(profit_factor, 4),
+    }
+
+
+def _calc_risk_metrics_per_trade(
+    pnl_per_trade:   list,
+    modal:           float,
+    index:           pd.DatetimeIndex,
+    max_drawdown_pct: float,
+    rfr:             float,
+    profit_factor:   float,
+) -> dict:
+    """
+    Fallback: per-trade IID method (legacy).
+    Hanya dipakai jika equity_curve tidak tersedia.
+    """
     returns = np.array(pnl_per_trade, dtype=np.float64) / (modal + 1e-9)
 
     n_years = max((index[-1] - index[0]).days / 365.25, 1 / 52)
@@ -846,10 +955,6 @@ def calc_risk_metrics(
 
     ann_return = float(np.mean(returns)) * trades_per_year
     calmar = (ann_return / abs(max_drawdown_pct)) if abs(max_drawdown_pct) > 1e-9 else 0.0
-
-    wins_sum = sum(p for p in pnl_per_trade if p > 0)
-    loss_sum = abs(sum(p for p in pnl_per_trade if p < 0))
-    profit_factor = (wins_sum / loss_sum) if loss_sum > 0 else 0.0
 
     return {
         "sharpe_ratio":  round(sharpe, 4),
@@ -1009,6 +1114,7 @@ def full_trading_report(
         modal            = modal,
         index            = index,
         max_drawdown_pct = base_ddp,
+        equity_curve     = base.get("equity_curve", None),
     )
 
     logger.info(
