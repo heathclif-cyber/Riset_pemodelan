@@ -793,3 +793,172 @@ Output: `reports/experiments/ic_test_{model}_{run_id}.md` dan `.json`
 
 *Script: `pipeline/03b_ic_test.py`*
 *Hasil LSTM: `reports/experiments/ic_test_lstm_ic_test_v1.json`*
+
+---
+
+## Rencana Eksekusi: IC Test & Training Guardian
+
+*Disusun 2026-06-05 | Status: belum dieksekusi*
+
+### Masalah yang Ditemukan di Kode Saat Ini (`06_train_guardian.py`)
+
+| # | Masalah | Lokasi | Dampak |
+|---|---------|--------|--------|
+| 1 | Scaler fit per fold di dalam CV loop, tapi final scaler fit pada semua data | Baris 271–272 vs 321–322 | Logloss CV dievaluasi pada skala berbeda dari model final — metric CV tidak bisa dipercaya |
+| 2 | Tidak ada cek distribusi label per fold | `train_guardian()` | Fold dengan 0 PARTIAL_EXIT sample bisa corrupt CV metric tanpa peringatan |
+| 3 | Tidak ada IC test khusus Guardian | — | Tidak tahu apakah dynamic features punya sinyal nyata sebelum training |
+| 4 | Tidak ada perbandingan importance: dynamic vs static | — | Model bisa hanya memorize entry pattern, bukan exit pattern |
+
+### Yang Belum Dilakukan (Gap Metodologi)
+
+| Gap | Risiko |
+|-----|--------|
+| **Multiple testing correction (Bonferroni)** di `03b` | Dari 104 fitur, ~5 lolos IC threshold hanya karena chance (α=0.05). False positive masuk model. Threshold efektif: `0.02 / 104 ≈ 0.0002` |
+| **IC Decay test** belum dilakukan untuk model apapun | Sinyal bisa ada di data historis tapi menghilang di data baru. Belum tahu apakah sinyal stabil lintas waktu |
+| **Label validation Guardian** belum dilakukan | Apakah label HOLD/PARTIAL/FULL_EXIT benar-benar memisahkan P&L? Jika tidak — Guardian hanya memorize noise |
+| **Linear baseline** sebelum LGBM Guardian | Simons rule: coba logistic regression dulu. Kalau linear tidak bisa → sinyal tidak ada, bukan masalah arsitektur |
+| **Post-training validation** Guardian | Setelah training, korelasi prediksi Guardian vs hindsight optimal exit belum pernah diukur |
+
+---
+
+### Phase 1 — Buat `pipeline/06b_ic_test_guardian.py`
+
+Guardian memiliki target berbeda (HOLD/PARTIAL/FULL_EXIT) dan fitur berbeda dari LGBM.
+`03b_ic_test.py` tidak bisa dipakai langsung — perlu script terpisah.
+
+**Alur script:**
+
+```
+1. generate_labels_for_coin() dari semua coin (reuse fungsi di 06_train_guardian.py)
+   → Output: DataFrame per-bar in-trade samples (104 static + 7 dynamic + label)
+
+2. IC test TERPISAH per kelompok:
+   [A] Dynamic features (7): bars_held_norm, current_pnl_pct, current_pnl_atr,
+                              max_favorable_pnl_pct, drawdown_from_peak_pct,
+                              direction, entry_price_ratio
+   [B] Static entry features (104): fitur LGBM dari feature_cols_v2.json
+
+3. Hitung untuk masing-masing:
+   - Standalone IC (Spearman) vs label ordinal (HOLD=0, PARTIAL=1, FULL=2)
+   - t-stat dengan koreksi autocorrelation
+   - Marginal IC via Gram-Schmidt
+
+4. Bonferroni correction:
+   threshold_bonferroni = 0.02 / n_features_tested
+   Fitur yang lolos Bonferroni = "sinyal kuat"
+
+5. Report:
+   - Dynamic features: berapa yang lolos? IC berapa?
+   - Static features: apakah ada yang masih relevan untuk exit decision?
+   - Rekomendasi: fitur static mana yang bisa di-drop dari Guardian
+```
+
+**Ekspektasi hasil yang sehat:**
+
+```
+Dynamic features → IC tinggi (0.05–0.15):
+  current_pnl_pct         IC ≈ +0.12  → profit saat ini prediksi exit
+  drawdown_from_peak_pct  IC ≈ +0.10  → pullback dari peak prediksi exit
+  max_favorable_pnl_pct   IC ≈ +0.07  → seberapa profit pernah dicapai
+
+Static features → IC rendah (0.00–0.03):
+  Sebagian besar tidak lolos Bonferroni
+  Beberapa mungkin ada sinyal sisa tapi jauh di bawah dynamic
+```
+
+Jika dynamic IC < 0.02 → Guardian tidak punya sinyal nyata untuk exit.
+Harus investigasi label generation sebelum lanjut training.
+
+**Jalankan:**
+```bash
+python pipeline/06b_ic_test_guardian.py
+python pipeline/06b_ic_test_guardian.py --run-id guardian_ic_v1
+```
+
+---
+
+### Phase 2 — Fix `pipeline/06_train_guardian.py`
+
+**Fix 1 — Scaler consistency:**
+
+```python
+# SEBELUM loop fold — fit satu scaler dari semua training data
+final_scaler = StandardScaler()
+X_all_scaled = final_scaler.fit_transform(X_all)
+
+# DI DALAM loop fold — transform saja, jangan fit ulang
+X_train_s = final_scaler.transform(X_all[train_idx])
+X_test_s  = final_scaler.transform(X_all[test_idx])
+```
+
+Scaler yang sama di CV dan final model → logloss CV benar-benar comparable.
+
+**Fix 2 — Label distribution check per fold:**
+
+```python
+# Di awal train_guardian(), sebelum loop fold
+for cls, name in enumerate(["HOLD", "PARTIAL_EXIT", "FULL_EXIT"]):
+    pct = (y_all == cls).mean() * 100
+    logger.info(f"  Label {name}: {pct:.1f}% ({(y_all == cls).sum()} samples)")
+
+# Di dalam loop fold — warning jika kelas minoritas terlalu sedikit
+for cls in [1, 2]:  # PARTIAL dan FULL
+    count = (y_train == cls).sum()
+    if count < 30:
+        logger.warning(f"  Fold {fold_idx+1}: class {cls} hanya {count} samples — CV unreliable")
+```
+
+**Fix 3 — Feature importance: dynamic vs static:**
+
+```python
+# Setelah training final model
+dynamic_feats = set(GUARDIAN_DYNAMIC_FEATURES)
+imp_dynamic = [(n, v) for n, v in zip(feat_cols_out, model.feature_importances_)
+               if n in dynamic_feats]
+imp_static  = [(n, v) for n, v in zip(feat_cols_out, model.feature_importances_)
+               if n not in dynamic_feats]
+
+total_imp = sum(model.feature_importances_)
+dyn_share = sum(v for _, v in imp_dynamic) / total_imp * 100
+sta_share = sum(v for _, v in imp_static)  / total_imp * 100
+
+logger.info(f"Feature importance share — Dynamic: {dyn_share:.1f}% | Static: {sta_share:.1f}%")
+# Sehat: Dynamic > 40%. Jika Dynamic < 20% → Guardian memorize entry pattern
+```
+
+---
+
+### Phase 3 — Label Validation Guardian (Opsional tapi Penting)
+
+Sebelum training final, validasi apakah label yang dihasilkan `generate_labels_for_coin()` benar-benar memisahkan outcome:
+
+```
+Ambil semua in-trade samples dari holdout period (Nov 2025 – Apr 2026)
+Kelompokkan berdasarkan label: HOLD=0, PARTIAL=1, FULL=2
+Ukur actual future P&L per kelompok
+
+Harapan kalau label valid:
+  FULL_EXIT bars  → rata-rata future P&L ≈ 0 atau negatif setelah exit bar
+  HOLD bars       → future P&L masih positif (worth holding)
+  PARTIAL bars    → future P&L positif tapi declining
+
+Kalau HOLD ≈ FULL_EXIT dalam actual P&L → label generation logic bermasalah
+```
+
+---
+
+### Urutan Eksekusi
+
+```
+1. python pipeline/06b_ic_test_guardian.py --run-id guardian_ic_v1
+   → Cek: apakah dynamic features punya IC > 0.02?
+   → Jika ya → lanjut ke step 2
+   → Jika tidak → investigasi label generation dulu (Phase 3)
+
+2. Edit pipeline/06_train_guardian.py — terapkan Fix 1, 2, 3
+
+3. python pipeline/06_train_guardian.py --run-id guardian_v3_clean
+
+4. Cek log: Dynamic feature importance share > 40%?
+   → Jika tidak → Guardian masih memorize entry signal, bukan exit signal
+```
