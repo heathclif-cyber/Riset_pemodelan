@@ -1,0 +1,36 @@
+{
+  "run_id": "lstm_momentum_v3",
+  "model_type": "lstm_momentum_v3",
+  "label_type": "momentum_flow_v2",
+  "n_features": 16,
+  "features": [
+    "log_ret_1",
+    "log_ret_5",
+    "log_ret_20",
+    "rsi_6",
+    "rsi_h4",
+    "h4_trend",
+    "trend_strength",
+    "ema_21_slope_h4",
+    "ema_50_slope_h4",
+    "price_vs_ema_50_h4",
+    "cvd",
+    "cvd_momentum_adv",
+    "volume_delta",
+    "Buy_Liq",
+    "Sell_Liq",
+    "whale_retail_divergence"
+  ],
+  "percoin_z_features": [
+    "Buy_Liq",
+    "Sell_Liq",
+    "cvd",
+    "volume_delta"
+  ],
+  "seq_len": 16,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "cv_folds": 8,
+  "note": "V3: 16 IC-validated features. Replace 4 weak V2 features + add strong H4/flow features. Target F1 > 0.44."
+}

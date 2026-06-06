@@ -383,11 +383,8 @@ def backtest_holdout_symbol(
         if guardian_feat_path.exists():
             with open(guardian_feat_path) as f:
                 g_feat_cols = json.load(f)
-            g_static = [c for c in g_feat_cols if c not in [
-                "bars_held_norm", "current_pnl_pct", "current_pnl_atr",
-                "max_favorable_pnl_pct", "drawdown_from_peak_pct",
-                "direction", "entry_price_ratio",
-            ]]
+            from config import GUARDIAN_DYNAMIC_FEATURES as _GDYN
+            g_static = [c for c in g_feat_cols if c not in set(_GDYN)]
             X_guardian = compute_guardian_static_array(df, g_static)
 
     report = full_trading_report(

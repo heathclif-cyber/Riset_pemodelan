@@ -226,7 +226,7 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
     report["output"]         = str(out_path)
     report["output_rows"]    = len(master)
     report["output_columns"] = len(master.columns)
-    logger.info(f"[{symbol}] Saved → {out_path} ({len(master):,} rows × {len(master.columns)} cols)")
+    logger.info(f"[{symbol}] Saved -> {out_path} ({len(master):,} rows × {len(master.columns)} cols)")
 
     return report
 
@@ -268,7 +268,7 @@ def main():
     report_path = REPORT_DIR / "cleaning_report.json"
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(full_report, f, indent=2, default=str)
-    logger.info(f"Report saved → {report_path}")
+    logger.info(f"Report saved -> {report_path}")
 
 
 if __name__ == "__main__":

@@ -44,7 +44,10 @@ DEPLOY_MAPPING = {
     "core/models.py": "core/models.py",
     "core/utils.py": "core/utils.py",
     "core/regime.py": "core/regime.py",
-    "core/cascade_utils.py": "core/cascade_utils.py"
+    "core/cascade_utils.py": "core/cascade_utils.py",
+
+    # 5. Positioning Data Mining (momentum model Phase 4)
+    "pipeline/01c_fetch_positioning.py": "pipeline/01c_fetch_positioning.py"
 }
 # =======================================================
 

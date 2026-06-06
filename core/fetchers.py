@@ -321,7 +321,7 @@ def fetch_btc_dominance(
     if df is not None:
         filepath = get_filepath("macro_btc_dom", "")
         if save_df(df, filepath, logger):
-            logger.info(f"BTC Dominance disimpan: {len(df)} hari → {filepath}")
+            logger.info(f"BTC Dominance disimpan: {len(df)} hari -> {filepath}")
             if progress is not None:
                 mark_done(progress, key)
         return df
@@ -380,7 +380,7 @@ def fetch_fear_greed(
 
         filepath = get_filepath("macro_fear_greed", "")
         if save_df(df, filepath, logger):
-            logger.info(f"Fear & Greed disimpan: {len(df)} hari → {filepath}")
+            logger.info(f"Fear & Greed disimpan: {len(df)} hari -> {filepath}")
             if progress is not None:
                 mark_done(progress, key)
         return df

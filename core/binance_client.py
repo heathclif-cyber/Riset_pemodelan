@@ -223,7 +223,7 @@ class BinanceClient:
                     actual_params = dict(params)  # Copy agar tidak mengubah params asli
                     actual_params["symbol"] = spot_symbol
                     if endpoint_name not in _1000_mapping_logged:
-                        logger.info(f"  ↳ Mapping {symbol} → {spot_symbol} untuk {endpoint_name}")
+                        logger.info(f"  -> Mapping {symbol} -> {spot_symbol} untuk {endpoint_name}")
                         _1000_mapping_logged.add(endpoint_name)
                 # ───────────────────────────────────────────────────────────
                 

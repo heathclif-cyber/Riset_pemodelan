@@ -1,0 +1,129 @@
+{
+  "run_id": "ic32_regime_v1",
+  "n_bars": 156149,
+  "n_eff": 6506,
+  "exit_better_rate": 0.4562309076587106,
+  "dynamic": [
+    {
+      "feature": "bars_held_norm",
+      "type": "dynamic",
+      "ic": 0.2968,
+      "tstat": 25.07,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "current_pnl_pct",
+      "type": "dynamic",
+      "ic": -0.2817,
+      "tstat": -23.68,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "current_pnl_atr",
+      "type": "dynamic",
+      "ic": -0.3144,
+      "tstat": -26.72,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "type": "dynamic",
+      "ic": 0.0249,
+      "tstat": 2.01,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "drawdown_from_peak_pct",
+      "type": "dynamic",
+      "ic": 0.3329,
+      "tstat": 28.47,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "direction",
+      "type": "dynamic",
+      "ic": 0.0242,
+      "tstat": 1.96,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "entry_price_ratio",
+      "type": "dynamic",
+      "ic": 0.03,
+      "tstat": 2.42,
+      "verdict": "KEEP"
+    }
+  ],
+  "static_top10": [
+    {
+      "feature": "Sell_Liq",
+      "type": "static",
+      "ic": -0.0288,
+      "tstat": -2.32,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "type": "static",
+      "ic": 0.0233,
+      "tstat": 1.88,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "type": "static",
+      "ic": -0.0226,
+      "tstat": -1.83,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "trend_accel_4h",
+      "type": "static",
+      "ic": 0.0174,
+      "tstat": 1.41,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "Buy_Liq",
+      "type": "static",
+      "ic": -0.0167,
+      "tstat": -1.35,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "log_ret_20",
+      "type": "static",
+      "ic": 0.0153,
+      "tstat": 1.24,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "type": "static",
+      "ic": 0.0153,
+      "tstat": 1.24,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "type": "static",
+      "ic": 0.0144,
+      "tstat": 1.16,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "rsi_h4",
+      "type": "static",
+      "ic": 0.0142,
+      "tstat": 1.15,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "cvd",
+      "type": "static",
+      "ic": 0.0118,
+      "tstat": 0.95,
+      "verdict": "WEAK"
+    }
+  ]
+}

@@ -10,6 +10,7 @@ Jalankan:
 
 import argparse
 import json
+import multiprocessing
 import sys
 import traceback
 from pathlib import Path
@@ -180,14 +181,24 @@ def main():
     LABEL_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
-    full_report = {"symbols": {}}
-    for symbol in coins:
-        full_report["symbols"][symbol] = engineer_symbol(symbol)
+    # Parallelisasi — tiap koin independen (baca/tulis file terpisah)
+    # n_workers: sisakan 1 CPU untuk sistem, maksimal sejumlah koin
+    n_workers = max(1, min(len(coins), multiprocessing.cpu_count() - 1))
+    logger.info(f"Processing {len(coins)} coins | workers={n_workers} | cpu_count={multiprocessing.cpu_count()}")
 
+    if n_workers <= 1:
+        results = [engineer_symbol(s) for s in coins]
+    else:
+        # spawn context untuk kompatibilitas Windows
+        ctx = multiprocessing.get_context("spawn")
+        with ctx.Pool(processes=n_workers) as pool:
+            results = pool.map(engineer_symbol, coins)
+
+    full_report = {"symbols": {s: r for s, r in zip(coins, results)}}
     report_path = REPORT_DIR / "engineering_v3_report.json"
     with open(report_path, "w", encoding="utf-8") as f:
         json.dump(full_report, f, indent=2, default=str)
-    logger.info(f"Report saved → {report_path}")
+    logger.info(f"Report saved -> {report_path}")
 
 
 if __name__ == "__main__":

@@ -144,7 +144,9 @@
       "Bash(git ls-tree *)",
       "Bash(.venv/Scripts/python.exe *)",
       "PowerShell(.venv/Scripts/python.exe -c \"import py_compile; py_compile.compile\\('core/evaluator.py', doraise=True\\); print\\('OK'\\)\")",
-      "PowerShell(python _test_metrics.py)"
+      "PowerShell(python _test_metrics.py)",
+      "Bash(.venv/Scripts/python.exe pipeline/07_holdout_backtest.py --all --run-id ic32_lstm_multi_v1 --skip-fetch --skip-clean --skip-engineer)",
+      "Bash(git stash *)"
     ]
   }
 }

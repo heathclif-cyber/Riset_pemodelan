@@ -762,12 +762,16 @@ Simons berhasil karena seluruh organisasinya dibangun untuk mencegah hal itu. Se
 
 ## Roadmap IC Test per Model
 
-| Model | Status | Fitur | Next Step |
-|-------|--------|-------|-----------|
-| LSTM | ✅ Selesai | 12 → 5 KEEP | IC Decay test lintas 6 window |
-| LGBM | 🔲 Belum | 104 fitur | `03b_ic_test.py --model lgbm` |
-| Guardian v3 | 🔲 Belum | 104+7 fitur | `03b_ic_test.py --model guardian` |
-| GRU (rencana) | 🔲 Tunggu IC signal | 6 fitur D1 | Ukur IC(etf_flow/OI, fwd_return) dulu |
+| Model | Status | Fitur | Hasil |
+|-------|--------|-------|-------|
+| LGBM | ✅ Selesai | 107 → 32 KEEP | ic32_regime_v1 (33 feat + hmm) |
+| IC Decay (LGBM) | ✅ Selesai | 25 KEEP → 25 STABLE | Semua 6/6 windows stable |
+| Temporal IC (LGBM) | ✅ Selesai | 7 STRONG, 7 MODERATE | Half-life ≥ 4 bar = STRONG |
+| HMM Regime | ✅ Selesai | 4-state walk-forward OOF | IC=0.021, t=3.83 → KEEP |
+| LSTM | ✅ Selesai | 7 STRONG temporal feat | ic32_lstm_multi_v1 |
+| Guardian IC Test | ✅ Selesai | 7 dynamic + 28 static | Dynamic IC hingga 0.333 |
+| Logistic Baseline | ✅ Selesai | 32 KEEP feat | F1=0.347 > random 0.333 |
+| GRU (rencana) | ❌ Ditinggalkan | — | HMM lebih parsimonious, sudah cukup |
 
 ---
 
@@ -796,9 +800,95 @@ Output: `reports/experiments/ic_test_{model}_{run_id}.md` dan `.json`
 
 ---
 
+## Hasil Eksekusi 2026-06-05
+
+*Semua langkah di bawah sudah selesai dieksekusi.*
+
+### IC Test LGBM (107 fitur)
+
+Effective N = N/24 (koreksi autocorrelation H1).
+
+| Verdict | Count |
+|---------|-------|
+| KEEP | 25 |
+| REDUNDANT | 23 (IC valid, tapi linear terhadap KEEP via Gram-Schmidt) |
+| WEAK | 10 (IC ≥ 0.02, tapi t < 2.0) |
+| DROP | 49 |
+
+Dipilih: **32 KEEP** (opsi tanpa REDUNDANT, lebih ketat) + `hmm_regime_enc` = 33 fitur total.
+
+### IC Decay Test (6 window temporal, 2020-2025)
+
+Semua 25 KEEP features **stable 6/6 windows** (IC_IR ≥ 0.5, sign_cons ≥ 5/6).
+Tidak ada fitur yang perlu di-drop setelah decay check.
+
+### Temporal IC Decay (Half-Life)
+
+| Kategori | Contoh Fitur | Half-Life |
+|----------|-------------|-----------|
+| STRONG | dist_liq_20x_long, rsi_slope_h4, log_ret_20, cvd_slope_h4 | ≥ 4 bar |
+| MODERATE | stochrsi_k, rsi_6, rsi_h4, Buy_Liq | 2–4 bar |
+
+LSTM diretrain dengan **7 STRONG features** saja → `models/feature_cols_lstm_temporal.json`.
+
+### HMM Regime
+
+4-state GaussianHMM walk-forward OOF (HMM_N_FOLDS=8, HMM_N_STATES=4).
+- `hmm_regime_enc` IC = +0.021, t = 3.83 → KEEP
+- Regime parquet `{coin}_regime_h1.parquet` dibuat untuk 21 training + holdout coins.
+
+### Logistic Regression Baseline (Simon Step 4)
+
+F1 = 0.347 vs random baseline 0.333 → ada non-linear signal.
+LGBM gain vs LogReg: +0.243 F1 → non-linear model justified.
+
+### Guardian IC Test
+
+| Kelompok | N KEEP | IC Range |
+|----------|--------|----------|
+| Dynamic features (7) | 6/7 | 0.021 – 0.333 |
+| Static features (28) | 24/28 | 0.020 – 0.090 |
+| Delta features (5) | 5/5 | 0.028 – 0.087 |
+
+Temuan: **dynamic features jauh lebih penting dari static** untuk exit decision.
+Static tetap dipertahankan karena semua feature importance > 0 (non-linear combinations).
+
+### Model Final
+
+| Komponen | Model ID | N Fitur |
+|----------|----------|---------|
+| LGBM | ic32_regime_v1 | 33 |
+| LSTM | ic32_lstm_multi_v1 | 7 STRONG |
+| Guardian | ic32_guardian_clean_v2 | 40 (33 static + 7 dynamic) |
+
+Guardian clean_v2: WR=67.5%, PnL=$2,089 → lebih baik dari ext_v1 (WR=67.5%, PnL=$1,852).
+
+### Apa yang TIDAK Berhasil
+
+**Triple Barrier** → ditinggalkan.
+Swing labels 95% correlated dengan TB labels. Features dioptimasi untuk swing outcomes.
+Hybrid labeling → bimodal FLAT (15% atau 80%). F1 LGBM dengan TB labels ≈ random.
+
+**Meta-labeling** → gagal OOS (in-sample bias).
+AUC=0.63 tapi WR improvement OOS hanya +1.4pp. Root cause: meta-labels dari training
+simulation → target leak ke meta-model. Butuh walk-forward OOF (setelah 1,000+ live trades).
+
+### Langkah Selanjutnya (Belum Dikerjakan)
+
+| Langkah | Prioritas | Kapan |
+|---------|-----------|-------|
+| Deploy ic32 ke production + paper trading | HIGH | Segera |
+| HMM sebagai Controller (threshold berbeda per regime) | HIGH | 1-2 bulan |
+| Kelly Criterion position sizing | HIGH | Minggu ini |
+| IC decay monitoring quarterly | MEDIUM | Setiap 4 minggu |
+| Meta-labeling walk-forward OOF | LOW | Setelah 1,000+ live trades |
+| Survival Analysis untuk Guardian | LOW | Research, belum urgent |
+
+---
+
 ## Rencana Eksekusi: IC Test & Training Guardian
 
-*Disusun 2026-06-05 | Status: belum dieksekusi*
+*Disusun 2026-06-05 | Status: ✅ SELESAI — lihat "Hasil Eksekusi" di atas*
 
 ### Masalah yang Ditemukan di Kode Saat Ini (`06_train_guardian.py`)
 

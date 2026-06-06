@@ -1,5 +1,675 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+## 2026-06-07 — Deploy Final + Positioning Data Mining + LSTM V3 Complete
+
+### Latar Belakang
+
+Deploy konfigurasi final ke production (swint_tradev2), menyelesaikan LSTM V3,
+dan memulai pengumpulan positioning data untuk momentum model Phase 4.
+
+### A. LSTM Momentum V3 — Final Results
+
+Training 5 koin, 16 IC-validated features, 8-fold purged CV.
+
+| Fold | Train F1 | Val F1 | BEARISH | NEUTRAL | BULLISH |
+|------|----------|--------|---------|---------|---------|
+| 1 | 0.442 | 0.408 | 0.407 | 0.303 | 0.516 |
+| 2 | 0.420 | 0.408 | 0.475 | 0.283 | 0.466 |
+| 3 | 0.431 | 0.407 | 0.418 | 0.285 | 0.518 |
+| 4 | 0.421 | 0.411 | 0.456 | 0.246 | 0.531 |
+| 5 | 0.498 | 0.402 | 0.482 | 0.266 | 0.456 |
+| 6 | 0.433 | 0.408 | 0.478 | 0.242 | 0.505 |
+| 7 | 0.443 | **0.418** | 0.500 | 0.277 | 0.478 |
+| 8 | 0.436 | 0.396 | 0.463 | 0.223 | 0.501 |
+| **Mean** | **0.441** | **0.407** | 0.460 | 0.266 | 0.496 |
+
+**Kesimpulan: PLATEAU.**
+- Mean Val F1 0.407 — tidak ada improvement vs V2 (0.415)
+- NEUTRAL class konsisten lemah (F1 ~0.22-0.30)
+- OHLCV telah mencapai ceiling informasi untuk prediksi momentum
+- Solusi: positioning data collection dimulai
+
+**Model**: `models/runs/lstm_momentum_v3/lstm_momentum_v3.pt`
+
+### B. Positioning Data Mining — Phase 4 Start
+
+**Script**: `pipeline/01c_fetch_positioning.py`
+**Schedule**: Windows Task Scheduler hourly
+**Endpoints (4)**:
+
+| Endpoint | Data | Source |
+|----------|------|--------|
+| `/takerlongshortRatio` | Aggressor buy/sell flow | Binance |
+| `/topLongShortPositionRatio` | Elite trader positioning | Binance |
+| `/globalLongShortAccountRatio` | Retail long/short ratio | Binance |
+| `/open-interest` | Total market exposure | Bybit |
+
+**Initial fetch**: 83 files, 21 koin, 200 bar/endpoint
+**Target**: 4,000+ bar dalam 6 bulan (Desember 2026) untuk training momentum model
+**Task Scheduler**: `FetchPositioningData` — setiap jam
+
+### C. Deploy ke Production
+
+**Deploy script**: `tools/deploy_model.py` — 15 file disalin ke swint_tradev2:
+- Models: LGBM (33 feat), LSTM (11 feat), Guardian (40 feat) + scalers
+- Config: inference_config.json, feature_cols_v2.json, guardian_feature_cols.json
+- Core: features.py, models.py, utils.py, regime.py, cascade_utils.py
+- Pipeline: 01c_fetch_positioning.py
+
+**Verifikasi**: verify_deploy.py — semua model load OK
+**Backup**: `models/backups/backup_20260607_003746/`
+
+### D. Config Live Final
+
+```json
+{
+  "model_version": "ic32_regime_v1",
+  "n_features": 33,
+  "cascade": {
+    "mode": "hard_consensus",
+    "lstm_confirmation_enabled": true,
+    "lstm_flat_review_enabled": true,
+    "lgbm_threshold_long": 0.69,
+    "lgbm_threshold_short": 0.59
+  },
+  "regime_alignment": {
+    "enabled": true,
+    "note": "FLIP: RANGING=counter-trend, TRENDING=with-trend"
+  },
+  "guardian": { "min_hold_bars": 2, "exit_threshold": 0.65 },
+  "risk": { "modal_per_trade": 10, "leverage_recommended": 5 },
+  "data_mining": { "enabled": true, "schedule": "hourly" }
+}
+```
+
+### E. Update 01c_fetch_positioning.py
+
+Tambahan endpoint ke-4: `/globalLongShortAccountRatio` → retails positioning.
+Sebelumnya 3 endpoint saja. Sekarang 4 endpoint — aggregator flow (taker), elite (top),
+retail (global), dan total exposure (OI).
+
+### F. Roadmap
+
+| Fase | Item | Timeline |
+|------|------|----------|
+| ✅ | Deploy final + FLIP alignment | 2026-06-07 |
+| ✅ | Positioning data mining start | 2026-06-07 |
+| 🔲 | Accrue 4,000+ bar positioning data | Desember 2026 |
+| 🔲 | IC38 momentum retrain with positioning features | Januari 2027 |
+| 🔲 | Dual-model ensemble (swing + momentum) deploy | 2027 |
+
+---
+
+
+### Latar Belakang
+
+Sesi besar: validasi konfigurasi cascade, retrain Guardian clean v2, training LSTM
+momentum v2 (flow-based labels), implementasi HMM Controller, dan leak audit.
+
+Semua model dideploy dari run directories ke `models/`:
+- LGBM: `ic32_regime_v1` (33 fitur, dari `models/runs/ic32_regime_v1/`)
+- LSTM: `ic32_lstm_multi_v1` (15 fitur, dari `models/runs/ic32_lstm_multi_v1/`)
+- Guardian: `ic32_guardian_clean_v2` (40 fitur, dari `models/runs/ic32_guardian_clean_v2/`)
+
+---
+
+### A. Cascade Sweep — Hasil Final
+
+**Phase 1**: 5 koin, 56 konfigurasi (4 mode × threshold sweeps)
+**Phase 2**: 21 koin, 3 konfigurasi terbaik
+
+#### Scorecard Final (21 Koin, Holdout Bersih, Guardian min_hold=2)
+
+| Config | Trades | WR% | LONG WR% | SHORT WR% | PnL | PF | SL% | GxWR% |
+|--------|--------|-----|----------|-----------|-----|-----|------|-------|
+| **LSTM=OFF + trend=OFF** | 3,976 | 63.5 | 62.0 | 64.0 | **$2,523** | 1.98 | 18.0 | 75.2 |
+| LSTM=OFF + trend=ON | 2,434 | **67.5** | **67.6** | **67.4** | $2,120 | **2.54** | 17.3 | **79.6** |
+| LSTM=ON (old ic32) + trend=OFF | 5,061 | 60.5 | 53.8 | 64.5 | $2,670 | 1.77 | 22.1 | 75.5 |
+| LSTM=ON (old ic32) + trend=ON | 3,690 | 63.3 | 57.6 | 66.4 | $2,528 | 2.09 | 21.2 | 78.3 |
+
+> **Catatan**: LSTM=ON di atas pakai LSTM lama (87 fitur) yang salah deploy.
+> Setelah deploy LSTM 15 fitur yang benar, LSTM malah kurangin trades drastis
+> (LONG dari 24% → 3.6%). Lihat Section C untuk detail.
+
+#### Kesimpulan Cascade
+
+1. **V2.5 Hybrid (hard_consensus + h4_trend) = konfigurasi terbaik**.
+   WR 67.5%, PF 2.54, LONG=SHORT WR seimbang (67.6%/67.4%).
+
+2. **Trend alignment (h4_trend) TERBUKTI**: +4pp WR, -70pp DD vs tanpa trend.
+
+3. **Dua pilihan deploy**:
+   - **Max PnL**: LSTM=OFF, trend=OFF → $2,523, WR 63.5%, vol 3,976 trades
+   - **Max WR/PF**: LSTM=OFF, trend=ON → $2,120, WR 67.5%, PF 2.54
+
+4. **LSTM (15 feat) tidak menambah value di cascade hard_consensus**.
+   Saat LSTM=ON, trade turun drastis karena LSTM 3-class juga dominan FLAT —
+   masalah yang sama dengan LGBM.
+
+5. **SHORT threshold dominan**: ubah 0.55→0.59 pangkas 334 trade, naik WR +5.2pp.
+   LONG threshold hampir tidak berpengaruh (0.65→0.69 cuma pangkas 6 trade).
+
+6. **dual_dominant terlalu selektif** (81 trade/5 koin/5 bulan). Tidak viable.
+
+---
+
+### B. Guardian Clean V2 — Retrain & Min Hold Sweep
+
+Guardian di disk sebelumnya ext_v1 (46 feat) — diganti dengan clean_v2 (40 feat).
+
+#### Training Clean V2
+- 156,149 samples dari 21 koin training
+- 33 static (feature_cols_v2.json) + 7 dynamic (no delta)
+- CV logloss 0.333-0.356, F1 macro 0.819-0.847
+- Dynamic importance share: 27.6% (sehat — Guardian genuine belajar)
+- Top features: current_pnl_atr, max_favorable_pnl_pct, drawdown_from_peak_pct
+
+#### Min Hold Sweep (21 Koin)
+
+| Min Hold | WR% | PnL | PF | SL% | GxWR% |
+|----------|-----|-----|-----|------|-------|
+| 0 | 63.1 | $1,341 | 1.93 | 18.8 | 74.7 |
+| 2 | 63.0 | $1,440 | 2.00 | 19.2 | 75.0 |
+| 6 | 63.1 | $1,643 | 2.07 | 22.2 | 79.3 |
+| 8 | 62.6 | $1,718 | 2.06 | 23.6 | 80.4 |
+| **OFF** | **64.9** | **$2,148** | **2.17** | 29.6 | — |
+
+**Guardian tidak mengalahkan static TP/SL.** Semakin tinggi min_hold, PnL Guardian
+naik (karena exit tidak prematur) — tapi tidak pernah mencapai level Guardian OFF.
+Guardian exit prematur memotong winner sebelum capai TP.
+
+**Rekomendasi**: Guardian OFF untuk maximize PnL. Guardian clean_v2 dengan min_hold=2
+kalau prioritas SL reduction (18.8% → 19.2% vs 29.6% tanpa Guardian).
+
+---
+
+### C. LSTM Momentum V2 — Flow-Based Labels
+
+#### Deskripsi
+LSTM baru memprediksi **momentum flow** (OFI, CVD, volume), BUKAN swing structure.
+Ini pendekatan yang benar secara teori Simons — LSTM harus menjawab pertanyaan BERBEDA
+dari LGBM agar ensemble punya diversifikasi.
+
+#### Label Generation (`05a_momentum_labels_v2.py`)
+- 4 vote signals: OFI z-score, CVD momentum, volume delta (per-coin z), price return
+- Need ≥ 2/4 votes untuk BULLISH atau BEARISH, else NEUTRAL
+- Distribusi: BULL 34%, NEU 33%, BEAR 33% — jauh lebih balanced dari swing (80% FLAT)
+
+#### Training Results
+| Koin | Val F1 | Gap | Gain vs Random |
+|------|--------|-----|----------------|
+| 5 koin | 0.4101 ± 0.006 | +0.025 | **+0.077** |
+| **21 koin** | **0.4149 ± 0.006** | **+0.019** | **+0.082** |
+
+Bandingkan: LSTM lama (swing labels) F1 = 0.334 (random). Momentum V2 F1 = 0.415
+(**+23% di atas random**). Model genuine belajar pola flow momentum.
+
+#### Kenapa Ensemble Tidak Menambah PnL
+
+Meski F1 bagus, LSTM momentum v2 tidak meningkatkan PnL saat diintegrasikan ke cascade:
+
+| Config | Trades | WR% | PnL | vs LSTM=OFF |
+|--------|--------|-----|-----|-------------|
+| LSTM=OFF trend=OFF | 3,976 | 63.5 | **$2,523** | baseline |
+| LSTM=ON trend=OFF | 2,249 | 61.9 | $1,392 | **-$1,131** |
+| LSTM=OFF trend=ON | 2,434 | **67.5** | $2,120 | baseline |
+| LSTM=ON trend=ON | 1,722 | 64.4 | $1,315 | **-$805** |
+
+**Akar masalah**: Cascade pakai hard_consensus gate (agree/disagree). LSTM momentum v2
+prediksi flow, LGBM prediksi structure. Saat flow BEARISH tapi structure LONG, cascade
+beri penalty -0.65 dan bunuh trade. Padahal ini informasi komplementer, bukan kontradiksi.
+
+**Test soft modulator**: Ubah opposite penalty dari 0.65 → 0.03-0.15.
+- Soft opp=0.03: PnL naik dari $304 ke $538 (trend=ON), lebih baik dari hard gate
+- Tapi tetap tidak mengalahkan LSTM=OFF ($549)
+- LSTM masih correlated dengan LGBM karena pakai 3-class + price return sebagai vote
+
+**Yang perlu diperbaiki untuk true ensemble**:
+1. Binary label (momentum ada/tidak), bukan 3-class
+2. Hapus price return dari vote signals (price return = swing label mini)
+3. LSTM sebagai confidence modulator, bukan direction gate
+4. Marginal IC test: IC(LSTM_momentum | LGBM) harus > 0
+
+---
+
+### D. HMM Controller — Implementasi & Hasil
+
+HMM sebelumnya hanya fitur LGBM (kolom ke-33). Diimplementasikan sebagai controller
+di `backtest_utils.py` (`hmm_controller_enabled`).
+
+#### Perbandingan
+
+| Config | Trades | WR% | PnL | PF |
+|--------|--------|-----|-----|-----|
+| BASELINE (no filter) | 3,976 | 63.5 | **$2,523** | 1.98 |
+| HMM (soft) | 3,030 | 64.7 | $2,057 | 2.11 |
+| **Legacy h4_trend** | 2,434 | **67.5** | $2,120 | **2.54** |
+
+**HMM kalah dari h4_trend.** Alasannya: HMM pakai base candle **H4** — sinyal
+berubah setiap 4 jam. h4_trend pakai H1 — sinyal berubah setiap jam. Untuk
+per-bar entry gating, sinyal cepat lebih informatif.
+
+**HMM lebih cocok untuk**: position sizing per regime, model weight switching.
+Tapi untuk per-bar confidence adjustment, h4_trend tetap superior.
+
+---
+
+### E. Leak Audit — BERSIH
+
+| Cek | Hasil |
+|-----|-------|
+| Holdout timestamps vs cutoff | ✅ Semua ≥ 2025-11-01 |
+| Training timestamps vs cutoff | ✅ Semua ≤ 2025-10-31 |
+| Train/holdout overlap | ✅ 0 bar overlap |
+| Feature look-ahead | ✅ Tidak ada suspicious |
+| HMM boundary transition | ✅ Natural jump (regime 0→1) |
+| HMM distribution train vs holdout | ✅ Berbeda signifikan (OOF, bukan global fit) |
+| HMM feature importance | ✅ Rendah (582, rank jauh di bawah top) |
+
+---
+
+### F. State Final — Models di Disk
+
+| File | Model | Fitur | Status |
+|------|-------|-------|--------|
+| `lgbm_baseline.pkl` | ic32_regime_v1 | 33 (32 KEEP + HMM) | ✅ Active |
+| `lstm_best.pt` | ic32_lstm_momentum_v2_full | 11 flow feat | ✅ Active (F1=0.415) |
+| `lstm_scaler.pkl` | RobustScaler | 11 | ✅ Active |
+| `feature_cols_lstm_temporal.json` | — | 11 feat list | ✅ Active |
+| `guardian_best.pkl` | ic32_guardian_clean_v2 | 40 (33+7) | ✅ Active (from run) |
+| `guardian_scaler.pkl` | StandardScaler | 40 | ✅ Active |
+| `guardian_feature_cols.json` | — | 40 feat list | ✅ Active |
+| `feature_cols_v2.json` | — | 33 feat list | ✅ Active |
+
+Config update: `GUARDIAN_DYNAMIC_FEATURES` = 7 only (no delta), `GUARDIAN_DELTA_MAP` = {}.
+
+---
+
+### G. Rekomendasi — Apa yang Bagus & Next Steps
+
+#### Yang Sudah Bagus (Bisa Deploy Sekarang)
+
+1. **LGBM ic32_regime_v1** — IC-validated, HMM sebagai fitur, WR 63-68% di holdout
+2. **h4_trend alignment** — +4pp WR, signal H1 yang cepat dan informatif
+3. **Guardian clean_v2** — kalau mau SL reduction, pakai min_hold=2
+4. **Feature pipeline** — IC test + decay + temporal IC sudah standar Simons
+5. **HMM sebagai fitur** — sudah contribute +5% PnL vs tanpa HMM
+
+#### Yang Perlu Dikerjakan (Priority Order)
+
+| # | Item | Priority | Note |
+|---|------|----------|------|
+| 1 | **Deploy ke production** | HIGH | Konfigurasi final sudah valid |
+| 2 | **Binary LGBM** (LONG vs SHORT) | HIGH | Perbaiki LONG 3.6% → 30%+ |
+| 3 | **LSTM sebagai soft modulator** | MEDIUM | Perlu binary labels dulu |
+| 4 | **HMM position sizing** | MEDIUM | Size 50-100% berdasarkan regime |
+| 5 | **LSTM framework ideal** | LOW | Binary, pure flow, tanpa price vote |
+| 6 | **Kelly Criterion** | LOW | Position sizing formula |
+
+#### Konfigurasi Deploy Final
+
+```python
+# Entry
+LGBM: ic32_regime_v1 (33 feat)
+LSTM: OFF (untuk sekarang)
+Cascade: hard_consensus, trend_alignment=ON
+Threshold: LONG=0.69, SHORT=0.59, confidence=0.59
+
+# Exit
+Guardian: clean_v2, min_hold=2 (atau OFF untuk max PnL)
+MODAL_PER_TRADE: $10 (ubah dari $25)
+
+# Expected Live Metrics (dari holdout)
+WR: 63-67% | PnL/bulan: ~$170 (dengan $10/trade, 5x)
+SL rate: 17-18% (dengan Guardian) atau 30% (tanpa Guardian)
+```
+
+---
+
+### H. Phase 1 Extended — HMM Probabilities (4 Probs vs Argmax)
+
+**Tujuan**: Ganti 1 kolom argmax (`hmm_regime_enc`) dengan 4 kolom probabilitas
+HMM state, sesuai rekomendasi Renaissance.
+
+**Implementasi**:
+- Script: `pipeline/03e_hmm_probs.py` — generate 4 posterior probabilities per bar
+- Walk-forward OOF, 8 folds, H4 base candle
+- Training + holdout: `{coin}_hmm_probs.parquet`
+
+**IC Test (10 coins, holdout)**:
+
+| Feature | IC | Sign Consistency |
+|---------|-----|------------------|
+| `hmm_regime_enc` (argmax) | **-0.0742** | — |
+| `hmm_prob_2` (RANGING_HIGH_VOL) | +0.0333 | 80% |
+| `hmm_prob_3` (TRENDING_UP) | +0.0252 | 60% |
+| `hmm_prob_0` (TRENDING_DOWN) | +0.0213 | 70% |
+| `hmm_prob_1` (RANGING_LOW_VOL) | +0.0116 | 80% |
+
+**Retrain LGBM dengan 4 probs (Version B, 36 feat)**:
+- `hmm_prob_3` masuk **#19 feature importance (1963)** — dari #33 (582) dengan argmax
+- Pertama kalinya HMM masuk top 20!
+
+**Head-to-Head Backtest (5 koin)**:
+
+| Config | Trades | WR% | PnL |
+|--------|--------|-----|-----|
+| V-A: argmax (33 feat) trend=OFF | 971 | 65.5 | **$233** |
+| V-B: 4 probs (36 feat) trend=OFF | 520 | 66.2 | $133 (-43%) |
+| V-A: argmax trend=ON | 579 | **72.9** | **$220** |
+| V-B: 4 probs trend=ON | 382 | 69.1 | $122 (-45%) |
+
+**Kesimpulan**: 4 probs naikkan feature importance (1963 vs 582) tapi PnL half dari argmax.
+4 probs saling berkorelasi (sum to 1) → redundancy → model lebih konservatif → lebih sedikit trade.
+HMM argmax (`hmm_regime_enc`) tetap superior sebagai integrasi terbaik.
+
+**Status**: ✅ Phase 1 complete. Argmax dipertahankan. Probs tidak diadopsi.
+
+---
+
+### I. Phase 2 Prototype — LSTM Binary Meta-Labeling
+
+**Tujuan**: LSTM prediksi OUTCOME trade (profit/loss), bukan arah flow.
+Simons §Meta-Labeling: "Model Primer prediksi arah, Model Sekunder prediksi apakah
+model primer benar."
+
+**Arsitektur**:
+```
+Input : 40 bar sequence × 19 features sebelum entry bar
+Model : LSTM 96 hidden + Attention + Dropout 0.40
+Output: P(good_trade) — binary sigmoid
+Label : walk-forward OOF (hindari in-sample bias)
+```
+
+**Scripts**:
+- `pipeline/08_generate_meta_labels_v2.py` — walk-forward meta-label generation
+- `pipeline/09_train_lstm_meta.py` — LSTM binary training dengan purged CV
+
+**Meta-Label Generation**:
+- 11,453 trades dari 5 koin, 8-fold walk-forward OOF
+- Label: is_good_trade = 1 jika net_pnl > median profit
+
+**Training Results (AUC)**:
+
+| Fold | AUC |
+|------|-----|
+| 1 | 0.569 |
+| 2 | 0.551 |
+| 3 | 0.566 |
+| 4 | 0.577 |
+| 5 | 0.535 |
+| 6 | **0.623** |
+| 7 | **0.612** |
+| 8 | 0.609 |
+| **Mean** | **0.580 ± 0.029** |
+
+**AUC 0.58 > 0.50 (random)** — pertama kalinya LSTM genuine prediksi trade quality!
+Semua fold di atas baseline, signal konsisten.
+
+**Ensemble Backtest (5 koin)**:
+
+| Config | Trades | WR% | PnL |
+|--------|--------|-----|-----|
+| BASELINE trend=OFF | 971 | 65.5 | **$233** |
+| META s=0.5 trend=OFF | 710 | **68.7** | $213 |
+| BASELINE trend=ON | 579 | **72.9** | **$220** |
+| META s=0.5 trend=ON | 527 | 73.1 | $205 |
+
+Meta-model naikkan WR +3.2pp (65.5 → 68.7) — genuine filtering signal.
+PnL masih di bawah baseline (-$20) — pola selectivity vs volume yang sama dengan Guardian.
+
+**Kesimpulan**: Konsep TERBUKTI. LSTM binary meta-labeling bisa prediksi trade quality
+(AUC 0.58, prototipe 5 koin, 11k trades). Butuh 150+ live trades + 21 koin untuk
+production training.
+
+**Status**: ✅ Prototype proven. 🔲 Production training after live data.
+
+---
+
+### J. HMM Meta-Controller — Regime-Aware Risk Management
+
+**Tujuan**: HMM bukan sebagai fitur atau ensemble member, tapi sebagai **meta-controller**
+yang mengatur perilaku sistem berdasarkan regime pasar.
+
+**Tiga peran HMM**:
+
+| Peran | Implementasi | Hasil |
+|-------|-------------|-------|
+| **Fitur LGBM** | `hmm_regime_enc` (kolom ke-33) | ✅ Deployed, IC=-0.074 |
+| **Meta-Controller** | Block counter-trend di TRENDING | ✅ Kode siap (`hmm_controller_enabled`) |
+| **Ensemble member** | Soft-vote LGBM + HMM | ❌ Tidak menambah value |
+
+#### Scorecard — BASELINE vs HMM Meta-Controller
+
+**Holdout (Nov 2025 – Apr 2026, 21 koin)**:
+
+| Metrik | BASELINE | HMM Controller | Delta |
+|--------|:---:|:---:|:---:|
+| Trades | 2,434 | 2,175 | -11% |
+| Win Rate | 67.5% | **68.4%** | +0.9pp |
+| Net PnL | **$848** | $787 | -$61 (-7%) |
+| Profit Factor | 2.54 | **2.70** | +0.16 |
+
+**Extended Backtest (2020–2025, 63 bulan, purged CV)**:
+
+| Metrik | BASELINE | HMM Controller | Delta |
+|--------|:---:|:---:|:---:|
+| Trades | 29,317 | 25,723 | -12% |
+| Win Rate | 51.5% | 51.6% | +0.1pp |
+| Net PnL | **-$501** | **-$179** | **+$322 (64% saved)** |
+| Negative months | 33/63 | **31/63** | -2 |
+| Monthly std PnL | $71.0 | **$57.7** | -19% |
+
+**Yearly Breakdown**:
+
+| Year | Market | BASELINE | HMM Controller | Saved |
+|------|--------|:---:|:---:|:---:|
+| 2021 | Bull run | -$1,289 | -$930 | **+$359** |
+| 2022 | Bear | +$93 | +$59 | -$33 |
+| 2023 | Recovery | +$205 | +$208 | +$3 |
+| 2024 | Sideways | +$109 | +$140 | +$31 |
+| 2025 | Ranging | +$446 | +$354 | -$92 |
+
+#### Key Insight: Asuransi, Bukan Optimasi
+
+```
+HMM Controller = AIRBAG, bukan turbo.
+
+RANGING MARKET (90% waktu):
+  - BASELINE lebih baik (+$92 di 2025 holdout)
+  - HMM Controller adalah "biaya asuransi" (-7% PnL)
+
+TRENDING MARKET (10% waktu):
+  - BASELINE hancur (-$1,289 di 2021)
+  - HMM Controller selamatkan +$359 (28% loss reduction)
+
+NET 63 BULAN: HMM Controller -$179 vs BASELINE -$501
+  → 64% loss reduction, 19% lower volatility
+```
+
+#### Deployment Strategy
+
+```
+Deploy BASELINE sekarang (market ranging).
+Monitor HMM regime distribution live.
+TRENDING > 20% bars selama seminggu → toggle hmm_controller_enabled=True.
+Kode sudah siap di backtest_utils.py, tidak perlu retrain.
+```
+
+**Status**: ✅ Kode siap. 🔲 Aktifkan saat trending terdeteksi di live.
+
+#### Leak Audit & Fix (2026-06-06)
+
+Ditemukan in-sample bias: script menggunakan pre-trained LGBM (`lgbm_baseline.pkl`)
+untuk semua fold. Model ini sudah lihat 2020-2025 → prediksi fold k+1 bukan genuine OOF.
+**Diperbaiki**: retrain LGBM per fold dari nol (hanya training data fold).
+
+**Hasil setelah fix**:
+- Trades: 20,166 (naik dari 11,453) — per-fold models lebih agresif
+- Good rate: 30.2% (turun dari 50%) — realistis untuk swing trading
+- AUC: **0.594** (naik dari 0.580) — genuine OOF signal LEBIH BAIK
+- Ensemble PnL: $211 (s=0.5, trend=OFF) — konsisten dengan sebelumnya ($213)
+
+**Kesimpulan**: Fix leakage justru MENINGKATKAN AUC. Genuine OOF labels lebih bersih —
+model bisa belajar pola yang benar-benar memisahkan trade bagus vs jelek.
+
+## 2026-06-05 — Simon Methodology: IC Test, HMM, Guardian IC, Retrain Pipeline Baru
+
+### Latar Belakang
+
+Implementasi penuh Jim Simons / Renaissance Technologies methodology sebagai standar feature
+selection dan model validation baru. Dijalankan setelah audit leakage 2026-06-04 mengharuskan
+rebuild pipeline dari awal dengan metodologi lebih ketat.
+
+### Pipeline Baru yang Dibangun
+
+| Step | File | Tujuan |
+|------|------|--------|
+| IC Test | `pipeline/03b_ic_test.py` | Spearman rank IC + Marginal IC (Gram-Schmidt) per fitur |
+| IC Decay Test | `pipeline/03c_ic_decay_test.py` | Stabilitas IC di 6 window temporal (2020-2025) |
+| Temporal IC Decay | `pipeline/03d_temporal_ic_test.py` | Half-life IC(feat_{t-k}, label_t) untuk k=0..32 |
+| HMM Regime | `pipeline/03e_regime_hmm.py` | GaussianHMM 4-state walk-forward OOF regime labels |
+| Logistic Baseline | `pipeline/04b_logistic_baseline.py` | Simon Step 4 — linear model sebagai batas bawah |
+| Triple Barrier | `pipeline/03f_triple_barrier_relabel.py` | TP/SL/time barrier — dieksplorasi, akhirnya ditinggalkan |
+| RR Sweep | `pipeline/03g_rr_sweep.py` | IC_IR sweep untuk RR ratio optimal per horizon |
+| Hybrid Relabel | `pipeline/03h_hybrid_relabel.py` | Hybrid swing+TB label — ditinggalkan (bimodal issue) |
+| Guardian IC Test | `pipeline/03b_guardian_ic_test.py` | IC test dynamic/static/delta features vs exit_better |
+| Meta-labeling | `pipeline/08_generate_meta_labels.py`, `09_train_meta_model.py` | Binary LGBM secondary filter |
+
+### Hasil IC Test (107 fitur → 32 KEEP)
+
+Effective N = N/24 untuk koreksi autocorrelation H1. t-stat threshold ≥ 2.0, IC threshold ≥ 0.02.
+
+| Verdict | Count | Keterangan |
+|---------|-------|-----------|
+| KEEP | 25 | IC ≥ 0.02 AND t ≥ 2.0 |
+| REDUNDANT | 23 | IC valid tapi linear dengan KEEP lain (Gram-Schmidt pruning) |
+| WEAK | 10 | IC ≥ 0.02 tapi t < 2.0 |
+| DROP | 49 | IC < 0.02 ATAU t < 1.0 |
+
+**Dipilih: 32 KEEP (tanpa REDUNDANT)** + hmm_regime_enc = **33 fitur aktif** (`models/feature_cols_v2.json`).
+
+Catatan Simon: REDUNDANT bisa berguna untuk non-linear models (LGBM) via kombinasi fitur,
+tapi IC pre-screening sudah cukup ketat sebagai entry point. Opsi expand ke KEEP+REDUNDANT tersedia
+di `models/feature_cols_ic44.json` (44 fitur).
+
+### Hasil IC Decay Test (6 Window Temporal, 2020-2025)
+
+Semua 25 KEEP features stable di 6/6 windows. STABLE threshold: IC_IR ≥ 0.5 DAN sign_cons ≥ 5/6.
+Tidak ada fitur yang perlu di-drop setelah stability check.
+
+### Hasil Temporal IC Decay (Half-Life)
+
+| Kategori | Fitur | Half-Life |
+|----------|-------|-----------|
+| STRONG (≥ 4 bar) | dist_liq_20x_long, rsi_slope_h4, log_ret_20, dist_liq_50x_long, long_short_ratio, cvd_slope_h4, ofi_h4_delta | ≥ 4 bar |
+| MODERATE (2-4 bar) | stochrsi_k, cvd_momentum_adv, Fib_786, stochrsi_d, rsi_6, rsi_h4, Buy_Liq | 2-4 bar |
+
+LSTM diretrain dengan **7 STRONG features** (temporal persistence lebih tinggi = lebih cocok untuk LSTM seq
+yang butuh pola temporal). Model disimpan sebagai `ic32_lstm_multi_v1`.
+
+### HMM Regime
+
+GaussianHMM 4-state walk-forward OOF: TRENDING_DOWN(0), RANGING_LOW_VOL(1), RANGING_HIGH_VOL(2), TRENDING_UP(3).
+- `hmm_regime_enc` IC = +0.021, t = 3.83 → KEEP
+- Diintegrasikan sebagai fitur ke-33 di LGBM (model `ic32_regime_v1`)
+- Di-merge ke holdout parquet sebelum inference di `07_holdout_backtest.py`
+
+### Logistic Regression Baseline (Simon Step 4)
+
+F1 = 0.347 vs random baseline 0.333 → konfirmasi ada non-linear signal.
+LGBM gain vs LogReg: +0.243 F1 → non-linear model justified.
+
+### Triple Barrier — Ditinggalkan
+
+Alasan teknis:
+1. Swing labels 95% correlated dengan TB labels (pada koin yang sama)
+2. Features dioptimasi untuk swing outcomes (liquidation levels, swing structure) — bukan ATR-scale moves
+3. Hybrid labeling → bimodal FLAT (15% atau 80%), tidak ada middle ground
+4. Backtest LGBM dengan TB labels: F1 ≈ random
+
+**Kesimpulan**: Swing labels lebih appropriate untuk crypto karena liquidation mechanics dan feature alignment.
+
+### Guardian IC Test
+
+Dynamic features IC vs exit_better target:
+
+| Feature | IC | Verdict | Interpretasi |
+|---------|----|---------|-------------|
+| current_pnl_atr | 0.333 | KEEP | Profit in ATR units → exit |
+| drawdown_from_peak_pct | 0.281 | KEEP | Drawdown dari peak → exit |
+| max_favorable_pnl_pct | 0.251 | KEEP | Max profit seen → exit |
+| bars_held_norm | 0.190 | KEEP | Lama hold → exit |
+| current_pnl_pct | 0.183 | KEEP | Profit % → exit |
+| entry_price_ratio | 0.120 | KEEP | Price ratio → exit |
+| direction | 0.021 | KEEP | Direction context |
+
+5/5 delta features (perubahan fitur sejak entry): IC = 0.02-0.09, semua KEEP.
+24/28 static features: IC = 0.02-0.09, KEEP. Static jauh lebih lemah dari dynamic.
+
+**Temuan kunci**: Dynamic features jauh lebih informatif dari static untuk exit decisions.
+Static features berguna via non-linear combinations (semua importance > 0 di feature importance CV).
+
+### Guardian Variants Tested
+
+| Variant | N Static | N Dynamic | N Total | WR | PnL ($) |
+|---------|----------|-----------|---------|-----|---------|
+| Guardian v3 lama | 104 | 7 | 111 | 69.2% | (referensi) |
+| **clean_v2** | **33** | **7** | **40** | **67.5%** | **$2,089** ← **DIPILIH** |
+| ext_v1 | 42 | 12 (7+5 delta) | 54 | 67.5% | $1,852 |
+
+**clean_v2 dipilih**: Lebih sederhana, tidak worse OOS vs ext_v1 yang lebih kompleks.
+Guardian v3 lama tetap lebih baik — kemungkinan karena distribusi training yang lebih kaya (104-feature LGBM era).
+
+### Meta-labeling — Gagal OOS (In-Sample Bias)
+
+AUC = 0.63, tapi WR improvement OOS sangat kecil (+1.4pp at threshold=0.70).
+Root cause: meta-labels digenerate dari training simulation → target leak ke training set meta-model.
+Evaluator melihat trade yang sama saat generate meta-labels dan saat training → in-sample bias.
+
+Fix yang diperlukan: walk-forward OOF meta-labels. Baru valid setelah 1,000+ live trades genuine OOS.
+
+### Model Final (State Point-in-Time 2026-06-05)
+
+| Komponen | ID | File | N Fitur |
+|----------|-----|------|---------|
+| LGBM | ic32_regime_v1 | `models/lgbm_baseline.pkl` | 33 |
+| LSTM | ic32_lstm_multi_v1 | `models/lstm_best.pt` | 7 STRONG |
+| Guardian | ic32_guardian_clean_v2 | `models/guardian_best.pkl` | 40 (33+7) |
+| Feature cols | — | `models/feature_cols_v2.json` | 33 |
+| Guardian feat | — | `models/guardian_feature_cols.json` | 40 |
+
+**⚠️ Inkonsistensi config**: `GUARDIAN_DYNAMIC_FEATURES` di config.py berisi 12 entri (7 original + 5 delta)
+tapi Guardian clean_v2 dilatih dengan 40 fitur (33+7). Perlu verifikasi shape sebelum deploy.
+
+### Bug Fixes
+
+| Bug | Fix |
+|-----|-----|
+| LSTM DirectML error saat Guardian training | Set `LSTM_CONFIRMATION_ENABLED=False` sebelum `06_train_guardian.py`, restore setelah |
+| Guardian shape mismatch (1,50) vs (45,) | `g_static = [c for c in g_feat_cols if c not in set(GUARDIAN_DYNAMIC_FEATURES)]` |
+| KeyError Guardian class_weight di fold | Check `classes_in_fold = set(np.unique(y_train))` sebelum build class_weight dict |
+| config.py corruption dari PowerShell write | Gunakan Edit tool only — JANGAN PowerShell `Out-File` / `Set-Content` untuk config.py |
+| Unicode arrows (→) di logger | Ganti dengan `->` untuk cp1252 terminal compatibility |
+
+### Keputusan
+
+- [x] IC test + IC decay + temporal IC → standar baru feature selection
+- [x] HMM regime diintegrasikan ke LGBM + holdout inference
+- [x] LGBM retrained: ic32_regime_v1 (33 fitur)
+- [x] LSTM retrained: ic32_lstm_multi_v1 (7 STRONG temporal features)
+- [x] Guardian: clean_v2 dipilih (WR 67.5%, PnL $2,089)
+- [x] Triple Barrier ditinggalkan — swing labels lebih appropriate untuk crypto
+- [x] Meta-labeling: gagal OOS, perlu walk-forward OOF fix
+- [ ] Deploy ic32_regime_v1 + ic32_lstm_multi_v1 + Guardian clean_v2 ke production
+- [ ] Fix inkonsistensi GUARDIAN_DYNAMIC_FEATURES (12 di config vs 7 di model)
+- [ ] HMM sebagai Controller (threshold berbeda per regime)
+- [ ] Kelly Criterion position sizing
+- [ ] IC decay monitoring quarterly (setiap 4 minggu di data live)
+- [ ] Meta-labeling proper setelah 1,000+ live trades
+
+---
+
 ## 2026-06-04 — PENCABUTAN METRIK: Data Leakage Terdeteksi
 
 > ⛔ **SEMUA HASIL BACKTEST DAN HOLDOUT SEBELUM TANGGAL INI DICABUT.**

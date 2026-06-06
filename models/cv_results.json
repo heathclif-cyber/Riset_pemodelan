@@ -1,5 +1,5 @@
 {
-  "run_id": "ic32_regime_v1",
+  "run_id": "tb30_lgbm_v2",
   "coins": [
     "BTCUSDT",
     "SOLUSDT",
@@ -25,11 +25,11 @@
   ],
   "n_folds": 8,
   "gap_bars": 20,
-  "best_fold": 8,
-  "best_f1_macro": 0.6085,
-  "mean_f1_macro": 0.5911,
-  "std_f1_macro": 0.0147,
-  "mean_accuracy": 0.7602,
+  "best_fold": 1,
+  "best_f1_macro": 0.3448,
+  "mean_f1_macro": 0.3179,
+  "std_f1_macro": 0.0224,
+  "mean_accuracy": 0.3586,
   "lgbm_params": {
     "objective": "multiclass",
     "num_class": 3,
@@ -47,7 +47,7 @@
     "gpu_platform_id": 0,
     "gpu_device_id": 0
   },
-  "final_retrain_n_estimators": 909,
+  "final_retrain_n_estimators": 77,
   "feature_cols": [
     "dist_from_8h_high",
     "rsi_6",
@@ -88,34 +88,34 @@
       "fold": 1,
       "n_train": 51361,
       "n_val": 71715,
-      "best_iteration": 488,
-      "train_accuracy": 0.8831,
-      "train_f1_macro": 0.825,
-      "train_f1_weighted": 0.884,
-      "train_f1_SHORT": 0.763,
-      "train_f1_FLAT": 0.9283,
-      "train_f1_LONG": 0.7837,
-      "accuracy": 0.7457,
-      "f1_macro": 0.5598,
-      "f1_weighted": 0.742,
-      "f1_SHORT": 0.3767,
-      "f1_FLAT": 0.8702,
-      "f1_LONG": 0.4325,
+      "best_iteration": 37,
+      "train_accuracy": 0.4551,
+      "train_f1_macro": 0.4372,
+      "train_f1_weighted": 0.4189,
+      "train_f1_SHORT": 0.4685,
+      "train_f1_FLAT": 0.308,
+      "train_f1_LONG": 0.535,
+      "accuracy": 0.3633,
+      "f1_macro": 0.3448,
+      "f1_weighted": 0.3404,
+      "f1_SHORT": 0.2993,
+      "f1_FLAT": 0.2845,
+      "f1_LONG": 0.4506,
       "confusion_matrix": [
         [
-          3457,
-          3677,
-          2259
+          5424,
+          2883,
+          10827
         ],
         [
-          3148,
-          45669,
-          3082
+          7141,
+          6021,
+          16974
         ],
         [
-          2357,
-          3716,
-          4350
+          4544,
+          3290,
+          14611
         ]
       ]
     },
@@ -123,34 +123,34 @@
       "fold": 2,
       "n_train": 123256,
       "n_val": 78722,
-      "best_iteration": 800,
-      "train_accuracy": 0.8594,
-      "train_f1_macro": 0.7823,
-      "train_f1_weighted": 0.8605,
-      "train_f1_SHORT": 0.7013,
-      "train_f1_FLAT": 0.9172,
-      "train_f1_LONG": 0.7283,
-      "accuracy": 0.7573,
-      "f1_macro": 0.5828,
-      "f1_weighted": 0.7567,
-      "f1_SHORT": 0.4035,
-      "f1_FLAT": 0.8756,
-      "f1_LONG": 0.4692,
+      "best_iteration": 62,
+      "train_accuracy": 0.4184,
+      "train_f1_macro": 0.3911,
+      "train_f1_weighted": 0.3694,
+      "train_f1_SHORT": 0.4359,
+      "train_f1_FLAT": 0.224,
+      "train_f1_LONG": 0.5133,
+      "accuracy": 0.365,
+      "f1_macro": 0.3396,
+      "f1_weighted": 0.3199,
+      "f1_SHORT": 0.3878,
+      "f1_FLAT": 0.1785,
+      "f1_LONG": 0.4525,
       "confusion_matrix": [
         [
-          3965,
-          3919,
-          2931
+          9318,
+          1685,
+          12631
         ],
         [
-          2971,
-          50248,
-          4219
+          9729,
+          3475,
+          19307
         ],
         [
-          1904,
-          3165,
-          5400
+          5371,
+          1267,
+          15939
         ]
       ]
     },
@@ -158,34 +158,34 @@
       "fold": 3,
       "n_train": 202218,
       "n_val": 79212,
-      "best_iteration": 995,
-      "train_accuracy": 0.8452,
-      "train_f1_macro": 0.7558,
-      "train_f1_weighted": 0.8468,
-      "train_f1_SHORT": 0.6664,
-      "train_f1_FLAT": 0.9114,
-      "train_f1_LONG": 0.6898,
-      "accuracy": 0.7561,
-      "f1_macro": 0.5974,
-      "f1_weighted": 0.7601,
-      "f1_SHORT": 0.4547,
-      "f1_FLAT": 0.8745,
-      "f1_LONG": 0.4631,
+      "best_iteration": 96,
+      "train_accuracy": 0.4148,
+      "train_f1_macro": 0.3894,
+      "train_f1_weighted": 0.3654,
+      "train_f1_SHORT": 0.4661,
+      "train_f1_FLAT": 0.2047,
+      "train_f1_LONG": 0.4975,
+      "accuracy": 0.3697,
+      "f1_macro": 0.3303,
+      "f1_weighted": 0.3077,
+      "f1_SHORT": 0.4713,
+      "f1_FLAT": 0.1038,
+      "f1_LONG": 0.4158,
       "confusion_matrix": [
         [
-          5105,
-          3160,
-          2690
+          15620,
+          701,
+          8802
         ],
         [
-          3988,
-          49544,
-          3882
+          15955,
+          1827,
+          14139
         ],
         [
-          2408,
-          3188,
-          5247
+          9591,
+          737,
+          11840
         ]
       ]
     },
@@ -193,34 +193,34 @@
       "fold": 4,
       "n_train": 281710,
       "n_val": 79370,
-      "best_iteration": 1000,
-      "train_accuracy": 0.8283,
-      "train_f1_macro": 0.7259,
-      "train_f1_weighted": 0.8302,
-      "train_f1_SHORT": 0.6274,
-      "train_f1_FLAT": 0.904,
-      "train_f1_LONG": 0.6463,
-      "accuracy": 0.7448,
-      "f1_macro": 0.5903,
-      "f1_weighted": 0.7502,
-      "f1_SHORT": 0.4798,
-      "f1_FLAT": 0.8657,
-      "f1_LONG": 0.4254,
+      "best_iteration": 10,
+      "train_accuracy": 0.3546,
+      "train_f1_macro": 0.3009,
+      "train_f1_weighted": 0.2653,
+      "train_f1_SHORT": 0.4412,
+      "train_f1_FLAT": 0.0129,
+      "train_f1_LONG": 0.4486,
+      "accuracy": 0.3421,
+      "f1_macro": 0.2865,
+      "f1_weighted": 0.2518,
+      "f1_SHORT": 0.4535,
+      "f1_FLAT": 0.0005,
+      "f1_LONG": 0.4056,
       "confusion_matrix": [
         [
-          6042,
-          3337,
-          2395
+          15624,
+          15,
+          8563
         ],
         [
-          4554,
-          48495,
-          4044
+          18427,
+          8,
+          14557
         ],
         [
-          2814,
-          3112,
-          4577
+          10651,
+          2,
+          11523
         ]
       ]
     },
@@ -228,34 +228,34 @@
       "fold": 5,
       "n_train": 361340,
       "n_val": 94528,
-      "best_iteration": 1000,
-      "train_accuracy": 0.8147,
-      "train_f1_macro": 0.7032,
-      "train_f1_weighted": 0.8168,
-      "train_f1_SHORT": 0.6016,
-      "train_f1_FLAT": 0.8977,
-      "train_f1_LONG": 0.6103,
-      "accuracy": 0.7517,
-      "f1_macro": 0.5844,
-      "f1_weighted": 0.7563,
-      "f1_SHORT": 0.4526,
-      "f1_FLAT": 0.8738,
-      "f1_LONG": 0.4269,
+      "best_iteration": 11,
+      "train_accuracy": 0.3519,
+      "train_f1_macro": 0.2979,
+      "train_f1_weighted": 0.2623,
+      "train_f1_SHORT": 0.4525,
+      "train_f1_FLAT": 0.0094,
+      "train_f1_LONG": 0.4319,
+      "accuracy": 0.3369,
+      "f1_macro": 0.2807,
+      "f1_weighted": 0.2459,
+      "f1_SHORT": 0.4538,
+      "f1_FLAT": 0.0023,
+      "f1_LONG": 0.386,
       "confusion_matrix": [
         [
-          6370,
-          3981,
-          3177
+          19829,
+          1,
+          8919
         ],
         [
-          5095,
-          59331,
-          4461
+          24613,
+          46,
+          14943
         ],
         [
-          3157,
-          3596,
-          5360
+          14199,
+          11,
+          11967
         ]
       ]
     },
@@ -263,34 +263,34 @@
       "fold": 6,
       "n_train": 456128,
       "n_val": 98446,
-      "best_iteration": 996,
-      "train_accuracy": 0.806,
-      "train_f1_macro": 0.6864,
-      "train_f1_weighted": 0.8082,
-      "train_f1_SHORT": 0.5825,
-      "train_f1_FLAT": 0.8942,
-      "train_f1_LONG": 0.5826,
-      "accuracy": 0.768,
-      "f1_macro": 0.5996,
-      "f1_weighted": 0.7692,
-      "f1_SHORT": 0.4638,
-      "f1_FLAT": 0.8819,
-      "f1_LONG": 0.4533,
+      "best_iteration": 91,
+      "train_accuracy": 0.3856,
+      "train_f1_macro": 0.3521,
+      "train_f1_weighted": 0.325,
+      "train_f1_SHORT": 0.4706,
+      "train_f1_FLAT": 0.1339,
+      "train_f1_LONG": 0.4519,
+      "accuracy": 0.3615,
+      "f1_macro": 0.3238,
+      "f1_weighted": 0.3,
+      "f1_SHORT": 0.4591,
+      "f1_FLAT": 0.1015,
+      "f1_LONG": 0.4109,
       "confusion_matrix": [
         [
-          6389,
-          4343,
-          2722
+          19219,
+          1050,
+          9941
         ],
         [
-          4594,
-          63457,
-          4185
+          21325,
+          2256,
+          16405
         ],
         [
-          3115,
-          3879,
-          5762
+          12979,
+          1153,
+          14118
         ]
       ]
     },
@@ -298,34 +298,34 @@
       "fold": 7,
       "n_train": 554894,
       "n_val": 111162,
-      "best_iteration": 995,
-      "train_accuracy": 0.8009,
-      "train_f1_macro": 0.6752,
-      "train_f1_weighted": 0.8032,
-      "train_f1_SHORT": 0.565,
-      "train_f1_FLAT": 0.8926,
-      "train_f1_LONG": 0.568,
-      "accuracy": 0.7753,
-      "f1_macro": 0.6056,
-      "f1_weighted": 0.7785,
-      "f1_SHORT": 0.4752,
-      "f1_FLAT": 0.8881,
-      "f1_LONG": 0.4536,
+      "best_iteration": 177,
+      "train_accuracy": 0.395,
+      "train_f1_macro": 0.3623,
+      "train_f1_weighted": 0.336,
+      "train_f1_SHORT": 0.4803,
+      "train_f1_FLAT": 0.1472,
+      "train_f1_LONG": 0.4593,
+      "accuracy": 0.3713,
+      "f1_macro": 0.3304,
+      "f1_weighted": 0.3064,
+      "f1_SHORT": 0.4693,
+      "f1_FLAT": 0.0951,
+      "f1_LONG": 0.4267,
       "confusion_matrix": [
         [
-          7275,
-          4375,
-          3519
+          21590,
+          882,
+          12457
         ],
         [
-          4957,
-          72413,
-          4995
+          22378,
+          2328,
+          20122
         ],
         [
-          3217,
-          3916,
-          6495
+          13113,
+          938,
+          17354
         ]
       ]
     },
@@ -333,34 +333,34 @@
       "fold": 8,
       "n_train": 666376,
       "n_val": 118009,
-      "best_iteration": 1000,
-      "train_accuracy": 0.7981,
-      "train_f1_macro": 0.6671,
-      "train_f1_weighted": 0.8005,
-      "train_f1_SHORT": 0.5574,
-      "train_f1_FLAT": 0.8922,
-      "train_f1_LONG": 0.5517,
-      "accuracy": 0.7825,
-      "f1_macro": 0.6085,
-      "f1_weighted": 0.7849,
-      "f1_SHORT": 0.4853,
-      "f1_FLAT": 0.8903,
-      "f1_LONG": 0.4499,
+      "best_iteration": 134,
+      "train_accuracy": 0.3858,
+      "train_f1_macro": 0.3497,
+      "train_f1_weighted": 0.3229,
+      "train_f1_SHORT": 0.4756,
+      "train_f1_FLAT": 0.1247,
+      "train_f1_LONG": 0.4487,
+      "accuracy": 0.3587,
+      "f1_macro": 0.3074,
+      "f1_weighted": 0.2789,
+      "f1_SHORT": 0.4574,
+      "f1_FLAT": 0.0418,
+      "f1_LONG": 0.4231,
       "confusion_matrix": [
         [
-          7847,
-          4600,
-          2868
+          23894,
+          193,
+          10863
         ],
         [
-          5660,
-          78201,
-          4691
+          28037,
+          1031,
+          18696
         ],
         [
-          3516,
-          4328,
-          6298
+          17606,
+          290,
+          17399
         ]
       ]
     }

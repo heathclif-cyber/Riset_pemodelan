@@ -64,9 +64,81 @@ File kunci produksi yang sering dibaca:
 01_fetch → 02_clean → 03_engineer → 04_train_lgbm
                                    → 05a_generate_momentum_labels
                                    → 05b_build_h1_sequences
-                                   → 05c_train_lstm_h1
+                                   → 05c_train_lstm_momentum_v3
                                    → 06_train_guardian → 07_holdout_backtest
+
+01c_fetch_positioning → hourly cron (Windows Task Scheduler: FetchPositioningData)
+                        4 endpoint: Binance taker_ratio + top_trader + global_ls + Bybit OI
+                        Output: data/positioning/{coin}_{type}.parquet
+                        Target: 4,000+ bar/jam dalam 6 bulan untuk training momentum model
 ```
+
+## LSTM Momentum — OHLCV Information Ceiling
+
+LSTM V3 (16 IC-validated features, 5 koin, 8-fold purged CV):
+- **Mean Val F1: 0.407 ± 0.007** — plateau, tidak ada improvement vs V2 (F1=0.415)
+- Random baseline: 0.333. Gain: +0.074.
+- NEUTRAL class selalu lemah (F1 ~0.22-0.30) — LSTM tidak bisa bedakan netral vs directional dari OHLCV
+- BULLISH/BEARISH classes lumayan (F1 ~0.46-0.53)
+- **Kesimpulan**: OHLCV telah mencapai ceiling informasi untuk prediksi momentum.
+  Solusi: positioning data (OI delta, Taker ratio, Top Trader L/S) — dikumpulkan via 01c_fetch_positioning.py.
+  Estimasi 6 bulan dari 2026-06-07 → Desember 2026 cukup data untuk IC38 momentum retrain.
+
+## Active Configuration (2026-06-07)
+
+```
+Entry   : LGBM ic32_regime_v1 (33 feat: 32 KEEP IC-test + HMM argmax)
+LSTM    : ON — survival filter (11 feat temporal, soft multiplier 0.70-1.30)
+Cascade : hard_consensus + FLIP alignment (regime-aware: RANGING=counter-trend, TRENDING=with-trend)
+Guardian: ic32_guardian_clean_v2 (40 feat, min_hold=2)
+HMM     : argmax sebagai fitur LGBM ke-33 (IC=-0.074)
+Data    : Positioning mining aktif — 4 endpoint Binance+Bybit hourly (83 file, 21 koin)
+```
+
+**Parameters:**
+| Parameter | Value |
+|-----------|-------|
+| LGBM_THRESHOLD_LONG | 0.69 |
+| LGBM_THRESHOLD_SHORT | 0.59 |
+| CONFIDENCE_THRESHOLD_ENTRY | 0.59 |
+| LSTM_CONFIRMATION_ENABLED | True |
+| LSTM_FLAT_REVIEW_ENABLED | True |
+| TREND_ALIGNMENT_ENABLED | False |
+| REGIME_AWARE_ALIGNMENT | True |
+| GUARDIAN_ENABLED | True |
+| GUARDIAN_MIN_HOLD_BARS | 2 |
+| GUARDIAN_EXIT_THRESHOLD | 0.65 |
+| MODAL_PER_TRADE | $10 |
+| LEVERAGE | 5x |
+
+## Scorecard — Holdout Nov 2025 – Apr 2026 (21 koin, 5 bulan)
+
+| Metrik | Nilai |
+|--------|-------|
+| **Total Trades** | 2,434 |
+| Trades/bulan | 487 |
+| **Win Rate** | **67.5%** |
+| LONG WR | 67.6% (682 trades, 28.0%) |
+| SHORT WR | 67.4% (1,752 trades) |
+| **Net PnL ($10/trade, 5x)** | **$848** |
+| PnL/bulan | $170 |
+| PnL/trade | $0.35 |
+| **Profit Factor** | **2.54** |
+| Sharpe Ratio (daily) | ~15 * |
+| Sharpe Ratio (live est.) | ~1.5-2.5 |
+| Max Drawdown | ~15% |
+> *Sharpe backtest inflated: 5 bln short period + 21 koin diversification + sqrt(365) annualization + perfect execution assumption. Live trading expect Sharpe 1.5-2.5. PF dan WR lebih reliable sebagai metrik backtest.
+| Max Consecutive Loss | 22 |
+| Avg Hold Bars | 9.6 |
+| SL Hit Rate | 17.3% (422 trades) |
+| Guardian Exit WR | 79.6% (1,792 trades) |
+| Time Exit | 9.0% (220 trades) |
+
+> Note: Sharpe/Sortino/Calmar dihitung dari daily equity curve $10/trade.
+> Sharpe = mean(daily_return) / std(daily_return) * sqrt(365).
+> Sortino = mean(daily_return) / std(neg_daily_return) * sqrt(365).
+> Calmar = annualized_PnL / max_drawdown.
+> Max DD dihitung dari peak-to-trough equity curve.
 
 ## Slash Commands
 

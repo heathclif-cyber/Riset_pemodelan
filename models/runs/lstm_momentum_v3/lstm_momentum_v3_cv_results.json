@@ -1,0 +1,69 @@
+{
+  "run_id": "lstm_momentum_v3",
+  "metrics": [
+    {
+      "fold": 1,
+      "train_f1": 0.4419,
+      "val_f1": 0.4083,
+      "f1_BEARISH": 0.4065,
+      "f1_NEUTRAL": 0.303,
+      "f1_BULLISH": 0.5155
+    },
+    {
+      "fold": 2,
+      "train_f1": 0.4197,
+      "val_f1": 0.4081,
+      "f1_BEARISH": 0.4751,
+      "f1_NEUTRAL": 0.2833,
+      "f1_BULLISH": 0.4659
+    },
+    {
+      "fold": 3,
+      "train_f1": 0.4306,
+      "val_f1": 0.407,
+      "f1_BEARISH": 0.418,
+      "f1_NEUTRAL": 0.2851,
+      "f1_BULLISH": 0.5178
+    },
+    {
+      "fold": 4,
+      "train_f1": 0.4206,
+      "val_f1": 0.4111,
+      "f1_BEARISH": 0.4563,
+      "f1_NEUTRAL": 0.246,
+      "f1_BULLISH": 0.5311
+    },
+    {
+      "fold": 5,
+      "train_f1": 0.4981,
+      "val_f1": 0.4015,
+      "f1_BEARISH": 0.4822,
+      "f1_NEUTRAL": 0.2663,
+      "f1_BULLISH": 0.456
+    },
+    {
+      "fold": 6,
+      "train_f1": 0.4329,
+      "val_f1": 0.4084,
+      "f1_BEARISH": 0.4782,
+      "f1_NEUTRAL": 0.2422,
+      "f1_BULLISH": 0.5046
+    },
+    {
+      "fold": 7,
+      "train_f1": 0.4434,
+      "val_f1": 0.4183,
+      "f1_BEARISH": 0.5002,
+      "f1_NEUTRAL": 0.2766,
+      "f1_BULLISH": 0.4781
+    },
+    {
+      "fold": 8,
+      "train_f1": 0.4357,
+      "val_f1": 0.3956,
+      "f1_BEARISH": 0.4627,
+      "f1_NEUTRAL": 0.2233,
+      "f1_BULLISH": 0.5009
+    }
+  ]
+}

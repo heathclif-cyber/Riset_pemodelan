@@ -239,11 +239,11 @@ LGBM_FLAT_REVIEW_THRESHOLD = 0.90  # threshold untuk trigger FLAT review (hanya 
 # Ini berbeda dari versi lama (hanya review ketika LGBM FLAT + max_conf rendah).
 # Tujuannya: memberi LSTM kesempatan lebih besar untuk mengoreksi / menguatkan
 # sinyal directional yang sedang "sedang-sedang saja" (>0.35), bukan hanya menyelamatkan FLAT.
-LSTM_FLAT_REVIEW_ENABLED         = True
+LSTM_FLAT_REVIEW_ENABLED         = True   # Directional review active
 LSTM_DIRECTIONAL_REVIEW_THRESHOLD = 0.35   # Threshold baru untuk mengaktifkan LSTM review pada sinyal directional
 
 LSTM_OVERRIDE_THRESHOLD    = 0.70  # minimum LSTM confidence untuk override FLAT (masih dipakai di jalur lama)
-LSTM_CONFIRMATION_ENABLED = True  # LSTM digunakan sebagai confirmation vote
+LSTM_CONFIRMATION_ENABLED = True   # LSTM ON — survival filter: +$292, -42% volatility di extended backtest
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)
 # yang tidak adil untuk confidence moderate (lihat AUDIT_REPORT.md §2.4).
@@ -531,7 +531,9 @@ TP_SL_MAX_SL_PCT         = 0.30   # max SL = 30% dari entry price
 # With-trend trades WR rendah (33.3%) → penalty untuk kurangi sinyal with-trend.
 # Counter-trend trades WR tinggi (77.8%) → boost untuk perlebar akses.
 # Trend determined by h4_trend feature (>0 = UP, <0 = DOWN, ≈0 = RANGING).
-TREND_ALIGNMENT_ENABLED  = True  # enable trend alignment adjustment
+TREND_ALIGNMENT_ENABLED  = False  # Disabled — digantikan REGIME_AWARE_ALIGNMENT
+REGIME_AWARE_ALIGNMENT   = True   # FLIP: RANGING=counter-trend (swing), TRENDING=with-trend (momentum)
+                                   # +$214 PnL (59% improvement) di extended backtest 63 bulan
 WITH_TREND_PENALTY       = 0.10   # penalty subtracted from confidence (2a)
 COUNTER_TREND_BOOST      = 0.05   # boost added to confidence (2b)
 WITH_TREND_BLOCK_CONF    = 0.00   # block all with-trend if conf < this (2c, 0 = disable)
@@ -559,7 +561,7 @@ GUARDIAN_EXIT_THRESHOLD        = 0.65   # min EXIT proba mid-level
 GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
 GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
-GUARDIAN_MIN_HOLD_BARS         = 2      # guardian tidak boleh exit di 2 bar pertama
+GUARDIAN_MIN_HOLD_BARS         = 2      # optimal: biarkan trade bernafas, kurangi exit prematur
 GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif instant (tanpa ATR minimum)
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
@@ -571,7 +573,28 @@ TRAILING_STOP_MIN_BARS         = 2      # min bars sebelum trailing aktif
 # Multiclass: 0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT
 GUARDIAN_STATIC_FEATURES = FEATURE_COLS_V3
 
+# Extended static features untuk Guardian:
+# 32 KEEP (ic32) + 10 REDUNDANT terbaik (IC 0.05-0.09)
+# REDUNDANT berguna untuk Guardian via non-linear combinations exit timing
+GUARDIAN_EXTENDED_STATIC = [
+    # 32 KEEP features (same as LGBM ic32)
+    "dist_from_8h_high", "rsi_6", "swing_momentum", "rsi_h4", "stochrsi_k",
+    "dist_liq_50x_long", "trend_accel_4h", "rsi_slope_h4", "Fib_786", "Fib_618",
+    "stochrsi_d", "ofi_h4_delta", "dist_liq_50x_short", "Buy_Liq",
+    "relative_strength_z", "dist_liq_20x_long", "cvd_momentum_adv", "cvd_slope_h4",
+    "ema_21_slope_h4", "ema_50_h1", "log_ret_20", "whale_retail_divergence",
+    "Sell_Liq", "long_short_ratio",
+    # 10 top REDUNDANT (punya IC 0.05-0.09, berguna non-linear untuk exit timing)
+    "ema_7_h1", "ema_7_h4", "log_ret_5", "price_in_range",
+    "VAH", "POC", "ema_21_h1", "dist_swing_low", "VAL", "dist_swing_high",
+]
+
+# Delta features — market change since entry (IC-validated)
+# Clean v2: delta di-drop — config kept for reference only.
+GUARDIAN_DELTA_MAP = {}
+
 # Dynamic features — trade context (dihitung per bar saat simulasi)
+# Clean v2: 7 original ONLY. Delta features di-drop — tidak menambah value OOS.
 GUARDIAN_DYNAMIC_FEATURES = [
     "bars_held_norm", "current_pnl_pct", "current_pnl_atr",
     "max_favorable_pnl_pct", "drawdown_from_peak_pct",
@@ -602,7 +625,7 @@ GUARDIAN_PURGE_GAP_BARS    = 5
 GUARDIAN_MIN_SAMPLES_COIN  = 30  # min in-trade bars per coin untuk training
 
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
-MODAL_PER_TRADE            = 25.0    # 25 USD per trade (sesuai setting UI)
+MODAL_PER_TRADE            = 10.0    # 10 USD per trade, 5x leverage = $50 exposure
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)

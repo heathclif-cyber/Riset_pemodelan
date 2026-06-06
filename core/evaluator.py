@@ -219,13 +219,20 @@ def simulate_trades(
 def _compute_guardian_dynamic(
     bars_held: int, entry_price: float, current_price: float,
     direction: int, atr_val: float, max_favorable_pnl: float,
+    g_static_current: np.ndarray | None = None,
+    g_static_entry:   np.ndarray | None = None,
+    delta_map: dict | None = None,
 ) -> np.ndarray:
-    """Compute 7 dynamic trade-context features for guardian per-bar check."""
+    """Compute dynamic trade-context features for guardian per-bar check.
+
+    7 base features + optional 5 delta features (IC-validated).
+    Delta features computed as g_static_current[src_idx] - g_static_entry[src_idx].
+    """
     pnl_pct = (current_price - entry_price) / entry_price
     if direction == 0:  # SHORT
         pnl_pct = -pnl_pct
 
-    bars_held_norm = bars_held / 24.0  # max_hold=24
+    bars_held_norm = bars_held / 24.0
     current_pnl_atr = pnl_pct * entry_price / atr_val if atr_val > 0 else 0.0
     dd_from_peak = (
         (max_favorable_pnl - pnl_pct) / max_favorable_pnl
@@ -233,15 +240,20 @@ def _compute_guardian_dynamic(
     )
     entry_ratio = entry_price / current_price if current_price > 0 else 1.0
 
-    return np.array([
-        bars_held_norm,
-        pnl_pct,
-        current_pnl_atr,
-        max_favorable_pnl,
-        dd_from_peak,
-        1.0 if direction == 2 else 0.0,  # direction: 1=LONG(2), 0=SHORT(0)
-        entry_ratio,
+    base = np.array([
+        bars_held_norm, pnl_pct, current_pnl_atr, max_favorable_pnl,
+        dd_from_peak, 1.0 if direction == 2 else 0.0, entry_ratio,
     ], dtype=np.float64)
+
+    # Delta features (IC-validated)
+    if g_static_current is not None and g_static_entry is not None and delta_map:
+        deltas = np.array([
+            float(g_static_current[sidx] - g_static_entry[sidx])
+            if sidx is not None and sidx < len(g_static_current) else 0.0
+            for sidx in delta_map.values()
+        ], dtype=np.float64)
+        return np.concatenate([base, deltas])
+    return base
 
 
 # ─── ★ BARU v3: Simulasi Trade (Dinamis dari H4 Swing Points) ────────────────
@@ -584,12 +596,24 @@ def simulate_trades_swing(
                     price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else float("inf")
                     bypass_gates = guardian_momentum
                     if bypass_gates or price_moved_atr >= guardian_activation_atr:
-                        # Build guardian feature vector: static + dynamic
-                        g_static = X_guardian[j, :]
+                        # Build guardian feature vector: static + dynamic (+ delta)
+                        g_static_cur = X_guardian[j, :]
+                        g_static_ent = X_guardian[i, :]  # entry bar static
+                        # Build delta_map: {delta_name: idx_in_static_array}
+                        try:
+                            from config import GUARDIAN_DELTA_MAP, GUARDIAN_EXTENDED_STATIC
+                            _dmap = {
+                                dname: GUARDIAN_EXTENDED_STATIC.index(src)
+                                if src in GUARDIAN_EXTENDED_STATIC else None
+                                for dname, src in GUARDIAN_DELTA_MAP.items()
+                            }
+                        except Exception:
+                            _dmap = None
                         g_dynamic = _compute_guardian_dynamic(
                             bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                            g_static_cur, g_static_ent, _dmap,
                         )
-                        g_feat = np.concatenate([g_static, g_dynamic]).reshape(1, -1)
+                        g_feat = np.concatenate([g_static_cur, g_dynamic]).reshape(1, -1)
                         g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
                         g_proba = guardian_model._Booster.predict(g_feat_s)[0]  # [p_hold, p_partial, p_full]
                         g_pred = int(g_proba.argmax())

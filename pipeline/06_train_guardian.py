@@ -35,10 +35,11 @@ warnings.filterwarnings("ignore")
 from config import (
     TRAINING_COINS, ALL_COINS, LABEL_MAP,
     GUARDIAN_STATIC_FEATURES, GUARDIAN_DYNAMIC_FEATURES,
+    GUARDIAN_EXTENDED_STATIC, GUARDIAN_DELTA_MAP,
     GUARDIAN_LGBM_PARAMS, GUARDIAN_EARLY_STOPPING,
     GUARDIAN_N_FOLDS, GUARDIAN_PURGE_GAP_BARS, GUARDIAN_MIN_SAMPLES_COIN,
     GUARDIAN_EXIT_THRESHOLD, GUARDIAN_SL_SAFETY_ATR,
-    GUARDIAN_PARTIAL_EXIT_RATIO,
+    GUARDIAN_PARTIAL_EXIT_RATIO, GUARDIAN_MIN_HOLD_BARS,
     TRAIN_CUTOFF_DATE,
     MAX_HOLDING_BARS, MODAL_PER_TRADE, LEVERAGE_SIM,
     FEE_PER_SIDE, SLIPPAGE_PER_SIDE,
@@ -58,12 +59,36 @@ logger = setup_logger("06_train_guardian")
 TRAIN_LABEL_DIR = LABEL_DIR
 
 
-def load_models():
-    lgbm = joblib.load(MODEL_DIR / "lgbm_baseline.pkl")
-    lstm = load_lstm(MODEL_DIR / "lstm_best.pt")
-    scaler = joblib.load(MODEL_DIR / "lstm_scaler.pkl")
-    with open(MODEL_DIR / "feature_cols_v2.json") as f:
+def load_models(run_id: str | None = None):
+    """Load entry models. Jika run_id diberikan, load dari run directory.
+    Fallback ke root models/ jika file tidak ditemukan di run directory.
+    """
+    run_dir = MODEL_DIR / "runs" / run_id if run_id else None
+
+    def _load(run_fname, root_fname):
+        if run_dir:
+            p = run_dir / run_fname
+            if p.exists():
+                return p
+        return MODEL_DIR / root_fname
+
+    lgbm_path   = _load("lgbm.pkl",                    "lgbm_baseline.pkl")
+    lstm_path   = _load("lstm_v2_style.pt",             "lstm_best.pt")
+    scaler_path = _load("lstm_v2_style_scaler.pkl",     "lstm_scaler.pkl")
+    feat_path   = _load("feature_cols_v2.json",         "feature_cols_v2.json")
+
+    logger.info(f"LGBM  : {lgbm_path}")
+    logger.info(f"LSTM  : {lstm_path}")
+    logger.info(f"Scaler: {scaler_path}")
+    logger.info(f"Feats : {feat_path}")
+
+    lgbm = joblib.load(lgbm_path)
+    lstm = load_lstm(lstm_path)
+    scaler = joblib.load(scaler_path)
+    with open(feat_path) as f:
         feat_cols = json.load(f)
+
+    logger.info(f"Models loaded — LGBM feats={len(lgbm.feature_name_)} | LSTM | feat_cols={len(feat_cols)}")
     return lgbm, lstm, scaler, feat_cols
 
 
@@ -83,6 +108,19 @@ def generate_labels_for_coin(
     df = df.sort_index()
     # Potong di TRAIN_CUTOFF_DATE — TIDAK BOLEH ada data testing bocor ke training
     df = df[df.index < TRAIN_CUTOFF_DATE]
+
+    # Merge HMM regime jika dibutuhkan
+    if "hmm_regime_enc" in feat_cols:
+        regime_path = TRAIN_LABEL_DIR / f"{symbol}_regime_h1.parquet"
+        if regime_path.exists():
+            try:
+                reg = pd.read_parquet(regime_path)
+                if "hmm_regime_enc" in df.columns:
+                    df = df.drop(columns=["hmm_regime_enc"])
+                df = df.join(reg[["hmm_regime_enc"]], how="left")
+                df["hmm_regime_enc"] = df["hmm_regime_enc"].fillna(1).astype("int32")
+            except Exception:
+                df["hmm_regime_enc"] = 1
     # Skip coin jika data terlalu sedikit setelah date filter
     mask = df["label"].astype(str).isin(LABEL_MAP)
     df = df[mask].copy()
@@ -132,12 +170,21 @@ def generate_labels_for_coin(
     if not trades:
         return []
 
-    # Guardian static features = same feature list as LGBM (dari feature_cols_v2.json)
-    g_static_cols = feat_cols
-    X_static = np.zeros((len(df), len(feat_cols)), dtype=np.float64)
-    for idx, col in enumerate(feat_cols):
+    # Guardian static features: 42 extended (32 KEEP ic32 + 10 REDUNDANT)
+    g_static_cols = [c for c in GUARDIAN_EXTENDED_STATIC if c in df.columns or c in feat_cols]
+    # Buat mapping: static_col -> index di feat_cols (untuk ambil nilai dari X)
+    feat_col_idx = {c: i for i, c in enumerate(feat_cols)}
+    X_static = np.zeros((len(df), len(g_static_cols)), dtype=np.float64)
+    for idx, col in enumerate(g_static_cols):
         if col in df.columns:
             X_static[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
+        elif col in feat_col_idx:
+            # ambil dari X (sudah di-compute)
+            X_static[:, idx] = X[:, feat_col_idx[col]]
+
+    # Index sumber delta dalam g_static_cols
+    static_idx = {c: i for i, c in enumerate(g_static_cols)}
+    delta_source_idx = {dname: static_idx.get(src) for dname, src in GUARDIAN_DELTA_MAP.items()}
 
     samples = []
     for t in trades:
@@ -189,31 +236,58 @@ def generate_labels_for_coin(
             # Upside remaining ratio (0..1, 0 = at peak, 1 = far from peak)
             upside_ratio = (best_future_pnl - current_pnl) / best_future_pnl if best_future_pnl > 0.001 else 0.0
 
-            if bars_held < 3:
+            # Deteksi momentum: trade searah dengan H4 trend yang kuat
+            # Saat momentum kuat, Guardian lebih sabar — beri ruang untuk pullback
+            h4_trend_j    = float(df["h4_trend"].iloc[j])    if "h4_trend"    in df.columns else 0.0
+            trend_str_j   = float(df["trend_strength"].iloc[j]) if "trend_strength" in df.columns else 0.0
+            is_momentum = (
+                (direction == 2 and h4_trend_j > 0 and trend_str_j > 1.0) or   # LONG + uptrend
+                (direction == 0 and h4_trend_j < 0 and trend_str_j < -1.0)     # SHORT + downtrend
+            )
+
+            # Threshold reversal — lebih longgar saat momentum WITH trend
+            if is_momentum:
+                reversal_full    = 0.15   # FULL_EXIT saat kehilangan 85% peak (toleran terhadap pullback)
+                reversal_partial = 0.35   # PARTIAL_EXIT saat kehilangan 65% peak
+                sl_mult          = 1.5    # SL lebih longgar saat momentum kuat (1.5x ATR)
+            else:
+                reversal_full    = 0.25   # FULL_EXIT saat kehilangan 75% peak (standar)
+                reversal_partial = 0.55   # PARTIAL_EXIT saat kehilangan 45% peak
+                sl_mult          = 1.0    # SL standar (1x ATR)
+
+            if bars_held < GUARDIAN_MIN_HOLD_BARS:
                 label = 0  # HOLD — min hold period
-            elif current_pnl < -1.0 * atr_pct:
-                label = 2  # FULL_EXIT — deep loss beyond 1x ATR
-            elif mfe_sofar > 0.015 and current_pnl < mfe_sofar * 0.25:
-                label = 2  # FULL_EXIT — severe reversal (lost 75% of peak)
+            elif current_pnl < -sl_mult * atr_pct:
+                label = 2  # FULL_EXIT — loss melewati SL threshold
+            elif mfe_sofar > 0.015 and current_pnl < mfe_sofar * reversal_full:
+                label = 2  # FULL_EXIT — reversal parah dari peak
             elif current_pnl >= best_future_pnl * 0.95:
                 label = 2  # FULL_EXIT — near optimal (within 5% of peak)
-            elif mfe_sofar > 0.015 and current_pnl < mfe_sofar * 0.55:
-                label = 1  # PARTIAL_EXIT — moderate pullback (lost 45% of peak)
+            elif mfe_sofar > 0.015 and current_pnl < mfe_sofar * reversal_partial:
+                label = 1  # PARTIAL_EXIT — pullback moderat dari peak
             elif current_pnl > 0.008 and upside_ratio < 0.03:
                 label = 1  # PARTIAL_EXIT — profit taking (near peak, < 3% upside)
             elif best_future_pnl > current_pnl * 1.05:
-                label = 0  # HOLD — 5%+ upside still available
+                label = 0  # HOLD — 5%+ upside masih tersedia
             else:
                 continue  # ambiguous zone, skip for cleaner training
 
             # Dynamic features (no forward-looking leakage)
-            mfe_pnl = mfe_sofar  # max favorable PnL seen up to this bar
+            mfe_pnl = mfe_sofar
             bars_held_norm = bars_held / MAX_HOLDING_BARS
             current_pnl_atr = current_pnl / atr_pct if atr_pct > 0 else 0.0
             dd_from_peak = (
                 (mfe_pnl - current_pnl) / mfe_pnl if mfe_pnl > 0.001 else 0.0
             )
             entry_ratio = entry_price / current_price if current_price > 0 else 1.0
+
+            # Compute delta features (market change since entry)
+            delta_vals = {}
+            for dname, sidx in delta_source_idx.items():
+                if sidx is not None:
+                    delta_vals[dname] = float(X_static[j, sidx] - X_static[bar_in, sidx])
+                else:
+                    delta_vals[dname] = 0.0
 
             sample = {
                 **{c: X_static[j, idx] for idx, c in enumerate(g_static_cols)},
@@ -225,6 +299,7 @@ def generate_labels_for_coin(
                 "drawdown_from_peak_pct": dd_from_peak,
                 "direction": 1.0 if direction == 2 else 0.0,
                 "entry_price_ratio": entry_ratio,
+                **delta_vals,
                 "label": label,
             }
             samples.append(sample)
@@ -232,7 +307,7 @@ def generate_labels_for_coin(
     return samples
 
 
-def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
+def train_guardian(samples_df: pd.DataFrame, coin_names: list[str], n_folds: int = GUARDIAN_N_FOLDS):
     """Train multiclass LGBM with purged CV, save best model + scaler."""
     # Static features = semua kolom kecuali dynamic + label (sudah difilter di generate_labels)
     g_static_cols = [c for c in samples_df.columns
@@ -252,7 +327,7 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
         logger.error("Not enough training samples (< 100)")
         return None, None, None
 
-    folds = build_purged_folds(samples_df.index, GUARDIAN_N_FOLDS, GUARDIAN_PURGE_GAP_BARS)
+    folds = build_purged_folds(samples_df.index, n_folds, GUARDIAN_PURGE_GAP_BARS)
     logger.info(f"Purged CV: {len(folds)} folds")
 
     best_score = float("inf")  # multi_logloss: lower is better
@@ -272,16 +347,19 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
         X_train_s = scaler.fit_transform(X_train)
         X_test_s = scaler.transform(X_test)
 
-        # Class weight balancing for multiclass
-        n_hold_t = int((y_train == 0).sum())
+        # Class weight balancing — hanya untuk kelas yang ada di fold ini
+        classes_in_fold = set(np.unique(y_train))
+        n_hold_t    = int((y_train == 0).sum())
         n_partial_t = int((y_train == 1).sum())
-        n_full_t = int((y_train == 2).sum())
-        total = n_hold_t + n_partial_t + n_full_t
-        class_weight = {
-            0: total / (3 * max(n_hold_t, 1)),
-            1: total / (3 * max(n_partial_t, 1)),
-            2: total / (3 * max(n_full_t, 1)),
-        }
+        n_full_t    = int((y_train == 2).sum())
+        total = max(n_hold_t + n_partial_t + n_full_t, 1)
+        class_weight = {}
+        if 0 in classes_in_fold:
+            class_weight[0] = total / (len(classes_in_fold) * max(n_hold_t, 1))
+        if 1 in classes_in_fold:
+            class_weight[1] = total / (len(classes_in_fold) * max(n_partial_t, 1))
+        if 2 in classes_in_fold:
+            class_weight[2] = total / (len(classes_in_fold) * max(n_full_t, 1))
 
         model = lgb.LGBMClassifier(**GUARDIAN_LGBM_PARAMS, class_weight=class_weight)
         model.fit(
@@ -297,9 +375,21 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
         logloss = model.best_score_["valid_0"]["multi_logloss"]
         acc = (y_pred == y_test).mean()
         f1_macro = f1_score(y_test, y_pred, average="macro")
+        f1_per   = f1_score(y_test, y_pred, average=None, zero_division=0, labels=[0, 1, 2])
 
-        logger.info(f"  Fold {fold_idx+1}: logloss={logloss:.4f} Acc={acc:.3f} F1_macro={f1_macro:.3f} "
-                    f"n_train={len(train_idx)} n_test={len(test_idx)}")
+        n_hold_test    = int((y_test == 0).sum())
+        n_partial_test = int((y_test == 1).sum())
+        n_full_test    = int((y_test == 2).sum())
+
+        logger.info(
+            f"  Fold {fold_idx+1}: logloss={logloss:.4f} | F1_macro={f1_macro:.3f} | Acc={acc:.3f} | "
+            f"iter={model.best_iteration_}"
+        )
+        logger.info(
+            f"           HOLD={f1_per[0]:.3f}(n={n_hold_test}) | "
+            f"PARTIAL={f1_per[1]:.3f}(n={n_partial_test}) | "
+            f"FULL={f1_per[2]:.3f}(n={n_full_test})"
+        )
         
         best_iters.append(model.best_iteration_)
 
@@ -324,12 +414,16 @@ def train_guardian(samples_df: pd.DataFrame, coin_names: list[str]):
     n_hold_all = int((y_all == 0).sum())
     n_partial_all = int((y_all == 1).sum())
     n_full_all = int((y_all == 2).sum())
-    total_all = n_hold_all + n_partial_all + n_full_all
-    class_weight_all = {
-        0: total_all / (3 * max(n_hold_all, 1)),
-        1: total_all / (3 * max(n_partial_all, 1)),
-        2: total_all / (3 * max(n_full_all, 1)),
-    }
+    total_all = max(n_hold_all + n_partial_all + n_full_all, 1)
+    classes_all = set(np.unique(y_all))
+    n_classes_all = len(classes_all)
+    class_weight_all = {}
+    if 0 in classes_all:
+        class_weight_all[0] = total_all / (n_classes_all * max(n_hold_all, 1))
+    if 1 in classes_all:
+        class_weight_all[1] = total_all / (n_classes_all * max(n_partial_all, 1))
+    if 2 in classes_all:
+        class_weight_all[2] = total_all / (n_classes_all * max(n_full_all, 1))
 
     # Set parameters final dengan n_estimators = avg_best_iter
     final_params = GUARDIAN_LGBM_PARAMS.copy()
@@ -347,7 +441,11 @@ def main():
     parser.add_argument("--all", action="store_true", help="Use all 20 coins")
     parser.add_argument("--coins", nargs="+", default=None)
     parser.add_argument("--min-samples", type=int, default=GUARDIAN_MIN_SAMPLES_COIN)
-    parser.add_argument("--run-id", default=None, help="Custom run ID")
+    parser.add_argument("--n-folds", type=int, default=GUARDIAN_N_FOLDS,
+                        help="Jumlah CV folds (default dari config)")
+    parser.add_argument("--run-id", default=None,
+                        help="Run ID untuk load LGBM+LSTM dan simpan Guardian. "
+                             "Contoh: cascade_v2.5_hybrid_pruned")
     args = parser.parse_args()
 
     coins = ALL_COINS if args.all else (args.coins or TRAINING_COINS)
@@ -356,7 +454,7 @@ def main():
     run_dir.mkdir(parents=True, exist_ok=True)
     logger.info(f"Coins: {len(coins)} — {coins} | Run ID: {run_id}")
 
-    lgbm_model, lstm_model, lstm_scaler, feat_cols = load_models()
+    lgbm_model, lstm_model, lstm_scaler, feat_cols = load_models(run_id)
     logger.info("Models loaded")
 
     all_samples = []
@@ -377,7 +475,7 @@ def main():
     df.set_index("timestamp", inplace=True)
     logger.info(f"Total labeled samples: {len(df)}")
 
-    model, scaler, feat_cols_out = train_guardian(df, coins)
+    model, scaler, feat_cols_out = train_guardian(df, coins, n_folds=args.n_folds)
     if model is None:
         return
 

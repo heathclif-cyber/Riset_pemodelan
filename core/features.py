@@ -924,34 +924,38 @@ def swing_based_labeling(
     close:          pd.Series,
     high:           pd.Series,
     low:            pd.Series,
-    atr_base:       pd.Series,   # ATR dari base timeframe (H1)
-    h4_swing_highs: pd.Series,   # swing high H4, aligned ke H1 index
-    h4_swing_lows:  pd.Series,   # swing low  H4, aligned ke H1 index
-    max_hold:       int   = 48,  # 48 bar H1 = 48 jam
+    atr_base:       pd.Series,
+    h4_swing_highs: pd.Series,
+    h4_swing_lows:  pd.Series,
+    max_hold:       int   = 48,
     min_rr:         float = 1.5,
     min_tp_atr:     float = 1.5,
     max_sl_atr:     float = 3.0,
+    # ── Hybrid momentum path ─────────────────────────────────────────────────
+    # Saat vol_spike_zscore ≥ momentum_threshold, gunakan ATR-based TP/SL
+    # alih-alih swing H4. Menangkap pump/dump yang sering jadi FLAT di swing mode
+    # karena swing H4 terlalu jauh saat market sedang trending kuat.
+    momentum_vol_spike:   pd.Series | None = None,
+    momentum_price_accel: pd.Series | None = None,
+    momentum_threshold:   float = 1.5,
+    momentum_tp_atr:      float = 2.0,
+    momentum_sl_atr:      float = 1.5,
 ) -> pd.Series:
     """
-    Labeling berbasis swing high/low H4 — untuk swing trade sesungguhnya.
+    Hybrid labeling: swing H4 untuk bar normal, ATR-based untuk bar momentum.
 
-    Mekanisme per bar i:
-      1. Ambil swing high H4 terdekat di atas  close[i] → TP_long
-         Ambil swing low  H4 terdekat di bawah close[i] → SL_long
-      2. Validasi setup:
-         - TP distance ≥ min_tp_atr × ATR   (hindari micro-swing)
-         - SL distance ≤ max_sl_atr × ATR   (hindari SL terlalu jauh)
-         - R:R = TP_dist / SL_dist ≥ min_rr
-      3. Scan bar i+1 sampai i+max_hold:
-         LONG  → high[j] ≥ TP_long  = WIN  / low[j]  ≤ SL_long  = MISS
-         SHORT → low[j]  ≤ TP_short = WIN  / high[j] ≥ SL_short = MISS
-      4. Jika tidak ada setup valid → FLAT
+    Normal path (vol_spike < threshold):
+      TP = H4 swing high, SL = H4 swing low — structural levels
 
-    Keunggulan vs Triple Barrier M15:
-      - TP/SL adalah level struktural nyata (swing H4), bukan arbitrary ATR
-      - Holding period fleksibel (sampai 48 jam)
-      - FLAT hanya genuine no-trade-zone
-      - Tidak ada lookahead bias (hanya ffill swing levels)
+    Momentum path (vol_spike ≥ threshold):
+      TP = close ± momentum_tp_atr × ATR  (2.0× default)
+      SL = close ∓ momentum_sl_atr × ATR  (1.5× default)
+      RR = 2.0/1.5 = 1.33 — always > min_rr=0.6
+      Keduanya (LONG & SHORT) selalu valid, outcome scan menentukan arah.
+      Tie-break: price_accel direction jika tersedia.
+
+    Backward-looking guarantee: semua fitur (vol_spike, price_accel, ATR)
+    dihitung dari bar i ke belakang — tidak ada lookahead.
     """
     n      = len(close)
     labels = np.full(n, "FLAT", dtype=object)
@@ -963,6 +967,9 @@ def swing_based_labeling(
     sh_arr = h4_swing_highs.values
     sl_arr = h4_swing_lows.values
 
+    vs_arr = momentum_vol_spike.values   if momentum_vol_spike   is not None else None
+    pa_arr = momentum_price_accel.values if momentum_price_accel is not None else None
+
     for i in range(n - 1):
         price = c_arr[i]
         atr_i = a_arr[i]
@@ -970,44 +977,75 @@ def swing_based_labeling(
         if np.isnan(price) or np.isnan(atr_i) or atr_i == 0:
             continue
 
-        swing_hi = sh_arr[i]
-        swing_lo = sl_arr[i]
-
-        if np.isnan(swing_hi) or np.isnan(swing_lo):
-            continue
-
-        # ── Setup LONG ────────────────────────────────────────────────────────
-        tp_long      = swing_hi
-        sl_long      = swing_lo
-        tp_dist_long = tp_long - price
-        sl_dist_long = price   - sl_long
-
-        long_valid = (
-            tp_dist_long > 0
-            and sl_dist_long > 0
-            and tp_dist_long >= min_tp_atr * atr_i
-            and sl_dist_long <= max_sl_atr * atr_i
-            and (tp_dist_long / sl_dist_long) >= min_rr
+        # ── Tentukan path: momentum atau swing ───────────────────────────────
+        is_momentum = (
+            vs_arr is not None
+            and not np.isnan(vs_arr[i])
+            and abs(vs_arr[i]) >= momentum_threshold
         )
 
-        # ── Setup SHORT ───────────────────────────────────────────────────────
-        tp_short      = swing_lo
-        sl_short      = swing_hi
-        tp_dist_short = price    - tp_short
-        sl_dist_short = sl_short - price
+        if is_momentum:
+            # ── Momentum path: ATR-based TP/SL ───────────────────────────────
+            tp_dist = momentum_tp_atr * atr_i
+            sl_dist = momentum_sl_atr * atr_i
+            rr_mom  = tp_dist / sl_dist if sl_dist > 0 else 0.0
 
-        short_valid = (
-            tp_dist_short > 0
-            and sl_dist_short > 0
-            and tp_dist_short >= min_tp_atr * atr_i
-            and sl_dist_short <= max_sl_atr * atr_i
-            and (tp_dist_short / sl_dist_short) >= min_rr
-        )
+            mom_valid = (
+                tp_dist >= min_tp_atr * atr_i
+                and sl_dist <= max_sl_atr * atr_i
+                and rr_mom >= min_rr
+            )
+            if not mom_valid:
+                continue
+
+            tp_long  = price + tp_dist
+            sl_long  = price - sl_dist
+            tp_short = price - tp_dist
+            sl_short = price + sl_dist
+            long_valid  = True
+            short_valid = True
+            rr_long  = rr_mom
+            rr_short = rr_mom
+
+        else:
+            # ── Normal path: swing H4 ─────────────────────────────────────────
+            swing_hi = sh_arr[i]
+            swing_lo = sl_arr[i]
+            if np.isnan(swing_hi) or np.isnan(swing_lo):
+                continue
+
+            tp_long      = swing_hi
+            sl_long      = swing_lo
+            tp_dist_long = tp_long - price
+            sl_dist_long = price   - sl_long
+
+            long_valid = (
+                tp_dist_long > 0
+                and sl_dist_long > 0
+                and tp_dist_long >= min_tp_atr * atr_i
+                and sl_dist_long <= max_sl_atr * atr_i
+                and (tp_dist_long / sl_dist_long) >= min_rr
+            )
+            rr_long = tp_dist_long / sl_dist_long if long_valid and sl_dist_long > 0 else 0.0
+
+            tp_short      = swing_lo
+            sl_short      = swing_hi
+            tp_dist_short = price    - tp_short
+            sl_dist_short = sl_short - price
+
+            short_valid = (
+                tp_dist_short > 0
+                and sl_dist_short > 0
+                and tp_dist_short >= min_tp_atr * atr_i
+                and sl_dist_short <= max_sl_atr * atr_i
+                and (tp_dist_short / sl_dist_short) >= min_rr
+            )
+            rr_short = tp_dist_short / sl_dist_short if short_valid and sl_dist_short > 0 else 0.0
 
         if not long_valid and not short_valid:
             continue
 
-        # ── Scan ke depan ─────────────────────────────────────────────────────
+        # ── Scan ke depan (sama untuk kedua path) ─────────────────────────────
         end           = min(i + max_hold, n)
         outcome_long  = "FLAT"
         outcome_short = "FLAT"
@@ -1028,7 +1066,6 @@ def swing_based_labeling(
                 elif h_arr[j] >= sl_short:
                     outcome_short = "MISS"
 
-            # Stop scan jika kedua sudah resolved
             long_done  = not long_valid  or outcome_long  != "FLAT"
             short_done = not short_valid or outcome_short != "FLAT"
             if long_done and short_done:
@@ -1036,26 +1073,184 @@ def swing_based_labeling(
 
         # ── Assign label final ────────────────────────────────────────────────
         if long_valid and short_valid:
-            rr_long  = tp_dist_long  / sl_dist_long  if sl_dist_long  > 0 else 0.0
-            rr_short = tp_dist_short / sl_dist_short if sl_dist_short > 0 else 0.0
-
             if outcome_long == "LONG" and outcome_short != "SHORT":
                 labels[i] = "LONG"
             elif outcome_short == "SHORT" and outcome_long != "LONG":
                 labels[i] = "SHORT"
             elif outcome_long == "LONG" and outcome_short == "SHORT":
-                # Keduanya menang → pilih R:R lebih tinggi
-                labels[i] = "LONG" if rr_long >= rr_short else "SHORT"
-            # else: keduanya MISS atau timeout → tetap FLAT
-
+                # Keduanya menang — tie-break:
+                # momentum path: pakai arah price_accel; normal path: pilih RR lebih tinggi
+                if is_momentum and pa_arr is not None and not np.isnan(pa_arr[i]):
+                    labels[i] = "LONG" if pa_arr[i] > 0 else "SHORT"
+                else:
+                    labels[i] = "LONG" if rr_long >= rr_short else "SHORT"
         elif long_valid:
             labels[i] = "LONG"  if outcome_long  == "LONG"  else "FLAT"
         elif short_valid:
             labels[i] = "SHORT" if outcome_short == "SHORT" else "FLAT"
 
-    # Bar di ekor data tidak punya cukup forward window → paksa FLAT
-    # max_hold = forward scan penuh, purge_gap = buffer untuk fold construction
     tail = min(max_hold, n)
+    labels[-tail:] = "FLAT"
+
+    return pd.Series(labels, index=close.index, name="label")
+
+
+def triple_barrier_labeling(
+    close:       pd.Series,
+    high:        pd.Series,
+    low:         pd.Series,
+    atr_base:    pd.Series,
+    tp_atr_mult: float = 2.0,
+    sl_atr_mult: float = 1.5,
+    max_hold:    int   = 36,
+) -> pd.Series:
+    """
+    Triple Barrier Labeling (Lopez de Prado).
+
+    Setiap bar di-evaluate untuk LONG dan SHORT secara independen:
+      LONG:  TP = close + tp_atr × ATR,  SL = close - sl_atr × ATR
+      SHORT: TP = close - tp_atr × ATR,  SL = close + sl_atr × ATR
+
+    Scan ke depan max_hold bar — label = barrier pertama yang tercapai.
+      TP_LONG hit dulu  → LONG
+      TP_SHORT hit dulu → SHORT
+      Keduanya → pilih berdasarkan siapa yang lebih cepat
+      Tidak ada → FLAT (time barrier)
+
+    RR = tp_atr_mult / sl_atr_mult (konstan untuk semua bar dan koin).
+    Label lebih selaras dengan sistem trading nyata (ATR-based TP/SL).
+    """
+    n       = len(close)
+    labels  = np.full(n, "FLAT", dtype=object)
+    c_arr   = close.values
+    h_arr   = high.values
+    l_arr   = low.values
+    atr_arr = atr_base.values
+
+    for i in range(n - 1):
+        price = c_arr[i]
+        atr_i = atr_arr[i]
+        if np.isnan(price) or np.isnan(atr_i) or atr_i <= 0:
+            continue
+
+        tp_long  = price + tp_atr_mult * atr_i
+        sl_long  = price - sl_atr_mult * atr_i
+        tp_short = price - tp_atr_mult * atr_i
+        sl_short = price + sl_atr_mult * atr_i
+
+        end = min(i + max_hold, n)
+        long_bar  = None   # bar index dimana LONG outcome tercapai
+        short_bar = None   # bar index dimana SHORT outcome tercapai
+        long_out  = "FLAT"
+        short_out = "FLAT"
+
+        for j in range(i + 1, end):
+            hj, lj = h_arr[j], l_arr[j]
+            if np.isnan(hj) or np.isnan(lj):
+                continue
+
+            if long_bar is None:
+                if hj >= tp_long:
+                    long_out, long_bar = "LONG", j
+                elif lj <= sl_long:
+                    long_out, long_bar = "MISS", j
+
+            if short_bar is None:
+                if lj <= tp_short:
+                    short_out, short_bar = "SHORT", j
+                elif hj >= sl_short:
+                    short_out, short_bar = "MISS", j
+
+            if long_bar is not None and short_bar is not None:
+                break
+
+        # Tentukan label final
+        long_win  = long_out  == "LONG"
+        short_win = short_out == "SHORT"
+
+        if long_win and not short_win:
+            labels[i] = "LONG"
+        elif short_win and not long_win:
+            labels[i] = "SHORT"
+        elif long_win and short_win:
+            # Keduanya menang — pilih yang lebih cepat
+            labels[i] = "LONG" if (long_bar or 9999) <= (short_bar or 9999) else "SHORT"
+        # else: FLAT (tidak ada yang menang dalam max_hold)
+
+    # Bar terakhir tidak bisa dilabeli (tidak ada data ke depan)
+    tail = min(max_hold, n)
+    labels[-tail:] = "FLAT"
+
+    return pd.Series(labels, index=close.index, name="label")
+
+
+def hybrid_labeling(
+    close:          pd.Series,
+    high:           pd.Series,
+    low:            pd.Series,
+    atr_base:       pd.Series,
+    h4_swing_highs: pd.Series,
+    h4_swing_lows:  pd.Series,
+    # Swing params
+    swing_weight:   float = 0.6,
+    max_hold:       int   = 36,
+    min_rr:         float = 0.6,
+    min_tp_atr:     float = 1.2,
+    max_sl_atr:     float = 4.0,
+    # Triple Barrier params
+    tb_weight:      float = 0.4,
+    tp_atr_mult:    float = 3.0,
+    sl_atr_mult:    float = 1.5,
+    # Threshold untuk final label
+    threshold:      float = 0.4,
+) -> pd.Series:
+    """
+    Hybrid labeling: weighted combination swing label + Triple Barrier label.
+
+    score = swing_weight × swing_ordinal + tb_weight × tb_ordinal
+    dimana ordinal: LONG=+1, FLAT=0, SHORT=-1
+
+    if score >=  threshold → LONG  (swing dan/atau TB mendukung LONG)
+    if score <= -threshold → SHORT
+    else                   → FLAT
+
+    Dengan swing_weight=0.6, tb_weight=0.4, threshold=0.4:
+      Both LONG (1.0):        → LONG  ✓ (sangat kuat)
+      Swing LONG + TB FLAT (0.6): → LONG  ✓ (swing saja cukup)
+      Swing FLAT + TB LONG (0.4): → LONG  ✓ (borderline)
+      Swing LONG + TB SHORT (0.2): → FLAT  ✓ (konflik = tidak masuk)
+      Both FLAT (0.0):         → FLAT  ✓
+    """
+    ORDINAL = {"LONG": 1, "FLAT": 0, "SHORT": -1}
+
+    # Compute swing labels
+    swing = swing_based_labeling(
+        close=close, high=high, low=low, atr_base=atr_base,
+        h4_swing_highs=h4_swing_highs, h4_swing_lows=h4_swing_lows,
+        max_hold=max_hold, min_rr=min_rr,
+        min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
+    )
+
+    # Compute Triple Barrier labels
+    tb = triple_barrier_labeling(
+        close=close, high=high, low=low, atr_base=atr_base,
+        tp_atr_mult=tp_atr_mult, sl_atr_mult=sl_atr_mult,
+        max_hold=max_hold,
+    )
+
+    # Ordinal encoding
+    swing_ord = swing.map(ORDINAL).fillna(0).values.astype(float)
+    tb_ord    = tb.map(ORDINAL).fillna(0).values.astype(float)
+
+    # Weighted score
+    score = swing_weight * swing_ord + tb_weight * tb_ord
+
+    # Final label
+    labels = np.where(score >= threshold, "LONG",
+             np.where(score <= -threshold, "SHORT", "FLAT"))
+
+    # Anti-lookahead: tail bars force FLAT
+    tail = min(max_hold, len(close))
     labels[-tail:] = "FLAT"
 
     return pd.Series(labels, index=close.index, name="label")
@@ -1556,6 +1751,31 @@ def engineer_features(
         (v - vol_mean_48) / vol_std_48
     ).fillna(0.0).clip(-5.0, 5.0)
 
+    # ── 28c. Momentum Acceleration Features (v4.2) ───────────────────────────
+    # Tujuan: menangkap sinyal pump/dump yang LGBM sering miss karena threshold
+    # terlalu tinggi saat momentum baru saja mulai terbentuk.
+    # Semua fitur backward-looking, tidak ada leakage.
+
+    # Feature 7: Price Acceleration (2nd derivative log return)
+    # Positif = harga mulai akselerasi naik, negatif = akselerasi turun.
+    # Berbeda dari log_ret_1 (kecepatan) — ini adalah PERUBAHAN kecepatan.
+    log_ret_1_raw = np.log(c / c.shift(1)).fillna(0)
+    feat["price_accel_1h"] = (log_ret_1_raw - log_ret_1_raw.shift(1)).fillna(0.0).clip(-0.1, 0.1)
+
+    # Feature 8: OFI Momentum Ratio (short-term vs long-term OFI)
+    # Nilai > 1: order flow beli/jual lebih intens dari rata-rata → momentum building
+    # Nilai < 1: order flow melemah → momentum fading
+    ofi_raw_series  = feat.get("ofi_raw", pd.Series(0.0, index=df.index))
+    ofi_short_ma    = ofi_raw_series.rolling(3,  min_periods=1).mean()
+    ofi_long_ma     = ofi_raw_series.rolling(24, min_periods=5).mean().replace(0, np.nan)
+    feat["ofi_momentum_ratio"] = (ofi_short_ma / ofi_long_ma).fillna(1.0).clip(-10.0, 10.0)
+
+    # Feature 9: Volume Acceleration (perubahan vol_ratio_20 dalam 3 bar)
+    # Positif = volume naik lebih cepat dari baseline → surge dimulai
+    # Negatif = volume mulai surut → momentum melemah
+    vol_ratio_series   = feat.get("vol_ratio_20", pd.Series(1.0, index=df.index))
+    feat["vol_accel_3h"] = (vol_ratio_series - vol_ratio_series.shift(3)).fillna(0.0).clip(-5.0, 5.0)
+
     # ── 29. Build DataFrame ───────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)
     feat_df = ensure_utc_index(feat_df)
@@ -1579,6 +1799,12 @@ def engineer_features(
             min_rr         = min_rr,
             min_tp_atr     = min_tp_atr,
             max_sl_atr     = max_sl_atr,
+            # Hybrid momentum path: ATR-based TP/SL saat vol_spike tinggi
+            momentum_vol_spike   = feat.get("vol_spike_zscore"),
+            momentum_price_accel = feat.get("price_accel_1h"),
+            momentum_threshold   = 1.5,
+            momentum_tp_atr      = 2.0,
+            momentum_sl_atr      = 1.5,
         )
 
         feat_df["label"] = structural_label_filter(

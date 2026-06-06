@@ -47,10 +47,20 @@ def get_lstm_device() -> torch.device:
 # ─── Logging ─────────────────────────────────────────────────────────────────
 
 class _FlushHandler(logging.StreamHandler):
-    """StreamHandler yang flush setiap baris — agar real-time di Jupyter."""
+    """StreamHandler yang flush setiap baris — agar real-time di Jupyter.
+    
+    Juga aman untuk Windows cp1252 (mengganti karakter Unicode bermasalah).
+    """
     def emit(self, record):
-        super().emit(record)
-        self.flush()
+        try:
+            msg = self.format(record)
+            # Ganti panah dan karakter Unicode bermasalah untuk Windows cp1252
+            safe_msg = msg.replace('→', '->').replace('←', '<-').replace('–', '-').replace('—', '-')
+            stream = self.stream
+            stream.write(safe_msg + self.terminator)
+            self.flush()
+        except Exception:
+            self.handleError(record)
 
 
 def setup_logger(name: str, level: int = logging.INFO) -> logging.Logger:

@@ -41,7 +41,7 @@ from config import (
     LSTM_OVERRIDE_THRESHOLD,
     REGIME_NAMES, MODEL_DIR,
     TREND_ALIGNMENT_ENABLED, WITH_TREND_PENALTY, COUNTER_TREND_BOOST,
-    WITH_TREND_BLOCK_CONF,
+    WITH_TREND_BLOCK_CONF, REGIME_AWARE_ALIGNMENT,
     CONFIDENCE_THRESHOLD_ENTRY,
     # New Momentum Gate parameters
     LSTM_FUSION_MODE,
@@ -216,11 +216,13 @@ def hierarchical_predict(
     feat_cols: list[str],
     h4_feat_cols: list[str],  # unused
     df_slice,
-    # ── Trend Alignment (Grup 2) ──────────────────────────────────────────────
+    # ── Trend Alignment / HMM Controller (Grup 2) ──────────────────────────────
     trend_alignment_enabled: bool = TREND_ALIGNMENT_ENABLED,
     with_trend_penalty:      float = WITH_TREND_PENALTY,   # 2a
     counter_trend_boost:     float = COUNTER_TREND_BOOST,  # 2b
     with_trend_block_conf:   float = WITH_TREND_BLOCK_CONF, # 2c (0 = disable)
+    hmm_controller_enabled:  bool = False,  # HMM-based regime controller (replaces h4_trend)
+    regime_aware_alignment:  bool = REGIME_AWARE_ALIGNMENT,  # FLIP from config
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review)
@@ -711,6 +713,21 @@ def hierarchical_predict(
                     min_score_to_correct=LSTM_MIN_SCORE_TO_CORRECT,
                 )
                 adj_conf = final_conf
+            elif LSTM_FUSION_MODE == "soft_multiplier":
+                # LSTM sebagai confidence multiplier, bukan gate.
+                # Ambil prob LSTM untuk arah yang dipilih LGBM.
+                # Multiplier range: 0.65 (LSTM sangat kontra) s/d 1.35 (LSTM sangat setuju).
+                # Tidak pernah blokir — hanya modulasi.
+                if lgbm_dir == 2:   # LGBM LONG -> pakai BULLISH prob
+                    lstm_support = float(lstm_proba[i, 2])
+                else:               # LGBM SHORT -> pakai BEARISH prob
+                    lstm_support = float(lstm_proba[i, 0])
+                # lstm_support range ~0.15-0.55 untuk 3-class model (FLAT dominan)
+                # Normalize: 0.15->mult=0.70, 0.55->mult=1.30
+                lstm_support_norm = (lstm_support - 0.15) / 0.40  # normalize ke 0-1
+                lstm_support_norm = max(0.0, min(1.0, lstm_support_norm))
+                mult = 0.70 + 0.60 * lstm_support_norm  # range 0.70-1.30
+                adj_conf = float(np.clip(adj_conf * mult, 0.0, 1.0))
             else:
                 # Old hard_consensus logic
                 lstm_dir = int(np.argmax(lstm_proba[i]))
@@ -722,8 +739,62 @@ def hierarchical_predict(
                     adj = -LSTM_ADJUST_OPPOSITE_PEN
                 adj_conf = float(np.clip(adj_conf + adj, 0.0, 1.0))
 
-        # STEP 4: Trend Alignment (Grup 2) — after LSTM adjustment
-        if trend_alignment_enabled:
+        # STEP 4: HMM Controller / Trend Alignment — after LSTM adjustment
+        if regime_aware_alignment:
+            # ── Regime-Aware Alignment (FLIP) ──────────────────────────────────
+            # RANGING (regime 1,2): counter-trend boost (swing mode)
+            # TRENDING (regime 0,3): with-trend boost (momentum mode)
+            # Ini kunci: SAMA model, DUA mode, tanpa retrain.
+            regime_col = "hmm_regime_enc"
+            h4_col = "h4_trend"
+            if regime_col in df_slice.columns and h4_col in df_slice.columns:
+                regime = int(df_slice[regime_col].iloc[i])
+                h4_t = float(df_slice[h4_col].iloc[i])
+                if not np.isnan(h4_t):
+                    if regime in [1, 2]:  # RANGING
+                        is_with = (lgbm_dir == 2 and h4_t > 0) or (lgbm_dir == 0 and h4_t < 0)
+                        is_counter = (lgbm_dir == 2 and h4_t < 0) or (lgbm_dir == 0 and h4_t > 0)
+                        if is_with: adj_conf -= 0.10
+                        elif is_counter: adj_conf += 0.05
+                    else:  # TRENDING (0,3)
+                        is_with = (lgbm_dir == 2 and h4_t > 0) or (lgbm_dir == 0 and h4_t < 0)
+                        is_counter = (lgbm_dir == 2 and h4_t < 0) or (lgbm_dir == 0 and h4_t > 0)
+                        if is_with: adj_conf += 0.10    # FLIP: boost with-trend
+                        elif is_counter: adj_conf -= 0.05  # FLIP: penalize counter-trend
+                    adj_conf = float(np.clip(adj_conf, 0.0, 1.0))
+
+        elif hmm_controller_enabled:
+            # ── HMM Regime Controller ────────────────────────────────────────
+            # Regime: 0=TRENDING_DOWN, 1=RANGING_LOW_VOL, 2=RANGING_HIGH_VOL, 3=TRENDING_UP
+            # Soft adjustments (no hard block kecuali RANGING_HIGH_VOL)
+            regime_col = "hmm_regime_enc"
+            if regime_col in df_slice.columns:
+                regime = int(df_slice[regime_col].iloc[i])
+
+                # RANGING_HIGH_VOL → block only if confidence is borderline
+                if regime == 2:  # RANGING_HIGH_VOL
+                    if adj_conf < 0.72:  # only block if not very confident
+                        continue
+                    else:
+                        adj_conf -= 0.03  # slight penalty for confident entries
+
+                # TRENDING regime adjustments (softer than legacy ±0.10)
+                elif regime == 0:  # TRENDING_DOWN
+                    if lgbm_dir == 2:   # LONG counter-trend → boost
+                        adj_conf += 0.07
+                    elif lgbm_dir == 0: # SHORT with-trend → mild penalty
+                        adj_conf -= 0.05
+                elif regime == 3:  # TRENDING_UP
+                    if lgbm_dir == 2:   # LONG with-trend → mild penalty
+                        adj_conf -= 0.05
+                    elif lgbm_dir == 0: # SHORT counter-trend → boost
+                        adj_conf += 0.07
+                # regime == 1: RANGING_LOW_VOL — no adjustment
+
+                adj_conf = float(np.clip(adj_conf, 0.0, 1.0))
+
+        elif trend_alignment_enabled:
+            # ── Legacy h4_trend Alignment ────────────────────────────────────
             h4_trend_col = "h4_trend"
             if h4_trend_col in df_slice.columns:
                 trend_val = df_slice[h4_trend_col].iloc[i]
