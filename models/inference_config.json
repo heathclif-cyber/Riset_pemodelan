@@ -125,15 +125,22 @@
   "data_mining": {
     "enabled": true,
     "script": "pipeline/01c_fetch_positioning.py",
-    "schedule": "hourly",
-    "output_dir": "data/positioning/",
+    "schedule": "hourly (per-coin) + daily (macro)",
+    "output_dirs": ["data/positioning/", "data/macro/"],
     "endpoints": {
-      "binance_taker_ratio": "/futures/data/takerlongshortRatio → taker_buy_sell_ratio per jam (aggressor flow)",
-      "binance_top_trader": "/futures/data/topLongShortPositionRatio → top_trader_ls_ratio per jam (elite positioning)",
-      "binance_global_ls": "/futures/data/globalLongShortAccountRatio → global_ls_ratio per jam (retail positioning)",
-      "bybit_oi": "/v5/market/open-interest → bybit_oi raw per jam (total market exposure)"
+      "positioning_hourly": {
+        "binance_taker_ratio": "/futures/data/takerlongshortRatio -> taker_buy_sell_ratio per jam (aggressor flow)",
+        "binance_top_trader": "/futures/data/topLongShortPositionRatio -> top_trader_ls_ratio per jam (elite positioning)",
+        "binance_global_ls": "/futures/data/globalLongShortAccountRatio -> global_ls_ratio per jam (retail positioning)",
+        "bybit_oi": "/v5/market/open-interest -> bybit_oi raw per jam (total market exposure)"
+      },
+      "macro_daily": {
+        "coingecko_global": "BTC dominance + total market cap + USDT volume (daily)",
+        "fear_greed": "Fear & Greed Index from alternative.me (daily)",
+        "etf_flow": "BTC/ETH ETF netflow from Dune Analytics (daily, needs DUNE_API_KEY env var)"
+      }
     },
-    "note": "Positioning data untuk momentum model (Phase 4). 4 endpoint gratis Binance+Bybit. ~200-500 bar history per endpoint. 4,000+ bar cukup dalam 6 bulan untuk training LGBM momentum."
+    "note": "Positioning + macro data untuk momentum model (Phase 4). Per-coin: 200 bar/hourly, target 4,000+ bar/6 bulan. Macro: daily, langsung tersedia. ETF flow butuh Dune API key (gratis 1k queries/bulan)."
   },
 
   "scorecard": {
