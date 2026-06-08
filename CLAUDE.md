@@ -17,11 +17,33 @@ Sistem trading kripto berbasis ML untuk Binance Futures.
 - **TRAIN_CUTOFF_DATE** — tidak boleh ada data post-cutoff bocor ke training, di mana pun
 - **LSTM**: Custom `ManualLSTMCell` — train GPU (DirectML), infer CPU
 
+## Backtest Methodology — MANDATORY
+
+**SEMUA extended backtest HARUS pakai Purged CV OOF.**
+- Retrain LGBM per fold dari nol — model TIDAK BOLEH lihat data uji
+- Testing dengan fixed model (`lgbm_baseline.pkl`) di 2020-2025 = **IN-SAMPLE LEAKAGE**
+- Hasil in-sample (PnL +$9,878, WR 69%) TIDAK VALID sebagai ekspektasi OOF
+- Hasil genuine OOF: PnL sekitar -$362 s/d -$148 (EXPERIMENTS.md §2026-06-06)
+
+**Cara validasi yang benar:**
+```python
+# ❌ SALAH — fixed model, in-sample leakage
+lgbm = joblib.load("lgbm_baseline.pkl")  # trained on 2020-2025
+test on 2020-2025                         # same data!
+
+# ✅ BENAR — purged CV OOF
+for fold in purged_folds:
+    fold_model = LGBMClassifier()
+    fold_model.fit(train_fold)            # train on folds != k
+    test on fold_k                        # model never saw this
+```
+
 ## Larangan (Do NOT)
 
 - **Jangan duplikasi isi `config.py`** — baca langsung dari file; `config.py` adalah source of truth
 - **Jangan tulis riwayat perubahan di sini** — gunakan `EXPERIMENTS.md`
 - **Jangan re-implement TP/SL regressor/classifier** — file sudah dihapus; diskusi dulu sebelum membuat ulang
+- **Jangan pakai fixed model untuk extended backtest** — IN-SAMPLE LEAKAGE. Harus purged CV OOF retrain per fold.
 - **Jangan modifikasi file di `swint_tradev2` secara manual** — deployment hanya via `tools/deploy_model.py`
 - **Metrik lama TIDAK VALID** — WR 88.93%, PnL $169k dicabut karena data leakage (2026-06-04). Detail: `EXPERIMENTS.md § 2026-06-04`
 
@@ -61,16 +83,16 @@ File kunci produksi yang sering dibaca:
 ## Pipeline Sequence
 
 ```
-01_fetch → 02_clean → 03_engineer → 04_train_lgbm
-                                   → 05a_generate_momentum_labels
-                                   → 05b_build_h1_sequences
-                                   → 05c_train_lstm_momentum_v3
-                                   → 06_train_guardian → 07_holdout_backtest
+01_fetch → 02_clean → 03_engineer → 03e_regime_hmm → 04_train_lgbm
+                                 → 06b_train_guardian_clean_v2 → 07_holdout_backtest
 
 01c_fetch_positioning → hourly cron (Windows Task Scheduler: FetchPositioningData)
                         4 endpoint: Binance taker_ratio + top_trader + global_ls + Bybit OI
                         Output: data/positioning/{coin}_{type}.parquet
                         Target: 4,000+ bar/jam dalam 6 bulan untuk training momentum model
+
+05_train_lstm_v2_style → LSTM training (v2-style, seq=32)
+11_train_lstm_daily → LSTM Daily binary momentum (AUC 0.611) — cadangan untuk professional_v2
 ```
 
 ## LSTM Momentum — OHLCV Information Ceiling

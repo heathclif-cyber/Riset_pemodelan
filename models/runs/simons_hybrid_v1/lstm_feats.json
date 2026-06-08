@@ -1,0 +1,10 @@
+[
+  "cvd_momentum_adv",
+  "ofi_h4_delta",
+  "cvd_slope_h4",
+  "atr_zscore_20d",
+  "vwdp_smooth",
+  "stochrsi_d",
+  "hour_sin",
+  "swing_momentum"
+]

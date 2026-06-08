@@ -1,0 +1,21 @@
+{
+  "run_id": "cascade_v2.5_hybrid_accel",
+  "model_type": "lstm_v2_style",
+  "n_features": 90,
+  "seq_len": 16,
+  "hidden": 128,
+  "layers": 2,
+  "dropout": 0.45,
+  "weight_decay": 0.0002,
+  "lr": 0.0007,
+  "scaler_type": "RobustScaler",
+  "final_epochs_trained": 30,
+  "cv_folds": 8,
+  "feature_file": "lstm_v2_style_feature_cols.json",
+  "fixes_applied": [
+    "per_coin_sequences",
+    "no_weighted_sampler",
+    "real_timestamps_purging",
+    "fold_scaler"
+  ]
+}

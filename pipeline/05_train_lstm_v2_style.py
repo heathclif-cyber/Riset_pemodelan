@@ -98,7 +98,7 @@ def scale_X(X: np.ndarray, scaler: RobustScaler) -> np.ndarray:
     return scaler.transform(X.reshape(-1, f)).reshape(n, s, f).astype(np.float32)
 
 
-def load_data_for_run(run_id: str, coins: list[str]):
+def load_data_for_run(run_id: str, coins: list[str], feature_cols_path: str = None):
     """
     Load data dan bangun sequences per-koin sebelum digabung.
 
@@ -111,10 +111,13 @@ def load_data_for_run(run_id: str, coins: list[str]):
       y  — shape (n_samples,)
       ts — shape (n_samples,) int64 nanoseconds UTC
     """
-    run_dir = MODEL_DIR / "runs" / run_id
-    feat_cols_path = run_dir / "feature_cols_v2.json"
-    if not feat_cols_path.exists():
-        feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
+    if feature_cols_path:
+        feat_cols_path = Path(feature_cols_path)
+    else:
+        run_dir = MODEL_DIR / "runs" / run_id
+        feat_cols_path = run_dir / "feature_cols_v2.json"
+        if not feat_cols_path.exists():
+            feat_cols_path = MODEL_DIR / "feature_cols_v2.json"
 
     with open(feat_cols_path) as f:
         feat_cols = json.load(f)
@@ -357,6 +360,7 @@ def main():
     parser = argparse.ArgumentParser()
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--all", action="store_true")
+    parser.add_argument("--feature-cols", default=None, help="Path ke custom feature columns JSON")
     args = parser.parse_args()
 
     coins = TRAINING_COINS if args.all else TRAINING_COINS[:5]
@@ -374,7 +378,7 @@ def main():
     np.random.seed(42)
 
     # FIX: load_data_for_run sekarang return (X_3d, y, ts_real, feat_cols)
-    X, y, ts, feat_cols = load_data_for_run(args.run_id, coins)
+    X, y, ts, feat_cols = load_data_for_run(args.run_id, coins, args.feature_cols)
     n_features = X.shape[2]
 
     logger.info(f"Dataset: X={X.shape} | y={y.shape} | features={n_features}")

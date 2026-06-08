@@ -1,0 +1,21 @@
+{
+  "run_id": "ic32_lstm_strong_v1",
+  "model_type": "lstm_v2_style",
+  "n_features": 7,
+  "seq_len": 16,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "weight_decay": 0.0002,
+  "lr": 0.0007,
+  "scaler_type": "RobustScaler",
+  "final_epochs_trained": 22,
+  "cv_folds": 8,
+  "feature_file": "lstm_v2_style_feature_cols.json",
+  "fixes_applied": [
+    "per_coin_sequences",
+    "no_weighted_sampler",
+    "real_timestamps_purging",
+    "fold_scaler"
+  ]
+}

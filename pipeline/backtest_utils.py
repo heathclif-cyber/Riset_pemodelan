@@ -28,6 +28,9 @@ sys.path.insert(0, str(ROOT))
 
 logger = logging.getLogger("backtest_utils")
 
+# Module-level storage for position sizing (Simons: "change the bet size, not the signal")
+_last_size_mult: np.ndarray | None = None
+
 from config import (
     NUM_CLASSES,
     LGBM_THRESHOLD_LONG, LGBM_THRESHOLD_SHORT,
@@ -42,6 +45,8 @@ from config import (
     REGIME_NAMES, MODEL_DIR,
     TREND_ALIGNMENT_ENABLED, WITH_TREND_PENALTY, COUNTER_TREND_BOOST,
     WITH_TREND_BLOCK_CONF, REGIME_AWARE_ALIGNMENT,
+    POSITIONING_ENGINE_ENABLED, POSITIONING_SIZE_MULTIPLIER, POSITIONING_LS_EXTREME_THR,
+    HMM_GATE_LSTM_ENABLED,
     CONFIDENCE_THRESHOLD_ENTRY,
     # New Momentum Gate parameters
     LSTM_FUSION_MODE,
@@ -107,7 +112,7 @@ SMART_ENTRY_LSTM_GATE = 0.42   # dual_gate: LSTM hard threshold (independen)
 # ─── Regime Model Registry ────────────────────────────────────────────────────
 # Cache per-regime LGBM models (loaded lazily on first use)
 _regime_models: dict = {}   # regime_name → lgbm model | None
-_regime_models_loaded = False
+_last_loaded_model_dir: Path | None = None
 
 
 def load_regime_models(model_dir: Path = MODEL_DIR) -> dict:
@@ -116,9 +121,12 @@ def load_regime_models(model_dir: Path = MODEL_DIR) -> dict:
     Return dict: {regime_name: model_or_None}.
     Dipanggil sekali saat pertama kali hierarchical_predict() dijalankan.
     """
-    global _regime_models, _regime_models_loaded
-    if _regime_models_loaded:
+    global _regime_models, _last_loaded_model_dir
+    if _last_loaded_model_dir == model_dir:
         return _regime_models
+
+    _regime_models = {}
+    _last_loaded_model_dir = model_dir
 
     for rname in REGIME_NAMES:
         safe = rname.replace(" ", "_")
@@ -126,16 +134,15 @@ def load_regime_models(model_dir: Path = MODEL_DIR) -> dict:
         if path.exists():
             try:
                 _regime_models[rname] = joblib.load(path)
-                logger.info(f"[regime] Loaded: {path.name}")
+                logger.info(f"[regime] Loaded: {path.name} from {model_dir}")
             except Exception as e:
-                logger.warning(f"[regime] Gagal load {path.name}: {e}")
+                logger.warning(f"[regime] Gagal load {path.name} dari {model_dir}: {e}")
                 _regime_models[rname] = None
         else:
             _regime_models[rname] = None
 
     loaded = [k for k, v in _regime_models.items() if v is not None]
-    logger.info(f"[regime] Per-regime models loaded: {loaded}")
-    _regime_models_loaded = True
+    logger.info(f"[regime] Per-regime models loaded from {model_dir}: {loaded}")
     return _regime_models
 
 _pass_rate = {"lgbm": 0, "lstm": 0, "total": 0}
@@ -223,6 +230,7 @@ def hierarchical_predict(
     with_trend_block_conf:   float = WITH_TREND_BLOCK_CONF, # 2c (0 = disable)
     hmm_controller_enabled:  bool = False,  # HMM-based regime controller (replaces h4_trend)
     regime_aware_alignment:  bool = REGIME_AWARE_ALIGNMENT,  # FLIP from config
+    model_dir:               Path = MODEL_DIR,              # Path to regime models
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review)
@@ -264,7 +272,7 @@ def hierarchical_predict(
     n = len(df_slice)
 
     # ── Load regime models (lazy, first call only) ────────────────────────────
-    regime_models = load_regime_models()
+    regime_models = load_regime_models(model_dir)
     use_per_regime = any(v is not None for v in regime_models.values())
     if use_per_regime:
         regime_col = "hmm_regime" if "hmm_regime" in df_slice.columns else None
@@ -316,8 +324,9 @@ def hierarchical_predict(
     _pass_rate["lgbm"]  = 0
     _pass_rate["lstm"]  = 0
 
-    y_pred     = np.ones(n, dtype=np.int64)
-    confidence = np.full(n, 1.0 / NUM_CLASSES)
+    y_pred      = np.ones(n, dtype=np.int64)
+    confidence  = np.full(n, 1.0 / NUM_CLASSES)
+    size_mult   = np.ones(n, dtype=np.float64)  # positioning size multiplier per bar
 
     for i in range(n):
         lgbm_long_conf  = lgbm_proba[i, 2]
@@ -691,10 +700,16 @@ def hierarchical_predict(
 
         _pass_rate["lgbm"] += 1
 
-        # STEP 3: LSTM adjustment
+        # STEP 3: LSTM adjustment (HMM-gated: only in TRENDING)
         adj_conf = lgbm_conf
 
-        if lstm_proba is not None:
+        # HMM Gate: LSTM only speaks in TRENDING regime (0=DOWN, 3=UP)
+        _hmm_regime = int(df_slice["hmm_regime_enc"].iloc[i]) if "hmm_regime_enc" in df_slice.columns else 1
+        _lstm_active = True
+        if HMM_GATE_LSTM_ENABLED:
+            _lstm_active = _hmm_regime in (0, 3)  # TRENDING only
+
+        if lstm_proba is not None and _lstm_active:
             if LSTM_FUSION_MODE == "momentum_gate":
                 # New Corrector + Booster logic
                 # For now we map 3-class proba to approximate scores (temporary bridge)
@@ -810,6 +825,15 @@ def hierarchical_predict(
                     if is_with_trend and with_trend_block_conf > 0 and adj_conf < with_trend_block_conf:
                         continue  # skip trade → FLAT
 
+        # STEP 5: Positioning Engine — SIZE multiplier (Simons: "change the bet, not the signal")
+        pos_size_mult = 1.0
+        if POSITIONING_ENGINE_ENABLED:
+            pos_extreme = float(df_slice["pos_extreme"].iloc[i]) if "pos_extreme" in df_slice.columns else 0.0
+            # LS extreme (>2σ) → size × 0.50 (|IC|=0.16, strongest positioning signal)
+            # Predicts VOLATILITY ahead, not direction → reduce exposure
+            if pos_extreme > 0:
+                pos_size_mult = POSITIONING_SIZE_MULTIPLIER  # 0.50
+
         if LSTM_FUSION_MODE == "momentum_gate" and 'final_dir' in locals():
             effective_dir = final_dir
         else:
@@ -817,8 +841,9 @@ def hierarchical_predict(
 
         if adj_conf >= lgbm_thr:
             _pass_rate["lstm"] += 1
-            y_pred[i]     = effective_dir
-            confidence[i] = adj_conf
+            y_pred[i]      = effective_dir
+            confidence[i]  = adj_conf
+            size_mult[i]   = pos_size_mult
 
     if n > 0:
         n_lgbm = _pass_rate["lgbm"]
@@ -827,6 +852,10 @@ def hierarchical_predict(
             f"[pass_rate] LGBM_pass={n_lgbm}/{n} ({n_lgbm/n:.1%}) → "
             f"FINAL={n_fin}/{n} ({n_fin/n:.1%})"
         )
+
+    # Store size_mult globally for callers
+    global _last_size_mult
+    _last_size_mult = size_mult
 
     return y_pred, confidence
 

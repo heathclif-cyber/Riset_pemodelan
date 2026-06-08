@@ -1,0 +1,39 @@
+{
+  "run_id": "ic32_lstm_momentum_v2",
+  "model_type": "lstm_momentum_v2",
+  "label_type": "momentum_flow_v2",
+  "label_map": {
+    "BEARISH": 0,
+    "NEUTRAL": 1,
+    "BULLISH": 2
+  },
+  "n_features": 11,
+  "features": [
+    "ofi_z_score",
+    "ofi_acceleration",
+    "cvd_momentum_adv",
+    "absorption_z",
+    "volume_delta",
+    "vol_ratio_20",
+    "log_ret_1",
+    "log_ret_5",
+    "log_ret_20",
+    "rsi_6",
+    "btc_h1_return"
+  ],
+  "percoin_z_features": [
+    "cvd_momentum_adv",
+    "ofi_acceleration",
+    "volume_delta"
+  ],
+  "seq_len": 16,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "weight_decay": 0.0002,
+  "lr": 0.0007,
+  "scaler_type": "RobustScaler",
+  "final_epochs": 20,
+  "cv_folds": 8,
+  "note": "Label: BEARISH(0)/NEUTRAL(1)/BULLISH(2) based on OFI+CVD+volume flow vote. Independent dari swing labels LGBM. Marginal IC LSTM vs LGBM harus ditest sebelum deploy ke ensemble."
+}

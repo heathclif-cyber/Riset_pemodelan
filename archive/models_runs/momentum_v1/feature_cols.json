@@ -1,0 +1,19 @@
+[
+  "ofi_z_score",
+  "ofi_acceleration",
+  "cvd_momentum_adv",
+  "absorption_z",
+  "volume_delta",
+  "vol_ratio_20",
+  "log_ret_1",
+  "log_ret_5",
+  "log_ret_20",
+  "rsi_6",
+  "btc_h1_return",
+  "hmm_prob_0",
+  "hmm_prob_1",
+  "hmm_prob_2",
+  "hmm_prob_3",
+  "h4_trend",
+  "trend_strength"
+]

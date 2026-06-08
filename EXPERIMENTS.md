@@ -1,5 +1,44 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+## 2026-06-08 — Integrasi Model Spesialis LGBM Trending (lgbm_trending_v1)
+
+### Latar Belakang
+Audit arsitektur `ic32_regime_v2` menunjukkan kelemahan fatal pada pasar momentum/trending. Pelabelan asli (`swing_based_labeling()`) berbasis swing levels H4 bertindak sebagai *mean-reversion target*, sehingga model sering FLAT atau memicu entri counter-trend rugi saat trend kuat terjadi. 
+
+Eksperimen ini membangun model spesialis **LGBM Trending** (`lgbm_regime_TRENDING_UP` dan `lgbm_regime_TRENDING_DOWN`) berbasis *continuation labels* (ATR-based TP/SL) untuk pasar trending, sementara pasar ranging tetap menggunakan model baseline global.
+
+### A. Uji IC Test Per Regime (Opsi A)
+Penyaringan fitur secara empiris (Simons Methodology) dijalankan khusus pada subset bar trending (`hmm_regime_enc == 0` atau `3`) menggunakan Triple Barrier continuation labels (TP=2.0 * ATR, SL=1.5 * ATR, max_hold=36 H1). Menerapkan **Opsi A** (KEEP + WEAK dengan Marginal IC >= 0.015 atau <= -0.015):
+
+*   **TRENDING_UP (5 KEEP + 18 WEAK/Suppressor = 23 Fitur)**:
+    *   *KEEP*: `ofi_h4_delta` (IC +0.085), `cvd_slope_h4` (IC +0.078), `funding_rate` (IC -0.078), `wyckoff_phase` (IC -0.037), `atr_zscore_20d` (IC +0.037)
+    *   *WEAK (Suppressor)*: `stochrsi_d`, `dist_liq_20x_short`, `cvd_div_h4`, `vol_spike_zscore`, `price_in_range`, `ema_7_h1`, `VAL`, `atr_14_h1`, `dow_cos`, `VAH`, `cvd_momentum_adv`, `sell_volume`, `whale_retail_divergence`, `h4_trend`, `log_ret_20`, `price_accel_1h`, `rsi_slope_h4`, `ofi_acceleration`
+*   **TRENDING_DOWN (8 KEEP + 15 WEAK/Suppressor = 23 Fitur)**:
+    *   *KEEP*: `cvd_slope_h4` (IC +0.090), `ofi_h4_delta` (IC +0.085), `wyckoff_phase` (IC -0.048), `stochrsi_d` (IC +0.026), `ema_21_slope_h4` (IC +0.024), `trend_accel_4h` (IC +0.023), `PDH` (IC -0.023), `ema_50_h1` (IC -0.022)
+    *   *WEAK (Suppressor)*: `cvd_div_h4`, `price_in_range`, `h4_trend`, `cvd_momentum_adv`, `swing_momentum`, `PWH`, `cvd`, `dow_sin`, `whale_retail_divergence`, `log_ret_20`, `atr_percentile_h1`, `ofi_acceleration`, `PWL`, `ema_200_h1`, `long_short_ratio`
+
+### B. Hasil Training (`04_train_lgbm_trending.py`)
+*   **LGBM_TRENDING_UP**: 88,039 baris data, 8-fold purged CV. Avg best iteration: **77**.
+*   **LGBM_TRENDING_DOWN**: 199,127 baris data, 8-fold purged CV. Avg best iteration: **50**.
+*   File disimpan di `models/runs/lgbm_trending_v1/` dan disalin ke root `models/` sebagai active baseline.
+
+### C. Hasil Backtest Holdout (OOS: 2025-11-01 - 2026-04-01, 21 Koin, Leverage 5x)
+Perbandingan di bawah ini telah **dinormalisasi ke modal yang sama yaitu $10.0 USD per trade**:
+
+| Metrik | Baseline (Model Global) | Spesialis Trending (`lgbm_trending_v1`) | Perubahan |
+| :--- | :---: | :---: | :---: |
+| **Total Net Profit** | **$ +755.80** | **$ +740.86** | **-$14.94** (Hampir setara) |
+| **Overall Win Rate** | 59.55% | **65.52%** | **+5.97 pp** (Akurasi naik) |
+| **Max Drawdown (5x)** | 124.93% (Margin Call) | **62.88%** | **-62.05 pp** (Risiko dipotong setengah) |
+| **Sharpe Ratio** | 3.99 | **5.59** | **+1.60** (Efisiensi volatilitas naik) |
+| **Profit Factor** | 1.62 | **2.43** | **+0.81** (Rasio win/loss membaik) |
+| **Total Trades** | 6,251 | 2,281 | **-63.5%** (Hemat trading fee & slippage) |
+| **Worst Single Trade** | -30.70% | **-24.70%** | **+6.00 pp** (Mengurangi risiko ekstrim) |
+
+**Kesimpulan**: Model spesialis baru berhasil menyamai profit baseline lama dengan **memangkas 63.5% jumlah perdagangan** dan **memotong drawdown setengahnya**. Ini memberikan kualitas trading yang jauh lebih efisien, meminimalkan trading fee, serta menyelamatkan akun dari potensi liquidation / margin call saat trending pasar terjadi.
+
+---
+
 ## 2026-06-07 — Deploy Final + Positioning Data Mining + LSTM V3 Complete
 
 ### Latar Belakang

@@ -1,66 +1,75 @@
 {
-  "active": "cascade_v3.1",
-  "architecture": "3-Model Cascade (LGBM \u2192 LSTM \u2192 Guardian v3) + Hybrid Swing/ATR TP/SL",
-  "confidence_threshold_entry": 0.65,
+  "active": "ic32_regime_v1",
+  "deployed_to_production": true,
+  "architecture": "LGBM ic32 (33 feat) + LSTM H1 survival filter + FLIP alignment + Guardian clean_v2",
+  "last_updated": "2026-06-08",
+
   "models": {
-    "lgbm": {
+    "lgbm_ic32_regime_v1": {
       "role": "Entry Signal Generator (3-class: SHORT/FLAT/LONG)",
-      "n_features": 93,
-      "threshold_long": 0.65,
-      "threshold_short": 0.65,
-      "class_weights": {
-        "SHORT": 3.0,
-        "FLAT": 1.5,
-        "LONG": 3.0
-      }
+      "n_features": 33,
+      "features": "32 IC-test KEEP + HMM argmax regime",
+      "run_dir": "models/runs/ic32_regime_v1/",
+      "threshold_long": 0.69,
+      "threshold_short": 0.59,
+      "confidence_threshold_entry": 0.59,
+      "class_weights": { "SHORT": 3.0, "FLAT": 1.5, "LONG": 3.0 }
     },
-    "lstm": {
-      "role": "Confirmation Vote (soft adjustment)",
-      "seq_len": 16,
+    "lstm_h1_survival": {
+      "role": "Soft survival filter (hard_consensus mode)",
+      "seq_len": 32,
       "hidden": 128,
       "layers": 2,
+      "contribution": "MARGINAL — near 0 trade impact. HMM Gate ON vs OFF = 0 trade changes.",
+      "recommendation": "DEACTIVATE in next iteration",
       "adjust_mode": "hard_consensus",
       "agree_boost": 0.05,
-      "neutral_pen": 0.05,
-      "opposite_pen": 0.99
+      "neutral_pen": 0.00,
+      "opposite_pen": 0.65
     },
-    "guardian_v3": {
+    "guardian_clean_v2": {
       "role": "Dynamic Exit (per-bar: HOLD/PARTIAL_EXIT/FULL_EXIT)",
-      "features": "93 static + 7 dynamic",
+      "run_dir": "models/runs/ic32_guardian_clean_v2/",
+      "features": "34 static (32 KEEP + 10 REDUNDANT via non-linear) + 7 dynamic",
       "classes": "0=HOLD, 1=PARTIAL_EXIT(50%), 2=FULL_EXIT",
       "threshold": 0.65,
-      "min_hold_bars": 3,
-      "activation_atr": 1.5
-    },
-    "cascade_v3.1": {
-      "status": "REVOKED",
-      "revoked_date": "2026-06-04",
-      "revoke_reason": "Data leakage terdeteksi: holdout split, feature engineering, Guardian training",
-      "trained_date": null,
-      "winrate": null,
-      "trade_per_month": null,
-      "pnl_lev5x": null,
-      "max_drawdown": null,
-      "sharpe_ratio": null,
-      "sortino_ratio": null,
-      "calmar_ratio": null,
-      "profit_factor": null,
-      "max_consecutive_loss": null
+      "min_hold_bars": 2,
+      "activation_atr": 0.0
     }
   },
-  "tp_sl": {
-    "mode": "Hybrid H4 Swing + ATR Fallback (non-ML)",
-    "hybrid": true,
-    "tp_fallback_atr": 2.0,
-    "sl_fallback_atr": 1.5,
-    "min_rr": 0.45
+
+  "active_features": {
+    "flip_alignment": true,
+    "regime_aware_alignment": true,
+    "trend_alignment_enabled": false,
+    "positioning_engine": true,
+    "positioning_size_multiplier": 0.50,
+    "hmm_gate_lstm": true
   },
+
+  "holdout_scorecard_nov2025_apr2026": {
+    "period": "Nov 2025 - Apr 2026",
+    "coins": 21,
+    "total_trades": 2434,
+    "trades_per_month": 487,
+    "win_rate_pct": 67.5,
+    "net_pnl_usd": 848,
+    "pnl_per_trade_usd": 0.35,
+    "profit_factor": 2.54,
+    "max_drawdown_pct": 15,
+    "max_consecutive_loss": 22,
+    "avg_hold_bars": 9.6
+  },
+
   "removed": [
-    "h4_lgbm (AUC 0.55, near-random)",
-    "stacked_ensemble (degradasi sinyal)",
-    "tp_sl_regressor (SL R\u00b2=0.05, all approaches degraded)",
-    "lstm_flat_review (WR 39%, killed 78%\u219257%)"
+    "cascade_v3.1 (REVOKED: data leakage)",
+    "cascade_v2.5_hybrid (50+ scenario sweeps, superseded by ic32)",
+    "LSTM momentum 3-class v1-v6 (plateau F1 0.41)",
+    "Regime router with trend LGBM (FAILED in genuine WFV)",
+    "LogReg meta-combiner (AUC 0.50)",
+    "Meta-labeling with positioning (degraded AUC)",
+    "Kelly sizing (amplifies losses)"
   ],
-  "active_research": "cascade_v2.5_hybrid",
-  "last_updated": "2026-06-01"
+
+  "next_architecture": "ic32_professional_v2 — Structural Trigger + LGBM + TradingLSTM 32-seq + Consensus Fusion. See swint_tradev2/professional_trader_architecture.md"
 }

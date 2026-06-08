@@ -1,0 +1,148 @@
+"""Test dual-model: Swing LGBM + IC38 Momentum LGBM + HMM selector."""
+import sys, json, joblib, numpy as np, pandas as pd
+from pathlib import Path
+ROOT = Path(__file__).parent.parent; sys.path.insert(0, str(ROOT))
+
+from config import MODEL_DIR, HOLDOUT_DIR, TRAINING_COINS, LABEL_MAP
+from config import (
+    MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE, SLIPPAGE_PER_SIDE,
+    MAX_HOLDING_BARS, SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
+    TP_SL_FALLBACK_TP, TP_SL_FALLBACK_SL, GUARDIAN_EXIT_THRESHOLD, GUARDIAN_DYNAMIC_FEATURES,
+)
+from pipeline.backtest_utils import compute_guardian_static_array, hierarchical_predict
+from core.evaluator import simulate_trades_swing
+import pipeline.backtest_utils as btu
+
+btu.SMART_ENTRY_MODE = 'disabled'; btu.LSTM_CONFIRMATION_ENABLED = False
+btu.LSTM_FLAT_REVIEW_ENABLED = False
+
+# Load models
+swing_lgbm = joblib.load(MODEL_DIR / 'lgbm_baseline.pkl')
+mom_lgbm = joblib.load(MODEL_DIR / 'runs/momentum_ic38/lgbm.pkl')
+swing_feats = json.load(open(MODEL_DIR / 'feature_cols_v2.json'))
+mom_feats = json.load(open(MODEL_DIR / 'runs/momentum_ic38/feature_cols.json'))
+
+guardian = joblib.load(MODEL_DIR / 'guardian_best.pkl')
+g_scaler = joblib.load(MODEL_DIR / 'guardian_scaler.pkl')
+g_feats = json.load(open(MODEL_DIR / 'guardian_feature_cols.json'))
+g_static = [c for c in g_feats if c not in set(GUARDIAN_DYNAMIC_FEATURES)]
+lstm_feat_cols = json.load(open(MODEL_DIR / 'feature_cols_lstm_temporal.json'))
+NON_FEATURE_COLS = {'label', 'h4_swing_high', 'h4_swing_low'}
+
+all_data = {}
+for coin in TRAINING_COINS[:10]:
+    path = HOLDOUT_DIR / 'labeled' / f'{coin}_features_v3.parquet'
+    rp = HOLDOUT_DIR / 'labeled' / f'{coin}_regime_h1.parquet'
+    if not path.exists(): continue
+    df = pd.read_parquet(path).sort_index()
+    if rp.exists():
+        reg = pd.read_parquet(rp)
+        if 'hmm_regime_enc' in df.columns: df = df.drop(columns=['hmm_regime_enc'])
+        df = df.join(reg[['hmm_regime_enc']], how='left')
+        df['hmm_regime_enc'] = df['hmm_regime_enc'].fillna(1).astype('int32')
+    for c in mom_feats:
+        if c not in df.columns: df[c] = 0.0
+    mask = df['label'].astype(str).isin(LABEL_MAP); df = df[mask].copy()
+    if len(df) >= 50: all_data[coin] = df
+
+def run(label, mode):
+    """mode: 'swing', 'momentum', 'dual_switch', 'dual_vote'"""
+    all_trades = []
+    for coin, df in all_data.items():
+        n = len(df)
+        # Build X for both models
+        X_sw = np.zeros((n, len(swing_feats)))
+        for i, col in enumerate(swing_feats):
+            if col in df.columns: X_sw[:, i] = df[col].ffill().fillna(0).values
+        X_mo = np.zeros((n, len(mom_feats)))
+        for i, col in enumerate(mom_feats):
+            if col in df.columns: X_mo[:, i] = df[col].ffill().fillna(0).values
+
+        # Swing prediction
+        yp_sw, cf_sw = hierarchical_predict(None, swing_lgbm, None, None, X_sw, swing_feats, [], df,
+                                              trend_alignment_enabled=True)
+        # Momentum prediction
+        gbm = mom_lgbm.feature_name_
+        Xp_mo = np.zeros((n, len(gbm)), dtype=np.float64)
+        for i, col in enumerate(gbm):
+            if col in df.columns: Xp_mo[:, i] = df[col].ffill().fillna(0).values
+        proba_mo = mom_lgbm.predict_proba(Xp_mo)
+
+        yp = np.ones(n, dtype=np.int64); cf = np.full(n, 0.5)
+
+        for i in range(n):
+            regime = int(df['hmm_regime_enc'].iloc[i])
+            h4_t = df['h4_trend'].iloc[i] if 'h4_trend' in df.columns else 0
+            sw_dir, sw_conf = yp_sw[i], cf_sw[i]
+            mo_dir = int(np.argmax(proba_mo[i]))
+            mo_conf = float(np.max(proba_mo[i]))
+
+            if mode == 'swing':
+                yp[i] = sw_dir; cf[i] = sw_conf
+
+            elif mode == 'momentum':
+                if mo_dir != 1 and mo_conf >= 0.59:
+                    yp[i] = mo_dir; cf[i] = mo_conf
+
+            elif mode == 'dual_switch':
+                # HMM switch: ranging -> swing, trending -> momentum
+                if regime in [1, 2]:  # RANGING
+                    yp[i] = sw_dir; cf[i] = sw_conf
+                else:  # TRENDING
+                    if mo_dir != 1 and mo_conf >= 0.55:  # Lower threshold for momentum
+                        yp[i] = mo_dir; cf[i] = mo_conf
+                    else:
+                        yp[i] = sw_dir; cf[i] = sw_conf  # fallback
+
+            elif mode == 'dual_boost':
+                # Swing primary, momentum boosts confidence when aligned
+                yp[i] = sw_dir; cf[i] = sw_conf
+                if sw_dir == 2 and mo_dir == 2:  # Both LONG/BULLISH
+                    cf[i] += 0.05
+                elif sw_dir == 0 and mo_dir == 0:  # Both SHORT/BEARISH
+                    cf[i] += 0.05
+                elif sw_dir != 1 and mo_dir != 1 and sw_dir != mo_dir:  # Opposite
+                    cf[i] -= 0.03
+
+        below = (yp != 1) & (cf < 0.59); yp[below] = 1
+        Xg = compute_guardian_static_array(df, g_static)
+        atr = df['atr_14_h1'].values if 'atr_14_h1' in df.columns else np.ones(n)
+        close = df['close'].values; high = df['high'].values if 'high' in df.columns else close
+        low = df['low'].values if 'low' in df.columns else close
+        sh = df['h4_swing_high'].values if 'h4_swing_high' in df.columns else np.full(n, np.nan)
+        sl = df['h4_swing_low'].values if 'h4_swing_low' in df.columns else np.full(n, np.nan)
+
+        r = simulate_trades_swing(
+            y_pred=yp, close=close, high=high, low=low, atr=atr,
+            h4_swing_highs=sh, h4_swing_lows=sl,
+            modal=MODAL_PER_TRADE, leverage=LEVERAGE_SIM[0],
+            fee_per_side=FEE_PER_SIDE, slippage=SLIPPAGE_PER_SIDE,
+            max_hold=MAX_HOLDING_BARS, min_rr=SWING_LABEL_MIN_RR, min_tp_atr=SWING_LABEL_MIN_TP,
+            max_sl_atr=SWING_LABEL_MAX_SL,
+            tp_fallback_atr=TP_SL_FALLBACK_TP, sl_fallback_atr=TP_SL_FALLBACK_SL,
+            confidence=cf, guardian_enabled=True,
+            guardian_model=guardian, guardian_scaler=g_scaler,
+            X_guardian=Xg, guardian_exit_threshold=GUARDIAN_EXIT_THRESHOLD,
+            guardian_min_hold_bars=2,
+        )
+        for t in r.get('trades', []): t['coin'] = coin
+        all_trades.extend(r.get('trades', []))
+
+    n = len(all_trades); wins = [t for t in all_trades if t.get('net_pnl', 0) > 0]
+    wr = len(wins)/n*100 if n else 0; pnl = sum(t.get('net_pnl', 0) for t in all_trades)
+    gw = sum(t.get('net_pnl', 0) for t in wins)
+    gl = abs(sum(t.get('net_pnl', 0) for t in all_trades if t.get('net_pnl', 0) <= 0))
+    pf = gw/gl if gl > 0 else float('inf')
+    lt = [t for t in all_trades if t.get('direction') == 'LONG']
+    st = [t for t in all_trades if t.get('direction') == 'SHORT']
+    lwr = len([t for t in lt if t.get('net_pnl', 0) > 0])/len(lt)*100 if lt else 0
+    swr = len([t for t in st if t.get('net_pnl', 0) > 0])/len(st)*100 if st else 0
+    print(f'{label:<30} {n:>5} {wr:>5.1f}% {lwr:>5.1f}% {swr:>5.1f}% {pnl:>8.1f} {pf:>6.2f}')
+
+print('DUAL-MODEL: Swing + IC38 Momentum (10 coins, holdout)')
+print(f'{"Mode":<30} {"Trades":>5} {"WR%":>5} {"L_WR%":>5} {"S_WR%":>5} {"PnL":>8} {"PF":>6}')
+print('-' * 70)
+run('SWING only (baseline)', 'swing')
+run('MOMENTUM only', 'momentum')
+run('DUAL: HMM switch', 'dual_switch')
+run('DUAL: Swing + Mom boost', 'dual_boost')

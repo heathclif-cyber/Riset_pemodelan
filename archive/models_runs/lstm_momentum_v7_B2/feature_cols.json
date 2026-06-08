@@ -1,0 +1,22 @@
+[
+  "log_ret_1",
+  "log_ret_5",
+  "log_ret_20",
+  "rsi_6",
+  "rsi_h4",
+  "h4_trend",
+  "trend_strength",
+  "ema_21_slope_h4",
+  "ema_50_slope_h4",
+  "price_vs_ema_50_h4",
+  "cvd",
+  "cvd_momentum_adv",
+  "volume_delta",
+  "Buy_Liq",
+  "Sell_Liq",
+  "whale_retail_divergence",
+  "adx_14",
+  "plus_di_14",
+  "minus_di_14",
+  "adx_slope"
+]

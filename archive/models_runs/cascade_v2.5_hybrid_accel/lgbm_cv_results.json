@@ -1,0 +1,425 @@
+{
+  "run_id": "cascade_v2.5_hybrid_accel",
+  "coins": [
+    "BTCUSDT",
+    "SOLUSDT",
+    "ETHUSDT",
+    "BNBUSDT",
+    "XRPUSDT",
+    "DOGEUSDT",
+    "TONUSDT",
+    "ADAUSDT",
+    "TRXUSDT",
+    "1000SHIBUSDT",
+    "AVAXUSDT",
+    "LINKUSDT",
+    "DOTUSDT",
+    "SUIUSDT",
+    "POLUSDT",
+    "NEARUSDT",
+    "1000PEPEUSDT",
+    "TAOUSDT",
+    "ARBUSDT",
+    "HBARUSDT",
+    "ONDOUSDT"
+  ],
+  "n_folds": 8,
+  "gap_bars": 20,
+  "best_fold": 8,
+  "best_f1_macro": 0.6333,
+  "mean_f1_macro": 0.6069,
+  "std_f1_macro": 0.0242,
+  "mean_accuracy": 0.7715,
+  "lgbm_params": {
+    "objective": "multiclass",
+    "num_class": 3,
+    "n_estimators": 1000,
+    "learning_rate": 0.05,
+    "max_depth": 6,
+    "num_leaves": 31,
+    "min_child_samples": 50,
+    "subsample": 0.8,
+    "colsample_bytree": 0.8,
+    "verbose": -1,
+    "n_jobs": -1,
+    "random_state": 42,
+    "device_type": "cpu",
+    "gpu_platform_id": 0,
+    "gpu_device_id": 0
+  },
+  "final_retrain_n_estimators": 779,
+  "feature_cols": [
+    "dist_liq_50x_long",
+    "dist_liq_50x_short",
+    "dist_liq_20x_long",
+    "fear_greed",
+    "atr_percent_h4",
+    "dist_liq_20x_short",
+    "cvd_slope_h4",
+    "dist_from_8h_high",
+    "Buy_Liq",
+    "funding_rate",
+    "PWL",
+    "open_interest",
+    "Sell_Liq",
+    "PWH",
+    "dist_swing_low",
+    "dow_sin",
+    "atr_zscore_20d",
+    "PDL",
+    "ofi_h4_delta",
+    "log_ret_20",
+    "atr_percentile_h1",
+    "absorption_at_swing",
+    "PDH",
+    "cvd",
+    "dist_swing_high",
+    "ema_200_h1",
+    "whale_retail_divergence",
+    "log_ret_5",
+    "dow_cos",
+    "btc_dominance",
+    "trend_strength",
+    "bars_since_BOS",
+    "VAH",
+    "stochrsi_k",
+    "stochrsi_d",
+    "rsi_slope_h4",
+    "vwdp_smooth",
+    "POC",
+    "relative_strength_z",
+    "cvd_div_h4",
+    "VAL",
+    "cvd_momentum_adv",
+    "range_expansion_h4",
+    "ema_7_h1",
+    "hour_sin",
+    "trend_accel_4h",
+    "hour_cos",
+    "ema_21_slope_h4",
+    "swing_momentum",
+    "funding_price_div",
+    "atr_14_h1",
+    "rsi_h4",
+    "ema_50_slope_h4",
+    "rsi_6",
+    "price_in_range",
+    "relative_strength_momentum",
+    "vol_spike_zscore",
+    "atr_14_h4",
+    "absorption_z",
+    "ema_21_h1",
+    "Fib_786",
+    "time_to_funding_norm",
+    "log_ret_1",
+    "long_short_ratio",
+    "ofi_z_score",
+    "vol_ratio_20",
+    "spread_to_volume",
+    "Fib_618",
+    "ema_50_h1",
+    "effort_vs_result",
+    "open",
+    "vol_price_confirm",
+    "high",
+    "ofi_acceleration",
+    "vol_efficiency",
+    "vol_regime",
+    "ema_200_h4",
+    "low",
+    "buy_volume",
+    "close",
+    "price_vs_ema_50_h4",
+    "market_session",
+    "volume",
+    "volume_delta",
+    "vwdp",
+    "ema_7_h4",
+    "ofi_raw",
+    "price_accel_1h",
+    "ofi_momentum_ratio",
+    "vol_accel_3h"
+  ],
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 51361,
+      "n_val": 71715,
+      "best_iteration": 207,
+      "train_accuracy": 0.8686,
+      "train_f1_macro": 0.8035,
+      "train_f1_weighted": 0.8707,
+      "train_f1_SHORT": 0.7487,
+      "train_f1_FLAT": 0.9213,
+      "train_f1_LONG": 0.7405,
+      "accuracy": 0.7448,
+      "f1_macro": 0.5653,
+      "f1_weighted": 0.747,
+      "f1_SHORT": 0.433,
+      "f1_FLAT": 0.8763,
+      "f1_LONG": 0.3866,
+      "confusion_matrix": [
+        [
+          4852,
+          2657,
+          1884
+        ],
+        [
+          4472,
+          45043,
+          2384
+        ],
+        [
+          3695,
+          3208,
+          3520
+        ]
+      ]
+    },
+    {
+      "fold": 2,
+      "n_train": 123256,
+      "n_val": 78722,
+      "best_iteration": 180,
+      "train_accuracy": 0.8164,
+      "train_f1_macro": 0.7072,
+      "train_f1_weighted": 0.8191,
+      "train_f1_SHORT": 0.5857,
+      "train_f1_FLAT": 0.9002,
+      "train_f1_LONG": 0.6358,
+      "accuracy": 0.7526,
+      "f1_macro": 0.5727,
+      "f1_weighted": 0.7539,
+      "f1_SHORT": 0.3266,
+      "f1_FLAT": 0.8782,
+      "f1_LONG": 0.5132,
+      "confusion_matrix": [
+        [
+          2671,
+          3406,
+          4738
+        ],
+        [
+          1723,
+          49009,
+          6706
+        ],
+        [
+          1146,
+          1760,
+          7563
+        ]
+      ]
+    },
+    {
+      "fold": 3,
+      "n_train": 202218,
+      "n_val": 79212,
+      "best_iteration": 868,
+      "train_accuracy": 0.888,
+      "train_f1_macro": 0.8267,
+      "train_f1_weighted": 0.8898,
+      "train_f1_SHORT": 0.77,
+      "train_f1_FLAT": 0.9346,
+      "train_f1_LONG": 0.7754,
+      "accuracy": 0.7667,
+      "f1_macro": 0.6081,
+      "f1_weighted": 0.7728,
+      "f1_SHORT": 0.4552,
+      "f1_FLAT": 0.8886,
+      "f1_LONG": 0.4806,
+      "confusion_matrix": [
+        [
+          5010,
+          2678,
+          3267
+        ],
+        [
+          3366,
+          49969,
+          4079
+        ],
+        [
+          2682,
+          2408,
+          5753
+        ]
+      ]
+    },
+    {
+      "fold": 4,
+      "n_train": 281710,
+      "n_val": 79370,
+      "best_iteration": 986,
+      "train_accuracy": 0.8786,
+      "train_f1_macro": 0.81,
+      "train_f1_weighted": 0.8807,
+      "train_f1_SHORT": 0.7465,
+      "train_f1_FLAT": 0.9308,
+      "train_f1_LONG": 0.7526,
+      "accuracy": 0.7605,
+      "f1_macro": 0.6131,
+      "f1_weighted": 0.768,
+      "f1_SHORT": 0.4892,
+      "f1_FLAT": 0.8803,
+      "f1_LONG": 0.47,
+      "confusion_matrix": [
+        [
+          6013,
+          2812,
+          2949
+        ],
+        [
+          4058,
+          48969,
+          4066
+        ],
+        [
+          2740,
+          2382,
+          5381
+        ]
+      ]
+    },
+    {
+      "fold": 5,
+      "n_train": 361340,
+      "n_val": 94528,
+      "best_iteration": 1000,
+      "train_accuracy": 0.8623,
+      "train_f1_macro": 0.7829,
+      "train_f1_weighted": 0.8649,
+      "train_f1_SHORT": 0.7112,
+      "train_f1_FLAT": 0.9232,
+      "train_f1_LONG": 0.7144,
+      "accuracy": 0.7655,
+      "f1_macro": 0.6033,
+      "f1_weighted": 0.771,
+      "f1_SHORT": 0.4741,
+      "f1_FLAT": 0.8857,
+      "f1_LONG": 0.45,
+      "confusion_matrix": [
+        [
+          6725,
+          3444,
+          3359
+        ],
+        [
+          4770,
+          59926,
+          4191
+        ],
+        [
+          3344,
+          3060,
+          5709
+        ]
+      ]
+    },
+    {
+      "fold": 6,
+      "n_train": 456128,
+      "n_val": 98446,
+      "best_iteration": 1000,
+      "train_accuracy": 0.8483,
+      "train_f1_macro": 0.7586,
+      "train_f1_weighted": 0.8512,
+      "train_f1_SHORT": 0.6798,
+      "train_f1_FLAT": 0.9166,
+      "train_f1_LONG": 0.6794,
+      "accuracy": 0.7888,
+      "f1_macro": 0.6326,
+      "f1_weighted": 0.7922,
+      "f1_SHORT": 0.5018,
+      "f1_FLAT": 0.8983,
+      "f1_LONG": 0.4978,
+      "confusion_matrix": [
+        [
+          6961,
+          3470,
+          3023
+        ],
+        [
+          4090,
+          64140,
+          4006
+        ],
+        [
+          3237,
+          2963,
+          6556
+        ]
+      ]
+    },
+    {
+      "fold": 7,
+      "n_train": 554894,
+      "n_val": 111162,
+      "best_iteration": 994,
+      "train_accuracy": 0.8398,
+      "train_f1_macro": 0.7412,
+      "train_f1_weighted": 0.8429,
+      "train_f1_SHORT": 0.6546,
+      "train_f1_FLAT": 0.9139,
+      "train_f1_LONG": 0.6551,
+      "accuracy": 0.7931,
+      "f1_macro": 0.6265,
+      "f1_weighted": 0.7963,
+      "f1_SHORT": 0.492,
+      "f1_FLAT": 0.9041,
+      "f1_LONG": 0.4833,
+      "confusion_matrix": [
+        [
+          7349,
+          3744,
+          4076
+        ],
+        [
+          4067,
+          73711,
+          4587
+        ],
+        [
+          3292,
+          3232,
+          7104
+        ]
+      ]
+    },
+    {
+      "fold": 8,
+      "n_train": 666376,
+      "n_val": 118009,
+      "best_iteration": 997,
+      "train_accuracy": 0.8354,
+      "train_f1_macro": 0.7312,
+      "train_f1_weighted": 0.8387,
+      "train_f1_SHORT": 0.6436,
+      "train_f1_FLAT": 0.9126,
+      "train_f1_LONG": 0.6374,
+      "accuracy": 0.8002,
+      "f1_macro": 0.6333,
+      "f1_weighted": 0.8037,
+      "f1_SHORT": 0.5216,
+      "f1_FLAT": 0.9053,
+      "f1_LONG": 0.473,
+      "confusion_matrix": [
+        [
+          8700,
+          3665,
+          2950
+        ],
+        [
+          5267,
+          79156,
+          4129
+        ],
+        [
+          4077,
+          3492,
+          6573
+        ]
+      ]
+    }
+  ]
+}

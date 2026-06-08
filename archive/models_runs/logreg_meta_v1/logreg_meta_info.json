@@ -1,0 +1,25 @@
+{
+  "features": [
+    "hmm_regime_enc",
+    "lgbm_confidence",
+    "lstm_support",
+    "is_with_trend",
+    "oi_zscore",
+    "fear_greed_zscore",
+    "is_trending"
+  ],
+  "n_samples": 12694,
+  "good_rate": 52.16637781629117,
+  "cv_auc_mean": 0.49932110453089623,
+  "cv_auc_std": 0.018426700296725926,
+  "coefficients": {
+    "hmm_regime_enc": -0.06509793318518943,
+    "lgbm_confidence": 0.06301448211088917,
+    "lstm_support": 2.672412825206102e-15,
+    "is_with_trend": -0.0014038485815001055,
+    "oi_zscore": 0.004570076049303621,
+    "fear_greed_zscore": -0.05809930492482618,
+    "is_trending": -0.0019659483629300414
+  },
+  "intercept": 0.08696811056775829
+}

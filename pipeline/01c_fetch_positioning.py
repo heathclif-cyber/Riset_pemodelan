@@ -227,6 +227,211 @@ def fetch_all_macro():
     _mark_macro_fetched()
 
 
+# ─── Backfill Historical Macro Data ─────────────────────────────────────────
+
+def backfill_fear_greed():
+    """Fetch ALL historical Fear & Greed data (Dec 2020 -> now)."""
+    print(f"\n  --- BACKFILL Fear & Greed ---")
+    try:
+        resp = requests.get(f"{FNG_BASE}/fng/?limit=2000", timeout=15)
+        if resp.status_code == 200:
+            items = resp.json()["data"]
+            rows = []
+            for item in items:
+                ts = datetime.fromtimestamp(int(item["timestamp"]), tz=timezone.utc)
+                rows.append({
+                    "timestamp": ts,
+                    "fear_greed_value": int(item["value"]),
+                    "fear_greed_class": item["value_classification"],
+                })
+            new_df = pd.DataFrame(rows).set_index("timestamp").sort_index()
+            n = update_parquet(MACRO_DIR / "fear_greed.parquet", new_df)
+            print(f"  Fear&Greed: {len(rows)} total points | {new_df.index[0].date()} -> {new_df.index[-1].date()} | -> {n} saved")
+            return True
+    except Exception as e:
+        print(f"  Fear&Greed backfill FAIL: {e}")
+    return False
+
+
+def backfill_coingecko_btc():
+    """
+    Fetch BTC historical market data from CoinGecko (daily).
+    Free API: up to 365 days. We fetch the full year.
+    """
+    print(f"\n  --- BACKFILL CoinGecko BTC History ---")
+    # We can get daily data for last 365 days from free API
+    # For longer history, need to call with different parameters
+    ranges = [
+        ("365d", 365),
+    ]
+    all_rows = []
+    try:
+        for label, days_val in ranges:
+            url = f"{COINGECKO_BASE}/coins/bitcoin/market_chart?vs_currency=usd&days={days_val}&interval=daily"
+            resp = requests.get(url, timeout=30)
+            if resp.status_code == 200:
+                data = resp.json()
+                prices = data.get("prices", [])
+                market_caps = data.get("market_caps", [])
+                total_volumes = data.get("total_volumes", [])
+
+                mc_map = {ts: v for ts, v in market_caps} if market_caps else {}
+                vol_map = {ts: v for ts, v in total_volumes} if total_volumes else {}
+
+                for ts_ms, price in prices:
+                    dt = datetime.fromtimestamp(ts_ms / 1000, tz=timezone.utc)
+                    all_rows.append({
+                        "timestamp": dt,
+                        "btc_price_usd": float(price),
+                        "btc_market_cap_usd": float(mc_map.get(ts_ms, 0)),
+                        "btc_total_volume_usd": float(vol_map.get(ts_ms, 0)),
+                    })
+                print(f"  CoinGecko {label}: {len(prices)} points")
+            else:
+                print(f"  CoinGecko {label}: HTTP {resp.status_code}")
+            time.sleep(1.5)  # Rate limit
+
+        if all_rows:
+            new_df = pd.DataFrame(all_rows).set_index("timestamp").sort_index()
+            new_df = new_df[~new_df.index.duplicated(keep="last")]
+            n = update_parquet(MACRO_DIR / "coingecko_btc_history.parquet", new_df)
+            print(f"  BTC History: {len(all_rows)} total points | {new_df.index[0].date()} -> {new_df.index[-1].date()} | -> {n} saved")
+            return True
+    except Exception as e:
+        print(f"  CoinGecko backfill FAIL: {e}")
+    return False
+
+
+# ─── Yahoo Finance ETF Data ──────────────────────────────────────────────────
+
+YAHOO_BASE = "https://query1.finance.yahoo.com/v8/finance/chart"
+
+# BTC Spot ETF tickers (proxy for institutional flow)
+ETF_TICKERS = {
+    "IBIT": "BlackRock BTC ETF (largest, most liquid)",
+    "FBTC": "Fidelity BTC ETF",
+    "GBTC": "Grayscale BTC Trust (legacy, outflows)",
+    "ARKB": "ARK 21Shares BTC ETF",
+    "BITB": "Bitwise BTC ETF",
+    "ETHW": "Bitwise ETH ETF",  # ETH ETF proxy
+    "ETHA": "BlackRock ETH ETF",
+}
+
+
+def fetch_yahoo_etf(ticker, period="5y", interval="1d"):
+    """
+    Fetch ETF OHLCV data from Yahoo Finance.
+    period: 1d, 5d, 1mo, 3mo, 6mo, 1y, 2y, 5y, 10y, ytd, max
+    """
+    params = {
+        "period1": 0,  # auto-calc from period
+        "period2": int(datetime.now(timezone.utc).timestamp()),
+        "interval": interval,
+        "includePrePost": "false",
+        "events": "div,splits",
+    }
+    url = f"{YAHOO_BASE}/{ticker}"
+    try:
+        resp = requests.get(url, params=params, timeout=15,
+                           headers={"User-Agent": "Mozilla/5.0"})
+        if resp.status_code == 200:
+            data = resp.json()
+            result = data.get("chart", {}).get("result", [])
+            if not result:
+                return None
+            meta = result[0]["meta"]
+            quotes = result[0]["indicators"]["quote"][0]
+            timestamps = result[0]["timestamp"]
+
+            rows = []
+            for i, ts in enumerate(timestamps):
+                dt = datetime.fromtimestamp(ts, tz=timezone.utc)
+                row = {
+                    "timestamp": dt,
+                    f"{ticker}_open": float(quotes["open"][i]) if quotes["open"][i] else None,
+                    f"{ticker}_high": float(quotes["high"][i]) if quotes["high"][i] else None,
+                    f"{ticker}_low": float(quotes["low"][i]) if quotes["low"][i] else None,
+                    f"{ticker}_close": float(quotes["close"][i]) if quotes["close"][i] else None,
+                    f"{ticker}_volume": int(quotes["volume"][i]) if quotes["volume"][i] else 0,
+                }
+                rows.append(row)
+
+            if hasattr(meta, "get"):
+                print(f"  {ticker}: {meta.get('symbol','?')} | {len(rows)} bars | period={period}")
+            return rows
+        else:
+            print(f"  {ticker}: HTTP {resp.status_code}")
+    except Exception as e:
+        print(f"  {ticker} FAIL: {e}")
+    return None
+
+
+def backfill_etf_yahoo():
+    """
+    Backfill ALL historical ETF data from Yahoo Finance (free, 5y+ history).
+    Saves per-ticker to data/macro/etf_{ticker}.parquet
+    Also creates combined etf_btc_flow.parquet with key metrics.
+    """
+    print(f"\n  --- BACKFILL ETF Data (Yahoo Finance) ---")
+    all_etf_data = {}
+
+    for ticker, desc in ETF_TICKERS.items():
+        rows = fetch_yahoo_etf(ticker, period="5y", interval="1d")
+        if rows:
+            df = pd.DataFrame(rows).set_index("timestamp").sort_index()
+            df = df.dropna(how="all")
+            n = update_parquet(MACRO_DIR / f"etf_{ticker}.parquet", df)
+            all_etf_data[ticker] = df
+            print(f"  {ticker} ({desc}): {len(df)} rows saved -> {n} total | {df.index[0].date()} to {df.index[-1].date()}")
+        time.sleep(0.5)
+
+    # Build combined BTC ETF metrics
+    btc_etfs = ["IBIT", "FBTC", "GBTC", "ARKB", "BITB"]
+    combined = None
+    for ticker in btc_etfs:
+        filepath = MACRO_DIR / f"etf_{ticker}.parquet"
+        if filepath.exists():
+            df = pd.read_parquet(filepath)
+            close_col = f"{ticker}_close"
+            vol_col = f"{ticker}_volume"
+            if close_col in df.columns:
+                s = df[[close_col, vol_col]].copy()
+                s.columns = ["close", "volume"]
+                s["ticker"] = ticker
+                if combined is None:
+                    combined = s
+                else:
+                    combined = pd.concat([combined, s])
+
+    if combined is not None:
+        # Daily: sum volume across all BTC ETFs, avg price
+        daily = combined.groupby(combined.index).agg(
+            btc_etf_total_volume=("volume", "sum"),
+            btc_etf_avg_price=("close", "mean"),
+            btc_etf_tickers=("ticker", "nunique"),
+        )
+        daily["btc_etf_volume_usd"] = daily["btc_etf_avg_price"] * daily["btc_etf_total_volume"]
+        n = update_parquet(MACRO_DIR / "etf_btc_combined.parquet", daily)
+        print(f"\n  Combined BTC ETF: {len(daily)} daily rows | {daily.index[0].date()} to {daily.index[-1].date()} | -> {n} total")
+        print(f"  Avg daily volume: ${daily['btc_etf_volume_usd'].mean()/1e9:.1f}B")
+
+    return len(all_etf_data) > 0
+
+
+def backfill_all_macro():
+    """Run all macro backfills to get full historical data."""
+    now = datetime.now(timezone.utc)
+    print(f"\n{'='*55}")
+    print(f"  MACRO DATA BACKFILL | {now.strftime('%Y-%m-%d %H:%M UTC')}")
+    print(f"  Fetching ALL available historical data for training period")
+    print(f"{'='*55}")
+    backfill_fear_greed()
+    backfill_coingecko_btc()
+    backfill_etf_yahoo()
+    print(f"\n  Backfill complete. Check data/macro/ for parquet files.")
+    print(f"{'='*55}")
+
+
 def fetch_all_coins(coins):
     """Fetch positioning data for all specified coins."""
     now = datetime.now(timezone.utc)
@@ -301,11 +506,17 @@ def main():
     parser.add_argument("--coins", nargs="+", default=None)
     parser.add_argument("--macro-only", action="store_true",
                         help="Only fetch macro data (no per-coin)")
+    parser.add_argument("--backfill", action="store_true",
+                        help="Fetch ALL available historical macro data for training")
     parser.add_argument("--schedule", action="store_true",
                         help="Run every hour (per-coin hourly, macro daily)")
     args = parser.parse_args()
 
     coins = args.coins or TRAINING_COINS
+
+    if args.backfill:
+        backfill_all_macro()
+        return
 
     if args.macro_only:
         fetch_all_macro()

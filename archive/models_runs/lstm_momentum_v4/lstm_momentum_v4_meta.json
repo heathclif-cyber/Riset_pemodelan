@@ -1,0 +1,43 @@
+{
+  "run_id": "lstm_momentum_v4",
+  "model_type": "lstm_momentum_v4",
+  "label_type": "momentum_flow_v2",
+  "n_features": 21,
+  "features": [
+    "log_ret_1",
+    "log_ret_5",
+    "log_ret_20",
+    "rsi_6",
+    "rsi_h4",
+    "h4_trend",
+    "trend_strength",
+    "ema_21_slope_h4",
+    "ema_50_slope_h4",
+    "price_vs_ema_50_h4",
+    "cvd",
+    "cvd_momentum_adv",
+    "volume_delta",
+    "Buy_Liq",
+    "Sell_Liq",
+    "whale_retail_divergence",
+    "fear_greed_value",
+    "fear_greed_momentum_5d",
+    "etf_volume_zscore_20d",
+    "etf_volume_momentum_7d",
+    "etf_price_momentum_7d"
+  ],
+  "ohlcv_features": 16,
+  "macro_features": 5,
+  "percoin_z_features": [
+    "Buy_Liq",
+    "Sell_Liq",
+    "cvd",
+    "volume_delta"
+  ],
+  "seq_len": 32,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "cv_folds": 8,
+  "note": "V4: seq_len=32 (8 H4 candles) + macro features (Fear & Greed, ETF flow). Target: break OHLCV ceiling F1 > 0.44."
+}

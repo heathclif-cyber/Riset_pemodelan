@@ -93,7 +93,7 @@ TRAIN_START = datetime(2020, 1,  1,  tzinfo=timezone.utc)
 
 # Cutoff untuk training — model HANYA dilatih di data sebelum tanggal ini.
 # Pastikan = OOS_START sehingga tidak ada overlap.
-TRAIN_CUTOFF_DATE = datetime(2025, 11, 1, tzinfo=timezone.utc)
+TRAIN_CUTOFF_DATE = datetime(2026, 4, 1, tzinfo=timezone.utc)
 TRAIN_END         = TRAIN_CUTOFF_DATE   # alias — 01_fetch.py pakai TRAIN_END
 
 START_DATE = TRAIN_START
@@ -102,8 +102,8 @@ END_DATE   = TRAIN_CUTOFF_DATE
 # ── OOS / Hold-Out window ────────────────────────────────────────────────────
 # Data ini di-fetch TERPISAH ke data/holdout/raw/ via --oos flag.
 # TIDAK BOLEH tumpang tindih dengan training.
-OOS_START = TRAIN_CUTOFF_DATE           # 2025-11-01 — sama persis dengan TRAIN_END
-OOS_END   = datetime(2026, 4, 1, tzinfo=timezone.utc)
+OOS_START = TRAIN_CUTOFF_DATE           # 2026-04-01 — sama persis dengan TRAIN_END
+OOS_END   = datetime(2026, 7, 1, tzinfo=timezone.utc)  # 3 bulan OOS: Apr-Jun 2026
 
 # ─── Binance API ─────────────────────────────────────────────────────────────
 BINANCE_BASE_URL       = "https://fapi.binance.com"
@@ -243,7 +243,13 @@ LSTM_FLAT_REVIEW_ENABLED         = True   # Directional review active
 LSTM_DIRECTIONAL_REVIEW_THRESHOLD = 0.35   # Threshold baru untuk mengaktifkan LSTM review pada sinyal directional
 
 LSTM_OVERRIDE_THRESHOLD    = 0.70  # minimum LSTM confidence untuk override FLAT (masih dipakai di jalur lama)
-LSTM_CONFIRMATION_ENABLED = True   # LSTM ON — survival filter: +$292, -42% volatility di extended backtest
+LSTM_CONFIRMATION_ENABLED = True   # LSTM ON — survival filter: +$292, -42% volatility
+
+# ─── HMM Gate: LSTM hanya aktif saat TRENDING ────────────────────────────
+HMM_GATE_LSTM_ENABLED      = True   # NEW: LSTM only speaks in TRENDING (regime 0,3)
+# Rationale: LSTM momentum OOF benefit +$125 over 63 months
+# In RANGING: LSTM silent — LGBM runs solo (better WR in ranging)
+# In TRENDING: LSTM active — survival filter (reduces counter-trend entries)
 # ─── LSTM Soft Adjustment Penalties ────────────────────────────────────────────
 # Tiered / absolute penalties menggantikan relative penalty (-0.15 × h1_conf)
 # yang tidak adil untuk confidence moderate (lihat AUDIT_REPORT.md §2.4).
@@ -277,7 +283,7 @@ LSTM_BOOST_MULTIPLIER = 0.80          # seberapa kuat boost ketika aligned
 LSTM_MIN_SCORE_TO_CORRECT = 0.65      # skor minimum LSTM agar diizinkan mengoreksi/boost
 LSTM_MAX_PROB_SHIFT = 0.45            # batas maksimal pergeseran probabilitas oleh LSTM
 # LSTM Params
-LSTM_SEQ_LEN    = 16   # diturunkan dari 32 — lebih reaktif ke koreksi (32 jam → 16 jam)
+LSTM_SEQ_LEN    = 32   # V4: naik dari 16 — 32 jam (8 candle H4) untuk capture momentum cycle penuh
 LSTM_HIDDEN     = 128
 LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
@@ -533,6 +539,14 @@ TP_SL_MAX_SL_PCT         = 0.30   # max SL = 30% dari entry price
 # Trend determined by h4_trend feature (>0 = UP, <0 = DOWN, ≈0 = RANGING).
 TREND_ALIGNMENT_ENABLED  = False  # Disabled — digantikan REGIME_AWARE_ALIGNMENT
 REGIME_AWARE_ALIGNMENT   = True   # FLIP: RANGING=counter-trend (swing), TRENDING=with-trend (momentum)
+
+# ─── Positioning Engine (IC-validated, Binance public API) ──────────────────
+POSITIONING_ENGINE_ENABLED  = True  # NEW: LS extreme → size × 0.50 (|IC|=0.16)
+POSITIONING_SIZE_MULTIPLIER = 0.50   # Size reduction when LS extreme (>2σ)
+POSITIONING_LS_EXTREME_THR  = 2.0    # Z-score threshold for extreme
+# Columns from Coinank daily data (pre-computed, joined to df_slice):
+#   pos_extreme:      LS z-score > 2.0 → reduces size (IC=0.16, predicts vol)
+#   pos_ls_z20, pos_ls_d7, pos_oi_z20: for future regime bias
                                    # +$214 PnL (59% improvement) di extended backtest 63 bulan
 WITH_TREND_PENALTY       = 0.10   # penalty subtracted from confidence (2a)
 COUNTER_TREND_BOOST      = 0.05   # boost added to confidence (2b)

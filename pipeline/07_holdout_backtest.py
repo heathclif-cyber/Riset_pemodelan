@@ -318,6 +318,7 @@ def backtest_holdout_symbol(
     trailing_stop_enabled   = False,
     trailing_stop_atr       = 2.0,
     trailing_stop_min_bars  = 2,
+    model_dir               = MODEL_DIR,
 ) -> dict | None:
     path = HOLDOUT_LABEL_DIR / f"{symbol}_features_v3.parquet"
     if not path.exists():
@@ -356,6 +357,7 @@ def backtest_holdout_symbol(
     y_pred, confidence = hierarchical_predict(
         None, lgbm_model, lstm_model, lstm_scaler,
         X, feat_cols, [], df,
+        model_dir=model_dir,
     )
 
     # Confidence filter
@@ -1484,6 +1486,7 @@ def main():
                 trailing_stop_enabled=TRAILING_STOP_ENABLED,
                 trailing_stop_atr=TRAILING_STOP_ATR,
                 trailing_stop_min_bars=TRAILING_STOP_MIN_BARS,
+                model_dir=run_dir,
             )
             if report:
                 results[symbol] = report
