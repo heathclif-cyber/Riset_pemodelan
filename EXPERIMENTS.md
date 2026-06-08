@@ -1,5 +1,168 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+## 2026-06-08 — Pembersihan Repo: Arsip 265+ File Eksperimen Gagal
+
+### Latar Belakang
+
+Repo memiliki 180+ model runs, 49 pipeline scripts, 30 scratch files, dan 14 temp/debug files
+di root — sebagian besar eksperimen gagal atau sudah tidak relevan dengan model produksi
+`ic32_regime_v1`. Pembersihan masif dilakukan untuk menyisakan hanya file yang relevan.
+
+### Ringkasan Eksperimen yang Diarsipkan
+
+#### A. LSTM Momentum 3-Class (v1–v6) — ❌ GAGAL, PLATEAU
+
+| Versi | File | F1 Val | Keterangan |
+|-------|------|--------|-----------|
+| v1 | `05a_momentum_labels_v2.py` + `05b_train_lstm_momentum_v2.py` | ~0.34 | Momentum labels pertama, flow-based voting |
+| v2 | `05c_train_lstm_momentum_v3.py` | 0.407 ± 0.007 | 16 IC-validated features, 5 koin |
+| v3 | `05d_train_lstm_momentum_v4.py` | ~0.41 | Trajectory features + N=12 |
+| v4 | `05e_train_lstm_momentum_v5.py` | ~0.41 | RobustScaler + 11 feat v2 |
+| v5 | `05f_train_lstm_momentum_v6.py` | ~0.41 | Final attempt |
+| v6 | (dalam 05f) | plateau | Tidak ada improvement dari v3 |
+
+**Kesimpulan**: OHLCV telah mencapai ceiling informasi untuk prediksi momentum 3-class.
+NEUTRAL class selalu lemah (F1 ~0.22-0.30). Random baseline 0.333, gain hanya +0.074.
+**Keputusan**: Arsipkan semua 6 versi. LSTM 3-class momentum TIDAK dilanjutkan.
+
+#### B. LGBM Trending (Regime Router) — ❌ GAGAL di Genuine WFV
+
+| File | Deskripsi | Hasil |
+|------|-----------|-------|
+| `04_train_lgbm_trending.py` | Training LGBM spesialis TRENDING_UP & TRENDING_DOWN | 23 fitur IC-test per regime |
+| `04_train_trend_momentum.py` | Momentum labels untuk trending | Continuation labels ATR-based |
+| `04_train_triple_barrier_lgbm.py` | Triple barrier labeling | Ditinggalkan — bimodal issue |
+| `04_train_momentum_ic38.py` | IC test 38 fitur untuk momentum | — |
+| `04_train_momentum_lgbm.py` | LGBM momentum dedicated | — |
+| `04_train_lgbm_hmm_probs.py` | LGBM dengan 4 HMM probs | PnL -45% vs argmax |
+
+**Masalah**: Pre-trained trending models tampak +$7,747 improvement di backtest —
+tapi ini IN-SAMPLE LEAKAGE. Genuine WFV (retrain per fold) menunjukkan:
+- ROUTER overtrade 2,880 vs baseline 66 trade
+- PnL ROUTER: -$762 vs baseline -$17.80
+- Model trending tidak generalize — hanya memorisasi data training
+
+**Script validasi** (juga diarsipkan):
+- `scratch/extended_regime_router.py` — fixed trending models (in-sample)
+- `scratch/extended_regime_genuine_oof.py` — genuine OOF retrain per fold (gagal)
+- `scratch/wf_validation_genuine.py` — WFV expanding window (gagal)
+- `scratch/wfv_jan2022_21coins.py` — WFV Jan 2022 21 koin (gagal)
+- `scratch/genuine_oof_3coins.py` — 3 koin OOF (gagal)
+- `scratch/extended_oof_genuine.py` — extended OOF (gagal)
+
+**Kesimpulan**: Regime router dengan model trending TIDAK viable. Swing model
+(sekarang ic32_regime_v1) + FLIP alignment (RANGING=counter-trend, TRENDING=with-trend)
+adalah solusi superior. **Keputusan**: Arsipkan semua trending LGBM.
+
+#### C. Meta-Labeling — ❌ GAGAL (AUC 0.50)
+
+| File | Deskripsi | Hasil |
+|------|-----------|-------|
+| `08_generate_meta_labels.py` / `v2` | Generate meta-labels dari trade outcome | Walk-forward OOF labeling |
+| `09_train_lstm_meta.py` | LSTM binary meta-model (profit/loss) | AUC 0.58 → 0.594 (setelah leak fix) |
+| `09_train_meta_model.py` | LGBM meta-model | AUC di bawah LSTM |
+| `10_train_meta_positioning.py` | Meta-model + positioning features | AUC degraded 0.594 → 0.534 |
+| `12_train_logreg_meta.py` | Logistic Regression meta-combiner | **AUC 0.499 ≈ random** |
+
+**Masalah**: Meta-model bisa prediksi trade quality (AUC 0.58-0.59) tapi tidak
+bisa improve PnL saat diintegrasikan ke cascade. Akar masalah: LSTM 3-class dan
+LGBM sudah correlated → meta-model tidak menambah informasi independen.
+
+**Kesimpulan**: Konsep terbukti secara statistik (AUC > 0.50) tapi tidak
+memberikan improvement PnL. **Keputusan**: Arsipkan. Tunggu 1,000+ live trades
+untuk training meta-model yang genuine OOF.
+
+#### D. Coinank Data Fetch — ❌ DITINGGALKAN
+
+| File | Deskripsi | Alasan |
+|------|-----------|--------|
+| `02c_fetch_coinank.py` | Fetch OI/LS dari Coinank API | API key expired / limit ketat |
+| `02d_fetch_coinank_extended.py` | Extended fetch multi-timeframe | Data tidak lengkap |
+| `02e_fetch_coinank_final.py` | Final Coinank pipeline | Abandoned |
+| `02f_fetch_free_features.py` | Free alternative features | Kualitas data buruk |
+| `scratch/ic_test_coinank.py` / `v2` | IC test fitur Coinank | IC rendah, tidak prediktif |
+| `scratch/test_coinank_auth.py` | Test autentikasi API | — |
+
+**Kesimpulan**: Coinank data tidak reliable untuk production. Digantikan oleh
+`01c_fetch_positioning.py` (Binance + Bybit public API, 4 endpoint, hourly cron).
+
+#### E. LSTM Attention & BiLSTM — ❌ TIDAK MENAMBAH VALUE
+
+| File | Deskripsi | Hasil |
+|------|-----------|-------|
+| `A1_lstm_attention.py` | LSTM + Attention mechanism | Tidak improve vs LSTM vanilla |
+| `B1_label_adx_bilstm.py` | ADX-based labels untuk BiLSTM | Label terlalu noisy |
+| `B2_adx_bilstm.py` | BiLSTM dengan ADX labels | F1 ≈ random |
+
+#### F. Eksperimen Pipeline Lainnya
+
+| File | Deskripsi | Hasil | Alasan Arsip |
+|------|-----------|-------|-------------|
+| `03b_guardian_ic_test.py` | IC test untuk Guardian features | Dynamic >> Static | Sudah di-merge ke 06b |
+| `03c_ic_decay_test.py` | IC stability di 6 window temporal | Semua 25 KEEP stabil | One-time analysis, hasil di EXPERIMENTS |
+| `03d_temporal_ic_test.py` | Half-life IC(feat_{t-k}, label_t) | 7 STRONG features identified | One-time, hasil sudah dipakai |
+| `03e_hmm_probs.py` | 4 HMM posterior probabilities | PnL -45% vs argmax | Argmax superior |
+| `03f_triple_barrier_relabel.py` | Triple barrier labeling exploration | 95% correlated dgn swing, bimodal FLAT | Ditinggalkan |
+| `03g_rr_sweep.py` | IC_IR sweep RR ratio | — | One-time sweep |
+| `03h_hybrid_relabel.py` | Hybrid swing + TB labels | Bimodal issue | Ditinggalkan |
+| `04b_logistic_baseline.py` | Logistic Regression baseline (Simon Step 4) | F1 0.347 vs random 0.333 | One-time, hasil di EXPERIMENTS |
+| `12_ic_test_per_regime.py` | IC test per HMM regime | 23 fitur trending UP/DN | One-time, hasil di EXPERIMENTS |
+| `04_train_lgbm_regimes.py` | LGBM training per regime | — | Superseded |
+
+#### G. Scratch Files — Semua Eksperimen
+
+| Kategori | File | Hasil |
+|----------|------|-------|
+| Extended backtest | `extended_2026_scorecard.py`, `extended_scorecard_v2.py` | Metrik lama, sebelum leak fix |
+| Cascade sweep | `run_sweep.py`, `run_full_sweep_49.py` | Grid sweep cascade_v2.5 |
+| Test cascade | `test_dual_mode.py`, `test_dual_model.py`, `test_flip_*.py`, `test_hmm_*.py`, `test_ic38_*.py`, `test_kelly_*.py`, `test_lstm_*.py`, `test_meta_*.py`, `test_positioning_*.py`, `test_regime_threshold.py`, `test_robustness.py`, `test_soft_lstm.py`, `test_trending_fix.py` | Semua test berbagai konfigurasi cascade |
+| Debug/verify | `check_equivalence.py`, `compare_lstm_seq_results.py`, `inspect_db.py`, `fe_live_ic_test.py` | One-time debugging |
+| Kelly sizing | `test_kelly_regime.py` | Kelly amplifies losses pada sistem tanpa edge OOF |
+| LSTM daily | `test_lstm_daily_cascade.py` | LSTM Daily integration test |
+| LogReg holdout | `test_logreg_holdout.py` | LogReg meta-model validation |
+| Positioning | `test_pos_ab.py`, `test_pos_overlap.py`, `test_hmmgate_sizemult.py`, `test_guardian_speed.py` | Positioning engine test |
+| Custom config | `test_custom_config.py`, `test_dune_query.py` | Config/Dune test |
+
+#### H. Root Temp Files
+
+Semua file temporary/debug di root dipindahkan ke `archive/root/`:
+`sweep_dualgate`, `_tmp_scorecard2`, `cekoverfitting.md`, `debug_lstm_sequences.py`,
+`integrasi_kronos.py`, `listdata.md`, `livesignal.csv`, `livetrade.csv`,
+`temp_analyze_livetrade.py`, `temp_check_data.py`, `temp_debug_data.py`,
+`temp_period_analysis.py`, `temp_save_pruned_features.py`, `verify_v2_sequences.py`.
+
+### State Setelah Pembersihan
+
+```
+Root:     6 file  (CLAUDE.md, config.py, EXPERIMENTS.md, MODEL_DEPLOYMENT_BRIDGE.md, requirements.txt, simon_methodology.md)
+Pipeline: 15 file (hanya ic32_regime_v1 + architecture plan)
+Models:   12 run dirs (ic32_*), 12 file root
+Archive:  265+ file di archive/
+```
+
+### Pelajaran dari Semua Eksperimen Gagal
+
+1. **LSTM 3-class momentum dari OHLCV tidak bisa melebihi F1 0.41** — ceiling informasi.
+   Solusi: positioning data (sedang dikumpulkan via 01c_fetch_positioning.py).
+2. **Regime-specific LGBM trending gagal di genuine WFV** — overfit di in-sample,
+   overtrade 40x di OOF. FLIP alignment (REGIME_AWARE_ALIGNMENT) lebih robust.
+3. **Meta-labeling butuh data live** — training dari simulasi backtest mengandung
+   in-sample bias. Perlu 1,000+ live trades untuk genuine OOF labels.
+4. **HMM argmax > 4 probs** — 4 probs redundan (sum to 1), PnL -45%.
+5. **LSTM H1 survival filter kontribusi ≈ 0** — HMM Gate ON vs OFF = 0 trade berubah.
+   Soft multiplier 0.70-1.30 tidak pernah dorong cross threshold karena LGBM confidence sudah tinggi.
+6. **Kelly Criterion amplifies losses** — tidak cocok untuk sistem tanpa genuine OOF edge.
+7. **Coinank data tidak reliable** — Binance/Bybit public API lebih baik.
+
+### Keputusan
+
+- [x] 265+ file diarsipkan ke `archive/`
+- [x] `model_registry.json` diperbarui: active = `ic32_regime_v1`
+- [x] `CLAUDE.md` pipeline sequence diperbarui
+- [x] Fokus pengembangan: `ic32_professional_v2` (Structural Trigger + LGBM + TradingLSTM 32-seq + Consensus Fusion)
+
+---
+
 ## 2026-06-08 — Integrasi Model Spesialis LGBM Trending (lgbm_trending_v1)
 
 ### Latar Belakang
