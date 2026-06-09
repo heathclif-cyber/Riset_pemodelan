@@ -283,13 +283,13 @@ LSTM_BOOST_MULTIPLIER = 0.80          # seberapa kuat boost ketika aligned
 LSTM_MIN_SCORE_TO_CORRECT = 0.65      # skor minimum LSTM agar diizinkan mengoreksi/boost
 LSTM_MAX_PROB_SHIFT = 0.45            # batas maksimal pergeseran probabilitas oleh LSTM
 # LSTM Params
-LSTM_SEQ_LEN    = 32   # V4: naik dari 16 — 32 jam (8 candle H4) untuk capture momentum cycle penuh
+LSTM_SEQ_LEN    = 72   # 3 hari — ETF flow berubah 3x dalam sequence window
 LSTM_HIDDEN     = 128
 LSTM_LAYERS     = 2
 LSTM_DROPOUT    = 0.3
 LSTM_EPOCHS     = 100
 LSTM_PATIENCE   = 10
-LSTM_BATCH_SIZE = 512
+LSTM_BATCH_SIZE = 2048
 LSTM_LR         = 0.001
 
 # ─── LSTM v2-style (khusus cascade_v2.5_hybrid_pruned) - Regularisasi ──────────
@@ -480,6 +480,9 @@ FEATURE_COLS_V3 = [
     "kronos_pred_return_1h", "kronos_pred_return_36h",
     "kronos_direction", "kronos_momentum", "kronos_volatility",
     "kronos_bull_prob", "kronos_range_ratio", "kronos_confidence",
+
+    # Coinank Premium Features
+    "etf_total_change_usd", "etf_gbtc_change_usd", "coinank_oi_change_24h",
 ]
 
 # ─── TP/SL Architecture (Final — tested via ASPECT_COMPARISON.md) ───────────

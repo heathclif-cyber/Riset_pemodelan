@@ -25,7 +25,6 @@ ROOT = Path(__file__).parent.parent
 sys.path.insert(0, str(ROOT))
 
 from pipeline.shared import build_purged_folds
-from core.features import triple_barrier_labeling
 from core.utils import setup_logger
 from config import (
     ALL_COINS, LABEL_DIR, MODEL_DIR,
@@ -37,37 +36,18 @@ from config import (
 
 logger = setup_logger("04_train_lgbm_regimes")
 
-# Simons 3-stage selected features
-UP_FEATS = [
-    "ofi_h4_delta", "cvd_slope_h4", "cvd_div_h4", "ema_50_h1", "stochrsi_d", 
-    "VAH", "atr_zscore_20d", "whale_retail_divergence", "ofi_acceleration", 
-    "vol_accel_3h", "vol_spike_zscore", "dist_from_8h_high", "log_ret_5", 
-    "ema_7_h1", "ema_21_h1", "atr_14_h4", "cvd", "open_interest", 
-    "vol_price_confirm", "Sell_Liq"
-]
-
-DOWN_FEATS = [
-    "ofi_h4_delta", "cvd_slope_h4", "log_ret_20", "cvd_div_h4", "cvd", 
-    "ema_21_slope_h4", "cvd_momentum_adv", "stochrsi_d", "price_in_range", 
-    "ema_21_h1", "btc_dominance", "ofi_acceleration", "log_ret_5", 
-    "vol_price_confirm", "trend_accel_4h", "dist_swing_low", "VAL", 
-    "wyckoff_phase"
-]
-
-RANGING_FEATS = [
-    "cvd_slope_h4", "ofi_h4_delta", "log_ret_20", "cvd_div_h4", "cvd", 
-    "ofi_z_score", "atr_percentile_h1", "stochrsi_d", "whale_retail_divergence", 
-    "log_ret_5", "cvd_momentum_adv", "atr_zscore_20d", "ema_200_h1", 
-    "buy_volume", "VAL", "dist_swing_high", "atr_percent_h4"
-]
-
-# Union of all selected features
-UNION_FEATS = list(dict.fromkeys(UP_FEATS + DOWN_FEATS + RANGING_FEATS))
+# Feature lists are loaded dynamically from multistage_selected_feats.json in main()
+# This avoids hardcoding and ensures features stay in sync with latest feature selection.
 
 LABEL_ORDINAL = {"SHORT": 0, "FLAT": 1, "LONG": 2}
 
 def load_data(coins: list[str]) -> pd.DataFrame:
-    """Load data features dan HMM regime dari parquet files."""
+    """Load data features dan HMM regime dari parquet files.
+    
+    Menggunakan kolom 'label' bawaan dari parquet (swing labeling oleh 03_engineer.py),
+    BUKAN re-generate triple_barrier_labeling() on-the-fly.
+    Ini konsisten dengan ic32_regime_v1 (04_train_lgbm.py).
+    """
     frames = []
     for sym in coins:
         fpath = LABEL_DIR / f"{sym}_features_v3.parquet"
@@ -89,18 +69,11 @@ def load_data(coins: list[str]) -> pd.DataFrame:
         df = df[df.index < TRAIN_CUTOFF_DATE]
         if df.empty:
             continue
+        
+        if "label" not in df.columns:
+            logger.warning(f"{sym}: no 'label' column, skip")
+            continue
             
-        # Generate triple barrier labels on the fly
-        tb_labels = triple_barrier_labeling(
-            close=df["close"],
-            high=df["high"],
-            low=df["low"],
-            atr_base=df["atr_14_h1"],
-            tp_atr_mult=2.0,
-            sl_atr_mult=1.5,
-            max_hold=36
-        )
-        df["trend_label"] = tb_labels
         df["coin"] = sym
         frames.append(df)
         
@@ -108,16 +81,18 @@ def load_data(coins: list[str]) -> pd.DataFrame:
         raise FileNotFoundError("Tidak ada data ditemukan untuk training!")
         
     combined = pd.concat(frames).sort_index()
-    combined = combined[combined["trend_label"].isin(LABEL_ORDINAL)].copy()
-    combined["label_ord"] = combined["trend_label"].map(LABEL_ORDINAL).astype(np.int32)
+    combined = combined[combined["label"].isin(LABEL_ORDINAL)].copy()
+    combined["label_ord"] = combined["label"].map(LABEL_ORDINAL).astype(np.int32)
     return combined
 
 def train_sp_model(df: pd.DataFrame, regime_enc: int | None, regime_name: str, feature_cols: list, run_dir: Path) -> lgb.LGBMClassifier:
-    """Melatih LightGBM untuk regime tertentu atau global."""
+    """Melatih LightGBM untuk regime tertentu atau global.
+    
+    Catatan: Melatih model spesifik regime hanya pada bar data regime yang sesuai.
+    """
+    X_df = df.copy()
     if regime_enc is not None:
-        X_df = df[df["hmm_regime_enc"] == regime_enc].copy()
-    else:
-        X_df = df.copy()
+        X_df = X_df[X_df["hmm_regime_enc"] == regime_enc].copy()
         
     if len(X_df) < 100:
         logger.warning(f"SKIP {regime_name} — Sampel terlalu sedikit ({len(X_df)})")
@@ -132,7 +107,7 @@ def train_sp_model(df: pd.DataFrame, regime_enc: int | None, regime_name: str, f
     for col in X.columns:
         X[col] = X[col].ffill().fillna(X[col].median()).fillna(0.0)
 
-    logger.info(f"Training Model: {regime_name} — Samples: {len(X):,} × Features: {len(X.columns)}")
+    logger.info(f"Training Model: {regime_name} (ALL TIMES) — Samples: {len(X):,} × Features: {len(X.columns)}")
     
     folds = build_purged_folds(X_df.index, n_folds=N_FOLDS, purge=PURGE_GAP_BARS)
     
@@ -198,7 +173,31 @@ def main():
     run_dir = MODEL_DIR / "runs" / args.run_id
     run_dir.mkdir(parents=True, exist_ok=True)
     
+    # Load feature lists from multi-stage feature selection results
+    feats_path = run_dir / "multistage_selected_feats.json"
+    if not feats_path.exists():
+        raise FileNotFoundError(
+            f"Feature selection belum dijalankan! File tidak ditemukan: {feats_path}\n"
+            f"Jalankan dulu: python pipeline/03c_feature_selection_multistage.py"
+        )
+    
+    with open(feats_path) as f:
+        feats = json.load(f)
+    
+    UP_FEATS = feats["up_feats"]
+    DOWN_FEATS = feats["down_feats"]
+    RANGING_LOW_FEATS = feats["ranging_low_feats"]
+    RANGING_HIGH_FEATS = feats["ranging_high_feats"]
+    GLOBAL_FEATS = feats.get("global_feats", [])
+    UNION_FEATS = list(dict.fromkeys(UP_FEATS + DOWN_FEATS + RANGING_LOW_FEATS + RANGING_HIGH_FEATS))
+    
+    # Use global_feats if available, otherwise use union
+    fallback_feats = GLOBAL_FEATS if GLOBAL_FEATS else UNION_FEATS
+    
     logger.info(f"Start Regime-Specific LGBM Training. Run ID: {args.run_id} | Dir: {run_dir}")
+    logger.info(f"Feature counts: UP={len(UP_FEATS)}, DOWN={len(DOWN_FEATS)}, "
+                f"RANGE_LOW={len(RANGING_LOW_FEATS)}, RANGE_HIGH={len(RANGING_HIGH_FEATS)}, "
+                f"GLOBAL={len(fallback_feats)}")
     
     df = load_data(ALL_COINS)
     logger.info(f"Loaded training dataset: {len(df):,} total samples.")
@@ -213,15 +212,15 @@ def main():
     
     # 3. Train RANGING_LOW_VOL (HMM State 1)
     logger.info("\n=== STEP 3: RANGING_LOW_VOL MODEL ===")
-    train_sp_model(df, 1, "RANGING_LOW_VOL", RANGING_FEATS, run_dir)
+    train_sp_model(df, 1, "RANGING_LOW_VOL", RANGING_LOW_FEATS, run_dir)
     
     # 4. Train RANGING_HIGH_VOL (HMM State 2)
     logger.info("\n=== STEP 4: RANGING_HIGH_VOL MODEL ===")
-    train_sp_model(df, 2, "RANGING_HIGH_VOL", RANGING_FEATS, run_dir)
+    train_sp_model(df, 2, "RANGING_HIGH_VOL", RANGING_HIGH_FEATS, run_dir)
     
     # 5. Train GLOBAL Fallback Model
     logger.info("\n=== STEP 5: GLOBAL FALLBACK MODEL ===")
-    train_sp_model(df, None, "GLOBAL", UNION_FEATS, run_dir)
+    train_sp_model(df, None, "GLOBAL", fallback_feats, run_dir)
     
     # Simpan metadata training
     meta = {
@@ -229,7 +228,9 @@ def main():
         "timestamp": str(datetime.now()),
         "up_feats": UP_FEATS,
         "down_feats": DOWN_FEATS,
-        "ranging_feats": RANGING_FEATS,
+        "ranging_low_feats": RANGING_LOW_FEATS,
+        "ranging_high_feats": RANGING_HIGH_FEATS,
+        "global_feats": fallback_feats,
         "union_feats": UNION_FEATS,
         "lgbm_params": LGBM_PARAMS,
     }

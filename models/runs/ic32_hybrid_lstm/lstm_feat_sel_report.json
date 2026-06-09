@@ -1,0 +1,305 @@
+{
+  "run_id": "ic32_hybrid_lstm",
+  "stage": 1,
+  "candidates": 32,
+  "thresholds": {
+    "min_ic": 0.015,
+    "min_mi": 0.003,
+    "min_marginal": 0.005
+  },
+  "keep": [
+    "dist_from_8h_high",
+    "rsi_6",
+    "ema_7_h1",
+    "etf_gbtc_change_usd",
+    "rsi_h4",
+    "log_ret_5",
+    "swing_momentum",
+    "etf_total_change_usd",
+    "stochrsi_k",
+    "dist_liq_50x_long",
+    "trend_accel_4h",
+    "price_in_range",
+    "rsi_slope_h4",
+    "stochrsi_d",
+    "dist_liq_50x_short",
+    "ofi_h4_delta",
+    "Buy_Liq",
+    "Sell_Liq",
+    "cvd_momentum_adv",
+    "long_short_ratio",
+    "volume_delta",
+    "cvd_slope_h4",
+    "ema_21_slope_h4",
+    "absorption_at_swing",
+    "h4_trend",
+    "log_ret_20",
+    "whale_retail_divergence",
+    "ofi_z_score",
+    "ofi_raw",
+    "hmm_regime_enc",
+    "vol_price_confirm"
+  ],
+  "redundant": [],
+  "weak": [
+    "vol_regime"
+  ],
+  "details": [
+    {
+      "feature": "dist_from_8h_high",
+      "sa_ic": -0.1530450182172671,
+      "t_stat": -98.20570525187509,
+      "mutual_info": 0.043751494920953427,
+      "marg_ic": -0.1530450182172671,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_6",
+      "sa_ic": -0.14302765575761966,
+      "t_stat": -91.63873061551905,
+      "mutual_info": 0.04117084119201131,
+      "marg_ic": -0.1534809022744122,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_7_h1",
+      "sa_ic": 0.13896032497032254,
+      "t_stat": 88.98068774472577,
+      "mutual_info": 0.05781932895994979,
+      "marg_ic": 0.09860641212097522,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "etf_gbtc_change_usd",
+      "sa_ic": 0.11635014988469417,
+      "t_stat": 74.28436961553247,
+      "mutual_info": 0.04843914758357304,
+      "marg_ic": 0.14412990147596136,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_h4",
+      "sa_ic": -0.11588632576036861,
+      "t_stat": -73.98419940052104,
+      "mutual_info": 0.03794979287566669,
+      "marg_ic": -0.06541789157631107,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "log_ret_5",
+      "sa_ic": -0.11474648519404922,
+      "t_stat": -73.24674375291659,
+      "mutual_info": 0.014460235031265256,
+      "marg_ic": 0.047246382448120475,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "swing_momentum",
+      "sa_ic": -0.1105070195749253,
+      "t_stat": -70.50643661683905,
+      "mutual_info": 0.008206603360503273,
+      "marg_ic": -0.017414637677717327,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "etf_total_change_usd",
+      "sa_ic": 0.11014234249545188,
+      "t_stat": 70.27090078355802,
+      "mutual_info": 0.053311501829243824,
+      "marg_ic": -0.007115263174463418,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_k",
+      "sa_ic": -0.10519850183925575,
+      "t_stat": -67.08059044696543,
+      "mutual_info": 0.022543808801456233,
+      "marg_ic": -0.04911383347548527,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "sa_ic": -0.10148050080673837,
+      "t_stat": -64.68465388375762,
+      "mutual_info": 0.025733659432178868,
+      "marg_ic": -0.054922448226700296,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "trend_accel_4h",
+      "sa_ic": -0.09677867802008688,
+      "t_stat": -61.65863584892798,
+      "mutual_info": 0.007461070103070178,
+      "marg_ic": 0.1215634809720865,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "price_in_range",
+      "sa_ic": -0.09528617988505414,
+      "t_stat": -60.69896929488422,
+      "mutual_info": 0.022163717448286935,
+      "marg_ic": -0.08506410445903077,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_slope_h4",
+      "sa_ic": -0.08527047386268359,
+      "t_stat": -54.26929133796465,
+      "mutual_info": 0.0064313909972271155,
+      "marg_ic": 0.07692808348745783,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_d",
+      "sa_ic": -0.07928159237736285,
+      "t_stat": -50.43271900598479,
+      "mutual_info": 0.01645099097756253,
+      "marg_ic": -0.06027651270685119,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "sa_ic": 0.07425168919744611,
+      "t_stat": 47.21474713400466,
+      "mutual_info": 0.021427814688650404,
+      "marg_ic": -0.05935225808987999,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "sa_ic": 0.07382802464927414,
+      "t_stat": 46.943869021946504,
+      "mutual_info": 0.06296468470698047,
+      "marg_ic": 0.10948706461104006,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "Buy_Liq",
+      "sa_ic": -0.0705773436097417,
+      "t_stat": -44.86632247024966,
+      "mutual_info": 0.025421109941424103,
+      "marg_ic": -0.06491262841104986,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "Sell_Liq",
+      "sa_ic": 0.06546416815325003,
+      "t_stat": 41.60131580989244,
+      "mutual_info": 0.026877743897796957,
+      "marg_ic": 0.006648843828670012,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "sa_ic": -0.06301737623851429,
+      "t_stat": -40.04010277367095,
+      "mutual_info": 0.0018477803939793702,
+      "marg_ic": 0.07362972219019578,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "long_short_ratio",
+      "sa_ic": -0.05917010723400826,
+      "t_stat": -37.586748810326355,
+      "mutual_info": 0.02039107956912778,
+      "marg_ic": -0.059917921809937824,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "volume_delta",
+      "sa_ic": -0.05774248604617571,
+      "t_stat": -36.67680663827879,
+      "mutual_info": 0.005728386444445732,
+      "marg_ic": 0.09139264099495693,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "sa_ic": 0.052685568639576255,
+      "t_stat": 33.455388480355,
+      "mutual_info": 0.10221862748502186,
+      "marg_ic": 0.08180020998948288,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "sa_ic": -0.05164724815570605,
+      "t_stat": -32.79427272796969,
+      "mutual_info": 0.0037855691980897,
+      "marg_ic": -0.03561214045558993,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "absorption_at_swing",
+      "sa_ic": -0.045112087709482815,
+      "t_stat": -28.635588271999243,
+      "mutual_info": 0.04591225871972293,
+      "marg_ic": -0.057247702164840916,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "h4_trend",
+      "sa_ic": -0.03630242551006799,
+      "t_stat": -23.03524413475914,
+      "mutual_info": 0.012834505139032615,
+      "marg_ic": -0.027010759095780542,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "log_ret_20",
+      "sa_ic": -0.03606374501840375,
+      "t_stat": -22.883594565837587,
+      "mutual_info": 0.001255223126474636,
+      "marg_ic": -0.008272508145111426,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "sa_ic": -0.034453933122606244,
+      "t_stat": -21.860875251841264,
+      "mutual_info": 0.00334537131484991,
+      "marg_ic": -0.026683328031599254,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ofi_z_score",
+      "sa_ic": -0.031999238636063805,
+      "t_stat": -20.30172422160309,
+      "mutual_info": 0.013326591992702586,
+      "marg_ic": 0.035608510551373394,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ofi_raw",
+      "sa_ic": -0.03010935617585289,
+      "t_stat": -19.101577509398595,
+      "mutual_info": 0.0010995141169765077,
+      "marg_ic": 0.07916507783202108,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "sa_ic": 0.029594571565007242,
+      "t_stat": 18.774705922771126,
+      "mutual_info": 0.0069287928921872854,
+      "marg_ic": 0.008330814457058721,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "vol_price_confirm",
+      "sa_ic": -0.02332702983492371,
+      "t_stat": -14.796140767320766,
+      "mutual_info": 0.05276518062279356,
+      "marg_ic": 0.06384553828632823,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "vol_regime",
+      "sa_ic": 0.0087911645066398,
+      "t_stat": 5.574860525500862,
+      "mutual_info": 0.04938829489133223,
+      "marg_ic": -0.01986656173633852,
+      "verdict": "WEAK"
+    }
+  ]
+}

@@ -1,92 +1,92 @@
 # 📊 Holdout Backtest Report: `ic32_regime_v1`
 
-**Tanggal Pembuatan**: 2026-06-05 06:05:40 UTC
+**Tanggal Pembuatan**: 2026-06-08 20:04:45 UTC
 **Model Run ID**: `ic32_regime_v1`
 **Periode Pengujian (Temporal OOS)**: `2025-11-01 - 2026-04-01`
 
 > [!NOTE]
 > **Ringkasan Portofolio Eksekutif**:
-> *   **Total Net Profit**: **$+2,100.50 USD** (ROI Portofolio: **+100.02%**)
-> *   **Rata-rata Win Rate**: **69.20%** | Total Trades: **2,426**
-> *   **Rata-rata Max Drawdown (5x)**: **49.73%**
-> *   **Risk-Adjusted**: Sharpe: **6.44** | Sortino: **16.53** | Calmar: **23.18** | Profit Factor: **2.81**
+> *   **Total Net Profit**: **$+699.87 USD** (ROI Portofolio: **+33.33%**)
+> *   **Rata-rata Win Rate**: **63.38%** | Total Trades: **2,415**
+> *   **Rata-rata Max Drawdown (5x)**: **56.59%**
+> *   **Risk-Adjusted**: Sharpe: **5.19** | Sortino: **14.02** | Calmar: **18.59** | Profit Factor: **2.28**
 
 ## 📈 Performa Scorecard Portofolio
 
 | Metrik Utama | Nilai Portofolio | Catatan |
 |:---|:---:|:---|
-| **Total Net Profit ($)** | `$+2,100.50` | Akumulasi keuntungan bersih 5x leverage |
-| **Portfolio ROI (%)** | `+100.02%` | ROI berdasarkan kapital portofolio $100/koin |
-| **Overall Win Rate** | `69.20%` | Rasio kemenangan rata-rata seluruh aset |
-| **Total Trades** | `2,426` | Jumlah total posisi yang dieksekusi |
-| **Rata-rata Trade / Bulan** | `23.4` | Rata-rata frekuensi trade bulanan portofolio |
+| **Total Net Profit ($)** | `$+699.87` | Akumulasi keuntungan bersih 5x leverage |
+| **Portfolio ROI (%)** | `+33.33%` | ROI berdasarkan kapital portofolio $100/koin |
+| **Overall Win Rate** | `63.38%` | Rasio kemenangan rata-rata seluruh aset |
+| **Total Trades** | `2,415` | Jumlah total posisi yang dieksekusi |
+| **Rata-rata Trade / Bulan** | `23.3` | Rata-rata frekuensi trade bulanan portofolio |
 | **Rata-rata Trade / Hari** | `0.77` | Rata-rata frekuensi trade harian portofolio |
-| **Max Drawdown (5x)** | `49.73%` | Rata-rata penurunan terdalam portofolio |
-| **Sharpe Ratio** | `6.44` | Efisiensi profit terhadap volatilitas portofolio |
-| **Sortino Ratio** | `16.53` | Efisiensi profit terhadap downside deviation |
-| **Calmar Ratio** | `23.18` | Rasio return tahunan terhadap drawdown |
-| **Profit Factor** | `2.81` | Rasio gross profit dibagi gross loss |
-| **Max Consecutive Loss** | `9` trades | Streak kekalahan beruntun terpanjang |
+| **Max Drawdown (5x)** | `56.59%` | Rata-rata penurunan terdalam portofolio |
+| **Sharpe Ratio** | `5.19` | Efisiensi profit terhadap volatilitas portofolio |
+| **Sortino Ratio** | `14.02` | Efisiensi profit terhadap downside deviation |
+| **Calmar Ratio** | `18.59` | Rasio return tahunan terhadap drawdown |
+| **Profit Factor** | `2.28` | Rasio gross profit dibagi gross loss |
+| **Max Consecutive Loss** | `11` trades | Streak kekalahan beruntun terpanjang |
 | **Worst Single Trade PnL** | `-24.90%` | Kerugian terdalam dalam satu trade tunggal |
-| **95% Trades Loss Under** | `10.30%` | Nilai risiko (VaR P95) kerugian maksimal |
+| **95% Trades Loss Under** | `10.70%` | Nilai risiko (VaR P95) kerugian maksimal |
 
 ## ↕️ Analisis Arah Signal (LONG vs SHORT)
 
 | Arah Posisi | Jumlah Trade | Distribusi | Menang | Kalah | Win Rate | PnL Bersih ($) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| **LONG** | 681 | 28.1% | 465 | 216 | 68.28% | +701.44 |
-| **SHORT** | 1,745 | 71.9% | 1,213 | 532 | 69.51% | +1,399.07 |
+| **LONG** | 626 | 25.9% | 403 | 223 | 64.38% | +258.00 |
+| **SHORT** | 1,789 | 74.1% | 1,123 | 666 | 62.77% | +441.87 |
 
 ### Rincian Rata-rata Profitabilitas per Trade
 
 | Tipe Trade | PnL Rata-rata ($) | PnL Rata-rata (%) |
 |:---|:---:|:---:|
-| **Trade Menang (Wins)** | `$+2.0337` | `+8.13%` |
-| **Trade Kalah (Losses)** | `$-1.7541` | `-7.02%` |
+| **Trade Menang (Wins)** | `$+0.8524` | `+8.52%` |
+| **Trade Kalah (Losses)** | `$-0.6759` | `-6.76%` |
 
 ## 📅 Scorecard Bulanan Portofolio
 
 | Bulan | Total Trades | Wins | Losses | Win Rate | Net PnL ($) |
 |:---|:---:|:---:|:---:|:---:|:---:|
-| 2025-11 | 550 | 378 | 172 | 68.73% | $+446.40 |
-| 2025-12 | 550 | 397 | 153 | 72.18% | $+619.47 |
-| 2026-01 | 491 | 325 | 166 | 66.19% | $+402.40 |
-| 2026-02 | 369 | 259 | 110 | 70.19% | $+298.50 |
-| 2026-03 | 466 | 319 | 147 | 68.45% | $+333.73 |
+| 2025-11 | 520 | 330 | 190 | 63.46% | $+153.39 |
+| 2025-12 | 547 | 347 | 200 | 63.44% | $+179.61 |
+| 2026-01 | 491 | 301 | 190 | 61.30% | $+137.15 |
+| 2026-02 | 384 | 240 | 144 | 62.50% | $+95.66 |
+| 2026-03 | 473 | 308 | 165 | 65.12% | $+134.06 |
 
 ## 🚪 Distribusi Alasan Keluar Posisi (Exit Reasons)
 
 | Alasan Exit | Jumlah | Persentase | Wins | Losses | Win Rate | PnL Bersih ($) |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|
-| `guardian_exit` | 1,986 | 81.9% | 1,642 | 344 | 82.68% | $+2,844.94 |
-| `sl_hit` | 399 | 16.4% | 1 | 398 | 0.25% | $-761.17 |
-| `time_exit` | 41 | 1.7% | 35 | 6 | 85.37% | $+16.74 |
+| `guardian_exit` | 1,886 | 78.1% | 1,478 | 408 | 78.37% | $+1,037.65 |
+| `sl_hit` | 476 | 19.7% | 1 | 475 | 0.21% | $-346.60 |
+| `time_exit` | 53 | 2.2% | 47 | 6 | 88.68% | $+8.82 |
 
 ## 🪙 Scorecard Per Koin (Detailed Assets)
 
 | Token | Win Rate | Trades | LONG WR | SHORT WR | Net PnL ($) | Max DD | Sharpe | Sortino | Calmar | PF |
 |:---|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|:---:|
-| **1000PEPE** | 66.41% | 128 | 71.0% | 65.0% | `$+65.59` | 102.81% | 3.30 | 6.79 | 6.21 | 1.58 |
-| **1000SHIB** | 62.70% | 126 | 56.2% | 66.7% | `$+65.41` | 85.98% | 4.35 | 11.07 | 7.41 | 1.85 |
-| **ADA** | 67.46% | 126 | 72.4% | 66.0% | `$+96.17` | 71.53% | 5.39 | 15.86 | 13.10 | 2.15 |
-| **ARB** | 65.41% | 133 | 68.8% | 63.5% | `$+113.92` | 63.74% | 5.44 | 12.22 | 17.41 | 2.22 |
-| **AVAX** | 72.34% | 141 | 71.4% | 72.6% | `$+150.11` | 42.42% | 9.23 | 31.86 | 34.47 | 3.38 |
-| **BNB** | 74.56% | 114 | 62.5% | 77.8% | `$+75.86` | 39.16% | 7.30 | 17.93 | 18.87 | 2.83 |
-| **BTC** | 75.00% | 104 | 78.8% | 73.2% | `$+71.10` | 26.62% | 7.48 | 14.65 | 26.01 | 2.99 |
-| **DOGE** | 63.33% | 150 | 67.4% | 61.7% | `$+122.54` | 56.10% | 6.46 | 16.21 | 21.28 | 2.35 |
-| **DOT** | 72.22% | 108 | 62.9% | 76.7% | `$+135.11` | 37.68% | 8.43 | 17.57 | 34.92 | 4.14 |
-| **ETH** | 71.93% | 114 | 68.8% | 73.2% | `$+119.19` | 28.00% | 8.33 | 19.50 | 41.46 | 3.76 |
-| **HBAR** | 71.43% | 105 | 73.9% | 70.7% | `$+80.35` | 43.63% | 6.15 | 14.73 | 17.94 | 2.45 |
-| **LINK** | 76.58% | 111 | 81.5% | 75.0% | `$+142.25` | 49.90% | 9.27 | 24.82 | 27.77 | 4.17 |
-| **NEAR** | 59.35% | 123 | 44.4% | 65.5% | `$+86.04` | 72.30% | 4.33 | 11.20 | 11.59 | 1.85 |
-| **ONDO** | 73.26% | 86 | 73.3% | 73.2% | `$+116.37` | 34.85% | 7.07 | 17.26 | 32.52 | 3.38 |
-| **POL** | 63.86% | 83 | 74.1% | 58.9% | `$+64.01` | 83.24% | 4.52 | 9.91 | 7.49 | 2.27 |
-| **SOL** | 72.52% | 131 | 87.5% | 69.2% | `$+135.58` | 56.44% | 8.05 | 23.22 | 23.40 | 3.35 |
-| **SUI** | 73.11% | 119 | 66.7% | 75.3% | `$+162.10` | 31.28% | 8.77 | 23.82 | 50.48 | 4.48 |
-| **TAO** | 68.70% | 115 | 66.7% | 69.6% | `$+106.17` | 42.08% | 4.87 | 9.54 | 24.58 | 2.09 |
-| **TON** | 56.84% | 95 | 55.6% | 57.4% | `$+38.85` | 27.26% | 3.34 | 9.19 | 13.88 | 1.65 |
-| **TRX** | 69.00% | 100 | 64.5% | 71.0% | `$+23.06` | 21.13% | 4.06 | 6.88 | 10.63 | 1.87 |
-| **XRP** | 77.19% | 114 | 81.2% | 75.6% | `$+130.71` | 28.12% | 9.01 | 33.00 | 45.28 | 4.26 |
+| **1000PEPE** | 62.79% | 129 | 72.4% | 60.0% | `$+25.59` | 82.00% | 3.26 | 6.40 | 7.60 | 1.59 |
+| **1000SHIB** | 55.64% | 133 | 48.9% | 59.3% | `$+21.62` | 80.93% | 3.13 | 8.19 | 6.50 | 1.56 |
+| **ADA** | 60.32% | 126 | 64.3% | 59.2% | `$+29.19` | 74.69% | 4.29 | 12.22 | 9.52 | 1.79 |
+| **ARB** | 62.70% | 126 | 61.0% | 63.5% | `$+43.03` | 63.74% | 4.99 | 11.93 | 16.44 | 2.14 |
+| **AVAX** | 58.27% | 139 | 60.0% | 57.8% | `$+38.46` | 53.70% | 5.65 | 17.38 | 17.44 | 2.07 |
+| **BNB** | 64.04% | 114 | 50.0% | 67.0% | `$+21.55` | 71.36% | 4.88 | 14.90 | 7.35 | 1.95 |
+| **BTC** | 66.97% | 109 | 76.5% | 62.7% | `$+22.07` | 63.00% | 4.84 | 9.42 | 8.53 | 2.01 |
+| **DOGE** | 56.62% | 136 | 63.2% | 54.1% | `$+24.45` | 70.22% | 3.54 | 9.02 | 8.48 | 1.65 |
+| **DOT** | 62.86% | 105 | 59.3% | 64.1% | `$+35.88` | 21.78% | 5.67 | 16.62 | 40.12 | 2.60 |
+| **ETH** | 70.18% | 114 | 69.0% | 70.6% | `$+49.82` | 21.51% | 8.40 | 21.77 | 56.40 | 3.74 |
+| **HBAR** | 66.67% | 120 | 71.4% | 65.7% | `$+34.00` | 35.16% | 5.44 | 15.78 | 23.54 | 2.12 |
+| **LINK** | 72.17% | 115 | 73.3% | 71.8% | `$+51.90` | 49.90% | 8.62 | 22.90 | 25.33 | 3.43 |
+| **NEAR** | 54.39% | 114 | 46.4% | 57.0% | `$+13.97` | 132.10% | 1.89 | 5.26 | 2.58 | 1.33 |
+| **ONDO** | 70.93% | 86 | 73.3% | 69.6% | `$+45.62` | 34.85% | 6.79 | 17.48 | 31.88 | 3.17 |
+| **POL** | 63.10% | 84 | 70.4% | 59.7% | `$+23.85` | 79.34% | 4.07 | 9.22 | 7.32 | 2.13 |
+| **SOL** | 65.04% | 123 | 82.6% | 61.0% | `$+40.19` | 54.54% | 5.99 | 15.90 | 17.94 | 2.36 |
+| **SUI** | 61.29% | 124 | 63.3% | 60.6% | `$+63.92` | 68.48% | 8.09 | 23.14 | 22.73 | 3.52 |
+| **TAO** | 68.81% | 109 | 72.4% | 67.5% | `$+41.42` | 42.08% | 5.09 | 9.47 | 23.97 | 2.17 |
+| **TON** | 57.29% | 96 | 43.5% | 61.6% | `$+20.33` | 33.05% | 3.66 | 11.16 | 14.98 | 1.78 |
+| **TRX** | 62.24% | 98 | 60.0% | 63.2% | `$+8.72` | 22.72% | 3.69 | 9.24 | 9.35 | 1.72 |
+| **XRP** | 68.70% | 115 | 75.0% | 66.3% | `$+44.30` | 33.18% | 6.98 | 27.11 | 32.51 | 3.05 |
 
 ## ⛓️ Daftar Fitur Aktif dalam Model
 

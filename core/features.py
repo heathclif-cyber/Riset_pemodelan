@@ -1446,8 +1446,12 @@ def engineer_features(
     feat["funding_rate"] = funding_rate
 
     # ── 13. EMA H1 (ATR-normalized) ───────────────────────────────────────────
+    # Format: (EMA - close) / ATR  → negatif = harga di atas EMA
+    ema_h1_raw: dict[int, pd.Series] = {}
     for span in (7, 21, 50, 200):
-        feat[f"ema_{span}_h1"] = (calc_ema(c, span) - c) / atr_safe
+        raw_h1            = calc_ema(c, span)
+        ema_h1_raw[span]  = raw_h1
+        feat[f"ema_{span}_h1"] = (raw_h1 - c) / atr_safe
 
     # ── 14. EMA H4 (ATR-normalized, aligned ke H1) ────────────────────────────
     ema_h4_raw: dict[int, pd.Series] = {}
@@ -1460,11 +1464,24 @@ def engineer_features(
         feat[f"ema_{span}_h4"]   = (aligned_ema - c) / atr_safe
 
     # ── 14b. EMA H4 Slopes & Price vs EMA (trend dynamics) ───────────────────
-    ema_21_aligned = ema_h4_raw[21]
-    ema_50_aligned = ema_h4_raw[50]
+    ema_21_aligned  = ema_h4_raw[21]
+    ema_50_aligned  = ema_h4_raw[50]
+    ema_200_aligned = ema_h4_raw[200]
     feat["ema_21_slope_h4"]    = (ema_21_aligned - ema_21_aligned.shift(4)) / atr_safe
     feat["ema_50_slope_h4"]    = (ema_50_aligned - ema_50_aligned.shift(4)) / atr_safe
     feat["price_vs_ema_50_h4"] = (c - ema_50_aligned) / atr_safe
+
+    # ── 14c. EMA Distance Features (NEW) ──────────────────────────────────────
+    # Format: (close - EMA) / ATR → positif = harga di atas EMA (bullish bias)
+    # H1 distances
+    feat["price_vs_ema_21_h1"]  = (c - ema_h1_raw[21])  / atr_safe  # jarak ke EMA21 H1 (short-term S/R)
+    feat["price_vs_ema_200_h1"] = (c - ema_h1_raw[200]) / atr_safe  # jarak ke MA200 H1 (long-term bias)
+    # H4 distances
+    feat["price_vs_ema_21_h4"]  = (c - ema_21_aligned)  / atr_safe  # jarak ke EMA21 H4
+    feat["price_vs_ema_200_h4"] = (c - ema_200_aligned) / atr_safe  # jarak ke EMA200 H4 (macro trend)
+    # EMA cross magnitude: gap antara EMA cepat (7) dan EMA lambat (21) H4
+    # Positif = bullish alignment (EMA7 > EMA21), magnitude = kekuatan momentum
+    feat["ema_cross_h4"]        = (ema_h4_raw[7] - ema_21_aligned)  / atr_safe
 
     # ── 15. RSI & StochRSI (H1) ───────────────────────────────────────────────
     feat["rsi_6"]          = calc_rsi(c, 6)

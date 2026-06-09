@@ -66,7 +66,7 @@ from core.utils import setup_logger, get_lstm_device
 from pipeline.shared import build_purged_folds
 
 logger = setup_logger("05_train_lstm_v2_style")
-DEVICE = get_lstm_device()
+DEVICE = torch.device("cpu")
 
 
 class PrebuiltSeqDataset(Dataset):
@@ -98,7 +98,7 @@ def scale_X(X: np.ndarray, scaler: RobustScaler) -> np.ndarray:
     return scaler.transform(X.reshape(-1, f)).reshape(n, s, f).astype(np.float32)
 
 
-def load_data_for_run(run_id: str, coins: list[str], feature_cols_path: str = None):
+def load_data_for_run(run_id: str, coins: list[str], feature_cols_path: str = None, step: int = 1):
     """
     Load data dan bangun sequences per-koin sebelum digabung.
 
@@ -172,7 +172,8 @@ def load_data_for_run(run_id: str, coins: list[str], feature_cols_path: str = No
         ts_c = df.index.astype(np.int64).values
 
         # Sequence dibangun dalam batas koin ini saja — tidak ada kontaminasi lintas koin
-        for i in range(LSTM_SEQ_LEN - 1, len(X_c)):
+        # step > 1 mempercepat training dengan mengurangi redundancy overlap
+        for i in range(LSTM_SEQ_LEN - 1, len(X_c), step):
             X_seqs.append(X_c[i - LSTM_SEQ_LEN + 1 : i + 1])
             y_seqs.append(y_c[i])
             ts_seqs.append(ts_c[i])
@@ -224,7 +225,7 @@ def train_one_fold(X_tr: np.ndarray, y_tr: np.ndarray,
     test_loader  = DataLoader(test_ds,  batch_size=LSTM_BATCH_SIZE, shuffle=False, num_workers=0)
 
     # n_features sudah di-set di atas (sebelum del X_tr)
-    model     = TradingLSTM(n_features, LSTM_V2_HIDDEN, LSTM_V2_LAYERS, LSTM_V2_DROPOUT).to(DEVICE)
+    model     = TradingLSTM(n_features, LSTM_V2_HIDDEN, LSTM_V2_LAYERS, LSTM_V2_DROPOUT, use_native=True).to(DEVICE)
     cw        = compute_class_weights(y_tr)
     criterion = nn.CrossEntropyLoss(weight=cw)
     optimizer = torch.optim.Adam(model.parameters(), lr=LSTM_V2_LR, weight_decay=LSTM_V2_WEIGHT_DECAY, foreach=False)
@@ -332,7 +333,7 @@ def retrain_final(X_all: np.ndarray, y_all: np.ndarray, n_epochs: int) -> tuple[
     ds     = PrebuiltSeqDataset(X_sc, y_all)
     loader = DataLoader(ds, batch_size=LSTM_BATCH_SIZE, shuffle=True, num_workers=0)
 
-    model     = TradingLSTM(n_features, LSTM_V2_HIDDEN, LSTM_V2_LAYERS, LSTM_V2_DROPOUT).to(DEVICE)
+    model     = TradingLSTM(n_features, LSTM_V2_HIDDEN, LSTM_V2_LAYERS, LSTM_V2_DROPOUT, use_native=True).to(DEVICE)
     cw        = compute_class_weights(y_all)
     criterion = nn.CrossEntropyLoss(weight=cw)
     optimizer = torch.optim.Adam(model.parameters(), lr=LSTM_V2_LR, weight_decay=LSTM_V2_WEIGHT_DECAY, foreach=False)
@@ -361,6 +362,7 @@ def main():
     parser.add_argument("--run-id", required=True)
     parser.add_argument("--all", action="store_true")
     parser.add_argument("--feature-cols", default=None, help="Path ke custom feature columns JSON")
+    parser.add_argument("--step", type=int, default=1, help="Sliding window step size (default: 1)")
     args = parser.parse_args()
 
     coins = TRAINING_COINS if args.all else TRAINING_COINS[:5]
@@ -371,6 +373,8 @@ def main():
     )
     logger.info(f"[CV] N_FOLDS={N_FOLDS}, PURGE_GAP_BARS={PURGE_GAP_BARS}")
     logger.info("[Fix] per-coin sequences | no WeightedRandomSampler | real timestamps for purging")
+    if args.step > 1:
+        logger.info(f"[Step] Using step={args.step} to speed up sequence building")
 
     # Fix random seed untuk reproducibility — cegah bad initialization
     import torch as _torch
@@ -378,7 +382,7 @@ def main():
     np.random.seed(42)
 
     # FIX: load_data_for_run sekarang return (X_3d, y, ts_real, feat_cols)
-    X, y, ts, feat_cols = load_data_for_run(args.run_id, coins, args.feature_cols)
+    X, y, ts, feat_cols = load_data_for_run(args.run_id, coins, args.feature_cols, step=args.step)
     n_features = X.shape[2]
 
     logger.info(f"Dataset: X={X.shape} | y={y.shape} | features={n_features}")

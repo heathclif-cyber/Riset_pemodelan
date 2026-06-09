@@ -10,12 +10,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\BTCUSDT_features_v3.parquet"
     },
     "SOLUSDT": {
@@ -28,12 +29,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 45753,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\SOLUSDT_features_v3.parquet"
     },
     "ETHUSDT": {
@@ -46,12 +48,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\ETHUSDT_features_v3.parquet"
     },
     "BNBUSDT": {
@@ -64,12 +67,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\BNBUSDT_features_v3.parquet"
     },
     "XRPUSDT": {
@@ -82,12 +86,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\XRPUSDT_features_v3.parquet"
     },
     "DOGEUSDT": {
@@ -100,12 +105,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\DOGEUSDT_features_v3.parquet"
     },
     "TONUSDT": {
@@ -118,12 +124,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 10777,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\TONUSDT_features_v3.parquet"
     },
     "ADAUSDT": {
@@ -136,12 +143,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\ADAUSDT_features_v3.parquet"
     },
     "TRXUSDT": {
@@ -154,12 +162,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\TRXUSDT_features_v3.parquet"
     },
     "1000SHIBUSDT": {
@@ -172,12 +181,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 39233,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\1000SHIBUSDT_features_v3.parquet"
     },
     "AVAXUSDT": {
@@ -190,12 +200,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 44745,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\AVAXUSDT_features_v3.parquet"
     },
     "LINKUSDT": {
@@ -208,12 +219,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\LINKUSDT_features_v3.parquet"
     },
     "DOTUSDT": {
@@ -226,12 +238,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 45568,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\DOTUSDT_features_v3.parquet"
     },
     "SUIUSDT": {
@@ -244,12 +257,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 21887,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\SUIUSDT_features_v3.parquet"
     },
     "POLUSDT": {
@@ -262,12 +276,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 9913,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\POLUSDT_features_v3.parquet"
     },
     "NEARUSDT": {
@@ -280,12 +295,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 44218,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\NEARUSDT_features_v3.parquet"
     },
     "1000PEPEUSDT": {
@@ -298,12 +314,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 21833,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\1000PEPEUSDT_features_v3.parquet"
     },
     "TAOUSDT": {
@@ -316,12 +333,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 13631,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\TAOUSDT_features_v3.parquet"
     },
     "ARBUSDT": {
@@ -334,12 +352,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 22867,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\ARBUSDT_features_v3.parquet"
     },
     "HBARUSDT": {
@@ -352,12 +371,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 51099,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\HBARUSDT_features_v3.parquet"
     },
     "ONDOUSDT": {
@@ -370,12 +390,13 @@
         "kronos_volatility",
         "kronos_bull_prob",
         "kronos_range_ratio",
-        "kronos_confidence"
+        "kronos_confidence",
+        "coinank_oi_change_24h"
       ],
       "status": "success",
       "rows_output": 4869,
       "rows_dropped_nan": 13,
-      "columns": 112,
+      "columns": 114,
       "output_file": "D:\\Apps-Dev\\Riset_pemodelan\\data\\training\\labeled\\ONDOUSDT_features_v3.parquet"
     }
   }

@@ -185,7 +185,17 @@
       "Bash(coinank etf *)",
       "Bash(coinank liq *)",
       "PowerShell(\\(Get-Command coinank\\).Source)",
-      "Bash(Sort-Object)"
+      "Bash(Sort-Object)",
+      "Bash(where python *)",
+      "Bash(D:/Apps-Dev/Riset_pemodelan/.venv/Scripts/pip.exe list *)",
+      "Bash(D:/Apps-Dev/Riset_pemodelan/.venv/Scripts/python.exe -c \"import flask; print\\('flask OK:', flask.__version__\\)\")",
+      "Bash(sqlite3 *)",
+      "Bash(Start-Sleep -Seconds 30)",
+      "Bash(Get-Content \"C:\\\\Users\\\\Bagas\\\\AppData\\\\Local\\\\Temp\\\\claude\\\\D--Apps-Dev-Riset-pemodelan\\\\28f7a46e-d30d-46da-b113-996687bc48a4\\\\tasks\\\\blk7c1u1c.output\" -Tail 30)",
+      "WebFetch(domain:api.farside.co.uk)",
+      "WebFetch(domain:www.coingecko.com)",
+      "Bash(.venv/Scripts/pip install *)",
+      "Bash(Copy-Item \"models\\\\feature_cols_ic32_hybrid.json\" \"models\\\\runs\\\\ic32_hybrid_v1\\\\feature_cols_v2.json\")"
     ]
   }
 }

@@ -1,10 +1,17 @@
 [
-  "cvd_momentum_adv",
-  "ofi_h4_delta",
+  "dist_from_8h_high",
   "cvd_slope_h4",
-  "atr_zscore_20d",
-  "vwdp_smooth",
+  "etf_gbtc_change_usd",
   "stochrsi_d",
-  "hour_sin",
-  "swing_momentum"
+  "rsi_6",
+  "ema_50_h1",
+  "swing_momentum",
+  "etf_total_change_usd",
+  "long_short_ratio",
+  "ema_21_h1",
+  "price_in_range",
+  "Buy_Liq",
+  "ema_21_slope_h4",
+  "vol_price_confirm",
+  "ofi_z_score"
 ]

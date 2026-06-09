@@ -1,0 +1,12 @@
+[
+  "long_short_ratio",
+  "vol_price_confirm",
+  "ofi_z_score",
+  "absorption_at_swing",
+  "ema_7_h1",
+  "cvd_slope_h4",
+  "volume_delta",
+  "trend_accel_4h",
+  "hmm_regime_enc",
+  "whale_retail_divergence"
+]

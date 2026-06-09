@@ -231,6 +231,7 @@ def hierarchical_predict(
     hmm_controller_enabled:  bool = False,  # HMM-based regime controller (replaces h4_trend)
     regime_aware_alignment:  bool = REGIME_AWARE_ALIGNMENT,  # FLIP from config
     model_dir:               Path = MODEL_DIR,              # Path to regime models
+    lstm_feat_cols:          list = None,
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review)
@@ -316,7 +317,15 @@ def hierarchical_predict(
 
     # STEP 2: LSTM probabilities (jika enabled)
     if LSTM_CONFIRMATION_ENABLED and lstm_model is not None:
-        lstm_proba = get_lstm_proba(lstm_model, lstm_scaler, X, n)
+        if lstm_feat_cols is not None:
+            # Align features dynamically from df_slice
+            X_lstm = np.zeros((n, len(lstm_feat_cols)), dtype=np.float64)
+            for idx, col in enumerate(lstm_feat_cols):
+                if col in df_slice.columns:
+                    X_lstm[:, idx] = df_slice[col].ffill().fillna(0).values.astype(np.float64)
+        else:
+            X_lstm = X
+        lstm_proba = get_lstm_proba(lstm_model, lstm_scaler, X_lstm, n)
     else:
         lstm_proba = None
 

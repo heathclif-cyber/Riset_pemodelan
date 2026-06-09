@@ -96,14 +96,25 @@ class TradingLSTM(nn.Module):
         num_layers:  int   = 2,
         dropout:     float = 0.3,
         num_classes: int   = 3,
+        use_native:  bool  = False,
     ):
         super().__init__()
-        self.lstm = _CellLSTM(
-            input_size  = n_features,
-            hidden_size = hidden_size,
-            num_layers  = num_layers,
-            dropout     = dropout if num_layers > 1 else 0.0,
-        )
+        self.use_native = use_native
+        if use_native:
+            self.lstm = nn.LSTM(
+                input_size  = n_features,
+                hidden_size = hidden_size,
+                num_layers  = num_layers,
+                dropout     = dropout if num_layers > 1 else 0.0,
+                batch_first = True,
+            )
+        else:
+            self.lstm = _CellLSTM(
+                input_size  = n_features,
+                hidden_size = hidden_size,
+                num_layers  = num_layers,
+                dropout     = dropout if num_layers > 1 else 0.0,
+            )
         self.norm    = nn.LayerNorm(hidden_size)
         self.dropout = nn.Dropout(dropout)
         self.fc      = nn.Linear(hidden_size, num_classes)
@@ -120,7 +131,30 @@ class TradingLSTM(nn.Module):
 def save_lstm(model: TradingLSTM, path: Path) -> None:
     """Simpan state dict saja (bukan full checkpoint)."""
     path.parent.mkdir(parents=True, exist_ok=True)
-    torch.save(model.state_dict(), str(path))
+    if getattr(model, "use_native", False):
+        # Convert native state dict to manual state dict on-the-fly
+        native_state = model.state_dict()
+        manual_state = {}
+        # Copy norm and fc weights directly
+        for k in ["norm.weight", "norm.bias", "fc.weight", "fc.bias"]:
+            if k in native_state:
+                manual_state[k] = native_state[k]
+        
+        # Determine num_layers from native_state keys
+        num_layers = sum(1 for k in native_state if k.startswith("lstm.weight_ih_l"))
+        
+        for l in range(num_layers):
+            manual_state[f"lstm.cells.{l}.W_ih"] = native_state[f"lstm.weight_ih_l{l}"]
+            manual_state[f"lstm.cells.{l}.W_hh"] = native_state[f"lstm.weight_hh_l{l}"]
+            
+            # Sum bias_ih and bias_hh for the manual cell
+            b_ih = native_state[f"lstm.bias_ih_l{l}"]
+            b_hh = native_state[f"lstm.bias_hh_l{l}"]
+            manual_state[f"lstm.cells.{l}.b"] = b_ih + b_hh
+            
+        torch.save(manual_state, str(path))
+    else:
+        torch.save(model.state_dict(), str(path))
 
 
 def load_lstm(

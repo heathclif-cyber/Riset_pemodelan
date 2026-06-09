@@ -277,6 +277,29 @@ def engineer_holdout_symbol(symbol: str) -> bool:
             add_label                = True,
         )
 
+        # ── Merge yfinance ETF Features (FREE) ────────────────────────────────
+        try:
+            macro_dir = ROOT / "data" / "macro"
+
+            # ETF Netflow (Global Macro) — yfinance, GRATIS
+            etf_path = macro_dir / "etf_flow_btc.parquet"
+            if etf_path.exists():
+                etf_df = pd.read_parquet(etf_path)
+                etf_df.index = pd.to_datetime(etf_df.index, utc=True)
+                etf_h1 = etf_df.reindex(etf_df.index.union(feat_df.index)).sort_index().ffill().reindex(feat_df.index)
+                for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
+                    if c in etf_h1.columns:
+                        feat_df[c] = etf_h1[c]
+
+            # Fill missing ETF features safely
+            for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
+                if c in feat_df.columns:
+                    feat_df[c] = feat_df[c].ffill().fillna(0.0)
+
+            logger.info(f"[{symbol}] yfinance ETF features merged successfully.")
+        except Exception as ce:
+            logger.warning(f"[{symbol}] yfinance merge failed: {ce}")
+
         cols_to_keep = [c for c in FEATURE_COLS_V3 if c in feat_df.columns] + \
                        ["label", "h4_swing_high", "h4_swing_low"]
         feat_df = feat_df[cols_to_keep]
@@ -308,6 +331,7 @@ def engineer_holdout_symbol(symbol: str) -> bool:
 def backtest_holdout_symbol(
     symbol: str,
     feat_cols: list[str],
+    lstm_feat_cols: list[str],
     lgbm_model,
     lstm_model,
     lstm_scaler,
@@ -334,10 +358,12 @@ def backtest_holdout_symbol(
     if regime_path.exists():
         try:
             reg = pd.read_parquet(regime_path)
-            if "hmm_regime_enc" in df.columns:
-                df = df.drop(columns=["hmm_regime_enc"])
-            df = df.join(reg[["hmm_regime_enc"]], how="left")
+            for col in ["hmm_regime_enc", "hmm_regime"]:
+                if col in df.columns:
+                    df = df.drop(columns=[col])
+            df = df.join(reg[["hmm_regime_enc", "hmm_regime"]], how="left")
             df["hmm_regime_enc"] = df["hmm_regime_enc"].fillna(1).astype("int32")
+            df["hmm_regime"] = df["hmm_regime"].fillna("RANGING_LOW_VOL")
         except Exception:
             pass
 
@@ -358,6 +384,7 @@ def backtest_holdout_symbol(
         None, lgbm_model, lstm_model, lstm_scaler,
         X, feat_cols, [], df,
         model_dir=model_dir,
+        lstm_feat_cols=lstm_feat_cols,
     )
 
     # Confidence filter
@@ -1363,10 +1390,19 @@ def main():
                 return p
         return MODEL_DIR / root_fname
 
-    lgbm_path        = _resolve("lgbm.pkl",                    "lgbm_baseline.pkl")
-    lstm_path        = _resolve("lstm_v2_style.pt",            "lstm_best.pt")
-    lstm_scaler_path = _resolve("lstm_v2_style_scaler.pkl",    "lstm_scaler.pkl")
-    feat_path        = _resolve("feature_cols_v2.json",        "feature_cols_v2.json")
+    if args.run_id == "ic32_regime_v1":
+        lgbm_path        = _resolve("lgbm.pkl",                    "lgbm_baseline.pkl")
+        lstm_path        = _resolve("lstm_v2_style.pt",            "lstm_best.pt")
+        lstm_scaler_path = _resolve("lstm_v2_style_scaler.pkl",    "lstm_scaler.pkl")
+        feat_path        = _resolve("feature_cols_v2.json",        "feature_cols_ic32_regime.json")
+        lstm_feat_path   = _resolve("lstm_v2_style_feature_cols.json", "feature_cols_lstm_temporal.json")
+    else:
+        lgbm_path        = _resolve("lgbm.pkl",                    "lgbm_baseline.pkl")
+        lstm_path        = _resolve("lstm_v2_style.pt",            "lstm_best.pt")
+        lstm_scaler_path = _resolve("lstm_v2_style_scaler.pkl",    "lstm_scaler.pkl")
+        feat_path        = _resolve("feature_cols_v2.json",        "feature_cols_v2.json")
+        lstm_feat_path   = _resolve("lstm_v2_style_feature_cols.json", "feature_cols_lstm_temporal.json")
+        
     guardian_path    = _resolve("guardian.pkl",                "guardian_best.pkl")
     g_scaler_path    = _resolve("guardian_scaler.pkl",         "guardian_scaler.pkl")
 
@@ -1375,6 +1411,7 @@ def main():
         (lstm_path,        "LSTM"),
         (lstm_scaler_path, "LSTM Scaler"),
         (feat_path,        "Feature cols"),
+        (lstm_feat_path,   "LSTM Feature cols"),
     ]:
         if not path.exists():
             raise FileNotFoundError(f"{name} tidak ditemukan: {path}")
@@ -1386,9 +1423,13 @@ def main():
     with open(feat_path) as f:
         feat_cols = json.load(f)
 
+    with open(lstm_feat_path) as f:
+        lstm_feat_cols = json.load(f)
+
     logger.info(f"LGBM   : {lgbm_path} ({len(lgbm_model.feature_name_)} fitur)")
     logger.info(f"LSTM   : {lstm_path}")
     logger.info(f"Feats  : {feat_path} ({len(feat_cols)} fitur)")
+    logger.info(f"LSTM Feats: {lstm_feat_path} ({len(lstm_feat_cols)} fitur)")
 
     # ── Guardian model (optional — graceful fallback) ────────────────────────
     guardian_model = None
@@ -1479,7 +1520,7 @@ def main():
     for symbol in coins:
         try:
             report = backtest_holdout_symbol(
-                symbol, feat_cols,
+                symbol, feat_cols, lstm_feat_cols,
                 lgbm_model, lstm_model, lstm_scaler,
                 guardian_model, guardian_scaler, guardian_enabled,
                 guardian_exit_threshold=GUARDIAN_EXIT_THRESHOLD,

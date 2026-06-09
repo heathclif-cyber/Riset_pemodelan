@@ -1,0 +1,21 @@
+{
+  "run_id": "lgbm_v2_nonlinear",
+  "model_type": "lstm_v2_style",
+  "n_features": 19,
+  "seq_len": 32,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "weight_decay": 0.0002,
+  "lr": 0.0007,
+  "scaler_type": "RobustScaler",
+  "final_epochs_trained": 43,
+  "cv_folds": 8,
+  "feature_file": "lstm_v2_style_feature_cols.json",
+  "fixes_applied": [
+    "per_coin_sequences",
+    "no_weighted_sampler",
+    "real_timestamps_purging",
+    "fold_scaler"
+  ]
+}

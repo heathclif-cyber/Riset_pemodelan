@@ -1,0 +1,21 @@
+[
+  "dist_liq_50x_short",
+  "vol_price_confirm",
+  "dist_from_8h_high",
+  "dist_swing_low",
+  "absorption_at_swing",
+  "ema_7_h1",
+  "Sell_Liq",
+  "dist_liq_20x_short",
+  "cvd_slope_h4",
+  "ofi_h4_delta",
+  "rsi_h4",
+  "log_ret_1",
+  "dist_swing_high",
+  "etf_gbtc_change_usd",
+  "rsi_slope_h4",
+  "ema_21_slope_h4",
+  "ema_50_h1",
+  "etf_total_change_usd",
+  "hmm_regime_enc"
+]

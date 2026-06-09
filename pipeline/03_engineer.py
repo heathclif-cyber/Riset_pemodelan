@@ -89,6 +89,29 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
             short_min_price_in_range = SHORT_MIN_PRICE_IN_RANGE,
             add_label                = True,
         )
+
+        # ── Merge yfinance ETF & Macro Features (FREE) ─────────────────────────
+        try:
+            macro_dir = ROOT / "data" / "macro"
+
+            # ETF Netflow (Global Macro) — yfinance, GRATIS
+            etf_path = macro_dir / "etf_flow_btc.parquet"
+            if etf_path.exists():
+                etf_df = pd.read_parquet(etf_path)
+                etf_df.index = pd.to_datetime(etf_df.index, utc=True)
+                etf_h1 = etf_df.reindex(etf_df.index.union(feat_df.index)).sort_index().ffill().reindex(feat_df.index)
+                for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
+                    if c in etf_h1.columns:
+                        feat_df[c] = etf_h1[c]
+
+            # Fill missing ETF features safely for historical data before 2024
+            for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
+                if c in feat_df.columns:
+                    feat_df[c] = feat_df[c].ffill().fillna(0.0)
+
+            logger.info(f"[{symbol}] yfinance ETF features merged successfully.")
+        except Exception as ce:
+            logger.warning(f"[{symbol}] yfinance merge failed: {ce}")
         
         # Validasi menggunakan FEATURE_COLS_V3
         missing_cols = validate_features(feat_df)
