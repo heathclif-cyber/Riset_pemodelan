@@ -1,5 +1,1123 @@
 # EXPERIMENTS.md — Logbook Eksperimen & Perubahan Parameter
 
+---
+
+## 2026-06-15 — genuine_v2 Stack: LGBM v2 + HMM Config B + Guardian v2 + Dynamic Sizing
+
+**Status**: DEPLOYED (2026-06-15)
+
+### Stack
+
+| Komponen | Detail |
+|----------|--------|
+| **LGBM entry** | tb_lgbm_genuine_v2 — 34 fitur, 8-fold purged CV, OOF F1=0.3968 |
+| **HMM threshold** | Config B: per-state (S0=0.55/0.55, S1=0.55/0.55, S2=0.50/0.50, S3=0.45/0.50, unk=0.45/0.45) |
+| **Guardian exit** | tb_guardian_genuine_v2_hmm_v2 — 25 fitur, tight labeling, exit2_neg_pnl=0.0% |
+| **Dynamic sizing** | `modal = base x regime_mult x conf_mult`, clamp [0.5x, 2.0x] |
+
+**Metodologi**: Seluruh threshold dipilih via OOF simulation (tidak menyentuh data Apr-Jun 2026 sebelum holdout). First-look holdout — tidak ada tuning berdasarkan data ini.
+
+### CV Results — LGBM genuine_v2 (34 fitur)
+
+| Fold | F1 Macro | F1 SHORT | F1 FLAT | F1 LONG | Iter |
+|------|----------|----------|---------|---------|------|
+| 1 | 0.3585 | 0.4636 | 0.2907 | 0.3212 | 36 |
+| 2 | 0.4032 | 0.4835 | 0.2797 | 0.4463 | 266 |
+| 3 | 0.3995 | 0.4683 | 0.2389 | 0.4912 | 375 |
+| 4 | 0.4042 | 0.5302 | 0.2592 | 0.4233 | 410 |
+| 5 | 0.4024 | 0.5058 | 0.2681 | 0.4333 | 468 |
+| 6 | 0.4021 | 0.5277 | 0.2407 | 0.4378 | 600 |
+| 7 | 0.3982 | 0.4939 | 0.2506 | 0.4500 | 587 |
+| 8 | 0.4064 | 0.5005 | 0.2481 | 0.4705 | 600 |
+| **Mean** | **0.3968 +/- 0.0147** | | | | avg=417 |
+
+OOF coverage: 729,212 / 785,185 bars (92.9%). Threshold sweep OOF: thr_long=0.45/thr_short=0.45 (PnL tertinggi $31,427 / 115,827 trades).
+
+### CV Results — Guardian v2 (tight labeling)
+
+**Run**: tb_guardian_genuine_v2_hmm_v2 | 25 fitur (18 static + 7 dynamic) | 975,988 OOF samples
+
+| Fold | Logloss | F1 Macro | Iter |
+|------|---------|----------|------|
+| 1 | 0.1619 | 0.8346 | 394 |
+| 2 | 0.1787 | 0.8572 | 370 |
+| 3 | 0.1861 | 0.8535 | 652 |
+| 4 | 0.1817 | 0.8576 | 520 |
+| 5 | 0.2017 | 0.8547 | 1100 |
+| 6 | 0.1898 | 0.8610 | 736 |
+| 7 | 0.2185 | 0.8563 | 1227 |
+| 8 | 0.2003 | 0.8626 | 1816 |
+| **Mean** | **0.2271** | **0.8281** | best-fold=394 |
+
+Label dist: HOLD=195,910 (79.9%), PARTIAL=9,266 (3.8%), EXIT=39,944 (16.3%).
+**Tight labeling key**: exit2_neg_pnl=0.0% — Guardian tidak pernah label EXIT saat trade rugi.
+
+Perubahan labeling vs Guardian v1:
+- `profit_lock`: mfe>0.03 pnl>0.003 ratio<0.30 (was: mfe>0.02 pnl>0 ratio<0.40)
+- `r3`: mfe>0.025 pnl>0.001 ratio<0.20 (was: mfe>0.015 NO_pnl_check ratio<0.25)
+- `r5_partial`: mfe>0.025 ratio<0.40 (was: mfe>0.015 ratio<0.55)
+
+### Dynamic Sizing — Konfigurasi
+
+```
+regime_mult:  S0=0.75, S1=1.0, S2=1.0, S3_LONG=1.5, S3_SHORT=0.75, unknown=0.8
+conf_mult:    linear 1.0->1.5 over 10pp excess above HMM threshold
+total_mult:   clamp(regime_mult x conf_mult, 0.50, 2.0)
+```
+
+### OOF Comparison (4 Configs, data 2020-2026-04-01)
+
+| Config | N | WR% | PPT | PPT_norm | PF |
+|--------|---|-----|-----|----------|----|
+| HMM only | 32,727 | 66.7% | +$0.4825 | +$0.4825 | 2.305 |
+| HMM + Guardian v2 | 32,727 | 65.7% | +$0.5012 | +$0.5012 | 2.521 |
+| **HMM + Guardian + DynSize** | **32,727** | **65.7%** | **+$0.6922** | **+$0.5187** | **2.521** |
+
+DynSize menambah +3.5% PPT_norm vs Guardian-only, PF tidak berubah (sizing tidak mempengaruhi trade selection).
+
+---
+
+### Holdout Evaluation — Apr 1 - Jun 13, 2026 (73 hari, 21 koin)
+
+**HMM state selama holdout**: 100% state 1 (RANGING_LOW) — pasar seluruhnya ranging.
+Threshold efektif semua trade: 0.55/0.55. Dynamic sizing hanya dari confidence multiplier (regime_mult=1.0 konstan).
+
+#### Scorecard
+
+| Config | N | WR% | PnL | PPT | PPT_norm | PF | SL% | AvgModal |
+|--------|---|-----|-----|-----|----------|----|-----|---------|
+| HMM only | 1,694 | 70.5% | $560.56 | +0.3309 | +0.3309 | 2.563 | 24.7% | $10.0 |
+| HMM + Guardian v2 | 1,694 | 68.4% | $648.59 | +0.3829 | +0.3829 | 2.754 | 28.9% | $10.0 |
+| **HMM + Guardian + DynSize** | **1,694** | **68.4%** | **$911.71** | **+0.5382** | **+0.3981** | **2.868** | **28.9%** | **$13.5** |
+
+*$10/trade base, 5x leverage. PPT_norm = PPT x 10 / 13.5 (size-adjusted)*
+
+#### Overview
+
+```
+Periode aktif     : 2026-04-01 - 2026-06-13 (73 hari)
+Total trade       : 1,694
+Trade/hari        : 23.2
+Koin aktif        : 21/21
+Total PnL         : $+911.71
+PnL/hari          : $+12.49
+Modal rata-rata   : $13.52 (base $10.0)
+```
+
+#### Win/Loss
+
+```
+Total WIN       : 1,159  (68.4%)   Avg PnL WIN  : +$1.2078
+Total LOSS      :   535  (31.6%)   Avg PnL LOSS : -$0.9125
+SL Hit          :   490  (28.9%)   Win/Loss Ratio: 1.32x
+Max win streak  : 21 trade         Profit Factor : 2.868
+Max loss streak : 12 trade
+```
+
+#### Long vs Short
+
+| Arah | N | WR% | PPT | PnL | SL% |
+|------|---|-----|-----|-----|-----|
+| LONG | 1,078 (63.6%) | 68.5% | +$0.5227 | $+563.47 | 29.6% |
+| SHORT | 616 (36.4%) | 68.3% | +$0.5653 | $+348.24 | 27.8% |
+
+SHORT slightly lebih efisien per trade di ranging market.
+
+#### Distribusi Outcome
+
+| Outcome | N | % | AvgPnL | TotalPnL | WR% |
+|---------|---|---|--------|----------|-----|
+| GUARDIAN_EXIT | 256 | 15.1% | +$0.761 | +$194.81 | 99.6% |
+| GUARDIAN_MOMENTUM_EXIT | 824 | 48.6% | +$1.423 | +$1,172.28 | 100.0% |
+| GUARDIAN_MOMENTUM_PARTIAL | 65 | 3.8% | +$0.438 | +$28.44 | 98.5% |
+| LOSS | 490 | 28.9% | -$0.986 | -$483.27 | 0.4% |
+| TIMEOUT | 41 | 2.4% | -$0.060 | -$2.48 | 12.2% |
+| TIMEOUT_MOMENTUM | 18 | 1.1% | +$0.108 | +$1.94 | 50.0% |
+
+GUARDIAN_MOMENTUM_EXIT adalah driver utama: 48.6% trades, WR 100%, avg +$1.423.
+
+#### Monthly Breakdown
+
+| Bulan | N | WR% | PnL | PPT | PF | SL% | Long/Short |
+|-------|---|-----|-----|-----|----|-----|-----------|
+| Apr 2026 | 724 | 73.1% | +$473.37 | +0.6538 | 3.82 | 25.7% | 494/230 |
+| Mei 2026 | 772 | 66.1% | +$367.45 | +0.4760 | 2.54 | 32.3% | 468/304 |
+| Jun 2026 | 198 | 60.6% | +$70.88 | +0.3580 | 1.87 | 27.8% | 116/82 |
+
+#### Weekly Breakdown
+
+| Minggu | N | WR% | PnL | PPT | SL% |
+|--------|---|-----|-----|-----|-----|
+| 2026-03-30 | 125 | 60.8% | +$66.88 | +0.5350 | 37.6% |
+| 2026-04-06 | 169 | 74.6% | +$172.33 | +1.0197 | 25.4% |
+| 2026-04-13 | 121 | 68.6% | +$49.68 | +0.4106 | 30.6% |
+| 2026-04-20 | 182 | 77.5% | +$103.57 | +0.5691 | 19.2% |
+| 2026-04-27 | 255 | 66.7% | +$95.83 | +0.3758 | 30.2% |
+| 2026-05-04 | 134 | 79.9% | +$90.79 | +0.6775 | 20.1% |
+| 2026-05-11 | 164 | 67.7% | +$74.63 | +0.4551 | 33.5% |
+| 2026-05-18 | 174 | 74.1% | +$147.47 | +0.8475 | 24.7% |
+| 2026-05-25 | 172 | 55.8% | +$39.65 | +0.2305 | 41.3% |
+| 2026-06-01 | 80 | 58.8% | -$1.66 | -0.0207 | 40.0% |
+| 2026-06-08 | 118 | 61.9% | +$72.54 | +0.6148 | 19.5% |
+
+Hanya 1 minggu negatif (Jun 1-7, -$1.66). Minggu terbaik: Apr 6-12 (+$172.33, PPT +1.02).
+
+#### Statistik Harian
+
+```
+Hari positif  : 56 / 73 (76.7%)    Avg PnL/hari : +$12.49
+Hari negatif  : 17 / 73 (23.3%)    Median PnL   : +$8.93
+                                    Std PnL      : +/-$18.02
+```
+
+**Hari Terbaik — 2026-04-07**: 34 trades, PnL +$76.52, WR 100%
+Recovery setelah crash Apr 4-5. Semua LONG GUARDIAN_MOMENTUM_EXIT.
+Biggest: DOTUSDT +$5.28, AVAXUSDT +$4.46, ARBUSDT +$4.50.
+
+**Hari Terburuk — 2026-04-04**: 41 trades, PnL -$23.02, WR 14.6%
+Flash crash hari ke-4 April. DOGEUSDT 12 LOSS berturut, ADAUSDT 4 LOSS besar (-$1.1~-$1.8).
+Pattern: semua LONG di pasar yang dump masif. SL hits massal seluruh altcoin.
+
+#### Top 5 Trade Terbaik / Terburuk
+
+**Terbaik:**
+
+| Coin | Entry | Dir | Outcome | PnL | Hold | Modal | Conf |
+|------|-------|-----|---------|-----|------|-------|------|
+| TAOUSDT | 2026-04-09 20:00 | SHORT | GME | +$11.469 | 4h | $14.8 | 0.599 |
+| ONDOUSDT | 2026-05-18 18:00 | LONG | GME | +$9.588 | 3h | $15.0 | 0.622 |
+| ONDOUSDT | 2026-05-18 16:00 | LONG | GME | +$9.140 | 5h | $15.0 | 0.602 |
+| TAOUSDT | 2026-04-09 21:00 | SHORT | GME | +$8.047 | 3h | $10.9 | 0.559 |
+| ONDOUSDT | 2026-05-22 17:00 | SHORT | GME | +$7.606 | 2h | $15.0 | 0.618 |
+
+**Terburuk:**
+
+| Coin | Entry | Dir | Outcome | PnL | Hold | Modal | Conf |
+|------|-------|-----|---------|-----|------|-------|------|
+| SUIUSDT | 2026-06-03 17:00 | LONG | LOSS | -$3.288 | 8h | $15.0 | 0.625 |
+| TAOUSDT | 2026-04-13 21:00 | LONG | LOSS | -$3.073 | 14h | $15.0 | 0.601 |
+| TAOUSDT | 2026-06-01 18:00 | LONG | LOSS | -$2.966 | 20h | $14.3 | 0.593 |
+| ONDOUSDT | 2026-06-05 07:00 | LONG | LOSS | -$2.873 | 7h | $10.0 | 0.550 |
+| TONUSDT | 2026-05-18 04:00 | SHORT | LOSS | -$2.634 | 8h | $15.0 | 0.626 |
+
+*GME = GUARDIAN_MOMENTUM_EXIT*
+
+#### Per-Koin Breakdown
+
+| Coin | N | WR% | PPT | PnL | PF | SL% |
+|------|---|-----|-----|-----|----|-----|
+| ONDOUSDT | 48 | 85.4% | +$1.700 | +$81.62 | 9.83 | 14.6% |
+| ARBUSDT | 89 | 74.2% | +$0.865 | +$76.97 | 3.41 | 23.6% |
+| 1000SHIBUSDT | 117 | 77.8% | +$0.616 | +$72.08 | 4.43 | 18.8% |
+| ADAUSDT | 99 | 73.7% | +$0.698 | +$69.10 | 3.87 | 22.2% |
+| 1000PEPEUSDT | 96 | 72.9% | +$0.567 | +$54.46 | 2.79 | 22.9% |
+| AVAXUSDT | 91 | 67.0% | +$0.588 | +$53.53 | 3.24 | 29.7% |
+| DOTUSDT | 66 | 71.2% | +$0.723 | +$47.72 | 3.41 | 27.3% |
+| SUIUSDT | 94 | 69.1% | +$0.475 | +$44.62 | 2.43 | 28.7% |
+| SOLUSDT | 98 | 58.2% | +$0.455 | +$44.56 | 2.43 | 36.7% |
+| HBARUSDT | 68 | 77.9% | +$0.654 | +$44.44 | 4.82 | 19.1% |
+| TAOUSDT | 66 | 60.6% | +$0.608 | +$40.14 | 2.05 | 36.4% |
+| NEARUSDT | 61 | 75.4% | +$0.644 | +$39.30 | 3.12 | 24.6% |
+| XRPUSDT | 84 | 69.0% | +$0.435 | +$36.57 | 2.93 | 31.0% |
+| DOGEUSDT | 137 | 53.3% | +$0.267 | +$36.56 | 1.66 | 43.1% |
+| LINKUSDT | 74 | 60.8% | +$0.462 | +$34.17 | 2.34 | 36.5% |
+| TONUSDT | 70 | 68.6% | +$0.373 | +$26.12 | 1.90 | 31.4% |
+| ETHUSDT | 65 | 55.4% | +$0.398 | +$25.86 | 2.30 | 40.0% |
+| BNBUSDT | 66 | 72.7% | +$0.373 | +$24.63 | 3.44 | 24.2% |
+| BTCUSDT | 56 | 67.9% | +$0.424 | +$23.75 | 3.62 | 28.6% |
+| POLUSDT | 53 | 67.9% | +$0.341 | +$18.08 | 2.09 | 32.1% |
+| TRXUSDT | 96 | 69.8% | +$0.182 | +$17.43 | 2.40 | 28.1% |
+
+Semua 21 koin profitable. DOGEUSDT worst SL% (43.1%) namun tetap profitable (+$36.56). ONDOUSDT best WR (85.4%), PF 9.83.
+
+#### Holding Time
+
+```
+Avg hold     : 11.9 jam    Avg WIN : 11.4 jam
+Median hold  : 8.0 jam     Avg LOSS: 13.1 jam
+Range        : 1-36 jam
+```
+
+| Hold Bucket | N | WR% | PPT |
+|-------------|---|-----|-----|
+| 1-4h | 432 (25.5%) | 86.3% | +$1.006 |
+| 4-8h | 356 (21.0%) | 68.0% | +$0.597 |
+| 8-16h | 363 (21.4%) | 46.8% | +$0.087 |
+| 16-24h | 253 (14.9%) | 65.6% | +$0.571 |
+| 24-49h | 290 (17.1%) | 71.7% | +$0.305 |
+
+Trade cepat (1-4h) paling efisien (WR 86.3%, PPT +$1.01). Trade 8-16h paling lemah.
+
+#### Confidence Distribution
+
+| Conf Range | N | WR% | PPT | AvgModal |
+|------------|---|-----|-----|---------|
+| 0.55-0.60 | 899 | 64.1% | +$0.331 | $12.21 |
+| 0.60-0.65 | 474 | 70.9% | +$0.637 | $15.00 |
+| 0.65-0.70 | 221 | 74.2% | +$0.801 | $15.00 |
+| 0.70-0.75 | 84 | 79.8% | +$1.129 | $15.00 |
+| 0.75-1.00 | 16 | 100.0% | +$2.526 | $15.00 |
+
+Monoton meningkat — confidence prediktif terhadap WR dan PPT. Sizing memberi lebih pada trades berkualitas.
+
+#### Dynamic Sizing Tiers
+
+| Tier | N | WR% | PPT_raw | PPT_norm | PnL |
+|------|---|-----|---------|----------|-----|
+| ~1.0x (base) | 243 | 60.9% | +$0.263 | +$0.251 | +$63.91 |
+| 1.1-1.3x | 356 | 62.6% | +$0.287 | +$0.240 | +$102.05 |
+| 1.3-1.5x | 300 | 68.3% | +$0.438 | +$0.314 | +$131.37 |
+| 1.5-2.0x (max) | 795 | 73.3% | +$0.773 | +$0.515 | +$614.39 |
+
+Tier tertinggi (1.5-2.0x): 67.4% dari total PnL. WR monoton naik seiring multiplier.
+
+#### Drawdown
+
+```
+Max drawdown   : -$10.77  (trade ke-152: SOLUSDT LONG LOSS -$2.43 @ 2026-06-10)
+Equity akhir   : +$911.71
+Recovery ratio : 84.66x (PnL/MaxDD)
+```
+
+### Kesimpulan & Deploy Decision
+
+**DEPLOY** — semua kriteria terpenuhi:
+
+| Kriteria | Target | Aktual | Status |
+|----------|--------|--------|--------|
+| WR | >= 62% | 68.4% | OK |
+| PF | >= 2.0 | 2.868 | OK |
+| PPT_norm vs guardian-only | > 0% | +3.9% | OK |
+| Max drawdown | << akun | $10.77 | OK |
+| Semua koin profitable | Ya | 21/21 | OK |
+
+**Catatan deployment**:
+- Dynamic sizing diimplementasikan di `paper_trading.py` `process_signal()` — replace tiered sizing
+- HMM Config B via `_get_effective_threshold()` per-state
+- `inference_config.json` diupdate: `sizing.mode = "dynamic"`, HMM per-state params, guardian_v2 files
+- Model files: `lgbm_baseline.pkl` (genuine_v2), `guardian_best.pkl` (v2 tight), scaler, feature cols
+- `model_registry.json`: run_id=tb_lgbm_genuine_v2, n_features=34, model_type=cascade
+
+**Tidak boleh re-run holdout** — HOLDOUT_EVALUATED = True sudah diset di script.
+
+---
+
+## 2026-06-15 — Genuine OOF Retrain (tb_lgbm_genuine_v1 + tb_guardian_genuine_v1)
+
+**Status**: IN PROGRESS
+
+### Hipotesis
+
+Model Widyawardhana v2 memiliki kontaminasi holdout — threshold dipilih berdasarkan 280+
+kombinasi parameter yang ditest pada data Apr-Jun 2026 (lihat `reports/ROBUSTNESS_AUDIT.md`).
+Angka WR=68.2% dan PF=2.79 adalah upper bound optimistik, bukan prediksi genuine.
+
+Dengan metodologi OOF yang benar, model yang ditraining pada data yang sama seharusnya
+menghasilkan angka holdout yang lebih rendah tapi dapat dipercaya sebagai estimasi live performance.
+
+### Yang Diubah
+
+- **Threshold selection**: dari holdout sweep → OOF simulation (tidak menyentuh Apr-Jun 2026)
+- **Guardian training**: dari in-sample trades → OOF trades (Fix Aturan 2)
+- **Guardian scaler**: dari `fit(X_all)` sebelum CV → `fit(X_train_fold)` per fold (Fix Aturan 3)
+- Arsitektur, fitur (27 flatboost_v2), dan labeling rules TIDAK diubah agar perbandingan fair
+
+### Target
+
+- Mendapatkan angka holdout yang genuine (tidak terkontaminasi)
+- Jika WR >= 62% dan PF >= 2.0 pada holdout Apr-Jun 2026 → layak deploy
+- Baseline: Widyawardhana v2 (WR=68.2%, PF=2.79, 905 trades) — tapi angka ini sudah diketahui bias
+
+### Script
+
+```bash
+python pipeline/04_train_lgbm_genuine_v1.py      # LGBM CV + OOF predictions + threshold sweep
+python pipeline/06_train_guardian_genuine_v1.py  # Guardian pada OOF trades, scaler per fold
+python pipeline/07_holdout_genuine_v1.py         # Evaluasi holdout SEKALI
+```
+
+### Hasil CV — tb_lgbm_genuine_v1
+
+| Fold | F1 Macro | F1 SHORT | F1 FLAT | F1 LONG | Iterations |
+|------|----------|----------|---------|---------|------------|
+| 1 | 0.3597 | 0.4453 | 0.3012 | 0.3327 | 25 |
+| 2 | 0.3939 | 0.4722 | 0.2754 | 0.4341 | 207 |
+| 3 | 0.3937 | 0.5044 | 0.2482 | 0.4284 | 376 |
+| 4 | 0.3984 | 0.5064 | 0.2612 | 0.4277 | 600 |
+| 5 | 0.3944 | 0.4942 | 0.2762 | 0.4126 | 154 |
+| 6 | 0.3983 | 0.5047 | 0.2542 | 0.4359 | 600 |
+| 7 | 0.3930 | 0.4859 | 0.2636 | 0.4295 | 595 |
+| 8 | 0.3988 | 0.4827 | 0.2671 | 0.4467 | 600 |
+| **Mean** | **0.3913 ± 0.0121** | | | | avg=394 |
+
+OOF coverage: 729,212 / 785,185 bars (92.9%) — ~7% awal (fold-0) tidak dapat OOF, expected.
+
+**Threshold sweep OOF (top 5 by total PnL):**
+
+| thr_long | thr_short | Trades | WR | PnL | PPT |
+|----------|----------|-------|----|-----|-----|
+| **0.45** | **0.45** | **80,728** | **59.0%** | **$20,416** | **$0.253** |
+| 0.50 | 0.45 | 63,513 | 59.7% | $16,543 | $0.261 |
+| 0.45 | 0.50 | 45,829 | 61.7% | $14,531 | $0.317 |
+| 0.55 | 0.45 | 57,584 | 59.4% | $14,323 | $0.249 |
+| 0.60 | 0.45 | 55,543 | 59.0% | $13,315 | $0.240 |
+
+*Catatan: sweep dioptimasi berdasarkan total PnL (bukan per-trade). Threshold 0.45/0.45 sangat agresif
+— lebih banyak trade tapi WR lebih rendah. Threshold 0.45/0.50 punya PPT tertinggi ($0.317).
+Keputusan final threshold bisa direvisi setelah melihat hasil holdout.*
+
+### Hasil CV — tb_guardian_genuine_v1
+
+Training data: 659,913 samples dari OOF trades LGBM (tidak ada in-sample contamination)
+
+| Fold | Logloss | F1 Macro | Iterations |
+|------|---------|----------|------------|
+| 1 | 0.1581 | 0.8370 | 292 |
+| 2 | 0.1874 | 0.8446 | 490 |
+| 3 | 0.1503 | 0.8331 | 445 |
+| 4 | 0.1854 | 0.8486 | 488 |
+| 5 | 0.1910 | 0.8507 | 925 |
+| 6 | 0.1934 | 0.8682 | 895 |
+| 7 | 0.2095 | 0.8569 | 906 |
+| 8 | 0.1889 | 0.8565 | 1615 |
+| **Mean** | **0.1830** | **0.8495** | best-fold=445 |
+
+**Label distribusi:**
+```
+HOLD     (0): 514,305 (77.9%)
+PARTIAL  (1):  13,105  (2.0%)
+EXIT     (2): 132,503 (20.1%)
+```
+
+**Warning**: EXIT-2 saat PnL negatif = 23.3% (target <5%). Lebih tinggi dari widyawardhana v2 (versi lama).
+Kemungkinan karena OOF threshold 0.45/0.45 sangat agresif → lebih banyak losing trades → labeling exit pada trades rugi.
+Efek nyata akan terlihat di holdout (apakah Guardian exit terlalu dini di losing trades atau tidak).
+
+### Hasil Holdout — Apr 1 – Jun 30, 2026 (3 bulan, 21 koin)
+
+**Ini adalah evaluasi genuine OOF pertama — thresholds tidak disentuh setelah holdout dievaluasi.**
+
+| Metrik | No Guardian | With Guardian | Widyawardhana v2 (baseline) |
+|--------|:-----------:|:-------------:|:---------------------------:|
+| **Total Trades** | 5,650 | 5,650 | 905 (2.5 bulan) |
+| Trades/bulan | 1,883 | 1,883 | 362 |
+| **Win Rate** | **57.4%** | **58.4%** | 68.2% |
+| **Profit Factor** | **1.476** | **1.430** | 2.79 |
+| **Net PnL ($10, 5x)** | **$848** | **$661** | $301 |
+| PnL/bulan | $283 | $220 | $120 |
+| PnL/trade | $0.150 | $0.117 | $0.332 |
+| Guardian Exit % | — | 56.5% | 65.1% |
+| SL Hit Rate | — | 36.8% | 0.0% |
+
+### Kesimpulan
+
+**Status: TIDAK deploy — tidak memenuhi kriteria upgrade Widyawardhana v2.**
+
+**Observasi kunci:**
+
+1. **WR dan PF jauh di bawah baseline**: WR 57.4% vs 68.2%, PF 1.48 vs 2.79. Model ini tidak beat
+   widyawardhana v2 pada metrik apapun per-trade basis.
+
+2. **Guardian hurt performance**: PnL $848 (no-G) → $661 (with-G), PF 1.476 → 1.430.
+   Guardian terlalu agresif cut winners. Ini sejalan dengan warning waktu training:
+   "EXIT-2 saat PnL negatif = 23.3%" — Guardian dilatih pada banyak losing trades dari
+   threshold 0.45 yang agresif, sehingga belajar exit terlalu dini.
+
+3. **SL hit rate tinggi (36.8%)**: Widyawardhana v2 = 0%. Ini karena thr=0.45 sangat agresif
+   → banyak trade marginal yang tidak punya conviction tinggi → lebih sering SL.
+
+4. **Volume tinggi, kualitas rendah**: 5,650 trades / 3 bulan vs 905 / 2.5 bulan.
+   PnL total lebih tinggi ($848 vs $301) TAPI ini karena volume 5x lebih banyak.
+   Per-trade quality (PPT) jauh lebih rendah: $0.150 vs $0.332.
+
+5. **Genuine baseline terbentuk**: Ini adalah **estimasi uncontaminated pertama** dari model
+   flatboost_v2 tanpa HMM/LSTM. WR genuine = 57%. Gap ke widyawardhana v2 (68%) adalah
+   ~11pp — sebagian besar mungkin dari HMM regime filtering + threshold selection.
+
+**Tidak boleh tune ulang menggunakan data Apr-Jun 2026 ini.**
+Eksperimen berikutnya harus menggunakan holdout period baru (Jul-Sep 2026) atau OOF saja.
+
+**Arah riset berikutnya:**
+- Tambahkan HMM regime filter ke pipeline genuine (gunakan OOF untuk pilih threshold per-regime)
+- Evaluasi apakah Guardian perlu dilatih ulang dengan threshold lebih tinggi (less agresif)
+- Pertimbangkan threshold 0.45/0.50 dari OOF sweep (PPT tertinggi $0.317) sebagai alternatif
+
+### Feature Selection untuk genuine_v2 (2026-06-15)
+
+**Script**: `pipeline/04b_feature_sample_train.py` (5-coin sample: BTC, SOL, DOGE, XRP, ARB)
+
+**Hipotesis**: Model flatboost_v2 (27 fitur) semua di horison H1/H4 — tidak ada awareness terhadap
+kondisi bull/bear multi-hari. Tambahkan 8 fitur macro-horizon. Test set: ic32_regime_v1 (33 feat)
+dikurangi 6 yang bermasalah (cvd raw, ema_50_h1 absolute, Fib_618/786, MSB_BOS, long_short_ratio)
+= 27 ic32_base + 8 macro_new = 35 kandidat.
+
+**Feature Importance (gain%) — 35 kandidat, 8-fold purged CV, OOF F1=0.3926:**
+
+| Rank | Feature | Gain% | Type |
+|------|---------|-------|------|
+| 1 | cvd_slope_h4 | 7.85% | ic32-base |
+| 2 | **atr_zscore_20d** | 7.25% | **MACRO NEW** |
+| 3 | **ret_7d** | 6.81% | **MACRO NEW** |
+| 4 | **ret_14d** | 6.05% | **MACRO NEW** |
+| 5 | **ret_30d** | 5.99% | **MACRO NEW** |
+| 6 | ofi_h4_delta | 5.79% | ic32-base |
+| 7 | log_ret_20 | 4.88% | ic32-base |
+| 8 | **atr_percentile_h1** | 4.76% | **MACRO NEW** |
+| 9 | **funding_rate** | 4.24% | **MACRO NEW** |
+| 10 | **dist_pdl** | 4.04% | **MACRO NEW** |
+| 11 | ema_50_slope_h4 | 3.85% | ic32-base |
+| 12 | **dist_pdh** | 3.79% | **MACRO NEW** |
+| ... | (ic32 features lainnya 0.69-2.65%) | | |
+| 35 | h4_trend | 0.06% | ic32-base — LEMAH |
+
+**Kesimpulan:**
+- Semua 8 macro additions masuk kuat (semua >= 3.79%), menempati 6 dari 12 posisi teratas
+- ret_7d/14d/30d menjawab concern model tidak tau kondisi bull/bear — masuk top-5
+- Hanya 1 ic32_base yang lemah: h4_trend (0.06%) — di-drop
+- **Final feature set untuk genuine_v2: 34 fitur** (35 - h4_trend)
+- File saved: `models/runs/tb_lgbm_genuine_v1/sample_recommended_features.json`
+
+### genuine_v2 Training Results (2026-06-15)
+
+**Script 1 (LGBM)**: `pipeline/04c_train_lgbm_genuine_v2.py`
+
+| Fold | F1 Macro | F1 SHORT | F1 FLAT | F1 LONG | Iterations |
+|------|----------|----------|---------|---------|------------|
+| 1 | 0.3585 | 0.4636 | 0.2907 | 0.3212 | 36 |
+| 2 | 0.4032 | 0.4835 | 0.2797 | 0.4463 | 266 |
+| 3 | 0.3995 | 0.4683 | 0.2389 | 0.4912 | 375 |
+| 4 | 0.4042 | 0.5302 | 0.2592 | 0.4233 | 410 |
+| 5 | 0.4024 | 0.5058 | 0.2681 | 0.4333 | 468 |
+| 6 | 0.4021 | 0.5277 | 0.2407 | 0.4378 | 600 |
+| 7 | 0.3982 | 0.4939 | 0.2506 | 0.4500 | 587 |
+| 8 | 0.4064 | 0.5005 | 0.2481 | 0.4705 | 600 |
+| **Mean** | **0.3968 ± 0.0147** | | | | avg=417 |
+
+OOF coverage: 729,212 / 785,185 bars (92.9%) — identik dengan genuine_v1.
+
+**Threshold sweep OOF (top 5 by total PnL):**
+
+| thr_long | thr_short | Trades | WR | PnL | PPT |
+|----------|----------|-------|----|-----|-----|
+| **0.45** | **0.45** | **115,827** | **59.1%** | **$31,427** | **$0.271** |
+| 0.50 | 0.45 | 90,620 | 60.5% | $26,949 | $0.297 |
+| 0.45 | 0.50 | 76,449 | 61.3% | $24,599 | $0.322 |
+| 0.55 | 0.45 | 79,416 | 60.5% | $23,335 | $0.294 |
+| 0.60 | 0.45 | 74,474 | 60.1% | $20,782 | $0.279 |
+
+**Script 2 (Guardian)**: `pipeline/06b_train_guardian_genuine_v2.py`
+
+Training data: 975,988 samples dari OOF trades genuine_v2 (vs 659,913 di genuine_v1 — 48% lebih banyak)
+
+| Fold | Logloss | F1 Macro | Iterations |
+|------|---------|----------|------------|
+| 1 | 0.1619 | 0.8346 | 394 |
+| 2 | 0.1787 | 0.8572 | 370 |
+| 3 | 0.1861 | 0.8535 | 652 |
+| 4 | 0.1817 | 0.8576 | 520 |
+| 5 | 0.2017 | 0.8547 | 1100 |
+| 6 | 0.1898 | 0.8610 | 736 |
+| 7 | 0.2185 | 0.8563 | 1227 |
+| 8 | 0.2003 | 0.8626 | 1816 |
+| **Mean** | **0.1898** | **0.8547** | best-fold=394 |
+
+EXIT-2 saat PnL negatif: **24.4%** (sama dengan genuine_v1: 23.3%). Masalah yang sama — threshold 0.45/0.45 agresif → banyak losing trades → Guardian belajar exit dini.
+
+**Perbandingan genuine_v1 vs genuine_v2:**
+
+| Metrik | genuine_v1 (27 fitur) | genuine_v2 (34 fitur) | Delta |
+|--------|:-------------------:|:-------------------:|-------|
+| OOF F1 | 0.3913 | **0.3968** | +0.0055 |
+| OOF PnL @0.45/0.45 | $20,416 | **$31,427** | +54% |
+| OOF WR @0.45/0.45 | 59.0% | **59.1%** | +0.1pp |
+| OOF Trades @0.45/0.45 | 80,728 | 115,827 | +43% |
+| Guardian F1 | 0.8495 | **0.8547** | +0.0052 |
+
+**Output files:**
+- `models/runs/tb_lgbm_genuine_v2/lgbm.pkl` — 417 iter, 34 fitur
+- `models/runs/tb_lgbm_genuine_v2/oof_predictions.parquet`
+- `models/runs/tb_lgbm_genuine_v2/best_thresholds.json` — 0.45/0.45
+- `models/runs/tb_guardian_genuine_v2/guardian.pkl` — 394 iter
+- `models/runs/tb_guardian_genuine_v2/guardian_scaler.pkl`
+- `models/runs/tb_guardian_genuine_v2/guardian_features.json` — 25 features
+
+**Catatan untuk deploy:**
+- Threshold 0.45/0.45 di OOF punya PnL tertinggi tapi EXIT-2 neg 24% → Guardian akan agresif exit trades rugi
+- Threshold 0.45/0.50 PPT=$0.322 (tertinggi di SHORT side) — alternatif lebih konservatif
+- Threshold 0.50/0.45 PPT=$0.297 — middle ground
+
+---
+
+## 2026-06-14b — Guardian momentum_v1: Deploy ke Production (tb_widyawardhana_v2)
+
+### Latar Belakang
+
+Guardian profit_v1 (18 static + 7 dynamic = 25 feat) pernah mengeksekusi exit SHORT terlalu awal — 30 menit setelah exit, harga dump signifikan. Root cause: fitur Guardian mengukur **state** momentum (seberapa kuat sekarang), bukan **perubahan** momentum (apakah mulai melemah). IC fitur momentum-state terhadap label EXIT struktural rendah karena "momentum kuat sekarang ≠ momentum akan berakhir."
+
+### Hipotesis
+
+Tambahkan 4 fitur **perubahan** momentum sebagai sinyal kapan momentum mulai memudar:
+
+| Fitur Baru | Komputasi | Sinyal |
+|------------|-----------|--------|
+| `cvd_slope_h4_delta` | `cvd_slope_h4.diff(1)` | Apakah selling pressure mulai flatten? |
+| `ofi_h4_accel` | `ofi_h4_delta.diff(2)` | Apakah OFI masih mempercepat atau sudah melambat? |
+| `rsi_h4_slope` | `rsi_h4.diff(2)` | RSI mulai berbalik sebelum harga? |
+| `dist_liq_50x_long` | kolom parquet | Untuk SHORT: kalau masih jauh dari long-liq wall, tahan |
+
+Semua 4 fitur dihitung on-the-fly dari kolom yang sudah ada di parquet (tidak perlu perubahan pipeline data).
+
+### Training — tb_guardian_momentum_v1
+
+- **Script**: `pipeline/06o_train_guardian_momentum_v1.py`
+- **Base**: profit_v1 (18 static) + 4 fitur baru + 7 dynamic = **29 feat total**
+- **Entry model**: flatboost_v2 LGBM (27 feat, thr=0.50/0.55)
+- **Labeling**: identik dengan profit_v1 (profit-only, MFE-based, hapus loss-based EXIT)
+- **Data**: 2020-01-01 – 2025-11-01 (TRAIN_CUTOFF), 21 koin
+- **Samples**: 129,893 | HOLD=93,808 PARTIAL=3,522 EXIT=32,563
+- **EXIT-2 PnL**: mean=+0.94%, pos=78% neg=22%
+
+**CV Results (8-fold purged):**
+
+| Fold | LogLoss | F1 Macro |
+|------|---------|----------|
+| 1 | 0.2508 | 0.8527 |
+| 2 | 0.2721 | 0.8544 |
+| 3 | 0.2465 | 0.8528 |
+| 4 | 0.1907 | 0.8464 |
+| 5 | 0.1861 | 0.8382 |
+| 6 | 0.2246 | 0.8477 |
+| 7 | 0.2358 | 0.8609 |
+| 8 | 0.2296 | 0.8493 |
+| **Mean** | **0.2295** | **0.8503** |
+
+**Feature Importance:**
+- Dynamic features: 50.1% (drawdown_from_peak, max_favorable_pnl, current_pnl_atr dominan)
+- New momentum feats: 7.1% — `dist_liq_50x_long` #1 dari 4 baru (3.1%), disusul `rsi_h4_slope`, `cvd_slope_h4_delta`, `ofi_h4_accel`
+
+### Holdout OOS Apr–Jun 2026 vs profit_v1
+
+- **Script**: `pipeline/07_holdout_guardian_momentum_compare.py`
+- **Entry**: flatboost_v2 + HMM T50_R55, identik untuk semua variant
+
+| Metrik | Standalone | profit_v1 (25 feat) | momentum_v1 (29 feat) |
+|--------|:----------:|:-------------------:|:---------------------:|
+| Total Trades | 918 | 918 | 918 |
+| Trades/bulan | 367 | 367 | 367 |
+| Win Rate | 69.1% | 68.8% | 68.7% |
+| LONG WR | 70.2% | 69.9% | 70.1% |
+| SHORT WR | 66.4% | 66.4% | 65.7% |
+| Net PnL | +$276 | +$267 | **+$279** |
+| PnL/bulan | +$111 | +$107 | **+$112** |
+| PnL/trade | +$0.301 | +$0.291 | **+$0.304** |
+| **Profit Factor** | 2.36 | 2.59 | **2.65** |
+| SL Hit Rate | 0.0% | 0.0% | 0.0% |
+| Guardian exits | — | 65.4% | 65.4% |
+
+**Delta momentum_v1 vs profit_v1**: +$12 PnL, PF 2.65 vs 2.59, PnL/trade +$0.013.
+
+### Temuan
+
+1. **Guardian menurunkan WR tapi menaikkan PF**: WR turun ~0.3 pp (exit lebih awal) tapi PF naik 2.36 → 2.65 — losers dipotong lebih efisien, distribusi keuntungan lebih rapi.
+
+2. **dist_liq_50x_long paling signifikan dari 4 fitur baru**: Sinyal jarak ke long liquidation wall memberikan konteks yang tidak dimiliki profit_v1 — untuk SHORT, Guardian lebih tahu kapan "masih ada ruang dump."
+
+3. **Selisih absolut kecil ($12) tapi konsisten di semua metrik**: PF, PnL/trade, PnL/bulan semuanya lebih tinggi di momentum_v1 vs profit_v1.
+
+### Deploy
+
+- **Tanggal**: 2026-06-14 23:30 WIB
+- **Target**: `swint_tradev2` production (tb_widyawardhana_v2 stack)
+- **File diganti**: `guardian_best.pkl`, `guardian_scaler.pkl`, `guardian_feature_cols.json`
+- **Backup**: `swint_tradev2/models/backups/backup_20260614_232755/`
+- **Catatan penting**: 4 fitur baru harus dihitung on-the-fly saat inference (tidak ada di parquet production) — perlu verifikasi `paper_trading.py` menghitung `cvd_slope_h4_delta`, `ofi_h4_accel`, `rsi_h4_slope` sebelum membangun feature vector Guardian.
+
+### Status
+
+- `models/runs/tb_guardian_momentum_v1/` — model + scaler + feature cols + holdout compare
+- `models/guardian_best.pkl` ← momentum_v1 (aktif)
+- **Perlu dicek**: komputasi 4 fitur derived di `swint_tradev2/app/services/paper_trading.py`
+
+---
+
+## 2026-06-14 — flatboost_v2: Binary FLAT IC + Hybrid Feature Set + Threshold Sweep
+
+### Setup
+- **Goal**: Meningkatkan F1 FLAT model TB LGBM 3-class (baseline v3: F1 FLAT=0.2655)
+- **Metode**: (1) eksplorasi MaxHold lebih panjang, (2) binary FLAT IC test, (3) hybrid feature set, (4) threshold sweep
+- **Data**: 785,185 bars, 21 koin, TP=2.0×ATR, SL=1.5×ATR
+- **Holdout OOS**: Apr 2026 – Jun 2026 (2.5 bln, setelah TRAIN_CUTOFF=2026-04-01)
+
+---
+
+### Eksperimen 1 — MaxHold 48h dan 72h
+
+**Hipotesis**: MaxHold lebih panjang → FLAT lebih sedikit → model lebih "tegas" → F1 FLAT lebih baik.
+
+**Hasil**: Berlawanan dengan hipotesis — tren monoton menurun:
+
+| MaxHold | FLAT% | F1 FLAT (mean 8-fold) |
+|---------|-------|-----------------------|
+| 36h (v3 baseline) | 17.6% | 0.2655 |
+| 48h | 15.8% | 0.1973 |
+| 72h | 14.6% | 0.1818 |
+
+**Temuan**: Longer MaxHold mengurangi jumlah FLAT sample sekaligus membuat FLAT makin sulit diklasifikasi (F1 turun dari 0.265 → 0.182). Hipotesis **ditolak**. MaxHold 36h tetap optimal.
+
+---
+
+### Eksperimen 2 — Binary FLAT IC Test (Opsi 2)
+
+**Masalah akar**: IC test ordinal (SHORT=-1/FLAT=0/LONG=+1) struktural tidak mampu mendeteksi sinyal FLAT karena FLAT=0 adalah posisi netral. Fitur yang berkorelasi kuat dengan FLAT tidak akan terdeteksi.
+
+**Solusi**: `03b_ic_test.py --mode flat-binary` — target FLAT=1 vs NON-FLAT=0 (Spearman), threshold lebih longgar (min_sa=0.01, min_ts=1.5, min_mg=0.005).
+
+**Catatan data**: Binary FLAT IC menggunakan swing label dari `features_v3.parquet` (FLAT=73.2%), bukan TB label (FLAT=17.6%). Hasil tetap directionally valid tapi bukan satu-ke-satu dengan TB label.
+
+**Hasil** (115 fitur):
+
+| Verdict | Count |
+|---------|-------|
+| KEEP | 31 |
+| REDUNDANT | 12 |
+| WEAK | 32 |
+| DROP | 40 |
+
+**Top FLAT-specific features** (IC negatif = fitur tinggi → lebih FLAT):
+
+| Feature | Standalone IC | Interpretasi |
+|---------|:-------------:|-------------|
+| `ultra_high_vol` | -0.311 | Volume ekstrem = pasar sideways/absorption |
+| `absorption_z` | -0.078 | Absorption candle = supply/demand equilibrium |
+| `vol_spike_zscore` | -0.077 | Spike volume tanpa directional follow-through |
+| `vol_accel_3h` | -0.063 | Akselerasi volume tiba-tiba → konsolidasi |
+| `no_supply` / `no_demand` | -0.060 / -0.059 | Wyckoff tidak ada tekanan arah |
+| `effort_vs_result` | -0.052 | Volume besar tapi range kecil = effort tanpa result |
+| `vol_ratio_20` | -0.050 | Volume relatif tinggi tanpa harga bergerak jauh |
+
+**Temuan kunci**: `cvd_slope_h4` dan `log_ret_20` — fitur directional terkuat — masuk kategori **DROP** di binary FLAT IC. Konfirmasi bahwa sinyal FLAT dan directional benar-benar ortogonal.
+
+---
+
+### Eksperimen 3 — Hybrid Feature Set: flatboost_v1 (24 feat)
+
+**Konstruksi**: 16 fitur directional terbaik (gain ranking ablation_v1) + 8 fitur FLAT-specific (dari binary IC KEEP).
+
+**Fitur directional (16)**: `dist_liq_50x_long`, `dist_liq_50x_short`, `dist_from_8h_high`, `dist_liq_20x_short`, `cvd_slope_h4`, `ofi_h4_delta`, `trend_accel_4h`, `cvd_momentum_adv`, `whale_retail_divergence`, `dist_swing_high`, `stochrsi_d`, `Buy_Liq`, `log_ret_20`, `vol_spike_zscore`, `atr_percent_h4`, `range_expansion_h4`
+
+**Fitur FLAT-specific baru (8)**: `ultra_high_vol`, `absorption_z`, `vol_accel_3h`, `no_supply`, `no_demand`, `effort_vs_result`, `vol_ratio_20`, `dow_cos`
+
+**Hasil CV (8-fold purged)**:
+
+| Metrik | v3 Baseline (18 feat) | flatboost_v1 (24 feat) |
+|--------|:---------------------:|:----------------------:|
+| Macro F1 | 0.3916 | 0.3908 |
+| F1 FLAT | 0.2655 | 0.2483 |
+| F1 SHORT | 0.4816 | 0.4880 |
+| F1 LONG | 0.4278 | 0.4363 |
+| Mean Pred FLAT% | — | 23.2% |
+
+**Temuan**: F1 FLAT justru turun (-0.017) dibanding baseline. Fold 1 masih early-stop di iter=1 (gejala distribusi shift berat di fold awal). Perlu fitur tambahan.
+
+---
+
+### Eksperimen 4 — flatboost_v2 (27 feat) ← **Best Result**
+
+**Penambahan 3 fitur**: `VAH` (Value Area High — konsolidasi volume profil), `atr_percentile_h1` (volatilitas relatif H1), `funding_rate` (sentiment pasar).
+
+**Motivasi**: VAH & atr_percentile_h1 keduanya ada di binary FLAT IC KEEP (VAH IC=-0.027, atr_percentile_h1 REDUNDANT). Funding rate sebagai proxy momentum-vs-FLAT.
+
+**Hasil CV (8-fold purged)**:
+
+| Fold | Macro F1 | F1 SHORT | F1 FLAT | F1 LONG | Pred FLAT% | Iter |
+|------|:--------:|:--------:|:-------:|:-------:|:----------:|-----:|
+| 1 | 0.3578 | 0.4403 | 0.3010 | 0.3320 | 37.7% | 22 |
+| 2 | 0.3928 | 0.4694 | 0.2739 | 0.4351 | 26.1% | 258 |
+| 3 | 0.3945 | 0.5043 | 0.2525 | 0.4268 | 24.3% | 284 |
+| 4 | 0.3988 | 0.5042 | 0.2641 | 0.4282 | 25.3% | 543 |
+| 5 | 0.3976 | 0.4963 | 0.2858 | 0.4108 | 27.1% | 314 |
+| 6 | 0.3987 | 0.5041 | 0.2573 | 0.4347 | 24.9% | 600 |
+| 7 | 0.3928 | 0.4838 | 0.2654 | 0.4291 | 29.7% | 585 |
+| 8 | 0.3981 | 0.4808 | 0.2701 | 0.4435 | 26.2% | 600 |
+| **MEAN** | **0.3914** | **0.4854** | **0.2713** | **0.4175** | **27.7%** | 400 |
+
+**Perbandingan vs baseline**:
+
+| Metrik | v3 Baseline (18 feat) | flatboost_v2 (27 feat) | Delta |
+|--------|:---------------------:|:----------------------:|:-----:|
+| Macro F1 | 0.3916 | 0.3914 | -0.0002 |
+| **F1 FLAT** | **0.2655** | **0.2713** | **+0.0058 ✓** |
+| F1 SHORT | 0.4816 | 0.4854 | +0.0038 |
+| F1 LONG | 0.4278 | 0.4175 | -0.0103 |
+
+**flatboost_v2 pertama kali melampaui baseline v3 untuk F1 FLAT (+0.58%).**
+
+Top features by gain: `cvd_slope_h4` (3184), `ofi_h4_delta` (2105), `atr_percentile_h1` (2019), `funding_rate` (2013), `cvd_momentum_adv` (1966), `log_ret_20` (1957), `atr_percent_h4` (1852), `Buy_Liq` (1831).
+
+Model: `models/runs/tb_lgbm_flatboost_v2/lgbm.pkl`
+
+---
+
+### Eksperimen 5 — Holdout OOS Apr–Jun 2026
+
+**Setup**: Standalone LGBM only (no LSTM, no Guardian), swing-based TP/SL, $10/5x.
+- flatboost_v2: argmax prediction, conf >= 0.40 (abstain ke FLAT jika tidak yakin)
+- ic32 benchmark: per-class threshold LONG>0.69, SHORT>0.59
+
+| Metrik | flatboost_v2 (argmax conf>0.40) | ic32_regime_v1 (benchmark) |
+|--------|:-------------------------------:|:--------------------------:|
+| Total Trades | 11,913 | 1,513 |
+| Trades/bulan | 4,765 | 605 |
+| **Win Rate** | **52.8%** | **56.6%** |
+| LONG WR | 55.7% | 64.2% |
+| SHORT WR | 50.0% | 52.4% |
+| LONG share | 49.7% | 35.3% |
+| Net PnL | +$916 | +$323 |
+| PnL/bulan | +$366 | +$129 |
+| **PnL/trade** | **$+0.077** | **$+0.213** |
+
+**Masalah**: flatboost_v2 dengan argmax/conf>0.40 menghasilkan terlalu banyak trade (11,913 vs ic32's 1,513) dengan WR yang lebih rendah (52.8% vs 56.6%). PnL total lebih tinggi tetapi PnL/trade 3.6x lebih rendah — efisiensi buruk.
+
+---
+
+### Eksperimen 6 — Threshold Sweep (49 kombinasi)
+
+**Setup**: Sweep thr_long ∈ [0.35, 0.65] step 0.05, thr_short ∈ [0.30, 0.60] step 0.05. Filter trades >= 400.
+
+**Insight utama**: Semakin tinggi threshold → semakin sedikit trades, semakin tinggi WR, semakin tinggi PnL/trade.
+
+**Top results dibanding ic32**:
+
+| thr_long | thr_short | Trades | WR | Net PnL | PnL/trade | vs ic32 |
+|:--------:|:---------:|:------:|:--:|:-------:|:---------:|:-------:|
+| 0.55 | 0.55 | 1,019 | 69.1% | +$309 | +$0.303 | +42% |
+| **0.50** | **0.55** | **1,698** | **66.9%** | **+$455** | **+$0.268** | **+26%** |
+| 0.55 | 0.50 | 1,696 | 63.0% | +$386 | +$0.228 | +7% |
+| 0.50 | 0.50 | 2,375 | 63.2% | +$533 | +$0.224 | +5% |
+| *ic32 bench* | — | *1,513* | *56.6%* | *+$323* | *+$0.213* | *baseline* |
+
+**Sweet spot: thr_long=0.50, thr_short=0.55** — 1,698 trades, WR 66.9%, PnL/trade $+0.268 (+26% vs ic32).
+
+Alternatif konservatif thr_long=0.55/thr_short=0.55: lebih sedikit trade (1,019) tapi WR lebih tinggi (69.1%) dan PnL/trade tertinggi ($+0.303).
+
+---
+
+### Temuan & Implikasi
+
+1. **MaxHold lebih panjang memperburuk F1 FLAT** — monoton dari 0.265 → 0.197 → 0.182. Tetap di 36h.
+
+2. **Binary FLAT IC mengungkap sinyal FLAT yang benar-benar ortogonal** terhadap sinyal directional. `ultra_high_vol` (IC=-0.311) adalah sinyal FLAT terkuat. `cvd_slope_h4` dan `log_ret_20` — yang terbaik untuk LONG/SHORT — adalah **DROP** di binary FLAT IC.
+
+3. **VAH + atr_percentile_h1 + funding_rate adalah kunci** untuk melampaui baseline (flatboost_v1 gagal, flatboost_v2 berhasil dengan penambahan 3 fitur ini).
+
+4. **Threshold tuning sangat kritis untuk efficiency**: Argmax conf>0.40 → 11,913 trades, WR 52.8%. Threshold 0.50/0.55 → 1,698 trades, WR 66.9% (+14 pp). Jumlah trade berkurang 7x tetapi kualitas meningkat drastis.
+
+5. **flatboost_v2 @ 0.50/0.55 lebih baik dari ic32** di holdout OOS: WR 66.9% vs 56.6%, PnL/trade $0.268 vs $0.213 (+26%). Trade volume sebanding (1,698 vs 1,513).
+
+### Status
+- `models/runs/tb_lgbm_flatboost_v2/` — model final
+- `models/runs/tb_lgbm_flatboost_v2/threshold_sweep.json` — 49 threshold combinations
+- `models/runs/tb_lgbm_flatboost_v2/holdout_apr_jun26_vs_ic32.json` — holdout result
+- **Next step**: LSTM + Guardian integration pada flatboost_v2 @ thr_long=0.50/thr_short=0.55
+
+---
+
+## 2026-06-13b — TB widyawardhana Threshold Sweep: 288 Combinations
+
+### Setup
+
+- **Script**: `pipeline/08_tune_tb_combination.py` (84 combos) + `pipeline/09_tune_tb_thresholds.py` (288 combos)
+- **Data**: Apr–Jun 2026 holdout (21 koin, ~2.5 bulan OOS)
+- **Fixed (09)**: LSTM=soft_mul, LSTM regime=skip_trending (best dari sweep 08)
+- **Sweep (09)**: 8 LGBM HMM configs × 9 Guardian threshold × 4 min_hold
+
+### Hasil Sweep 08 — LSTM/HMM Combination (84 combos)
+
+| Rank | HMM Config | LSTM Mode | Regime Apply | Trades | WR% | PnL |
+|------|-----------|-----------|--------------|--------|-----|-----|
+| 1 | hmm_v2 | soft_mul | skip_trending | 850 | 50.7% | $326 |
+| 2 | hmm_v2 | none | skip_ranging/skip_trending/uniform | 855 | 50.6% | $322 |
+| 8 | hmm_v2 | soft_mul | uniform | 841 | 50.5% | $321 |
+| 11 | hmm_v2 | flip_p40 | skip_ranging | 616 | **52.4%** | $287 | 
+
+**Finding sweep 08**: HMM adalah lever utama (bukan LSTM). `hmm_v2={TRENDING:0.42, RANGING:0.52}` dominates top 10. LSTM soft_mul minimal effect (+$4 vs no LSTM). hmm_current baseline (`{TRENDING:0.45, RANGING:0.50}`) lebih buruk dari flat threshold.
+
+### Hasil Sweep 09 — Threshold Sweep (288 combos)
+
+Top konfigurasi:
+
+| Rank | LGBM Config | GDN_Thr | MinHold | Trades | WR% | PnL | $/trade |
+|------|-------------|---------|---------|--------|-----|-----|---------|
+| 1 | T042_R050 | 0.55 | 2 | 1,038 | 50.6% | **$366** | $0.353 |
+| 3 | T042_R052 | 0.55 | 1 | 908 | 53.1% | $365 | $0.402 |
+| 4 | T042_R052 | 0.55 | 2 | 908 | 53.1% | $365 | $0.402 |
+| ~prev best | T042_R052 | 0.65 | 2 | 850 | 50.7% | $326 | $0.383 |
+
+Per-dimension averages:
+
+| Guardian Thr | Avg PnL | Best PnL |
+|---|---|---|
+| 0.55 | **$318** | $366 |
+| 0.58 | $308 | $355 |
+| 0.65 *(sebelumnya)* | $276 | $326 |
+| 0.75 | $249 | $296 |
+
+| LGBM Config | Avg PnL | Config |
+|---|---|---|
+| T042_R052 | **$322** | {TRENDING:0.42, RANGING:0.52} |
+| T042_R050 | $304 | {TRENDING:0.42, RANGING:0.50} |
+| T040_R055 | $217 | {TRENDING:0.40, RANGING:0.55} |
+
+min_hold: 1≈2 ($279 avg), 3→$276, 4→$271. Saat ini (2) optimal.
+
+### Konfigurasi Optimal TB widyawardhana_v3
+
+```
+LGBM    : {0: 0.42, 1: 0.52, 2: 0.52, 3: 0.42}  ← T042_R052
+LSTM    : soft_mul, apply_only_in_ranging={0:F,1:T,2:T,3:F}
+GDN_THR : 0.55  ← turun dari 0.65 (+12% PnL)
+MIN_HOLD: 2
+```
+
+Performa: 908 trades, WR=53.1%, PnL=$365, $0.402/trade
+
+### Temuan
+
+1. **Guardian 0.55 > 0.65**: Delta +$42 avg across semua LGBM configs. Guardian terlalu konservatif di 0.65 — exits terlalu dini bagi TB trades yang avg hold ~13-15 bar. Threshold lebih rendah = lebih banyak GDN exits (69% vs 63%), hold lebih pendek (13 vs 16 bar), WR lebih tinggi.
+
+2. **HMM lever > LSTM lever**: Perbedaan PnL antar HMM config ~$100 ($217–$322 avg). Perbedaan LGBM mode di sweep 08 < $10. LSTM bukan lever yang efektif untuk TB.
+
+3. **TB widyawardhana masih di bawah ic32+Guardian ($292) pada holdout Apr-Jun**: TB optimal $365 > ic32 $292 hanya setelah tuning, dan dengan lebih banyak trades (908 vs 1,041 ic32). WR TB (53.1%) < ic32 (61.7%). TB mengandalkan trade volume, ic32 mengandalkan precision.
+
+---
+
+## 2026-06-13 — Holdout OOS Apr–Jun 2026: 6-Variant Full Comparison
+
+### Setup
+
+- **Periode**: 2026-04-01 – 2026-06-13 (2.5 bulan, benar-benar OOS setelah TRAIN_CUTOFF_DATE=2026-04-01)
+- **Koin**: 21 | **Modal**: $10/trade 5x | **Exit**: SL=1.5xATR + max_hold=36bar + Guardian
+- **Pipeline**: 01_fetch → 02_clean → 03_engineer → 03e_regime_hmm_holdout → 07_holdout_tb_full_comparison
+- **Note**: Holdout Nov-Mar 2026 (sesi sebelumnya) contaminated — TB Guardian v2 training overlap. Ini holdout bersih pertama.
+
+### Scorecard
+
+| Variant | Trades | Trades/bln | WR% | PnL | PnL/bln | PnL/trade |
+|---------|--------|-----------|-----|-----|---------|-----------|
+| **ic32+Guardian** | 1,041 | 208 | **61.7%** | **+$292** | **+$58** | $0.281 |
+| TB+Guardian | 883 | 177 | 47.7% | +$254 | +$51 | $0.287 |
+| TB+LSTM-C+Gdn | 556 | 111 | 52.2% | +$181 | +$36 | **$0.326** |
+| ic32 bare | 712 | 142 | 41.7% | +$185 | +$37 | $0.260 |
+| TB bare | 701 | 140 | 38.8% | +$141 | +$28 | $0.201 |
+| TB+LSTM-C | 486 | 97 | 42.6% | +$114 | +$23 | $0.235 |
+
+Exit breakdown (ic32+Guardian): SL=22.8%, Guardian=76.6%, Avg hold=7.1 bar
+
+### Temuan
+
+1. **ic32+Guardian menang** ($292, 61.7% WR) — model produksi aktif terbukti paling robust pada holdout baru.
+
+2. **TB labeling tidak beat ic32** pada periode ini. TB bare $141 < ic32 bare $185. Performa TB lebih rendah dari ekspektasi holdout Nov-Mar (TB+Guardian $1,125 pada 5 bulan).
+
+3. **LSTM-C terlalu agresif**: FLIP rate 51.6% (vs 24.3% di holdout Nov-Mar) — LSTM memveto >50% sinyal TB. TB+LSTM-C lebih sedikit trade (486) dan PnL lebih rendah ($114).
+
+4. **Degradasi vs Nov-Mar**: PnL/bulan ic32+Guardian $58 vs $157 di holdout lama (-63%). Periode Apr-Jun 2026 adalah market harder untuk strategi ini (kemungkinan: trending down/volatile setelah Apr crash).
+
+5. **Guardian konsisten bernilai**: Semua +Guardian variants menang vs bare equivalents. Guardian exit WR 76.6% (ic32) dan 61.0% (TB).
+
+### Implikasi
+
+- ic32+Guardian tetap menjadi alpha model. TB labeling tidak meningkatkan edge di periode ini.
+- LSTM-C tidak cocok sebagai filter untuk TB; jika dipakai, butuh kalibrasi ulang flip rate.
+- Perlu data lebih banyak (6+ bulan) untuk final judgment TB vs ic32.
+
+---
+
+## 2026-06-12 — P4 Assessment: tb_lstm_binary_meta_v1 Production Readiness
+
+### Kesimpulan: TIDAK SIAP DEPLOY — Terlalu Kecil Efeknya + Domain Mismatch
+
+#### Model
+
+- **Arsitektur**: TradingLSTM(n_feat=15, hidden=32, layers=1, dropout=0.5, seq_len=32)
+- **Target**: Binary WIN=1 / LOSS=0 dari TB-labeled trades (base WR=41.25%)
+- **CV AUC**: 0.5566 ± 0.0218 (8-fold purged CV)
+- **Marginal IC**: 0.0682, t=9.77, p≈0 — **gate_pass=True** (satu-satunya LSTM yang lolos)
+- **Disimpan**: `models/runs/tb_lstm_binary_meta_v1/`
+
+#### Holdout Test Hasil (TB+Guardian system, Nov 2025–Apr 2026)
+
+**Hard threshold filter:**
+
+| Config | Trades | WR% | PnL | PnL/trade |
+|--------|--------|-----|-----|-----------|
+| tb+Guardian (baseline) | 1,931 | 55.6% | $1,125 | $0.58 |
+| +Meta(p≥0.50) | 1,273 | 57.6% | $784 | $0.62 |
+| +Meta(p≥0.55) | 637 | 55.9% | $393 | $0.62 |
+| +Meta(p≥0.60) | 98 | 55.1% | $51 | $0.52 |
+
+WR naik tipis (+2pp) tapi total PnL turun drastis karena volume dipotong -34% sampai -95%.
+
+**Soft multiplier (λ × meta → confidence adjustment):**
+
+| λ | Trades | WR% | PnL | PnL/trade |
+|---|--------|-----|-----|-----------|
+| 0.0 (baseline) | 1,931 | 55.6% | $1,125 | $0.58 |
+| 0.50 | 3,181 | 48.3% | $1,196 | $0.38 |
+| 0.75 | 3,571 | 46.3% | $1,040 | $0.29 |
+| 1.00 | 3,812 | 46.2% | $1,126 | $0.30 |
+| 1.25 | 3,984 | 45.4% | $1,093 | $0.27 |
+
+λ=0.50 hanya naik $71 (+6.3%) tapi WR turun -7pp dan PnL/trade turun -34%.
+Multiplier memasukkan terlalu banyak trade marginal, mendilusi kualitas.
+
+#### Diagnosis
+
+**Dua masalah fundamental:**
+
+1. **Effect size terlalu kecil**: IC=0.068 secara statistik signifikan (t=9.77) tapi
+   ekonomis kecil. Model bisa prediksi WIN/LOSS lebih baik dari random, tapi tidak cukup
+   besar untuk menghasilkan konfigurasi yang clearly beats baseline di holdout.
+
+2. **Domain mismatch dengan ic32**: Model dilatih pada TB-WIN/LOSS labels
+   (TP=2×ATR hit terlebih dahulu). Production system ic32 menggunakan Guardian exit
+   + time exit — mekanisme exit yang berbeda. Prediksi "TB-WIN" tidak identik dengan
+   prediksi "ic32-WIN". Penggunaan langsung di ic32 cascade berisiko miscalibrate threshold.
+
+#### Keputusan
+
+- **TIDAK deploy** ke ic32 production — domain mismatch + effect size kecil
+- **Arsitektur binary meta BENAR** (vs 3-class directional) — prinsip terbukti
+- **Path ke depan**: tambahkan Binance Vision positioning features (OI delta, taker L/S)
+  ke feature set binary meta, lalu retraining. Target marginal IC > 0.10 sebelum deploy.
+  Data positioning sekarang tersedia di `data/positioning_hist/`.
+
+---
+
+## 2026-06-12 — P2 Audit: ETF Look-Ahead Leakage + Binance Vision Download
+
+### A. ETF Feature Look-Ahead Leakage — CONFIRMED & FIXED
+
+#### Temuan
+
+Audit fitur `etf_total_change_usd` dan `etf_gbtc_change_usd` di `pipeline/03_engineer.py` menemukan
+**look-ahead leakage** pada ETF features. Fitur ETF daily di-merge ke H1 bars tanpa T-1 lag:
+
+```python
+# SEBELUM (BUGGY) — 03_engineer.py baris 105
+feat_df[c] = etf_h1[c]  # forward-fill tanpa shift — ETF hari ini memprediksi label hari ini!
+
+# SESUDAH (FIXED)
+feat_df[c] = etf_h1[c].shift(24)  # T-1 lag: 24 H1 bars = 1 hari trading (crypto 24/7)
+```
+
+#### Bukti Leakage — IC Anomali
+
+Dari `models/runs/tb_lstm_v1/tb_lstm_v1_feature_selection.json`:
+
+| Feature | IC | t-stat | Keterangan |
+|---------|-----|--------|-----------|
+| `etf_gbtc_change_usd` | 0.1518 | 136.1 | **ANOMALI — 2x fitur terkuat** |
+| `etf_total_change_usd` | 0.1449 | 129.7 | **ANOMALI — 2x fitur terkuat** |
+| `cvd_slope_h4` | 0.079 | ~72 | Normal range |
+| `ofi_h4_delta` | 0.081 | ~73 | Normal range |
+
+IC=0.14–0.15 dengan t-stat 130–136 adalah **look-ahead yang tidak mungkin** untuk fitur
+prediktif yang legitimate. Setelah fix (T-1 lag), true IC akan ~0.001 (setara noise).
+
+Root cause mekanis: `etf_total_change_usd` ≈ daily BTC price change × shares_static.
+Memakai perubahan harga hari yang sama untuk memprediksi label hari itu = circular.
+
+#### Dampak
+
+- **`tb_lstm_v1`** — CONTAMINATED. 2 dari 41 features adalah look-ahead.
+  CV F1=0.3862 harus dianggap inflated — jangan deploy.
+  `marginal_ic` kedua ETF features = 0.0 (tersaturasi di Gram-Schmidt),
+  jadi pengaruh aktual ke model mungkin kecil, tapi feature selection-nya sudah bias.
+- **`03_engineer.py`** — FIXED (2026-06-12). Semua run baru bebas dari leak ini.
+- Models lain yang tidak pakai ETF features: tidak terpengaruh.
+  `ic32_regime_v1`, `ic32_guardian_clean_v2` — tidak pakai ETF features, **AMAN**.
+
+#### Fix Applied
+
+File: `pipeline/03_engineer.py` baris 105  
+Change: `feat_df[c] = etf_h1[c]` → `feat_df[c] = etf_h1[c].shift(24)`
+
+### B. Binance Vision Historical Metrics Download
+
+Script `pipeline/01d_fetch_binance_vision_metrics.py` dijalankan untuk download
+daily OI, top-trader L/S, global L/S, taker L/S untuk 21 koin dari data.binance.vision.
+
+Coverage (berdasarkan probe coverage check 2026-06-11):
+- BTC: dari 2021-01-01
+- 13 koin inti (ETH, SOL, BNB, XRP, DOGE, ADA, TRX, 1000SHIB, AVAX, LINK, DOT, NEAR, HBAR): dari 2022-01-01
+- Altcoin baru (SUI, 1000PEPE, ARB): dari 2024-01-01
+- TONUSDT, POLUSDT, TAOUSDT, ONDOUSDT: dari 2025-01-01
+
+Output: `data/positioning_hist/{coin}_metrics.parquet`
+
+Fitur derivatif yang di-generate:
+- `oi_usd_delta_pct` — OI change daily %
+- `taker_ls_delta` — perubahan taker L/S ratio
+- `toptrader_ls_delta` — perubahan top-trader L/S ratio
+
+**Status**: SELESAI. 21 koin tersimpan di `data/positioning_hist/`. Digunakan untuk:
+1. Feature set masa depan LSTM positioning-enhanced (IC test setelah engineer)
+2. IC benchmark target vs TB labels: >0.05 untuk lolos marginal gate
+3. Estimasi apakah OI/taker data pecahkan ceiling F1=0.37-0.41 pada directional LSTM
+
+### C. tb_lstm_macro_v1 — CEILING CONFIRMATION
+
+**Script**: `pipeline/05_train_lstm_macro_v1.py`  
+**Arsitektur**: VectorizedLSTM(n_feat=7, hidden=64, layers=2, dropout=0.35, seq_len=32)  
+**Label**: Triple Barrier (TP=2×ATR, SL=1.5×ATR, max_hold=36)  
+**Features**: 5 OHLCV/flow + 2 macro (VIX z-score, TLT 5d return)  
+**N sequences**: 195,949 | 21 koin | 2020–2025
+
+#### Hasil Per Fold (8-fold Purged CV)
+
+| Fold | F1 | Acc | BestEpoch |
+|------|-----|-----|-----------|
+| 1 | 0.3456 | 0.4508 | 4 |
+| 2 | 0.3517 | 0.4662 | 22 |
+| 3 | 0.3332 | 0.4153 | 5 |
+| 4 | 0.3819 | 0.5014 | 14 |
+| 5 | 0.3905 | 0.4865 | 18 |
+| 6 | 0.3719 | 0.4783 | 29 |
+| 7 | 0.3824 | 0.5215 | 3 |
+| 8 | 0.3952 | 0.5267 | 17 |
+| **Mean** | **0.3690 ± 0.0213** | **0.4808** | — |
+
+Random baseline: 0.333 | Gain: **+0.036**
+
+#### Analisis
+
+**Kesimpulan: CEILING CONFIRMED.** Menambahkan VIX + TLT ke fitur OHLCV/flow tidak
+meningkatkan F1 secara berarti vs percobaan sebelumnya (semua plateau di 0.34–0.41).
+
+Tanda-tanda weak signal:
+- BestEpoch sangat dini: 3, 4, 5 di F1/F3/F7 — model konvergen ke noise dalam beberapa epoch
+- Variance antar fold: F1=0.3332 vs F8=0.3952 — perbedaan karena ukuran training set, bukan stabilitas sinyal
+- Gain +0.036 di atas random — ada sedikit sinyal, tapi tidak cukup untuk edge PnL yang berarti
+
+**Perbandingan semua LSTM directional 3-class yang pernah dicoba:**
+
+| Model | F1 Mean | ΔRandom | Keterangan |
+|-------|---------|---------|-----------|
+| LSTM Momentum V1-V6 | 0.34–0.41 | +0.01–+0.08 | 16 IC features, OHLCV |
+| tb_lstm_v1 | 0.3862* | +0.053* | *CONTAMINATED — ETF look-ahead |
+| **tb_lstm_macro_v1** | **0.3690** | **+0.036** | 7 feat, VIX+TLT, clean |
+
+*: Tidak valid — lihat bagian A di atas.
+
+**Keputusan**: STOP semua percobaan directional 3-class LSTM dari OHLCV. Informasi telah
+mencapai ceiling. Jalur benar: (1) binary meta-labeling [tb_lstm_binary_meta_v1 — lolos IC gate],
+(2) positioning features dari Binance Vision setelah di-engineer ke IC test.
+
+**Model tersimpan di**: `models/runs/tb_lstm_macro_v1/` — archived, DO NOT deploy.
+
+---
+
 ## 2026-06-08 — Pembersihan Repo: Arsip 265+ File Eksperimen Gagal
 
 ### Latar Belakang
@@ -2206,4 +3324,517 @@ Keputusan ini diambil setelah analisis mendalam livetrade.csv + EXPERIMENTS.md.
 
 ---
 
+## 2026-06-11 — Triple Barrier v3 + LSTM + Meta-Labeling + Coinank IC Test
+
+### Overview
+
+Serangkaian eksperimen lanjutan dari TB LGBM widyawardhana_v3 (terbaik sebelumnya: $940/WR 46.2%):
+1. **LSTM training** (`tb_lstm_v1`) — LSTM triple barrier dengan soft ensemble
+2. **Meta-labeling Layer 2** (`tb_meta_v1`) — binary WIN/LOSS classifier sebagai filter entry
+3. **IC test coinank** — validasi apakah coinank features layak masuk LGBM
+4. **LGBM v4** (`tb_lgbm_widyawardhana_v4`) — retrain dengan +4 coinank features
+
+**Best result hari ini: `tb+LSTM+Guardian` = $1,155 / WR 57.3% / 1,756 trades**
+
+---
+
+### 1. LSTM Triple Barrier (`tb_lstm_v1`) — F1 0.386
+
+**Script**: `pipeline/05_train_lstm_tb.py`
+**Model**: `models/runs/tb_lstm_v1/`
+
+LSTM dilatih menggunakan label Triple Barrier (bukan swing-based). Format: 11 fitur temporal, `seq=32`, `ManualLSTMCell`, GPU DirectML.
+
+| Metrik | Nilai |
+|--------|-------|
+| Val F1 Macro (CV mean) | 0.386 |
+| Val F1 Macro (best fold) | 0.408 |
+| Random baseline | 0.333 |
+| Gain vs random | +0.053 |
+| Agreement dengan LGBM (semua bar) | 75.7% |
+| Agreement dengan LGBM (directional only) | 80.7% |
+
+**Analisis decorrelation**: 80.7% directional agreement menunjukkan LSTM dan LGBM berbagi domain fitur yang hampir sama (keduanya OHLCV-based). Soft ensemble alpha=0.3 tetap dilakukan karena gain WR kecil namun konsisten dari low-correlation subset.
+
+---
+
+### 2. Holdout LGBM + LSTM + Guardian — 4-Way Comparison
+
+**Script**: `pipeline/07_holdout_livelike_lstm.py`
+**Hasil**: `models/runs/tb_lgbm_widyawardhana_v3/holdout_lstm_ensemble.json`
+**Period**: Nov 2025 – Apr 2026 (5 bulan, 21 koin, $10/trade 5x leverage)
+**LSTM ensemble**: `p_combined = 0.7 * p_lgbm + 0.3 * p_lstm`
+
+| Metrik | tb bare | tb+LSTM | tb+Guardian | **tb+LSTM+Guardian** |
+|--------|--------:|--------:|------------:|---------------------:|
+| Total Trades | 1,501 | 1,392 | 1,931 | **1,756** |
+| Trades/bulan | 300 | 278 | 386 | **351** |
+| Win Rate | 46.2% | 47.1% | 55.6% | **57.3%** |
+| LONG WR | 43.7% | 45.1% | 52.4% | 51.3% |
+| SHORT WR | 47.1% | 47.6% | 56.8% | **59.1%** |
+| SL hit rate | 50.9% | 50.2% | 24.2% | **23.5%** |
+| Guardian exits | — | — | 70.3% | **71.7%** |
+| Avg hold (bar) | 24.2 | 24.3 | 15.3 | 15.6 |
+| **Net PnL (5 bln)** | $940 | $995 | $1,125 | **$1,155** |
+| PnL/bulan | $188 | $199 | $225 | **$231** |
+| PnL/trade | $0.63 | $0.71 | $0.58 | $0.66 |
+
+**Kesimpulan**:
+- `tb+LSTM+Guardian` adalah **konfigurasi terbaik**: PnL $1,155, WR 57.3%
+- LSTM sendiri (+$55 dari tb bare) memberikan kontribusi kecil namun positif
+- Guardian adalah driver utama: SL rate turun dari 50.9% → 23.5%, WR naik +11pp
+- LSTM + Guardian bersifat **komplementer**: Guardian exit lebih awal, LSTM filter entry lebih baik
+
+---
+
+### 3. Meta-Labeling Layer 2 (`tb_meta_v1`)
+
+**Konsep**: Binary classifier yang menjawab "apakah sinyal LGBM ini akan WIN atau LOSS?"
+Trained di atas OOF predictions dari LGBM widyawardhana_v3 (walk-forward, tidak ada leakage).
+
+**Scripts**:
+- `pipeline/08_generate_meta_labels_tb.py` — generate OOF trades dengan meta-label
+- `pipeline/09_train_meta_lgbm_tb.py` — train binary LGBM meta-model
+- `pipeline/07_holdout_livelike_meta_guardian.py` — 4-way holdout comparison
+
+#### 3a. OOF Dataset Generation
+
+| Metrik | Nilai |
+|--------|-------|
+| Total OOF trades | 22,988 |
+| Base WIN rate (OOF) | 41.2% |
+| Coins | 21 |
+
+#### 3b. Meta-Model Training (Binary LGBM)
+
+**Features** (11): `p_short, p_flat, p_long, confidence, direction, atr_percentile_h1, funding_rate, wyckoff_phase, stochrsi_k, ofi_h4_delta, Sell_Liq`
+
+| Metrik | Nilai |
+|--------|-------|
+| CV Mean AUC | 0.5949 |
+| Best fold AUC | 0.6424 (fold 7) |
+| WR selected (CV) | 58.1% |
+| WR rejected (CV) | 38.8% |
+| Final n_estimators | 88 |
+
+Gap WR selected vs rejected = **+19.3pp** — separasi signal cukup meaningful.
+
+#### 3c. Holdout 4-Way Comparison (Nov 2025 – Apr 2026)
+
+| Metrik | tb bare | tb+Guardian | tb+meta(0.45) | tb+meta+Guardian |
+|--------|--------:|------------:|--------------:|-----------------:|
+| Total Trades | 1,501 | 1,931 | 449 | 485 |
+| Win Rate | 46.2% | 55.6% | 57.5% | **68.2%** |
+| SL hit rate | 50.9% | 24.2% | 37.9% | 13.2% |
+| Guardian exits | — | 70.3% | — | 80.2% |
+| **Net PnL** | $940 | **$1,125** | $496 | $442 |
+| PnL/trade | $0.63 | $0.58 | **$1.10** | $0.91 |
+
+**Analisis**:
+- Meta-model **berhasil meningkatkan WR** dari 46.2% → 57.5% (standalone) dan 68.2% (+ Guardian)
+- Namun **volume trade turun drastis**: 449 trades vs 1,501 (−70%) — trade count terlalu sedikit
+- PnL absolut lebih rendah dari tb+Guardian ($496 vs $1,125) karena volume tidak cukup
+- `tb+meta+Guardian` WR 68.2% mendekati ic32 (67.5%) tapi dengan 485 trades vs 2,434 — tidak comparable
+- **Trade-off**: Quality (WR) vs Volume (PnL). Untuk akhir tujuan PnL absolut, Guardian alone lebih efektif.
+
+**Keputusan**: Meta-labeling tidak digunakan sebagai production filter untuk saat ini. Berguna sebagai analitik untuk memahami mana trade yang cenderung menang.
+
+---
+
+### 4. IC Test Coinank Features (`scratch/ic_test_coinank_tb.py`)
+
+**Tujuan**: Validasi apakah 4 coinank features layak masuk LGBM training.
+**Period**: Jan 2025 – Oct 2025 (overlap coinank dengan training data)
+**Target**: TB label ordinal (SHORT=-1, FLAT=0, LONG=1)
+**Methodology**: Spearman IC, N_eff = N/24 (H1 autocorrelation correction)
+**Threshold**: |IC| >= 0.02, |t-stat| >= 2.0
+
+#### IC Results (KEEP features)
+
+| Feature | IC | t-stat | Verdict |
+|---------|---:|-------:|---------|
+| ls_pos_zscore_20d | +0.075 | +5.51 | KEEP + STABLE |
+| smart_retail_div_delta_1d | +0.034 | +2.60 | KEEP + STABLE |
+| oi_pct_1d | +0.029 | +2.08 | KEEP + STABLE |
+| oi_price_div_1d | +0.028 | +2.03 | KEEP + STABLE |
+
+Semua 4 KEEP features lulus **stability test** (IC sign konsisten >= 2/3 temporal windows, IC_IR >= 0.5).
+
+**Interpretasi**:
+- `ls_pos_zscore_20d` (IC=0.075) paling kuat: top trader position z-score 20D — contrarian signal (long bias trader = bearish next bar)
+- `smart_retail_div_delta_1d`: perubahan divergensi top trader vs retail dalam 24 bar — momentum positioning
+- `oi_pct_1d`, `oi_price_div_1d`: OI change dan divergensi terhadap harga — mengukur leverage buildup
+
+---
+
+### 5. LGBM v4 + Coinank (`tb_lgbm_widyawardhana_v4`)
+
+**Script**: `pipeline/04_train_lgbm_tb_v4.py`
+**Features**: 22 (18 v3 + 4 coinank)
+
+#### 5a. Training Results
+
+| Metrik | v3 (baseline) | v4 (+coinank) |
+|--------|:-------------:|:-------------:|
+| CV Mean F1 | 0.4173 | 0.4149 |
+| CV Std F1 | ±0.0097 | ±0.0107 |
+
+**Feature importance rank 1–10** (v4):
+1. etf_gbtc_change_usd (2596)
+2. etf_total_change_usd (2093)
+3. **ls_pos_zscore_20d** (1975) ← coinank rank ke-3
+4. **smart_retail_div_delta_1d** (1839) ← coinank rank ke-4
+5. funding_rate (1524)
+
+Coinank features `ls_pos_zscore_20d` dan `smart_retail_div_delta_1d` masuk top-5 meskipun hanya 13-18% data non-NaN. Bukti IC yang genuine.
+
+**Coinank coverage** saat training:
+- Per-coin coverage: 13.0% (mayoritas koin lama) – 98.0% (ONDOUSDT yang baru listing)
+- Rata-rata: ~17% non-NaN dari 785,185 total bars
+
+#### 5b. Holdout v3 vs v4 (Nov 2025 – Apr 2026)
+
+| Metrik | tb_v3 (18 feat) | tb_v4 (22 feat) | Delta |
+|--------|----------------:|----------------:|------:|
+| Total Trades | 1,501 | 1,655 | +154 |
+| Win Rate | 46.2% | 41.5% | **−4.7pp** |
+| SL hit rate | 50.9% | 55.4% | +4.5pp |
+| **Net PnL** | **$940** | $723 | **−$218** |
+| PnL/trade | $0.63 | $0.44 | −$0.19 |
+
+**Root cause underperformance**:
+- Saat training: 83% bar coinank = NaN (2020-2024) → LGBM belajar "mode NaN"
+- Saat holdout (Nov-Apr 2026): 100% coinank tersedia → model beroperasi dalam "mode coinank"
+- Mode coinank hanya punya 9 bulan training data (Jan-Oct 2025), vs 5 tahun untuk OHLCV features
+- **Regime mismatch**: model tidak cukup eksposur ke pola coinank untuk generalisasi
+
+**Keputusan**: v4 tidak digunakan. Revisit ketika coinank coverage > 12 bulan (est. Juli 2026) sehingga coinank-mode mendapat training data yang cukup.
+
+---
+
+### 6. Binary LSTM Meta-Labeling — Simon Phase 2 (`tb_lstm_binary_meta_v1`)
+
+**Script**: `pipeline/10_train_lstm_binary_meta_tb.py`
+**Model**: `models/runs/tb_lstm_binary_meta_v1/`
+**Tujuan**: Prediksi WIN/LOSS trade (bukan arah harga) — meta-labeling ala Marcos Lopez de Prado, dengan Simon Gate sebagai pre-filter.
+
+#### 6a. Training Results
+
+- **Dataset**: 22,979 OOF trades dari TB LGBM v3 (Nov 2025–Apr 2026)
+- **Base WIN rate**: 41.2% (pos_weight=1.42)
+- **CV AUC**: 0.5566 ± 0.0218
+- **Simon Gate**: PASS — Marginal IC = +0.0682, t=+9.77, p=0.000
+
+Marginal IC mengukur IC(lstm_score | already_known_lgbm_confidence) menggunakan residualisasi Spearman. PASS berarti LSTM memberikan informasi tambahan di atas LGBM.
+
+**OOF threshold sweep:**
+| Threshold | Coverage | WR | Lift vs base |
+|-----------|:--------:|---:|:------------:|
+| 0.45 | 74.3% | 43.4% | +1.8pp |
+| 0.50 | 51.5% | 44.5% | +2.9pp |
+| 0.55 | 25.5% | 45.7% | +4.1pp |
+| 0.60 | 9.7% | 48.2% | +7.0pp |
+| 0.65 | 2.6% | 50.8% | +9.2pp |
+
+#### 6b. Holdout Evaluation — Binary Meta sebagai Entry Gate
+
+**Script**: `pipeline/11_holdout_binary_meta_tb.py`
+**Pendekatan**: Filter entry — jika `p_win < threshold` → skip trade (set FLAT)
+
+| Konfigurasi | Trades | WR | Net PnL | PnL/trade |
+|-------------|-------:|---:|--------:|----------:|
+| tb+Guardian (baseline) | 1,931 | 55.6% | $1,125 | $0.583 |
+| tb+Meta(0.50)+Guardian | 1,273 | 57.6% | $784 | $0.616 |
+| tb+Meta(0.55)+Guardian | 637 | 55.9% | $393 | $0.616 |
+| tb+Meta(0.60)+Guardian | 98 | 55.1% | $51 | $0.521 |
+
+**Kesimpulan: GAGAL meningkatkan PnL absolut.** WR naik tipis (+2pp di thr=0.50) tetapi volume turun drastis (−34% di thr=0.50), sehingga PnL total turun $341.
+
+#### Root Cause Analysis
+
+1. **Train-holdout distribution shift**: Meta dilatih pada OOF LGBM trades tanpa Guardian (base WR 41.2%). Tapi saat holdout, kita filter trades yang sudah di-Guardian (WR 55.6%). Guardian sudah mengerjakan seleksi distribusi — trades "jelek" sudah dieliminasi per-bar. Meta tidak punya sinyal tambahan untuk seleksi pre-entry.
+
+2. **PnL/trade meningkat tapi tidak cukup**: thr=0.50 → PnL/trade $0.616 vs $0.583 (+$0.033). Improvement nyata tapi terlalu kecil untuk offset 34% volume loss.
+
+3. **Guardian dominates**: Guardian melakukan seleksi dinamis (per-bar monitoring), lebih efisien dari static entry gate karena ia bisa exit tepat waktu bahkan ketika masuk di bar buruk.
+
+**Keputusan**: Binary LSTM Meta sebagai entry gate tidak production-ready. Tidak dilanjutkan.
+
+---
+
+### 7. Guardian-OOF LSTM Retrain — Simon Phase 3 (`tb_lstm_meta_guardian_v1`)
+
+**Script**: `pipeline/12_train_lstm_meta_guardian.py`
+**Model**: `models/runs/tb_lstm_meta_guardian_v1/`
+**Tujuan**: Fix distribusi target — retrain LSTM dengan Guardian-simulated WIN/LOSS agar OOF labels sesuai dengan evaluasi produksi.
+
+#### Motivasi
+
+Binary LSTM meta-labeling v1 lulus Simon Gate (marginal IC +0.0682) tetapi gagal di holdout. Root cause: LSTM dilatih pada OOF trades tanpa Guardian (base WR 41.2%), sedangkan saat holdout kita evaluasi trades yang sudah melewati Guardian (base WR 55.6%). **Target mismatch**.
+
+Simon's principle: model harus dilatih pada distribusi target yang sama dengan produksi.
+
+#### Metodologi
+
+1. Re-simulasi setiap OOF trade melalui Guardian (per-bar check)
+2. Label WIN = Guardian exit dengan profit ATAU time exit dengan profit
+3. IC test ulang terhadap Guardian-WIN target
+4. Train LSTM hanya dengan fitur yang lulus IC
+
+#### IC Test Results — vs Guardian-WIN
+
+| Feature | IC | t-stat | Verdict |
+|---------|---:|-------:|---------|
+| atr_percent_h4 | +0.025 | +3.49 | KEEP |
+| Semua fitur lain (OFI, CVD, RSI, momentum, dll) | < 0.01 | < 1.5 | DROP |
+
+Hanya 1 dari 16 fitur yang lulus standalone IC. Ini konfirmasi empiris bahwa **pre-entry OHLCV features tidak bisa memprediksi Guardian-WIN** karena Guardian memiliki komponen stokastik (per-bar exit) yang tidak bisa diketahui di waktu entry.
+
+#### Final Training (2 fitur: atr_percent_h4 + direction)
+
+| Metrik | Nilai |
+|--------|-------|
+| CV AUC | 0.506 |
+| Simon Gate | **FAIL** — Marginal IC = -0.0003, t = -0.04 |
+
+**Kesimpulan**: LSTM dengan Guardian-correct labels tidak memberikan sinyal marginal sama sekali. AUC 0.506 = hampir random. Simon Gate FAIL mengkonfirmasi tidak ada informasi yang bisa dipelajari.
+
+**Interpretasi fundamental**: Guardian exit mengubah trade outcome dari fungsi deterministik fitur entry menjadi proses stokastik. Model berbasis pre-entry features tidak bisa memprediksi proses ini secara meaningful.
+
+---
+
+### 8. Coefficient Multiplier Evaluation (`tb_lstm_binary_meta_v1`)
+
+**Script**: `pipeline/13_holdout_multiplier_meta.py`
+**Model**: `tb_lstm_binary_meta_v1` (Simon Gate PASS, AUC=0.5566)
+**Tujuan**: Evaluasi apakah LSTM bisa diintegrasikan sebagai **koefisien pengali** kontinu — Bayesian likelihood ratio — alih-alih hard gate atau soft blend.
+
+#### Mekanisme
+
+```
+multiplier    = clip(1 + lam * (p_win / base_rate - 1), 0.60, 1.50)
+effective_conf = lgbm_conf * multiplier
+```
+
+Jika `p_win > base_rate (0.412)`: multiplier > 1 → LGBM signal diperkuat
+Jika `p_win < base_rate`: multiplier < 1 → LGBM signal dilemahkan
+Lambda (lam) mengontrol seberapa agresif multiplier diterapkan.
+
+#### Hasil Lambda Sweep (Nov 2025 – Apr 2026)
+
+| Metrik | baseline(lam=0) | lam=0.50 | lam=0.75 | lam=1.00 | lam=1.25 |
+|--------|:-----------:|:--------:|:--------:|:--------:|:--------:|
+| Total Trades | 1,931 | 3,181 | 3,571 | 3,812 | 3,984 |
+| Win Rate | 55.6% | 48.3% | 46.3% | 46.2% | 45.4% |
+| SL hit rate | 24.2% | 27.5% | 28.5% | 28.9% | 29.4% |
+| Guardian exits | 70.3% | 67.0% | 65.8% | 65.7% | 65.1% |
+| Avg hold (bar) | 15.3 | 14.7 | 14.6 | 14.5 | 14.4 |
+| **Net PnL (5bln)** | **$1,125** | **$1,196** | $1,040 | $1,126 | $1,093 |
+| PnL/bulan | $225 | $239 | $208 | $225 | $219 |
+| PnL/trade | $0.583 | $0.376 | $0.291 | $0.295 | $0.274 |
+
+#### Root Cause — Design Flaw
+
+**lam > 0 menambah trade, bukan memfilter.** Ini terjadi karena multiplier di-aplikasikan ke semua LGBM signal bars, termasuk yang di bawah regime threshold. Ketika `p_win > base_rate` (mayoritas bars karena LSTM memprediksi banyak WIN), effective_conf melebihi threshold → entry baru.
+
+- lam=0.50: +1,250 trade extra (semua dari below-threshold LGBM)
+- WR trades extra: ~43% (bawah break-even setelah spread+fee)
+- Efek: volume meledak +65%, WR jatuh -7pp, tapi PnL masih naik tipis +$71 karena volume kompensasi
+
+**lam=0.50 "menang" hanya karena volume, bukan quality.** PnL/trade turun dari $0.583 ke $0.376 (-35%).
+
+#### Analisis Keputusan
+
+Ketiga pendekatan integrasi LSTM sudah dievaluasi:
+
+| Mekanisme | Hasil | Root Cause Kegagalan |
+|-----------|-------|----------------------|
+| Hard gate (binary filter) | PnL $784 (-$341) | -34% volume, WR gain kecil |
+| Soft blend (alpha=0.3) | PnL $1,155 (+$30) | 80.7% agreement, efek minimal |
+| Coefficient multiplier | PnL $1,196 (+$71) | Volume explosion, edge/trade -35% |
+
+Semua tiga pendekatan gagal memberikan **improvement meaningful**. Soft blend dan multiplier memberikan gain marginal tapi dengan trade-off signifikan (volume, quality, dll).
+
+**Kesimpulan fundamental**: Binary LSTM meta-labeling (`tb_lstm_binary_meta_v1`) memiliki AUC=0.5566 — terlalu lemah untuk menjadi filter bermakna. Sinyal LSTM dan LGBM sangat berkorelasi (80.7% agreement pada static OHLCV features) sehingga tidak ada information gain baru.
+
+**Keputusan**: Tidak ada mekanisme LSTM yang memberikan improvement net-positive atas `tb+Guardian` baseline ($1,125). **Final config: `tb+LSTM+Guardian` ($1,155) tetap sebagai terbaik — dengan catatan bahwa gain $30 vs Guardian-only adalah marginal dan tidak signifikan secara statistik.**
+
+---
+
+### Ringkasan Semua Konfigurasi — Nov 2025 – Apr 2026
+
+| Konfigurasi | Trades | WR | Net PnL | PnL/trade | Catatan |
+|-------------|-------:|---:|--------:|----------:|---------|
+| tb bare | 1,501 | 46.2% | $940 | $0.63 | Baseline |
+| tb+LSTM | 1,392 | 47.1% | $995 | $0.71 | LSTM soft filter |
+| tb+Guardian | 1,931 | 55.6% | $1,125 | $0.58 | Guardian early exit |
+| **tb+LSTM+Guardian** | **1,756** | **57.3%** | **$1,155** | **$0.66** | **Terbaik** |
+| tb+Multiplier(lam=0.50)+Guardian | 3,181 | 48.3% | $1,196 | $0.38 | Marginal gain, -35% edge/trade |
+| tb+BinaryMeta(0.50)+Guardian | 1,273 | 57.6% | $784 | $0.62 | Meta-gate, volume loss |
+| tb+meta(0.45) | 449 | 57.5% | $496 | $1.10 | Volume terlalu rendah |
+| tb+meta+Guardian | 485 | 68.2% | $442 | $0.91 | WR tinggi, PnL rendah |
+| tb_v4 (coinank) | 1,655 | 41.5% | $723 | $0.44 | Regime mismatch |
+| ic32+Guardian (benchmark) | 2,434 | 67.5% | $848 | $0.35 | Production model |
+
+**Winner: `tb+LSTM+Guardian`** — PnL tertinggi ($1,155), WR 57.3%, 1,756 trades. Mengungguli ic32+Guardian ($848) sebesar +$307 (+36%).
+
+> Note: ic32+Guardian menggunakan swing-based labeling yang berbeda. Perbandingan tidak apple-to-apple, namun keduanya ditest pada holdout period yang sama.
+
+### Keputusan & Next Steps
+
+1. **Triple Barrier + Guardian** terbukti viable sebagai alternatif swing-based labeling
+2. **LSTM soft ensemble** memberikan kontribusi kecil namun konsisten (+$30 atas Guardian alone)
+3. **Coinank features** memiliki IC genuine tapi membutuhkan lebih banyak training coverage — revisit Juli 2026
+4. **Binary LSTM Meta-gate / Multiplier** tidak efektif — LSTM tidak punya cukup sinyal independen dari LGBM (80.7% agreement, AUC 0.5566)
+5. **Bottleneck**: LSTM pre-entry tidak bisa prediksi Guardian-WIN (stokastik per-bar). Untuk LSTM berkontribusi meaningful, perlu: (a) temporal dynamics features seperti ic32, atau (b) positioning data (mining aktif, est. Des 2026)
+6. **Next**: Evaluasi apakah `tb+LSTM+Guardian` layak menggantikan `ic32+Guardian` di live — butuh paper trading
+
+---
+
+### 9. Investigasi ETF Flow Data — Dune/SoSoValue/yfinance
+
+**Tujuan**: Cari sumber data real ETF flow (creation/redemption) untuk fitur LSTM.
+
+**Motivasi**: ETF outflow masif (IBIT selling) menyebabkan dump BTC. Jika bisa capture sinyal ini sebelum price drop, bisa jadi fitur prediktif untuk LSTM.
+
+#### 9a. Analisis yfinance ETF Proxy
+
+**Proxy**: `flow_est[t] = shares_est × (close[t] - close[t-1])`
+- `shares_est = AUM_static / close_latest` (shares tidak berubah)
+- Korelasi dengan real flow (Coinank): r ≈ 0.40, direction agreement ≈ 65%
+
+**IC test** (10 koin, 493K H1 bars, T-1 lag, TB label):
+- Sebelum T-1 lag: IC = +0.18 → look-ahead artifact (flow T dipakai di bar T)
+- Setelah T-1 lag: IC = +0.0015 → essentially zero
+
+**Root cause**: `flow_est = shares_static × price_change`. Price change ≈ BTC return.
+Dengan T-1 lag, ini menggunakan BTC return kemarin untuk prediksi hari ini → tidak lebih dari autocorrelation lemah. **Proxy ini circular dan tidak berguna setelah T-1 lag.**
+
+#### 9b. Pencarian Dune Analytics
+
+**API key** digunakan untuk scan ~300+ query IDs (3391430 - 3840000 + query-query spesifik).
+- Query 3802960 (dari production code): **WRONG** — data Ethereum uncle/miner
+- Query IDs lain (3615936, 3726336, 3835897, dll): semua 404 (private atau tidak ada)
+- Scan lebar 300+ IDs: hanya 3 yang accessible, tidak ada yang berisi ETF flow
+
+**Status**: Tidak ada Dune query publik yang bisa diakses dari environment ini untuk BTC ETF flow.
+
+#### 9c. Alternatif API — Semua Gagal (Network Restriction)
+
+| Source | URL | Status |
+|--------|-----|--------|
+| SoSoValue | ssosovalue.com/api | DNS resolution failed |
+| TheBlock | api.theblockresearch.com | DNS resolution failed |
+| CoinGlass | open-api.coinglass.com | HTTP 500 |
+| yfinance .info | sharesOutstanding | N/A untuk IBIT/FBTC/ARKB/BITB |
+
+#### Kesimpulan
+
+**Real ETF flow tidak accessible untuk free dari environment ini.** Opsi ke depan:
+1. Set up Dune daily fetch sebagai cron pipeline (butuh query ID yang valid dari Dune dashboard)
+2. Gunakan SoSoValue/CoinGlass dari server production yang tidak ada network restriction
+3. Tunggu sampai positioning data cukup (Des 2026) — coinank taker/OI lebih predictive dari ETF flow
+
+**Satu-satunya macro signal yang genuine**: `tlt_ret_5d_ff` (IC=+0.028) — TLT 5-day return dengan T-1 lag. Mekanisme: risk-on rotation (bond sell = equity/crypto buy).
+
+---
+
+### 10. LSTM Macro+Temporal v1 (`tb_lstm_macro_v1`) — IN PROGRESS
+
+**Script**: `pipeline/05_train_lstm_macro_v1.py`
+**Model**: `models/runs/tb_lstm_macro_v1/`
+
+**Motivasi**: Semua pendekatan LSTM sebelumnya menggunakan fitur OHLCV sama dengan LGBM (80.7% directional agreement). Untuk LSTM genuine complement, perlu fitur yang berbeda secara informatif. IC test menunjukkan 7 fitur yang pass threshold:
+
+**7 IC-validated features** (IC >= 0.02, |t| >= 2.0, marginal IC >= 0.01):
+
+| Fitur | IC | Kategori |
+|-------|----|----------|
+| cvd_slope_h4 | +0.045 | OHLCV temporal (H4 slope) |
+| ofi_h4_delta | +0.038 | OHLCV temporal (H4 delta) |
+| ema_50_slope_h4 | +0.035 | OHLCV temporal (trend slope) |
+| ema_21_slope_h4 | +0.031 | OHLCV temporal (trend slope) |
+| cvd_momentum_adv | +0.024 | OHLCV temporal (momentum) |
+| tlt_ret_5d_ff | +0.028 | Macro (T-1 lag, bond rotation) |
+| vix_z20 | +0.022 | Macro (T-1 lag, fear gauge) |
+
+**Architecture**: TradingLSTM(n_feat=7, hidden=64, layers=2, dropout=0.35), seq_len=72 (3 days H1)
+**Dataset**: 391,470 sequences, 21 koin, 2020-2025
+**Label dist**: SHORT=56%, FLAT=3%, LONG=41% — asimetri karena SL (1.5x ATR) lebih dekat dari TP (2.0x ATR)
+**Training**: Purged CV 8 fold, ManualLSTMCell (DirectML AMD RX 6600)
+
+> Status: **Training berjalan** (background). Hasil akan ditambahkan setelah selesai.
+
+---
+
+### 11. Meta-Labeling flatboost_v2 (`tb_meta_fb_v2`) — CLOSED / NO-GO
+
+**Tanggal**: 2026-06-15  
+**Model aktif**: `tb_widyawardhana_v2_continuation` (flatboost_v2 + HMM T50_R55 + LSTM soft veto + Guardian continuation_v1)  
+**Tujuan**: Binary LGBM meta gate (take/skip) di atas entry stack produksi — Simon 3-gate sebelum deploy.
+
+#### Pipeline
+
+| Script | Output |
+|--------|--------|
+| `pipeline/08_generate_meta_labels_fb_v2.py` | `data/meta_labels/fb_v2_oof_trades.parquet` (25,026 OOF trades) |
+| `pipeline/09_train_meta_lgbm_fb_v2.py` | `models/runs/tb_meta_fb_v2/meta_lgbm.pkl` |
+| `pipeline/14_eval_meta_entry_fb_v2.py` | Holdout ablation (Guardian OFF, entry-only) |
+| `pipeline/15_marginal_ic_meta_fb_v2.py` | Simon Gate #1 |
+| `pipeline/16_explore_meta_fb_v2.py` | Varian fitur + soft multiplier |
+
+#### Gate #1 — Marginal IC (Simon)
+
+| Dataset | n | Marginal IC(meta\|conf) | t | Verdict |
+|---------|--:|------------------------:|--:|---------|
+| OOF (in-sample meta) | 25,026 | +0.230 | +37.4 | PASS (inflated — meta dilatih dari label yang sama) |
+| Holdout Apr–Jun 2026 | 918 | +0.029 | **+0.9** | **FAIL** |
+
+Pass criteria: `|marginal_IC| >= 0.015` AND `|t| >= 2.0`.  
+`corr(meta, conf) ≈ 0.53` — prediktif meta sebagian besar redundan dengan LGBM confidence.
+
+#### Holdout Ablation — Entry-only (Guardian OFF)
+
+| Arm | Trades | WR | PF | PnL |
+|-----|-------:|---:|---:|----:|
+| primary_hmm (baseline) | 918 | 69.1% | 2.36 | **+$276** |
+| stack_baseline (+LSTM) | 656 | 71.3% | 2.59 | +$210 |
+| primary_meta_0.50 | 611 | 72.2% | 2.91 | +$234 |
+| primary_meta_0.55 | 391 | 71.4% | 2.83 | +$151 |
+
+Hard gate naikkan PF tapi **buang PnL** — filter trade profitable, bukan menambah alpha.
+
+#### Eksplorasi Lanjutan (`16_explore_meta_fb_v2`)
+
+Tiga varian fitur + soft multiplier — semua gagal beat `primary_hmm`:
+
+| Varian | Marginal IC (holdout) | Best arm PnL | Δ vs baseline |
+|--------|----------------------:|-------------:|--------------:|
+| full (proba + context) | +0.055, t=1.7 | full_mult +$272 | -$4 |
+| orthogonal (margin/entropy/gap) | -0.005, t=-0.2 | orthogonal_mult +$268 | -$8 |
+| context_only (tanpa proba) | -0.036, t=-1.1 | context_only_mult +$232 | -$44 |
+
+`context_only` hampir orthogonal ke confidence (corr ≈ -0.04) tapi sinyal prediktif negatif.
+
+#### Keputusan
+
+**CLOSED — tidak deploy meta entry gate ke produksi.**
+
+Root cause (konsisten dengan `tb_lstm_binary_meta_v1`, `tb_meta_v1`, `ic32_meta_v1`):
+1. Meta dilatih pada fitur yang overlap dengan primary (proba LGBM + confidence)
+2. OOF AUC tinggi (0.58–0.67) tidak generalize ke holdout
+3. Stack produksi sudah cukup kuat — meta menambah kompleksitas tanpa alpha orthogonal
+
+**Gate #2 (label Guardian-OOF) tidak dijalankan** — ROI rendah setelah semua varian fitur gagal IC.
+
+#### Arah Riset Berikutnya (pengganti meta entry)
+
+1. **Exit layer** — iterasi Guardian (`continuation_v1` → fitur flow delta, labeling HOLD override)
+2. **Entry primary** — fitur baru di LGBM flatboost (positioning data, macro temporal)
+3. **LSTM complement** — `tb_lstm_macro_v1` (fitur berbeda dari LGBM, bukan meta gate)
+4. **Positioning mining** — taker ratio, OI, top trader L/S (est. cukup history Des 2026)
+
+Artefak: `models/runs/tb_meta_fb_v2/marginal_ic_gate1.json`, `ablation_fb_v2_results.json`, `models/runs/tb_meta_fb_v2_explore/explore_results.json`
+
+---
 

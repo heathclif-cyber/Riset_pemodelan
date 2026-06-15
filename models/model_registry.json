@@ -1,8 +1,11 @@
 {
-  "active": "ic32_regime_v1",
+  "active": "tb_genuine_v2",
+  "run_id": "tb_lgbm_genuine_v2",
+  "model_type": "cascade",
+  "n_features": 34,
   "deployed_to_production": true,
-  "architecture": "LGBM ic32 (33 feat) + LSTM H1 survival filter + FLIP alignment + Guardian clean_v2",
-  "last_updated": "2026-06-08",
+  "architecture": "LGBM genuine_v2 (34 feat) + HMM Config B per-state thr + Guardian v2 tight + Dynamic Sizing",
+  "last_updated": "2026-06-15",
 
   "models": {
     "lgbm_ic32_regime_v1": {
