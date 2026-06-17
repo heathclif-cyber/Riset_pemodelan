@@ -16,6 +16,7 @@ Fitur:
 import os
 import shutil
 import json
+import glob as _glob
 from datetime import datetime
 
 # ==================== CONFIGURATION ====================
@@ -26,11 +27,13 @@ TARGET_REPO_DIR = r"D:\Apps-Dev\swint_tradev2"
 DEPLOY_MAPPING = {
     # 1. Models & Scalers (Source -> Target)
     "models/lgbm_baseline.pkl": "models/lgbm_baseline.pkl",
-    "models/lstm_best.pt": "models/lstm_best.pt",
-    "models/lstm_scaler.pkl": "models/lstm_scaler.pkl",
     "models/guardian_best.pkl": "models/guardian_best.pkl",
     "models/guardian_scaler.pkl": "models/guardian_scaler.pkl",
-    
+    # LSTM momentum complement (8f, seq 72) — conditional_momentum stack
+    "models/runs/tb_lstm_genuine_v2/lstm_momentum.pt": "models/runs/tb_lstm_genuine_v2/lstm_momentum.pt",
+    "models/runs/tb_lstm_genuine_v2/lstm_momentum_scaler.pkl": "models/runs/tb_lstm_genuine_v2/lstm_momentum_scaler.pkl",
+    "models/runs/tb_lstm_genuine_v2/lstm_v4_selected_features.json": "models/runs/tb_lstm_genuine_v2/lstm_v4_selected_features.json",
+
     # 2. Configs & Features
     "models/feature_cols_v2.json": "models/feature_cols_v2.json",
     "models/guardian_feature_cols.json": "models/guardian_feature_cols.json",
@@ -47,8 +50,87 @@ DEPLOY_MAPPING = {
     "core/cascade_utils.py": "core/cascade_utils.py",
 
     # 5. Positioning Data Mining (momentum model Phase 4)
-    "pipeline/01c_fetch_positioning.py": "pipeline/01c_fetch_positioning.py"
+    "pipeline/01c_fetch_positioning.py": "pipeline/01c_fetch_positioning.py",
+
+    # 6. Production Guardian service (continuation_v1 feature builder)
+    "tools/production/guardian_service.py": "app/services/guardian_service.py",
 }
+
+# 6. Per-symbol HMM models (dynamic — add all found *.pkl in models/hmm/)
+for _fp in _glob.glob(os.path.join(SOURCE_REPO_DIR, "models", "hmm", "*_hmm.pkl")):
+    _rel = "models/hmm/" + os.path.basename(_fp)
+    DEPLOY_MAPPING[_rel] = _rel
+
+# ---- Key operasional milik operator/VPS (di-set via UI atau fitur web-app-side) ----
+# Saat menyalin inference_config.json, nilai key ini DIPRESERVE dari config target
+# lama — deploy model TIDAK menimpanya. Mencegah:
+#   * risk.modal_per_trade / leverage  ter-reset ke default Riset (insiden modal=10)
+#   * rr_gate.sl_trigger_mode          ikut terhapus (fitur exit sisi web-app)
+# Format: dotted path. Hanya dipreserve bila path-nya ADA di config target.
+PRESERVE_KEYS = [
+    "risk.modal_per_trade",
+    "risk.leverage_recommended",
+    "rr_gate.sl_trigger_mode",
+]
+
+# File yang di-merge (bukan copy buta) — dikecualikan dari cek kesetaraan ukuran.
+MERGE_FILES = {"models/inference_config.json"}
+
+
+def _get_nested(d, dotted):
+    cur = d
+    for part in dotted.split("."):
+        if not isinstance(cur, dict) or part not in cur:
+            return (False, None)
+        cur = cur[part]
+    return (True, cur)
+
+
+def _set_nested(d, dotted, value):
+    parts = dotted.split(".")
+    cur = d
+    for part in parts[:-1]:
+        cur = cur.setdefault(part, {})
+    cur[parts[-1]] = value
+
+
+def merge_inference_config(src_path, tgt_path):
+    """Salin config dari source, tapi preserve PRESERVE_KEYS dari target lama.
+
+    Memastikan parameter operasional (modal/leverage UI, sl_trigger_mode) tidak
+    ter-reset saat deploy model baru. Ditulis dgn indent=2, ensure_ascii=False
+    agar konsisten dgn gaya source (tanpa escape unicode \\u2014).
+    """
+    with open(src_path, "r", encoding="utf-8") as f:
+        cfg = json.load(f)
+
+    preserved = []
+    if os.path.exists(tgt_path):
+        try:
+            with open(tgt_path, "r", encoding="utf-8") as f:
+                old = json.load(f)
+            for key in PRESERVE_KEYS:
+                found, val = _get_nested(old, key)
+                if found:
+                    _, src_val = _get_nested(cfg, key)
+                    _set_nested(cfg, key, val)
+                    if src_val != val:
+                        preserved.append(f"{key}={val} (source={src_val})")
+                    else:
+                        preserved.append(f"{key}={val}")
+        except (json.JSONDecodeError, OSError) as e:
+            print(f"     [WARNING] Gagal baca config target untuk preserve: {e}")
+
+    with open(tgt_path, "w", encoding="utf-8") as f:
+        json.dump(cfg, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    if preserved:
+        print("     [PRESERVE] Nilai operasional dipertahankan dari config target:")
+        for p in preserved:
+            print(f"                - {p}")
+    else:
+        print("     [PRESERVE] Tidak ada key operasional di target (deploy bersih).")
 # =======================================================
 
 def print_banner():
@@ -134,10 +216,15 @@ def copy_files():
         
         # Buat subdirektori target jika belum ada (misal models/)
         os.makedirs(os.path.dirname(tgt_path), exist_ok=True)
-        
-        # Salin file beserta metadata
-        shutil.copy2(src_path, tgt_path)
-        print(f"     [->] Copied: {rel_src} ===> {rel_tgt}")
+
+        if rel_tgt in MERGE_FILES:
+            # Merge: salin config baru tapi preserve key operasional dari target lama
+            merge_inference_config(src_path, tgt_path)
+            print(f"     [~>] Merged: {rel_src} ===> {rel_tgt}")
+        else:
+            # Salin file beserta metadata
+            shutil.copy2(src_path, tgt_path)
+            print(f"     [->] Copied: {rel_src} ===> {rel_tgt}")
         copied_files.append(tgt_path)
         
     print(f"   - [OK] Berhasil menyalin {len(copied_files)} file ke produksi.")
@@ -149,12 +236,17 @@ def validate_deployment():
     # 1. Validasi ukuran file cocok
     size_checks = True
     for rel_src, rel_tgt in DEPLOY_MAPPING.items():
+        # File merge sengaja berbeda dari source (preserve key operasional) —
+        # validasi strukturnya ditangani terpisah di bawah, bukan via ukuran.
+        if rel_tgt in MERGE_FILES:
+            continue
+
         src_path = os.path.join(SOURCE_REPO_DIR, rel_src)
         tgt_path = os.path.join(TARGET_REPO_DIR, rel_tgt)
-        
+
         src_size = os.path.getsize(src_path)
         tgt_size = os.path.getsize(tgt_path)
-        
+
         if src_size != tgt_size:
             print(f"   [WARNING] Mismatch Ukuran File: {rel_tgt} (Source: {src_size}B vs Target: {tgt_size}B)")
             size_checks = False
