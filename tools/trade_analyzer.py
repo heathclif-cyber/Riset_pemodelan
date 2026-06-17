@@ -25,9 +25,15 @@ from statistics import mean, stdev
 
 # ── Defaults ──────────────────────────────────────────────────────────────────
 
-# Deteksi otomatis berkas live trading dari Web App Produksi (Zero-Copy Bridge)
+# Deteksi otomatis berkas live trading.
+# Prioritas: cache live dari VPS (live_db_bridge.py) > CSV swint lokal (basi) > fallback lokal.
+# Jalankan `python tools/live_db_bridge.py` dulu untuk refresh cache live dari VPS.
+LIVE_CACHE_CSV = os.path.join(os.path.dirname(os.path.dirname(__file__)),
+                              "data", "live_cache", "hasil_livetrading.csv")
 PRODUCTION_CSV = r"D:\Apps-Dev\swint_tradev2\hasil_livetrading.csv"
-DEFAULT_CSV    = PRODUCTION_CSV if os.path.exists(PRODUCTION_CSV) else "livetrade.csv"
+DEFAULT_CSV    = (LIVE_CACHE_CSV if os.path.exists(LIVE_CACHE_CSV)
+                  else PRODUCTION_CSV if os.path.exists(PRODUCTION_CSV)
+                  else "livetrade.csv")
 DEFAULT_REPORT = r"D:\Apps-Dev\Riset_pemodelan\reports\TRADE_ANALYSIS_REPORT.md"
 DEFAULT_P2     = 0.05   # min Vol Regime
 DEFAULT_P4     = 0.08   # max H4 swing deviation

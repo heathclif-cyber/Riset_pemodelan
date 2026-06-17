@@ -62,3 +62,6 @@ logs/
 # OS
 .DS_Store
 Thumbs.db
+
+# Cache DB live ditarik dari VPS via tools/live_db_bridge.py (jangan commit data live)
+data/live_cache/
