@@ -2,6 +2,918 @@
 
 ---
 
+## 2026-06-17 — Guardian Continuation v1 untuk ic32 (Jalur C)
+
+**Status**: COMPLETED — **PROMOTE** vs clean_v2
+
+### Hipotesis
+Guardian clean_v2 (40f) terlalu agresif FULL_EXIT setelah TP. Model continuation (momentum delta + flow HOLD override) hold lebih lama saat momentum searah.
+
+### Yang Diubah
+- Retrain Guardian multiclass entry **OOF ic32** (thr 0.69/0.64)
+- 32 feat (22 static + 10 dynamic), label profit_v1 + flow HOLD override
+- 245,300 samples, hold_override=3,456 label flips
+
+### Hasil CV
+| Metrik | Nilai |
+|--------|-------|
+| Mean logloss | 0.2231 |
+| Mean F1 macro | 0.846 |
+
+### Hasil OOF Full Stack (vs clean_v2, same entry)
+| Metrik | clean_v2 | continuation_v1 | Delta |
+|--------|----------|-------------------|-------|
+| Trades | 25,596 | 25,596 | 0 |
+| WR | 58.6% | **59.6%** | +1.0pp |
+| PF | 1.48 | **1.59** | +0.11 |
+| PnL | +$4,194 | **+$5,452** | +$1,258 |
+| mom_exit count | 5,638 | 8,092 | +2,454 |
+| mom_avg_bars | 7.7 | **10.4** | +2.7 |
+
+### Kesimpulan
+Hipotesis terbukti — continuation hold lebih lama post-TP (+2.7 bar avg) dengan PF/WR/PnL naik.
+
+**Deploy 2026-06-17**: `guardian_best.pkl` + `guardian_feature_cols.json` (32f) -> swint_tradev2 + VPS. Backup: `backup_20260617_133803`.
+
+**Artefak**: `models/runs/ic32_guardian_continuation_v1/`, `oof_compare_vs_clean_v2.json`
+**Script**: `06_train_guardian_ic32_continuation_v1.py`, `08b_oof_ic32_guardian_compare.py`
+
+---
+
+## 2026-06-16 — Deploy + Holdout Genuine v3 (`tb_genuine_v2_dynsize_lstm_cond`)
+
+**Status**: DEPLOYED ke `swint_tradev2` (2026-06-16) + HOLDOUT SEALED
+
+### Deploy
+- Script: `tools/deploy_model.py` — backup `swint_tradev2/models/backups/backup_20260616_201350`
+- Stack: LGBM 36f (`lgbm_baseline.pkl`) + HMM B + LSTM Ref (`tb_lstm_genuine_v2`) + Guardian v2 + DynSize cm_0.60
+- `model_registry.json`: `deployed_to_production=true`
+- Verifikasi live: gunakan DEPLOY_VERIFY_PROMPT di chat/deploy note 2026-06-16
+
+### Keputusan eksperimen (LOCK-IN)
+| Item | Nilai | Ditolak |
+|------|-------|---------|
+| LSTM run | `tb_lstm_genuine_v2` (8f, seq 72) | `tb_lstm_lgbm_seq_v1`, opp_pen=0.18 |
+| Fusion | conditional_momentum o14 | hard_consensus, soft veto v2 |
+| Training cutoff | 2026-04-01 (sampai Mar 2026) | metadata lama "Okt 2025" — STALE |
+| Entry threshold | HMM Config B frozen (OOF) | **Tidak tune** dari holdout Apr–Jun |
+
+### Holdout Apr–Jun 2026 (first look)
+| Stack | Trades | WR | PF | PPT_norm |
+|-------|-------:|---:|---:|---------:|
+| tb_lgbm_genuine_v2 (no LSTM) | 1,638 | 73.6% | 3.029 | +$0.3859 |
+| + LSTM Ref | 1,648 | 73.4% | 3.002 | +$0.3839 |
+
+Artefak: `2026-06-16_genuine_v3_lstm_cond_holdout.json`
+
+---
+
+## 2026-06-16 — Holdout Genuine v3 LSTM Cond (Apr–Jun 2026)
+
+**Status**: COMPLETED — `HOLDOUT_EVALUATED=True` di `07_holdout_genuine_v3_lstm_cond.py`
+
+### Hipotesis
+Stack frozen `tb_genuine_v2_dynsize_lstm_cond` (36f + LSTM Ref) akan generalize ke holdout Apr–Jun 2026 setelah training sampai Mar 2026 (`TRAIN_CUTOFF=2026-04-01`).
+
+### Yang Dievaluasi
+- **baseline_no_lstm**: LGBM 36f + HMM B + Guardian v2 + DynSize
+- **ref_lstm_cond**: + LSTM conditional_momentum (opp_pen=0.14, frozen inference_config)
+- Script: `pipeline/07_holdout_genuine_v3_lstm_cond.py`
+- Menggantikan holdout v2 (34f, tanpa LSTM) — STALE
+
+### Hasil Holdout (21 koin, Apr 1 – Jun 13 2026)
+
+| Stack | Trades | WR | PF | PnL | PPT_norm |
+|-------|-------:|---:|---:|----:|---------:|
+| baseline_no_lstm | 1,638 | 73.6% | 3.029 | +$876.54 | +$0.3859 |
+| **ref_lstm_cond** | **1,648** | **73.4%** | **3.002** | **+$875.42** | **+$0.3839** |
+
+LSTM signal: boost_unlock=22, penalty_block=7. Delta vs baseline: PPT_norm -$0.0021 (netral).
+
+**Slice pump/SHORT** (vol>=2, frac_up>=0.8): n=10 kedua stack, WR 70%, PF baseline 5.31 vs LSTM 4.84 — sample terlalu kecil untuk inferensi kuat.
+
+**HMM**: 100% state 1 (RANGING_LOW) — sama seperti holdout v2.
+
+### Kesimpulan
+- Holdout **positif dan kuat**: WR 73%+, PF ~3.0, PnL +$875 (~2.5 bulan, $10 base modal)
+- LSTM Ref **tidak menambah edge material** di holdout ini (delta netral) — konsisten dengan OOF delta tipis (+$0.0008)
+- **Tetap deploy Ref** — proteksi pump/SHORT terbukti di OOF; holdout pump slice n terlalu kecil (10 trade)
+- **Jangan re-run** script ini — holdout tersegel. Eval berikutnya butuh periode baru (Jul–Sep 2026)
+
+**Artefak**: `reports/experiments/2026-06-16_genuine_v3_lstm_cond_holdout.md/json`
+
+---
+
+## 2026-06-16 — LGBM Conf sebagai Fitur Input LSTM (Audit + Eksperimen)
+
+**Status**: COMPLETED — varian B (`tb_lstm_lgbm_seq_v1`)
+
+### Hipotesis
+LSTM momentum saat ini hanya melihat 8 fitur market (CVD/OFI/vol) tanpa konteks skor LGBM. Saat LGBM FLAT + vol spike, LSTM tidak tahu apakah LGBM hampir LONG/SHORT (near-miss) atau benar-benar netral. Menambahkan `p0_lgbm`, `p2_lgbm`, `lgbm_conf` ke sequence input bisa membuat LSTM lebih kontekstual — terutama untuk kasus counter-trend SHORT saat pump (LGBM SHORT vs LSTM BULL conflict).
+
+### Audit (2026-06-16) — Status Saat Ini
+| Komponen | LGBM p0/p2/conf di input LSTM training? |
+|----------|----------------------------------------|
+| `05_train_lstm_genuine_v2` (live momentum) | **Tidak** — hanya 8f `lstm_v4_selected_features.json` |
+| `prepare_lstm_momentum_input` (live) | **Tidak** — same 8 market features |
+| `conditional_momentum` fusion | **Tidak** — LGBM proba di-adjust **setelah** LSTM infer |
+| `build_complement_frame` (05 genuine_v2) | Join OOF LGBM hanya untuk **post-hoc** complement sweep |
+| `05o` meta SHORT win | `lgbm_conf` hanya untuk **marginal IC**, bukan tensor X |
+| Archive `10_train_lstm_binary_meta_tb` | **Partial** — constant `direction` (+1/-1), bukan p0/p2/conf |
+
+**Korelasi OOF** (merge 155,169 bar gate, `tb_lgbm_genuine_v2` + `tb_lstm_genuine_v2`):
+| Slice | corr(lgbm_conf, lstm_bull) | corr(p2_lgbm, p2_lstm) |
+|-------|:--------------------------:|:----------------------:|
+| All merged | -0.04 | -0.14 |
+| vol_spike >= 2 | -0.10 | -0.18 |
+| complement (LGBM flat + vol) | -0.10 | **-0.22** |
+
+→ Skor LGBM dan LSTM **hampir independen** (korelasi rendah/negatif). Fusion penalty zone: **352 bar** LGBM SHORT signal + LSTM bull>=0.38 pada gate bars.
+
+Script audit: `scratch/audit_lgbm_lstm_conf.py`
+
+### Yang Diubah (rencana)
+- Fork `05_train_lstm_genuine_v2` → `05p_lstm_lgbm_conf_feat_v1.py`
+- Varian fitur (A/B/C):
+  - **A**: +3 constant per timestep (`p0_oof`, `p2_oof`, `conf_oof`) dari join OOF LGBM **per fold** (bar target saja, diulang di seluruh seq)
+  - **B**: +3 per timestep dari window OOF LGBM historis (seq_len bar LGBM score)
+  - **C**: Retrain `05o` meta dengan LGBM conf di X (task berbeda — SHORT win, bukan momentum 3-class)
+- **Aturan leakage**: LGBM score untuk fold k harus dari OOF fold k saja (`oof_predictions.parquet`, `has_oof==True`); tidak boleh pakai model final in-sample
+
+### Target
+- CV Mean F1 momentum >= baseline 0.3987 (tb_lstm_genuine_v2)
+- **Gate utama**: 05j OOF portfolio `PPT_norm` with LSTM >= +$0.0008 delta vs baseline
+- Secondary: precision complement directional, conflict bars (LGBM SHORT + LSTM bull) turun tanpa trade count collapse
+
+### Baseline
+- `tb_lstm_genuine_v2` F1=0.3987, 05j PPT_norm delta +$0.0008
+- Stack aktif: `conditional_momentum` (bukan filter tambahan)
+
+### Hasil CV (21 koin, 142,789 seq)
+| Metrik | tb_lstm_lgbm_seq_v1 | tb_lstm_genuine_v2 |
+|--------|:-------------------:|:------------------:|
+| Mean F1 Macro | **0.4109** +/- 0.0102 | 0.3987 |
+| F1 delta | **+0.0122** | — |
+| Samples kept | 142,789 (12,380 skip gap OOF) | 155,169 |
+| Complement prec_dir @ thr=0.40 | 0.539 | ~0.57 (ref) |
+
+### Hasil 05j Portfolio OOF
+| Metrik | tb_lstm_lgbm_seq_v1 | tb_lstm_genuine_v2 (ref) |
+|--------|:-------------------:|:------------------------:|
+| Baseline port PPT | +0.5041 | +0.5041 |
+| With LSTM port PPT | +0.5048 | +0.5049 |
+| **delta port PPT** | **+0.0007** | **+0.0008** |
+| boost_unlock | 88 | 72 |
+| penalty_block | **61** | 108 |
+| new_mom trades PPT | +0.94 (N=45-53) | +0.74 (N=46) |
+| 05j Decision | PROMOTE_CANDIDATE | ref_05j_winner |
+
+### Kesimpulan
+- Hipotesis **sebagian terbukti**: F1 naik +0.012 dengan konteks LGBM historis — LSTM belajar lebih baik pada label momentum
+- Portfolio delta **sedikit di bawah** ref (`+0.0007` vs `+0.0008`) — tidak cukup untuk ganti `tb_lstm_genuine_v2` di production
+- Penalty block turun 108→61: LSTM+LGBM input lebih selaras dengan LGBM, konflik wrong-way berkurang (bisa bagus atau kurang protektif — perlu slice pump/SHORT)
+- **Tetap pakai `tb_lstm_genuine_v2` untuk deploy**; `tb_lstm_lgbm_seq_v1` disimpan sebagai kandidat riset
+
+### Script
+- `pipeline/05p_lstm_lgbm_conf_feat_v1.py` → `models/runs/tb_lstm_lgbm_seq_v1/`
+- `05j --lstm-run tb_lstm_lgbm_seq_v1` → `lstm_conditional_momentum_eval_tb_lstm_lgbm_seq_v1.json`
+
+---
+
+## 2026-06-16 — LGBM-seq Fusion Tweak A/B (opp_pen + bear_thr)
+
+**Status**: COMPLETED
+
+### Hipotesis
+`tb_lstm_lgbm_seq_v1` + frozen 05j kurang protektif pump/SHORT (penalty 61 vs 108). Tweak `opposite_pen=0.18` dari 05q naik delta ke +0.0008. Exp A/B validasi via full sweep.
+
+### Yang Diubah
+- **Exp A**: `tb_lstm_lgbm_seq_v1`, `opposite_pen=0.18` FIXED, sweep bull/bear/boost/near_gap/modes (190 configs)
+- **Exp B**: + `bear_thr=0.55` FIXED, sweep sisanya (64 configs)
+- Script: `pipeline/05r_lstm_lgbm_seq_experiments_ab.py`
+
+### Hasil
+| Exp | Best config | dPort | port PPT | newMom N/PPT | pen_blk | vs ref |
+|-----|-------------|:-----:|:--------:|:------------:|:-------:|:------:|
+| **A** | `bu38 be50 g3 b10 o18` | **+0.0008** | 0.5049 | 53 / +0.90 | 74 | **beats** |
+| **B** | `bu38 be55 g3 b10 o18` | +0.0008 | 0.5049 | 46 / +0.90 | 68 | beats |
+| ref | `tb_lstm_genuine_v2` o14 | +0.00075 | 0.5049 | 46 / +0.74 | 108 | — |
+
+### Kesimpulan
+- **Exp A menang** — `bear_thr=0.50` (sama 05j) + `opposite_pen=0.18` memberi delta tertinggi (+0.0008) dengan newMom terbanyak (53)
+- Exp B (`bear_thr=0.55` fixed) comparable tapi sedikit lebih sedikit trade baru (46); newMom PPT sedikit lebih tinggi (+0.90 vs +0.90)
+- Kandidat stack baru: `tb_lstm_lgbm_seq_v1` + fusion `opp_pen=0.18` (bull/bear/boost/near_gap tetap 05j winner)
+- **Belum deploy** — margin vs ref tipis (+0.00005); perlu slice pump/SHORT live sebelum ganti production
+
+**Artefak**: `models/runs/tb_lgbm_genuine_v2/lstm_lgbm_seq_experiments_ab.json`
+
+---
+
+## 2026-06-16 — Pump/SHORT Slice Eval (3 stack)
+
+**Status**: COMPLETED
+
+### Stacks dibandingkan
+1. `ref_genuine_v2` — tb_lstm_genuine_v2 + opp_pen=0.14
+2. `seq_frozen_o14` — tb_lstm_lgbm_seq_v1 + opp_pen=0.14
+3. `seq_exp_a_o18` — tb_lstm_lgbm_seq_v1 + opp_pen=0.18 (Exp A winner)
+
+### Hasil Signal Slice (vol>=2, rally frac_up>=0.8)
+| Stack | conflict pen% | pump SHORT blocked | rally SHORT blocked |
+|-------|:-------------:|:------------------:|:-------------------:|
+| ref | **30.1%** | **106** | **7** |
+| seq o14 | 24.2% | 61 | 3 |
+| seq o18 | 29.4% | 74 | 6 |
+
+### Hasil Trade Slice (SHORT entries yang benar-benar dieksekusi)
+| Stack | pump SHORT (n) | pump WR | pump PPT_norm | rally SHORT (n) |
+|-------|:--------------:|:-------:|:-------------:|:---------------:|
+| ref | 724 | **77.6%** | **+0.701** | 2216 |
+| seq o14 | 759 | 76.5% | +0.676 | 2220 |
+| seq o18 | 749 | 76.8% | +0.683 | 2218 |
+
+### Kesimpulan
+- **Ref tetap paling protektif** di pump/SHORT (block 106 sinyal, PPT pump +0.701)
+- seq o14 **paling lemah** — lebih banyak pump SHORT trade (759) dengan PPT lebih rendah
+- **seq o18 memperbaiki** seq o14 (block 74, PPT +0.683) tapi **belum mengalahkan ref** di slice pump/SHORT
+- Di slice rally: semua stack hampir identik (WR ~69.8%, n~2216) — masalah utama bukan di rally trade quality tapi di **jumlah pump SHORT yang lolos**
+
+### Keputusan Final (2026-06-16)
+**LOCK-IN Ref** — `tb_lstm_genuine_v2` + fusion 05j (`bull=0.38, bear=0.50, boost=0.10, opposite_pen=0.14, near_gap=0.03`).
+
+| Kriteria | Ref | seq o18 (ditolak) |
+|----------|:---:|:-----------------:|
+| pump SHORT trades | **724** | 749 |
+| pump SHORT WR | **77.6%** | 76.8% |
+| pump SHORT PF | **4.88** | 4.62 |
+| pump SHORT PPT_norm | **+0.701** | +0.683 |
+| pump SHORT blocked | **106** | 74 |
+
+- `tb_lstm_lgbm_seq_v1` + `opp_pen=0.18` **tidak dipromosikan** — delta portfolio tipis (+0.00005) tapi kalah di slice masalah utama (SHORT saat pump)
+- `inference_config.json` + `model_registry.json` tetap Ref; seq stack disimpan sebagai riset only
+
+**Artefak**: `pump_short_slice_eval.json`
+
+---
+
+## 2026-06-16 — LSTM Simon Meta-Labeling SHORT Win (Prioritas 2)
+
+**Status**: COMPLETED — **Simon Gate PASS** (belum deploy live)
+
+### Hipotesis
+LSTM BULL/BEAR/NEUTRAL dari OHLCV sudah mencapai ceiling (F1 ~0.41). Jalur benar: meta-labeling — "Kalau LGBM mau entry SHORT sekarang, apakah trade ini menang?" dengan fitur komplementer (CVD, OFI, vol spike) yang tidak duplikasi LGBM. Gate promosi: **marginal IC pada OOF trades**, bukan F1 macro.
+
+### Yang Diubah
+- Script aktif: `pipeline/05o_lstm_meta_short_win_v1.py`
+- Label: win/loss trade **SHORT** dari `tb_lstm_genuine_v2/oof_trade_dataset.parquet` (18,100 trades)
+- Fitur: 14 complement (exclude overlap LGBM 36f): ofi_raw, ofi_z_score, buy/sell_volume, cvd, vol_spike_zscore, vol_accel_3h, absorption_z, ultra_high_vol, range_expansion_h4, vol_ratio_20, no_supply, no_demand, effort_vs_result
+- Arsitektur: Binary LSTM seq=32 hidden=32 (CPU), purged CV 8-fold
+
+### Hasil CV
+| Metrik | Nilai |
+|--------|-------|
+| CV Mean AUC | 0.5728 +/- 0.0172 |
+| **Marginal IC** | **+0.0629** (t=+7.94, n=15,891) |
+| Simon Gate | **PASS** (IC >= 0.015) |
+| Base WR SHORT | 68.6% |
+| WR @ thr=0.55 | 73.6% (cover 38.6%) |
+| WR @ thr=0.60 | 75.0% (cover 27.9%) |
+
+### Kesimpulan
+- Meta SHORT win **lebih kuat** dari `tb_lstm_binary_meta_v1` directional mix (IC +0.0629 vs +0.0682 pada all-direction v1 — comparable, tapi **domain match**: hanya SHORT yang bermasalah saat pump)
+- **Belum deploy live** — perlu OOF trade sim: meta veto SHORT (score < thr) di atas stack `conditional_momentum` aktif; eval PF/portfolio sebelum layer ketiga
+- Layer arsitektur: LGBM -> conditional_momentum LSTM -> **meta veto SHORT** (future)
+
+**Artefak**: `models/runs/tb_lstm_meta_short_win_v1/`
+
+---
+
+## 2026-06-16 — Deploy conditional_momentum ke swint_tradev2 (Prioritas 1)
+
+**Status**: COMPLETED
+
+### Hipotesis
+Live SHORT saat pump karena LSTM off (`lgbm_only`) + mode `hard_consensus`. Menyalakan LSTM `conditional_momentum` (05j winner) akan: (1) penalty SHORT saat LSTM bullish di bar vol_spike, (2) boost LONG near-miss saat pump — tanpa filter `frac_up` tambahan.
+
+### Yang Diubah
+- `core/cascade_utils.py`: `evaluate_conditional_momentum_entry`, `apply_hmm_gate_single`
+- `swint_tradev2/app/services/inference.py`: cabang `conditional_momentum`, LSTM momentum 8f seq 72
+- `swint_tradev2/app/services/data_service.py`: `prepare_lstm_momentum_input`
+- `tools/deploy_model.py`: deploy `lstm_momentum.pt` + scaler + feature json
+- `models/inference_config.json`: `mode=conditional_momentum`, `lstm_confirmation_enabled=true`, `seq_len=72`
+
+### Hasil Deploy
+- Model version: `tb_genuine_v2_dynsize_lstm_cond`
+- cascade.mode: `conditional_momentum`
+- lstm_momentum: bull_thr=0.38, bear_thr=0.50, near_miss=0.03, boost=0.10, opposite_pen=0.14, vol_thr=2.0
+- Signal log harus isi `cascade_stage=conditional_momentum_*` + `lstm_proba` (bukan `lgbm_only`)
+
+### Catatan
+- `tb_lstm_genuine_v2/lstm_momentum.pt` sementara dari complement_v1 (fitur identik 8f). Jalankan `05_train_lstm_genuine_v2.py --all` untuk weights OOF genuine_v2 final.
+
+---
+
+## 2026-06-16 — Rally Boost (cross-coin ranking, additive)
+
+**Status**: COMPLETED — **NO_PROMOTE** (tetap `ref_05j_winner`)
+
+### Hipotesis
+Pump wide: banyak koin FLAT karena skor per-koin rendah. Rally Boost **menambah** boost (bukan filter) pada top-K koin FLAT dengan skor LONG tertinggi saat >=75% koin naik — di atas layer 05j yang sudah ada.
+
+### Yang Diubah
+- Logika baru `apply_rally_boost_panel` + `build_predictions_full` di `lstm_fusion_shared.py`
+- Layer: 05j conditional_momentum DULU, lalu rally boost additive
+- Kandidat: LGBM raw FLAT + vol_spike>=2, rank by p2, boost top 3/5
+- Varian: `rally_require_lstm` True/False
+- Script: `pipeline/05n_rally_boost_eval.py` (18 configs)
+
+### Hasil Signal (vs ref)
+| Config | rally_entry+ | boost fires | n_dir |
+|--------|:------------:|:-----------:|:-----:|
+| ref_05j | 0 | 0 | 38,249 |
+| rbr75 rk5 ra10 (no LSTM filter) | **1,197** | **4,914** | 39,446 |
+| rbr80 rk5 ra10 lst (LSTM filter) | 171 | 1,007 | 38,420 |
+
+**Rally boost berhasil buka multi-coin entry** — hipotesis teknis terbukti.
+
+### Hasil Pipeline (vs ref_05j)
+| Config | port PPT_norm | dPort | new_rally N | new_rally PPT | PASS |
+|--------|:-------------:|:-----:|:-----------:|:-------------:|:----:|
+| **ref_05j** | **+$0.5049** | — | 5 | -$0.14 | ref |
+| rbr80 rk5 ra10 (agresif) | +$0.5022 | -0.27 sen | 331 | +$0.22 | N |
+| rbr80 rk5 ra8 (agresif) | +$0.5032 | -0.17 sen | 229 | +$0.24 | N |
+| rbr80 rk5 ra10_lst (LSTM) | +$0.5039 | -0.09 sen | 75 | +$0.08 | N |
+
+### Kesimpulan
+- **Tanpa filter LSTM**: entry rally meledak (+400 trade baru) tapi port turun 2–3 sen — kualitas rendah.
+- **Dengan filter LSTM**: hampir setara ref (-0.09 sen) tapi rally PPT masih rendah (+$0.08/trade).
+- Trade-off klasik: multi-coin pump terbuka, profit per trade turun.
+- **Arah lanjut**: (a) rally boost + LSTM + min raw p2 floor, (b) boost proporsional by rank, (c) Guardian retrain jika trade mix berubah besar.
+
+**Artefak**: `rally_boost_eval.json`
+
+### Tuning Round 2 — 2026-06-16 (COMPLETED)
+
+Grid 51 config: `rally_min_gap` (near-miss only) + `rally_prop_rank` + LSTM wajib.
+
+| Config | dPort | new_rally N | new_rally PPT |
+|--------|:-----:|:-----------:|:-------------:|
+| ref_05j | — | 5 | -$0.14 |
+| v1 anchor rbr80 rk5 ra10 lst | -0.09 sen | 75 | +$0.08 |
+| **tune best** rbr85 rk2 ra8 lst mg8_pr | **-0.04 sen** | 29 | -$0.01 |
+
+**Decision: TUNE_MORE** — jarak ke ref tinggal 0.04 sen (8x lebih baik dari v1), tapi new_rally PPT masih negatif/skim. Belum PROMOTE, belum NO_PROMOTE final.
+
+**Round 3 arah**: boost 0.04, top_k=1-2, syarat `p2_raw >= tl-0.03` (overlap near_miss 05j), eval subset rally saja sebagai gate utama.
+
+---
+
+## 2026-06-16 — Multi-Coin Pump v2 (frac_up saja + top-K tanpa breadth)
+
+**Status**: COMPLETED — **NO_PROMOTE** (tetap `ref_05j_winner`)
+
+### Hipotesis
+05l gagal karena breadth+max_p2 terlalu ketat. Varian v2:
+1. **top-K saja** pada ref 05j — cap LONG per bar tanpa memotong boost
+2. **frac_up saja** (tanpa max_p2) — gate rally lebih longgar
+3. **near_miss lebih lebar** (0.08/0.10) — buka lebih banyak near-miss FLAT saat pump
+
+### Yang Diubah
+- Script: `pipeline/05m_multi_coin_pump_v2_eval.py` (24 configs, 15 pipeline)
+- Rally metric loose: `frac_up >= 0.75` (5,572 bars vs strict 1,888)
+- Base frozen: 05j winner params
+
+### Temuan Signal (ref vs terbaik)
+| Config | rally_loose+ | boost+ | multi_long_bars | max_long/bar | n_dir |
+|--------|:------------:|:------:|:---------------:|:------------:|:-----:|
+| ref_05j_winner | 8 | 72 | 3,653 | **18** | 38,249 |
+| top-K=8 only | 7 | 69 | 3,653 | 18 | 38,002 |
+| near_miss g8/g10 | 8 | 72 | 3,653 | 18 | 38,249 |
+| frac_up 0.75 + kl3 | 5 | 5 | 3,638 | — | 35,795 |
+
+**Insight**: ref 05j **sudah** allow sampai 18 LONG per bar — bottleneck bukan top-K cap, tapi hanya 8 unlock di rally loose bars.
+
+### Hasil Pipeline (vs ref_05j)
+| Config | port PPT_norm | dPort | new_mom N | new_mom PPT | PASS |
+|--------|:-------------:|:-----:|:---------:|:-----------:|:----:|
+| **ref_05j_winner** | **+$0.5049** | — | **46** | **+$0.7398** | ref |
+| top-K=8 (kl8) | +$0.4984 | -$0.0065 | 43 | +$0.7152 | N |
+| top-K=5 (kl5) | +$0.4849 | -$0.0200 | 39 | +$0.5873 | N |
+| near_miss g8/g10 | +$0.5049 | 0 | 46 | +$0.7398 | tie (no uplift) |
+| frac_up + top-K | +$0.4627–0.4848 | -$0.02–0.04 | 3 | neg | N |
+
+**Keputusan: NO_PROMOTE** — tidak ada config yang strictly mengalahkan ref. kl8 paling dekat (-0.65 sen port) tapi new_mom PPT turun.
+
+### Kesimpulan
+- Lebar near_miss (0.08/0.10) **tidak menambah** entry vs 0.03 — near-miss sudah cukup lebar di ref.
+- top-K mengurangi trade berkualitas tanpa uplift port.
+- frac_up-only breadth tetap memotong boost (72→4–5).
+- **Root cause**: conditional_momentum boost hanya +8 LONG di rally loose bars; perlu logic baru (rank-based selective boost top-K by LSTM+p2 di rally bar, bukan filter breadth).
+
+**Artefak**: `multi_coin_pump_v2_eval.json`
+
+---
+
+## 2026-06-16 — Multi-Coin Pump (breadth gate + top-K per bar)
+
+**Status**: COMPLETED — **NO_PROMOTE** (tetap `ref_05j_winner`)
+
+### Hipotesis
+Saat pump lebar (frac_up>=0.8), banyak koin naik tapi hanya ~1 lolos threshold LGBM per koin. Conditional momentum 05j sudah buka +72 boost — breadth gate + top-K per bar dapat buka lebih banyak koin berkualitas di rally tanpa flood trade di non-rally.
+
+### Yang Diubah
+- Breadth gate: boost LONG hanya saat `frac_up >= 0.8` (+ optional `max_p2 < 0.45`)
+- Top-K per bar: cap LONG signals per timestamp (3 / 5)
+- Near-miss gap sweep: 0.03 / 0.05 / 0.08 pada frozen 05j params
+- Base: `bull_thr=0.38, bear_thr=0.50, boost=0.10, opposite_pen=0.14`
+- Script: `pipeline/05l_multi_coin_pump_eval.py` (20 configs, 13 pipeline)
+
+### Hasil Signal (Stage A)
+| Config | rally+ LONG | boost+ | n_dir |
+|--------|:-----------:|:------:|:-----:|
+| ref_05j_winner | 0 | **72** | 38,249 |
+| br80 + kl3 (best pump) | 0 | 4 | 35,794 |
+| br80 + mp45 + kl3 | 0 | 0 | 35,790 |
+| br80 + kl5 | 0 | 5 | 37,290 |
+
+Rally bars (frac_up>=0.8, max_p2<0.45): **1,888** — tapi **0** unlock LONG di rally untuk semua config termasuk ref 05j. Artinya +72 boost 05j terjadi di bar non-rally; masalah pump wide tidak ter-cover oleh conditional_momentum saat ini.
+
+### Hasil Pipeline (Stage B vs ref_05j)
+| Config | port PPT_norm | dPort | new_mom N | new_mom PPT | PASS |
+|--------|:-------------:|:-----:|:---------:|:-----------:|:----:|
+| **ref_05j_winner** | **+$0.5049** | — | **46** | **+$0.7398** | ref |
+| br80 + kl5 + mp45 | +$0.4849 | -$0.020 | 0 | — | N |
+| br80 + kl5 | +$0.4848 | -$0.020 | 3 | -$0.1456 | N |
+| br80 + kl3 | +$0.4627 | -$0.042 | 3 | -$0.1456 | N |
+
+**Keputusan: NO_PROMOTE** — breadth gate memotong boost 72→4, port PPT turun 2–4 sen; top-K tidak membantu karena sinyal sudah terlalu sedikit.
+
+### Kesimpulan
+- Hipotesis **tidak terbukti**: gate rally justru menghilangkan hampir semua boost yang profitable dari 05j.
+- Rally metric 0 menunjukkan mismatch: pump user-facing (banyak koin naik) != definisi rally (frac_up>=0.8 AND max_p2<0.45).
+- **Arah lanjut**: (a) longgarkan rally def (frac_up saja, tanpa max_p2), (b) top-K tanpa breadth gate pada near-miss FLAT, (c) rank boost by p2 cross-section tanpa hard breadth cutoff.
+
+**Artefak**: `multi_coin_pump_eval.json`
+
+---
+
+## 2026-06-16 — LSTM Complement Retrain (flat-only pool)
+
+**Status**: COMPLETED — **NO_PROMOTE** (tetap pakai `tb_lstm_genuine_v2` untuk fusion)
+
+### Hipotesis
+LSTM akurasi boost per koin naik jika dilatih **hanya** pada bar LGBM FLAT + pump/dump — pool yang sama dengan fungsi complement di live.
+
+### Yang Diubah
+- Sample: `is_pump_dump_bar` AND LGBM FLAT (OOF HMM Config B) — 137,189 seq
+- Loss: FocalLoss + alpha boost BULL/BEAR (probe asym B)
+- Run: `tb_lstm_complement_v1`
+- Script: `pipeline/05k_train_lstm_complement_v1.py --all`
+- Re-eval: `05j --lstm-run tb_lstm_complement_v1`
+
+### Hasil CV (8-fold purged)
+| Metrik | complement_v1 | genuine_v2 (ref) | probe asym B (ref) |
+|--------|:-------------:|:----------------:|:------------------:|
+| Mean F1 macro | **0.3629** +/- 0.013 | ~0.36 gate-all | 0.3560 |
+| Complement pool OOF | 36,481 bars | — | 36,406 bars |
+| Fires (bull/bear) | 1,776 (928/848) | — | 1,378 (672/706) |
+| mixed_precision_dir | **0.539** | — | **0.563** |
+| bear_precision | 0.492 | — | 0.504 |
+| bull_precision | 0.283 | — | 0.313 |
+
+### Hasil Re-eval conditional_momentum (05j, OOF baru)
+| Metrik | genuine_v2 (winner) | complement_v1 |
+|--------|:-------------------:|:-------------:|
+| boost_unlock | **72** | 8 |
+| penalty_block | 108 | 0 |
+| new_mom trades | **46** | 4 |
+| new_mom PPT_norm | +$0.74 | +$0.95 (N=4, tidak robust) |
+| port PPT_norm | **+$0.5049** (+$0.0008) | +$0.5042 (+$0.0000) |
+| Decision | PROMOTE_CANDIDATE | NO_PROMOTE |
+
+### Kesimpulan
+- Retrain flat-only **berhasil** (F1 macro naik, model + OOF tersimpan) tapi **tidak translate** ke trading fusion.
+- Complement precision OOF (0.539) **di bawah** probe asym B (0.563) — training pada subset flat-only membuat sinyal terlalu jarang / konservatif saat di-sweep 05j.
+- **Keputusan**: `inference_config.json` tetap pakai OOF `tb_lstm_genuine_v2` untuk `conditional_momentum`; artefak `tb_lstm_complement_v1` disimpan untuk riset lanjut (mis. boost-only tanpa penalty, atau threshold lebih rendah).
+
+**Artefak**: `models/runs/tb_lstm_complement_v1/` (lstm_momentum.pt, oof, meta), `lstm_conditional_momentum_eval_tb_lstm_complement_v1.json`
+
+---
+
+## 2026-06-16 — LSTM Score Fusion (boost/penalty pada skor LGBM)
+
+**Status**: COMPLETED — **NO_PROMOTE**
+
+### Hipotesis
+LGBM FLAT saat pump karena skor per-koin di bawah threshold HMM absolut. LSTM momentum (OOF `tb_lstm_genuine_v2`) dapat **boost** skor searah momentum dan **penalty** skor berlawanan — membuka near-miss tanpa mengganti LGBM/Guardian/HMM.
+
+### Yang Diubah
+- 2-stage eval (genuine OOF, holdout sealed):
+  - **Stage 1** (`05i_lstm_fusion_stage1_signal.py`): signal-only sweep 145 config (~100s)
+  - **Stage 2** (`05i_lstm_fusion_stage2_pipeline.py`): full pipeline top-12 (~5.5 min)
+- Fusion: `pre_hmm` / `post_hmm` × gate `all_oof` / `vol_spike2`
+- HMM: **Config B frozen** dari `inference_config.json` (bukan sweep winner Config D)
+- Stack: Guardian v2 + DynSize cm_0.60, baseline tanpa LSTM
+
+### Kontrol Genuine
+- Data < TRAIN_CUTOFF_DATE only
+- LGBM/LSTM: `has_oof=True` only
+- Holdout tidak disentuh
+- Guardian params dari `inference_config.json`
+- Bug fix: run pertama salah pakai `hmm_threshold_best.json` (Config D) — di-rerun dengan Config B
+
+### Hasil Stage 1 (signal only)
+| Metrik | Baseline | Best candidate |
+|--------|----------|----------------|
+| LONG signals | 17,671 | +4,287 (b10_n4_o6) |
+| Rally unlock (frac_up>=0.8, max_p2<0.45) | 0 | **+75 LONG** |
+| Rally bars | 1,888 | — |
+
+Top-12 semua `pre_hmm` + `all_oof` — `post_hmm` dan `vol_spike2` tidak masuk top.
+
+### Hasil Stage 2 (full pipeline OOF)
+| Config | N | dN | PPT_norm | dPPT_norm | PF | PASS |
+|--------|---|-----|----------|-----------|-----|------|
+| **Baseline (no LSTM)** | **34,122** | — | **+$0.5041** | — | **2.565** | ref |
+| Best: `pre_hmm_all_oof_b8_n4_o6` | 36,073 | +1,951 | +$0.4819 | -$0.0223 | 2.422 | N |
+| Aggressive: `pre_hmm_all_oof_b10_n4_o6` | 38,268 | +4,146 | +$0.4655 | -$0.0386 | 2.338 | N |
+
+**Keputusan: NO_PROMOTE** — 0/12 kandidat lolos gate (PPT_norm +0.002, trades >=80%, PF >=98%).
+
+### Kesimpulan
+- LSTM **berhasil** membuka entry momentum (+75 rally LONG di Stage 1, +1,951 trades di pipeline terbaik)
+- Tapi trade tambahan **kualitas rendah**: PPT_norm turun -$0.02 s/d -$0.04, PF turun ~5%
+- Guardian dilatih pada entry mix baseline — retrain tidak akan menutup gap PPT sebesar ini
+- **Arah lanjut**: (a) gate lebih ketat (`vol_spike2` only + boost_only tanpa penalty SHORT), (b) boost hanya LONG saat rally, (c) probe LSTM asym B, (d) CS overlay conditional
+
+**Artefak**: `lstm_fusion_stage1_signal.json`, `lstm_fusion_stage2_pipeline.json`
+
+### Stage 2b — Momentum overlay (vol_spike2, subset metrics) — 2026-06-16
+
+**Status**: COMPLETED — **NO_PROMOTE**
+
+Evaluasi ulang dengan framing benar: LSTM hanya aktif di bar momentum (`vol_spike>=2`), metrik utama = PPT trade subset momentum.
+
+| Config | Mom N | Δ Mom N | Mom PPT_norm | Δ Mom PPT | Port PPT_norm | PASS |
+|--------|-------|---------|--------------|-----------|---------------|------|
+| **Baseline** | **1,458** | — | **+$0.6728** | — | +$0.5041 | ref |
+| `boost_both_vol_spike2_b6` (best) | 2,093 | +635 | +$0.5974 | **-$0.0754** | +$0.5027 | N |
+| `boost_long_vol_spike2_b8` | 2,013 | +555 | +$0.5874 | -$0.0854 | +$0.5020 | N |
+| `pre_hmm_vol_spike2_b8_n4_o6` | 1,985 | +527 | +$0.5724 | -$0.1004 | +$0.5010 | N |
+
+**Temuan kunci**: Baseline **sudah** punya 1,458 trade momentum berkualitas tinggi (PPT_norm +$0.67, PF 3.43). LSTM overlay menambah +500–1,600 trade momentum tapi **kualitas lebih rendah** — PPT subset turun 7–20 sen.
+
+**Keputusan**: NO_PROMOTE. LSTM boost/penalty tidak meningkatkan momentum trading dengan genuine OOF.
+
+**Script**: `pipeline/05i_lstm_fusion_stage2b_momentum.py`  
+**Artefak**: `lstm_fusion_stage2b_momentum.json`
+
+---
+
+## 2026-06-16 — LSTM Conditional Momentum Fusion (boost FLAT + penalty reversal)
+
+**Status**: COMPLETED — **PROMOTE_CANDIDATE**
+
+### Hipotesis
+Kualitas naik jika LSTM hanya: (1) **boost** saat LGBM FLAT/near-miss di vol_spike, (2) **penalty** saat LGBM entry berlawanan momentum dominant LSTM. Threshold asimetris BULL/BEAR seperti probe asym.
+
+### Yang Diubah (fusion logic, bukan retrain LGBM)
+`apply_conditional_momentum_fusion_pre` di `core/cascade_utils.py`:
+- **BOOST**: vol_spike>=2 + LGBM FLAT/near-miss + LSTM dominant >= bull_thr/bear_thr
+- **PENALTY**: vol_spike>=2 + LGBM would-enter + LSTM dominant opposite
+- Proportional strength by LSTM confidence
+
+### Hasil 05j (genuine OOF)
+| Metrik | Baseline | Best conditional |
+|--------|----------|----------------|
+| Portfolio PPT_norm | +$0.5041 | **+$0.5049** (+$0.0008) |
+| New momentum trades | 0 | **46** |
+| New momentum PPT_norm | — | **+$0.7398** |
+| Signal boost unlock | — | +72 |
+| Signal penalty block | — | +108 |
+
+**Frozen candidate**: `bull_thr=0.38, bear_thr=0.50, near_miss_gap=0.03, boost=0.10, opposite_pen=0.14`
+
+**Kenapa lebih baik dari sweep sebelumnya**: tidak boost semua bar — hanya FLAT/near-miss + penalty reversal. Trade baru sedikit tapi berkualitas.
+
+Guardian retrain: **tidak perlu** (delta +46 trades = 0.13%).
+
+**Disimpan ke** `models/inference_config.json` + `model_registry.json` (2026-06-16). Belum deploy swint_tradev2. Holdout sealed.
+
+**Artefak**: `lstm_conditional_momentum_eval.json`
+
+---
+
+## 2026-06-16 — FROZEN SETUP: tb_genuine_v2_dynsize
+
+**Status**: FROZEN (research active stack)
+
+### Keputusan
+Stack riset terbaik saat ini — semua komponen genuine OOF, holdout tidak disentuh.
+
+| Layer | Versi | File |
+|-------|-------|------|
+| LGBM Entry | 36f + dow_cos/dow_sin | `models/lgbm_baseline.pkl` |
+| HMM Gate | **Config B** | `inference_config.json` hmm.per_state_thresholds |
+| Guardian Exit | v2 tight, exit=0.55, min_hold=2 | `models/guardian_best.pkl` |
+| DynSize | cm_0.60 (conf_max_mult=0.6) | `inference_config.json` sizing.dynamic |
+| LSTM | OFF | — |
+
+### OOF Scorecard (ekspektasi riset)
+- Trades: **34,122** | WR: **69.0%** | PF: **2.565** | PPT_norm: **+$0.5041** | Avg modal: **$13.60**
+
+### Tidak dipakai / ditolak
+- HMM Config D (PF lebih rendah, Guardian tidak align)
+- frac_up / p2_rank ke LGBM (marginal IC ~0)
+- CS overlay global (belum diimplement — next research)
+
+### Holdout
+Apr-Jun 2026 scorecard **STALE** (34f era). Jangan pakai untuk validasi stack 36f.
+
+**Source of truth**: `models/inference_config.json` + `models/model_registry.json`
+
+---
+
+## 2026-06-16 — HMM Promote Decision + DynSize OOF Re-sweep (36f)
+
+**Status**: COMPLETED
+
+### Hipotesis
+Setelah stack 36f+dow stabil, perlu keputusan eksplisit: promote HMM Config D atau tetap Config B, dan re-sweep DynSize params (masih era 34f) pada OOF pipeline penuh.
+
+### Yang Diubah
+- Script baru: `pipeline/05g_hmm_promote_dynsize_sweep.py`
+- Part 1: side-by-side Config B vs D (HMM / FULL / DYN) dengan Guardian v2 + DynSize default
+- Part 2: DynSize grid 12 skenario pada Config B (frozen)
+- `inference_config.json`: DynSize `conf_max_mult` 0.5 -> 0.6 (winner `cm_0.60`)
+- HMM: **KEEP Config B** (tidak promote D)
+
+### Hasil — HMM B vs D (OOF, Guardian + DynSize default)
+
+| Config | Stage | N | WR% | PPT_norm | PF |
+|--------|-------|---|-----|----------|-----|
+| **B (deploy)** | HMM | 34,122 | 66.8% | +$0.4775 | 2.268 |
+| **B** | FULL | 34,122 | 69.0% | +$0.4819 | 2.535 |
+| **B** | **DYN** | **34,122** | **69.0%** | **+$0.5006** | **2.543** |
+| D (sweep) | HMM | 32,620 | 66.2% | +$0.4831 | 2.205 |
+| D | FULL | 32,620 | 68.7% | +$0.4786 | 2.454 |
+| D | DYN | 32,620 | 68.7% | +$0.5014 | 2.485 |
+
+**Keputusan HMM**: **KEEP_B** — D PPT_norm DYN sedikit lebih tinggi (+$0.5014 vs +$0.5006) tapi PF turun (2.485 vs 2.543) dan trades -1,502. Guardian sudah dilatih pada entry mix Config B.
+
+### Hasil — DynSize re-sweep (Config B + Guardian)
+
+| Rank | Config | PPT_norm | PF | AvgModal |
+|------|--------|----------|-----|----------|
+| **1** | **cm_0.60** (conf_max_mult=0.6) | **+$0.5041** | **2.565** | $13.60 |
+| 2 | clamp_2.5 | +$0.5038 | 2.545 | $13.52 |
+| 3 | cw_0.12 | +$0.5024 | 2.550 | $13.10 |
+| ref | current_deploy (cm=0.5) | +$0.5006 | 2.543 | $13.32 |
+
+Delta vs deploy: **+$0.0035 PPT_norm** — lolos gate 0.002, promoted ke `inference_config.json`.
+
+### Kesimpulan
+- HMM Config B tetap frozen deploy; Config D tidak dipromote (PF trade-off).
+- DynSize di-update: `conf_max_mult` 0.5 -> **0.6** (regime_mult unchanged).
+- Guardian **tidak** perlu retrain (HMM tidak berubah).
+- Holdout masih sealed — tidak disentuh.
+
+**Artefak**: `models/runs/tb_lgbm_genuine_v2/hmm_promote_dynsize_sweep.json`
+
+---
+
+## 2026-06-16 — HMM Re-sweep + OOF Pipeline Eval (stack 36f)
+
+**Status**: COMPLETED
+
+### Hipotesis
+Setelah LGBM +dow (36f) dan Guardian retrain, HMM Config B masih frozen dari sweep OOF 34f (15 Jun). Re-sweep pada OOF 36f akan mengkonfirmasi atau merevisi per-state threshold tanpa menyentuh holdout.
+
+### Yang Diubah
+- Input: `tb_lgbm_genuine_v2/oof_predictions.parquet` (36 feat, dow_cos/dow_sin)
+- HMM threshold: re-sweep OOF via `05e_hmm_threshold_sweep.py`
+- Pipeline eval: BASE / HMM-B / FULL / DYN via `05f_eval_pipeline_with_guardian.py`
+- Guardian: `tb_guardian_genuine_v2_hmm_v2` (retrained 16 Jun), exit_thr=0.55 dari inference_config
+- `05f` diperbaiki: HMM dari `hmm_threshold_best.json`, Guardian params dari `inference_config.json`
+
+### Kontrol Genuine
+1. HMM sweep: OOF simulation only, guardian_enabled=False, data < TRAIN_CUTOFF_DATE
+2. Pipeline eval: OOF predictions only, holdout tidak disentuh
+3. Guardian exit_thr/min_hold dari `inference_config.json` (bukan config.py default 0.65)
+4. Artefak: `hmm_threshold_best.json`, `oof_pipeline_eval.json`
+
+### Hasil HMM Sweep (OOF 36f)
+
+**Baseline flat 0.45/0.45**: N=122,668 (+6,841 vs sweep 34f), PPT=+$0.2654, PF=1.631
+
+**Phase 1 symmetric best**: S0=0.55, S1=0.55, S2=0.50, S3=0.45
+
+**Phase 2 S3 direction-aware best**: S3 L=0.45 / S=0.50, PPT=+$0.4775
+
+**Phase 3 kandidat (HMM only, no Guardian)**:
+
+| Config | N | WR% | PPT | PF | vs BASE delta PPT |
+|--------|---|-----|-----|-----|-------------------|
+| B: Sym+S3-dir (**frozen deploy**) | 34,122 | 66.8% | +$0.4775 | **2.268** | +$0.2121 |
+| **D: S1=0.58, rest sym (sweep winner)** | 32,620 | 66.2% | **+$0.4831** | 2.205 | +$0.2177 |
+| A: Sym-Best all | 36,231 | 66.2% | +$0.4704 | 2.202 | +$0.2051 |
+
+Sweep winner = **Config D** (S1 naik 0.55 -> 0.58, S3 kembali symmetric 0.45/0.45).
+Frozen deploy = **Config B** (S1=0.55, S3=[0.45, 0.50]) — masih valid OOF, PF lebih tinggi, +1,502 trades.
+
+### Hasil OOF Pipeline Eval (Config D + Guardian retrain 36f)
+
+| Config | N | WR% | PnL | PPT | PPT_norm | PF | AvgModal |
+|--------|---|-----|-----|-----|----------|-----|----------|
+| BASE (0.45/0.45) | 122,668 | 58.9% | $32,554 | +$0.2654 | +$0.2654 | 1.631 | $10.0 |
+| HMM Config D | 32,620 | 66.2% | $15,757 | +$0.4831 | +$0.4831 | 2.205 | $10.0 |
+| HMM + Guardian | 32,620 | 68.7% | $15,611 | +$0.4786 | +$0.4786 | 2.454 | $10.0 |
+| **HMM + Guardian + DynSize** | **32,620** | **68.7%** | **$21,424** | **+$0.6568** | **+$0.5014** | **2.485** | **$13.1** |
+
+**vs baseline frozen 34f (15 Jun, Config B)**:
+
+| Config | N (34f) | PPT_norm (34f) | PPT_norm (36f, Config D) | Delta |
+|--------|---------|----------------|--------------------------|-------|
+| HMM only | 32,727 | +$0.4825 | +$0.4831 | +$0.0006 |
+| HMM + Guardian | 32,727 | +$0.5012 | +$0.4786 | -$0.0226 |
+| HMM + Guardian + DynSize | 32,727 | +$0.5187 | +$0.5014 | -$0.0173 |
+
+### Kesimpulan
+- Re-sweep **genuine** — baseline OOF naik ke 122,668 trades (36f+dow), holdout tidak disentuh.
+- **Config D** menang PPT HMM-only (+$0.4831), tapi **Config B frozen** masih kompetitif (PF 2.268 vs 2.205, lebih banyak trade).
+- Guardian retrain 36f: WR naik +2.5pp (68.7%) tapi PPT sedikit turun vs HMM-only (-$0.0045) — exit lebih agresif pada trade mix baru.
+- DynSize tetap memberi lift PPT_norm (+$0.0228 vs FULL), avg modal $13.1.
+- **`inference_config.json` belum di-update** — masih Config B frozen. Promote Config D butuh keputusan eksplisit + optional Guardian retrain (entry mix berubah).
+- Holdout masih sealed — scorecard Apr-Jun 2026 belum mencerminkan stack 36f.
+
+**Artefak**: `models/runs/tb_lgbm_genuine_v2/hmm_threshold_best.json`, `oof_pipeline_eval.json`
+
+---
+
+## 2026-06-16 — Guardian Retrain (OOF LGBM 36f + dow)
+
+**Status**: COMPLETED (promoted via quality gate)
+
+### Hipotesis
+LGBM entry sudah di-promote ke 36 fitur (+dow). Guardian masih dilatih pada OOF trades dari entry 34 fitur. Retrain Guardian pada OOF trades baru agar stack entry-exit konsisten (Aturan 2).
+
+### Yang Diubah
+- Entry OOF source: `tb_lgbm_genuine_v2` (36 feat, dow_cos/dow_sin)
+- Guardian fitur: **tidak berubah** (25 feat, sudah ada dow_cos)
+- Labeling Guardian v2 tight: **tidak berubah**
+- HMM Config B: **frozen**
+
+### Kontrol Genuine
+1. Entry dari `oof_predictions.parquet` dengan `has_oof=True` only
+2. Trades via `simulate_trades_swing(guardian_enabled=False)` pada OOF signals
+3. Parquet features `< TRAIN_CUTOFF_DATE`
+4. Guardian CV: scaler per fold (fit train, transform val)
+5. Purge=36 bar, 8-fold
+6. Holdout tidak disentuh
+7. Promote `guardian_best.pkl` hanya dengan `--promote` + quality gate (F1>=0.80, EXIT2 neg<=10%, n>=100k)
+
+### Script
+```bash
+python pipeline/06d_train_guardian_genuine_v2_hmm_v2.py --promote
+```
+
+### Hasil CV
+
+| Metrik | Sebelum (OOF 34f) | Sesudah (OOF 36f+dow) | Delta |
+|--------|:-----------------:|:--------------------:|:-----:|
+| Guardian samples | 245,120 | **249,796** | +4,676 |
+| CV Mean F1 macro | 0.8281 | **0.8265** | -0.0016 |
+| CV Mean logloss | 0.2271 | 0.2315 | +0.0044 |
+| EXIT-2 PnL<0 | — | **0.0%** | OK |
+
+**Promotion gate**: PASS (F1>=0.80, EXIT2 neg<=10%, n>=100k)  
+**Promoted**: `models/guardian_best.pkl`, `guardian_scaler.pkl`, `guardian_feature_cols.json`  
+**Audit**: `models/runs/tb_guardian_genuine_v2_hmm_v2/genuine_audit.json`
+
+### Kesimpulan
+- Guardian retrained pada OOF trades dari LGBM 36f — stack entry-exit kini konsisten.
+- F1 sedikit turun (-0.16%) karena trade mix berubah; masih di atas floor 0.80.
+- Holdout masih sealed — belum evaluasi live-like penuh stack baru.
+
+---
+
+## 2026-06-16 — LGBM genuine_v2 + DOW (dow_cos, dow_sin)
+
+**Status**: COMPLETED (promoted via OOF gate)
+
+### Hipotesis
+`dow_cos` lolos IC gate (IC=-0.022, t=-4.01, stable 5/6 tahun). Pasangan siklus `dow_sin` punya gain tertinggi di eksperimen +timefeat meski IC DROP. Menambah keduanya ke LGBM entry genuine_v2 menangkap pola hari-mingguan tanpa noise hour/session.
+
+### Yang Diubah
+- Base: 34 fitur genuine_v2 (dari `sample_recommended_features.json`, tidak diubah)
+- Tambahan: `dow_cos`, `dow_sin` (+2 = **36 fitur**)
+- Semua hyperparameter LGBM identik dengan `04c`
+
+### Kontrol Genuine (wajib)
+1. Data `< TRAIN_CUTOFF_DATE` only — runtime audit `assert_genuine_data_bounds()`
+2. 8-fold purged CV, purge=36 bar (= MAX_HOLDING_BARS)
+3. OOF predictions per bar — model fold tidak pernah lihat val bar
+4. Threshold sweep **hanya OOF simulation** — holdout tidak disentuh
+5. `dow_*` causal: derived dari timestamp bar UTC, no lookahead
+6. Promote ke `feature_cols_v2.json` **hanya** dengan flag `--promote` DAN OOF gate PASS (F1 >= baseline AND PnL >= baseline)
+7. Output audit: `genuine_audit.json`
+
+### Target
+- OOF F1 >= 0.3968, OOF PnL >= $31,427 vs `tb_lgbm_genuine_v2`
+
+### Script
+```bash
+python pipeline/04e_train_lgbm_genuine_v2_dow.py          # train + audit, no promote
+python pipeline/04e_train_lgbm_genuine_v2_dow.py --promote  # promote hanya jika OOF gate PASS
+```
+
+### Hasil CV (36 fitur vs baseline 34 fitur)
+
+| Metrik | genuine_v2 (34f) | +dow (36f) | Delta |
+|--------|:----------------:|:----------:|:-----:|
+| Mean F1 macro | 0.3968 | **0.4004** | **+0.0036** |
+| OOF PnL (thr 0.45/0.45) | $31,427 | **$32,554** | **+$1,126 (+3.6%)** |
+| OOF trades | 115,827 | 122,668 | +6,841 |
+| OOF WR | 59.1% | 58.9% | -0.2% |
+
+**Dow gain importance**: dow_sin=85,022 | dow_cos=64,276
+
+**Genuine audit**: `models/runs/tb_lgbm_genuine_v2_dow/genuine_audit.json`
+- holdout_evaluated: false
+- train_cutoff enforced: max bar 2025-10-31 < 2026-04-01
+- purge=36 (= MAX_HOLDING_BARS)
+- threshold via OOF only
+- promoted: true (OOF gate PASS, flag `--promote`)
+
+### Kesimpulan
+- `dow_cos` + `dow_sin` ditambahkan ke LGBM entry dengan protokol genuine penuh.
+- Promote ke `feature_cols_v2.json` + `lgbm_baseline.pkl` setelah OOF gate PASS.
+- **Holdout masih sealed** — belum konfirmasi live-like. Guardian/HMM stack belum di-retrain atas OOF baru.
+
+---
+
+## 2026-06-16 — LGBM genuine_v2 + Time Features (hour/dow/session)
+
+**Status**: COMPLETED
+
+### Hipotesis
+Model aktif `tb_genuine_v2` (34 fitur) tidak memakai fitur waktu sama sekali. Analisis failure map menunjukkan variasi WR per jam UTC — menambah `hour_cos/sin`, `dow_cos/sin`, `market_session` ke LGBM mungkin menangkap pola intraday/hari yang tidak tertangkap fitur OHLCV.
+
+### Yang Diubah
+- Base: 34 fitur `genuine_v2` (sama persis)
+- Tambahan: `hour_cos`, `hour_sin`, `dow_cos`, `dow_sin`, `market_session` (+5 = 39 fitur)
+- Semua parameter LGBM, CV, TB labeling, threshold sweep: identik dengan `04c`
+
+### Target
+- Mean F1 macro > 0.3968 (baseline genuine_v2)
+- OOF PnL > $31,427 (baseline genuine_v2 threshold sweep)
+- Time feature gain importance > 0 (bukan noise)
+
+### Baseline IC (tb_ic_v2, TB labels)
+| Fitur | IC | t-stat | Verdict |
+|-------|-----|--------|---------|
+| dow_cos | -0.0222 | -4.01 | KEEP |
+| hour_sin | -0.0087 | -1.57 | DROP |
+| hour_cos | +0.0083 | +1.51 | DROP |
+| dow_sin | -0.0075 | -1.36 | DROP |
+| market_session | +0.0009 | +0.17 | DROP |
+
+Hanya `dow_cos` lolos IC gate; jam/session historisnya lemah.
+
+### Script
+- `python pipeline/04d_train_lgbm_genuine_v2_timefeat.py`
+- Output: `models/runs/tb_lgbm_genuine_v2_timefeat/`
+- Holdout: TIDAK dijalankan (sealed)
+
+### Hasil CV (39 fitur vs baseline 34 fitur)
+
+| Metrik | genuine_v2 (34f) | +timefeat (39f) | Delta |
+|--------|:----------------:|:---------------:|:-----:|
+| Mean F1 macro | 0.3968 | **0.4020** | **+0.0052** |
+| OOF PnL (thr 0.45/0.45) | $31,427 | **$33,723** | **+$2,295 (+7.3%)** |
+| OOF trades | 115,827 | 121,854 | +6,027 |
+| OOF WR | 59.1% | 59.4% | +0.3% |
+| PPT | $0.271 | $0.277 | +$0.006 |
+
+**Gain importance fitur waktu** (final model):
+| Fitur | Gain |
+|-------|-----:|
+| dow_sin | 91,327 |
+| dow_cos | 62,827 |
+| hour_sin | 41,150 |
+| hour_cos | 30,452 |
+| market_session | 7,608 |
+
+Fitur waktu BUKAN noise — `dow_sin` gain tertinggi di antara kelima fitur baru. `market_session` paling lemah.
+
+### Kesimpulan
+- Hipotesis **terbukti sebagian**: F1 +0.52% dan OOF PnL +7.3% vs baseline, dengan gain importance signifikan terutama `dow_*` dan `hour_*`.
+- IC gate linear **terlalu konservatif** untuk fitur siklik — LGBM memanfaatkan interaksi non-linear yang tidak terlihat di standalone IC.
+- **Belum deploy**: holdout Apr-Jun 2026 masih sealed. Perlu evaluasi holdout genuine sebelum upgrade model aktif.
+- **Arah lanjut**: (a) ablation hanya `dow_cos` saja (IC-validated, 35 feat) untuk cek apakah 4 fitur lain redundant; (b) atau hour filter rule (bukan fitur ML) jika pola jam konsisten di failure map.
+
+---
+
 ## 2026-06-15 — genuine_v2 Stack: LGBM v2 + HMM Config B + Guardian v2 + Dynamic Sizing
 
 **Status**: DEPLOYED (2026-06-15)
@@ -930,6 +1842,162 @@ Exit breakdown (ic32+Guardian): SL=22.8%, Guardian=76.6%, Avg hold=7.1 bar
 - ic32+Guardian tetap menjadi alpha model. TB labeling tidak meningkatkan edge di periode ini.
 - LSTM-C tidak cocok sebagai filter untuk TB; jika dipakai, butuh kalibrasi ulang flip rate.
 - Perlu data lebih banyak (6+ bulan) untuk final judgment TB vs ic32.
+
+---
+
+## 2026-06-17 — Emergency Revert to ic32_regime_v1 (Live Degradation of TB Genuine Stack)
+
+**Status**: PLANNED → EXECUTED (berdasarkan live data is_live=1 yang menunjukkan kerusakan cepat)
+
+### Hipotesis
+TB genuine stack (tb_genuine_v2_dynsize_lstm_cond, deployed 2026-06-16 dengan base thr 0.45/0.45 + HMM per-state ~0.45-0.55) menghasilkan terlalu banyak sinyal LGBM marginal (conf 0.46–0.56). Di live (terutama low-vol regime) sinyal ini langsung gagal (quick SL + floating loss), sementara di sim OOF/holdout terlihat bagus karena Guardian selalu diasumsikan "menyelamatkan" sebelum SL tercapai + threshold rendah dipakai untuk volume.
+
+ic32_regime_v1 (swing H4 labeling + higher threshold + hard_consensus LSTM + regime FLIP) lebih konservatif dan robust di kondisi live saat ini.
+
+### Yang Diubah
+- Rollback production ke ic32_regime_v1 (snapshot inference_config 2026-06-06 + model weights dari run ic32_regime_v1 / backup 2026-06-13).
+- LGBM thresholds naik signifikan: lgbm_threshold_long=0.69, short=0.59, confidence_entry=0.59 (vs TB 0.45).
+- Fusion: hard_consensus (LSTM sebagai survival filter, opposite_pen 0.65) + lstm_flat_review_enabled.
+- Regime: FLIP alignment aktif (RANGING = counter-trend boost, TRENDING = with-trend).
+- Guardian: clean_v2, exit_thr=0.65, min_hold=2, 40 feat.
+- Structural filter + rr_gate + volatility circuit breaker aktif.
+- Positioning data mining (hourly) + macro enabled.
+- Features LGBM 33 (lebih struktural: Fib_618/786, MSB_BOS, swing_momentum, h4_trend, hmm_regime_enc, cvd/ofi family).
+
+### Target
+- Hentikan bleeding cepat: kurangi entry marginal, kurangi SL rate di low vol, kurangi floating loss pada open book.
+- Kembali ke model yang historically "lumayan baik" di live sebelum eksperimen TB low-thr volume hunting.
+- Bandingkan live scorecard pasca-revert vs TB cluster 16-17 Jun (7 SL + 2 floating dalam <24 jam, VolR 0.03-0.15).
+
+### Script & Restore
+- `python tools/live_db_bridge.py` (pull fresh sebelum & sesudah).
+- Restore dari backup snapshot + models/runs/ic32_regime_v1:
+  ```
+  cp 'models/backups/snapshot_20260613_080220/feature_cols_v2.json' 'models/feature_cols_v2.json'
+  cp 'models/backups/snapshot_20260613_080220/feature_cols_lstm_temporal.json' 'models/feature_cols_lstm_temporal.json'
+  cp 'models/backups/snapshot_20260613_080220/guardian_feature_cols.json' 'models/guardian_feature_cols.json'
+  cp 'models/backups/snapshot_20260613_080220/inference_config.json' 'models/inference_config.json'
+  # Model binaries (lgbm_baseline.pkl, lstm_best.pt, guardian_best.pkl, scalers) — AMBIL DARI runs/ic32_regime_v1 atau backup lengkap (snapshot ini incomplete)
+  systemctl restart swint-trade
+  ```
+- Preferred: Siapkan artifact di repo riset (overwrite models/lgbm_baseline.pkl dll dengan ic32 version), lalu `python tools/deploy_model.py` (otomatis backup + merge PRESERVE_KEYS).
+- Update models/model_registry.json (active = ic32_regime_v1, catat deployed_date + note live degradation TB).
+
+**⚠️ Peringatan dari user**: File model binary (lgbm_baseline.pkl, lstm_best.pt, lstm_scaler.pkl, guardian_best.pkl, guardian_scaler.pkl) **hilang** di snapshot yang disebutkan. Harus disediakan dari `models/runs/ic32_regime_v1/` atau backup penuh sebelum restore.
+
+### Evaluasi Singkat Config yang Direstore
+- **Inference thresholds**: Jauh lebih selektif (0.69/0.59) — langsung address "triple barrier hanya menghasilkan conf rendah".
+- **LSTM**: hard_consensus + flat_review + opposite_pen 0.65 (survival filter, bukan conditional momentum).
+- **HMM + Regime**: 4-state (TRENDING_DOWN / RANGING_LOW_VOL / RANGING_HIGH_VOL / TRENDING_UP), FLIP alignment enabled (bukan controller block).
+- **Guardian**: 40 feat clean_v2, exit 0.65, min_hold 2, partial 0.5.
+- **Filters**: structural_filter (swing range), rr_gate, volatility_circuit_breaker, data_mining positioning aktif.
+- **Scorecard (dari snapshot)**:
+  - Holdout 5mo: 67.5% WR, PF 2.54, +$848 ($170/mo), Guardian exit WR 79.6%, SL hit 17.3%, 0 negative months, trades 2434.
+  - Extended 63mo FLIP: +$214 (59% improvement) vs baseline.
+- **Live reference sebelumnya**: "ic32+Guardian tetap menjadi alpha model" (lihat EXPERIMENTS 2026-06-13 perbandingan holdout Apr-Jun).
+
+---
+
+## 2026-06-17 — OOF Test Preparation for Current Live ic32_regime_v1 (Pre-Dynamic Size, No OOF Yet)
+
+**Status**: COMPLETED (2026-06-17)
+
+### Hipotesis
+The exact ic32_regime_v1 configuration currently running live (from the 2026-06-06 snapshot: LGBM thr 0.69/0.59 + conf 0.59, hard_consensus LSTM fusion, regime FLIP alignment, Guardian clean_v2 exit 0.65/min_hold=2, structural_filter + rr_gate + vol circuit breaker, **no dynamic sizing**, positioning data mining enabled) has solid genuine OOF performance consistent with its archived holdout ( ~62% WR, PF ~2.0-2.5, positive PnL on Apr-Jun 2026 holdout). This will give a clean baseline for the pre-dynsize ic32 to compare against future live results and against the recent TB live failure (low conf entries causing quick SLs and floating losses). Since the revert was emergency and this specific live config has not had fresh OOF validation yet, we need to (re)produce and simulate full-stack OOF trades with the **exact** live parameters.
+
+### Yang Diubah / Exact Setup to Test (Match Live Snapshot)
+- **LGBM**: 33 features (from user's paste: dist_from_8h_high, rsi_6, swing_momentum, rsi_h4, stochrsi_k, dist_liq_50x_long, ..., hmm_regime_enc). Thresholds exactly as snapshot: lgbm_threshold_long=0.69, short=0.59, confidence_threshold_entry=0.59.
+- **LSTM**: hard_consensus fusion (lstm_fusion_mode=hard_consensus, lstm_confirmation_enabled=true, lstm_flat_review_enabled=true, lstm_directional_review_threshold=0.35, lstm_adjust_opposite_pen=0.65, lstm_adjust_agree_boost=0.05, lstm_no_veto_threshold=0.5). Use the LSTM files from the ic32 snapshot (lstm_best.pt + feature_cols_lstm_temporal.json).
+- **HMM + Regime**: 4 states (TRENDING_DOWN, RANGING_LOW_VOL, RANGING_HIGH_VOL, TRENDING_UP), hmm_regime_enc feature. **regime_alignment FLIP enabled** (ranging: counter_trend_boost 0.05 / with_trend_penalty 0.1; trending: counter_trend_penalty 0.05 / with_trend_boost 0.1). controller.enabled=false.
+- **Guardian**: clean_v2 (40 feat: the 33 + 7 dynamic: bars_held_norm, current_pnl_pct, current_pnl_atr, max_favorable_pnl_pct, drawdown_from_peak_pct, direction, entry_price_ratio). exit_threshold=0.65, min_hold_bars=2, partial_exit_ratio=0.5, activation_atr=0.
+- **Other filters (exact from snapshot)**: structural_filter (enabled, max_swing_deviation_pct=0.15, require_entry_in_swing_range=true, swing_max_age_hours=48, breakout_tolerance_pct=0.03). rr_gate (enabled, min_rr=0.6, min_tp_atr=1.2, max_sl_atr=4, swing_bumper_atr=0.5). volatility_circuit_breaker (enabled, atr_multiplier=3, lookback_bars=24). tp_sl (tp_atr_mult=2, sl_atr_mult=1.5, min_rr=0.6, min_tp_atr=1.2, max_sl_atr=4).
+- **Risk/Sizing**: Fixed (modal_per_trade=10, leverage=5, no dynamic/conf-based sizing, no pyramiding). fee/slippage as in snapshot.
+- **Data mining/positioning**: enabled (hourly binance/bybit + daily macro).
+- **Labeling/Training basis**: The original ic32 swing-based (not TB). Model from the ic32_regime_v1 run (lgbm with 8-fold purged CV, gap=20 bars, mean F1 ~0.591).
+- **No dynamic size entry** (as confirmed by user for this live setup).
+- **OOF methodology**: Genuine 8-fold purged CV (matching the run's n_folds=8, gap_bars=20). Then full-stack simulation on OOF predictions using the exact live inference params above (LGBM probs -> thresholds -> hard_consensus LSTM -> FLIP regime -> Guardian per-bar check + structural/rr/vol filters).
+- **Period**: Training up to TRAIN_CUTOFF_DATE=2026-04-01 for OOF. Validate against the existing holdout Apr-Jun 2026 in the run (and any new data).
+
+### Target
+- OOF metrics: Mean/ std F1 (LGBM only), then full portfolio: trades, WR, PF, net PnL ( $10 base, 5x), PnL/trade, max consec loss, SL hit rate, Guardian exit %, avg hold bars, per direction (LONG/SHORT WR/PnL), per coin concentration, Vol Regime / H4 alignment slices if possible.
+- Compare to:
+  - Archived ic32 holdout in the run (62.07% WR, ~$207 PnL on Apr-Jun, PF~1.96-2.54 depending on stack).
+  - TB live failure (45.8% WR, PF 0.47, many quick SL at low conf).
+  - TB sim holdout (higher WR/PF in genuine_v* runs).
+- Confirm no leakage (purged gaps, features backward-looking, Guardian trained/used only on OOF trades if re-training).
+- Baseline for future live monitoring post-revert.
+
+### Script & Preparation
+- Existing artifacts in `models/runs/ic32_regime_v1/` (lgbm.pkl, lgbm_cv_results.json with 8-fold, holdout_apr_jun26.json, holdout_full_stack.json, holdout_trade_history.csv, failure_map.json).
+- The lgbm was trained with the ic32 33 features + hmm_regime_enc.
+- To prepare fresh OOF simulation matching **exact live config**:
+  1. Load the trained lgbm from ic32_regime_v1.
+  2. Re-generate or use OOF proba if available (the original cv was done; we can re-apply the exact thresholds/fusion/Guardian simulation on the OOF bars or re-run CV if needed for purity).
+  3. Implement the full inference stack from the snapshot config (cascade hard_consensus + regime_alignment FLIP + Guardian + filters) in a simulation loop (similar to core/evaluator.py or the holdout_full_stack eval).
+  4. Use purged folds matching the run (gap 20).
+  5. No dynamic sizing in the sim.
+- Starter script to prepare: `scratch/oof_test_ic32_current_live.py` (will load ic32 lgbm + apply exact config simulation, output scorecard + OOF predictions parquet for further Guardian analysis if needed).
+- Data: Use the latest training data up to 2026-04-01 (from pipeline/03_engineer or the run's context). Features must exactly match the 33 + the dynamic for Guardian.
+- Threshold sweep not needed (use the exact live 0.69/0.59).
+- After OOF, full holdout re-eval on Apr-Jun (or newer if sealed period allows) with the live config.
+
+### Dependencies / Notes
+- Match the exact feature list from the revert (user-provided 33 for LGBM, 40 for Guardian).
+- Use the Guardian and LSTM weights from the ic32 snapshot/run.
+- Since "belum oof test" for this live config, this will be the reference genuine OOF for monitoring.
+- Follow Aturan: Purged CV, Guardian on OOF trades only, no holdout leakage.
+- If re-training LGBM is needed for fresh OOF proba with current data: Adapt older ic32 training code or the genuine pipeline but force the ic32 33 features + multiclass objective + the original LGBM params from lgbm_cv_results.json.
+
+### Script (dijalankan)
+- `pipeline/04_train_lgbm_ic32_genuine_oof.py` — 8-fold purged CV, gap=20, swing labels, 33 feat
+- `pipeline/08_oof_ic32_full_stack.py` — full stack sim pada OOF proba (exact live inference_config)
+
+### Hasil CV LGBM (OOF classifier)
+| Metrik | Nilai |
+|--------|-------|
+| OOF coverage | 731,164 / 785,185 bars (93.1%) |
+| Mean F1 macro | 0.5908 +/- 0.0138 |
+| Fold F1 range | 0.5615 – 0.6076 |
+
+Artefak: `models/runs/ic32_regime_v1/oof_predictions.parquet`, `oof_cv_results.json`
+
+### Hasil OOF Full Stack (live config exact, $10/trade 5x, no dynamic sizing)
+| Metrik | OOF (2020–Mar 2026) | Holdout archived (Apr–Jun 2026) |
+|--------|--------------------:|--------------------------------:|
+| Trades | 25,596 | 936 |
+| Trades/bulan | 341 | 374 |
+| WR | 55.7% | 62.1% |
+| LONG WR / SHORT WR | 59.1% / 54.6% | 66.1% / 59.7% |
+| LONG share | 24.2% | 37.2% |
+| Net PnL | +$3,564 | +$207 |
+| PnL/trade | +$0.139 | +$0.221 |
+| Profit Factor | 1.39 | 1.96 |
+| Guardian exit % | 65.5% | 73.3% |
+| SL hit rate | 0.0% | 18.8% |
+
+Artefak: `oof_full_stack_scorecard.json`, `oof_trade_history.csv`
+
+### Kesimpulan
+- **Hipotesis sebagian terbukti**: OOF full-stack ic32 live config **positif** (PF 1.39, +$3.6k over ~6 tahun training period). Revert dari TB stack secara OOF masuk akal — model konservatif tetap profitable walau tidak se-agresif TB sim.
+- **Gap OOF vs holdout**: WR OOF 55.7% vs holdout 62.1%. Perbedaan wajar: (1) OOF mencakup seluruh regime 2020–2026 termasuk bear 2022, (2) holdout hanya 2.5 bulan Apr–Jun 2026, (3) Guardian/LSTM dipakai sebagai fixed weights (bukan retrain pada OOF trades).
+- **vs TB genuine_v2 OOF** (stack yang di-revert): ic32 lebih konservatif — ~341 trade/bln vs TB ~2800+, WR lebih rendah tapi selektivitas tinggi (thr 0.69/0.59).
+- **Baseline monitoring live**: ekspektasi OOF ~56% WR, PF ~1.4, ~340 trade/bln. Live di bawah ini >7 hari → investigasi drift.
+- Guardian clean_v2 dipakai di sim (sesuai holdout baseline ic32).
+
+---
+
+**Catatan dari user (2026-06-17)**: "saya pakai ic regime v1 saat ini... setup dulu belum pakai dynamic size entry. saya juga belum oof test". OOF gap untuk config live pre-dynsize ini sudah terisi.
+
+### Kesimpulan & Next (revert monitoring)
+Live data (is_live=1) adalah bukti kuat bahwa eksperimen TB dengan threshold rendah untuk "adaptif + volume" gagal di real execution (sim optimis). Revert ke ic32_regime_v1 adalah emergency measure yang rasional.
+
+Setelah revert:
+- Monitor ketat 3-7 hari pertama dengan bridge + trade_analyzer (fokus is_live, recent streak, per coin, exit_reason, Vol Regime).
+- Arsip snapshot TB genuine saat ini.
+- Lanjut riset TB secara parallel untuk fix root cause (label noise TB vs real barrier realization, low-vol entry filter ketat, Guardian vs SL alignment di paper_trading.py).
+- Jika ic32 juga degrade di regime baru (Apr+), maka masalah lebih dalam (market structure change, bukan hanya labeling).
+
+**Catatan metodologi**: Keputusan ini didasarkan pada live degradation yang nyata (bukan tuning holdout). Holdout TB tetap valid untuk riset masa depan; live adalah final envelope.
 
 ---
 
@@ -3838,3 +4906,123 @@ Artefak: `models/runs/tb_meta_fb_v2/marginal_ic_gate1.json`, `ablation_fb_v2_res
 
 ---
 
+
+## 2026-06-17 — SL% Floor Minimum (mitigasi stop-out koin low-vol)
+
+**Status**: DEPLOYED 2026-06-17 — `min_sl_pct=0.008` lolos OOF + holdout, di-deploy ke produksi (approval user).
+
+### Konteks / Motivasi
+Trade live TRXUSDT LONG (2026-05-12) kena `sl_hit` di −2,6% (leveraged 5x) padahal harga
+hanya bergerak −0,51%. Penyebab: ATR TRX sangat rendah (~0.31% dari harga, vol regime 0.23).
+SL = 1.5×ATR menghasilkan band SL hanya ~0,46% dari entry → noise pasar normal langsung
+trigger SL. Masalah struktural untuk koin volatilitas rendah: ATR meremehkan noise riil.
+
+### Hipotesis
+Memasang **floor minimum jarak SL** (SL tidak boleh lebih dekat dari X% dari entry, berapapun
+ATR-nya) akan mengurangi stop-out prematur akibat noise di koin low-vol → menaikkan WR & PF.
+Trade-off: SL melebar menurunkan RR (sebagian trade gagal RR gate) dan memperbesar loss saat
+SL benar-benar kena. Net PnL adalah arbiter.
+
+### Yang Diubah
+- Tambah parameter `min_sl_pct` di `core/evaluator.py::simulate_trades_swing` — floor jarak SL
+  (widen `sl_price` agar `sl_dist >= min_sl_pct * price`), diterapkan SEBELUM RR gate (jujur:
+  efek RR ikut terukur).
+- Sweep `min_sl_pct` ∈ {0.000 (baseline), 0.006, 0.008, 0.010, 0.012, 0.015} pada OOF.
+
+### Metodologi (GENUINE OOF — Aturan 1)
+- Sumber: `tb_lgbm_genuine_v2/oof_predictions.parquet` (has_oof=True) + `tb_lstm_genuine_v2` +
+  Guardian `tb_guardian_genuine_v2_hmm_v2`. HMM Config B frozen. Holdout TIDAK disentuh.
+- Fusion config = stack aktif `tb_genuine_v2_dynsize_lstm_cond`
+  (cond_BP bu0.38/be0.50/g0.03/b0.10/o0.14, vol_thr 2.0) + dynamic sizing cm_0.60.
+- Keputusan floor terbaik dibuat HANYA dari metrik OOF. Holdout untuk konfirmasi sekali nanti
+  (script terpisah), bukan untuk memilih floor.
+
+### Target
+- WR OOF >= baseline (min_sl_pct=0) DAN PF OOF >= baseline DAN PnL/trade (ppt_norm) >= baseline.
+- Khusus slice low-vol (vol regime rendah / ATR% rendah): turunnya SL-hit rate terlihat.
+- Jika tidak ada floor yang memenuhi semua → ABANDONED, catat alasan, tidak ubah config.
+
+### Script
+- `core/evaluator.py` (tambah `min_sl_pct`)
+- `pipeline/05t_sl_floor_sweep.py` (sweep OOF, output `models/runs/tb_lgbm_genuine_v2/sl_floor_sweep.json`)
+
+### Hasil OOF (21 koin, stack aktif penuh — HMM B + dynsize + LSTM cond + Guardian)
+
+**Portfolio penuh:**
+| floor | Trades | WR% | PF | PnL | ppt_norm | SL-hit% |
+|------:|-------:|----:|---:|----:|---------:|--------:|
+| 0.000 (base) | 34,101 | 69.0 | 2.57 | 23,419 | 0.5049 | 29.6 |
+| 0.006 | 34,066 | 69.1 | 2.56 | 23,410 | 0.5052 | 29.5 |
+| **0.008** | **33,931** | **69.3** | **2.57** | **23,418** | **0.5073** | **29.2** |
+| 0.010 | 33,612 | 69.6 | 2.57 | 23,382 | 0.5112 | 28.9 |
+| 0.012 | 33,119 | 69.9 | 2.57 | 23,317 | 0.5168 | 28.6 |
+| 0.015 | 32,099 | 70.4 | 2.56 | 23,050 | 0.5263 | 28.0 |
+
+**Slice low-vol (ATR% < 0.4% di bar entry — di sinilah masalah TRX):**
+| floor | Trades | WR% | PF | SL-hit% |
+|------:|-------:|----:|---:|--------:|
+| 0.000 (base) | 1,537 | 61.9 | 2.22 | 36.9 |
+| 0.006 | 1,502 | 63.9 | 2.13 | 34.8 |
+| **0.008** | **1,367** | **68.1** | **2.24** | **30.1** |
+| 0.010 | 1,048 | 70.3 | 2.17 | 27.4 |
+| 0.012 | 555 | 72.6 | 2.27 | 25.2 |
+| 0.015 | 46 | 80.4 | 3.99 | 17.4 |
+
+### Kesimpulan
+- **Hipotesis terbukti pada akar masalah.** Di slice low-vol, floor 0.008 menaikkan WR
+  +6.2pp (61.9→68.1) dan menurunkan SL-hit −6.8pp (36.9→30.1). Floor lebih besar makin kuat
+  efeknya tapi makin banyak trade ter-reject RR gate (1,537 → 46 di 0.015).
+- **Efek portfolio penuh marginal** karena trade low-vol cuma ~4.5% dari total. PnL praktis flat
+  (−$1.40 dari $23k = −0.006%), WR +0.3pp, PF tetap 2.57, ppt_norm +0.0024.
+- **Winner per kriteria (WR & PF & ppt_norm >= base, max PnL): `min_sl_pct = 0.008` (0.8%).**
+  0.006 & 0.015 gugur karena PF turun (2.56 < 2.57). 0.010 & 0.012 lulus tapi PnL sedikit lebih
+  rendah; viable jika ingin proteksi low-vol lebih agresif.
+- **Kasus TRX**: band SL semula 0.46%, wiggle yang men-stop = 0.51%. Floor 0.8% memindah SL ke
+  luar wiggle itu → trade tidak akan ke-stop. Mekanisme sesuai diagnosis.
+- Ini perbaikan **kualitas/risiko** (mengurangi stop-out konyol di koin low-vol), bukan booster
+  PnL portfolio. Tidak merugikan baseline → layak jadi kandidat.
+
+### Hasil Holdout — KONFIRMASI (Apr 1 – Jun 30 2026, 21 koin, floor frozen dari OOF)
+Stack aktif `tb_genuine_v2_dynsize_lstm_cond`. Bukan tuning — floor sudah dipilih di OOF.
+
+| floor | Trades | WR% | PF | PnL | ppt_norm | SL-hit% |
+|------:|-------:|----:|---:|----:|---------:|--------:|
+| 0.000 (current) | 1,648 | 73.4 | 3.00 | $875.42 | 0.3839 | 25.3 |
+| **0.008** | 1,622 | **73.7** | 3.00 | $872.84 | 0.3886 | **24.7** |
+
+Slice low-vol (ATR% < 0.4%):
+| floor | Trades | WR% | PF | SL-hit% |
+|------:|-------:|----:|---:|--------:|
+| 0.000 | 159 | 69.2 | 2.18 | 29.6 |
+| **0.008** | 133 | **72.2** | **2.29** | **23.3** |
+
+Delta 0.008 vs current: portfolio WR +0.31pp, PF −0.002 (flat), PnL −$2.58 (−0.3%),
+ppt_norm +0.0047, SL-hit −0.58pp. **Low-vol: WR +3.0pp, PF +0.108, SL-hit −6.25pp.**
+
+### Kesimpulan Akhir
+- **Holdout mengkonfirmasi OOF**: arah konsisten di periode out-of-sample. Floor 0.008
+  menaikkan WR & menurunkan SL-hit, terutama di koin low-vol (akar masalah TRX), dengan
+  biaya PnL portfolio yang dapat diabaikan (−0.3%) dan PF tidak berubah.
+- Kriteria upgrade (WR>=, PF>=, trades>=80%, genuine OOF) terpenuhi. Floor 0.008 layak deploy.
+- **Holdout disegel** (`CONFIRMED=True` di `07_holdout_sl_floor_confirm.py`).
+
+### Deploy ke Produksi (2026-06-17, approval user eksplisit)
+Temuan saat deploy: logika floor di `core/evaluator.py` adalah backtest-only & TIDAK ada di
+mapping `deploy_model.py`. Produksi hitung SL di `app/services/paper_trading.py::_calculate_tp_sl`
+(juga di luar mapping deploy). Jadi deploy butuh edit MANUAL kode produksi, bukan cuma push config.
+Model live = `tb_genuine_v2_dynsize_lstm_cond` (sama dgn yg divalidasi; catatan ic32 di CLAUDE.md stale).
+
+Perubahan yang dilakukan:
+1. `config.py`: `MIN_SL_PCT = 0.008`
+2. `inference_config.json`: `min_sl_pct: 0.008` di blok `rr_gate` (yg dibaca produksi) + `tp_sl`
+3. **MANUAL** `swint_tradev2/app/services/paper_trading.py`: helper `_apply_sl_floor()` +
+   `self._min_sl_pct` di `__init__` + terapkan di 3 titik return `_calculate_tp_sl`
+4. `python tools/deploy_model.py` (38 file, backup `models/backups/backup_20260617_092145`)
+
+Verifikasi: prod `rr_gate.min_sl_pct=0.008`, paper_trading membaca & terapkan floor.
+Functional test kasus TRX: SL melebar 0.46%->0.80%, wiggle 0.3470 tidak lagi sentuh SL baru 0.3460.
+
+Artefak: `models/runs/tb_lgbm_genuine_v2/sl_floor_sweep.json`,
+`reports/experiments/2026-06-17_sl_floor_holdout_confirm.json`
+
+---

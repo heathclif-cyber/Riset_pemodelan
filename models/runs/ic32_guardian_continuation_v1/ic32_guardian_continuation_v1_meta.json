@@ -1,0 +1,92 @@
+{
+  "run_name": "ic32_guardian_continuation_v1",
+  "trained_at": "2026-06-17T13:26:13.894504",
+  "entry_model": "ic32_regime_v1",
+  "entry_oof": true,
+  "thr_long": 0.69,
+  "thr_short": 0.64,
+  "n_samples": 245300,
+  "label_dist": {
+    "0": 176932,
+    "2": 62440,
+    "1": 5928
+  },
+  "feat_cols": [
+    "VAH",
+    "absorption_z",
+    "atr_percentile_h1",
+    "cvd_momentum_adv",
+    "cvd_slope_h4",
+    "cvd_slope_h4_delta",
+    "dist_from_8h_high",
+    "dist_liq_50x_long",
+    "dist_liq_50x_short",
+    "dist_swing_low",
+    "ema_200_h1",
+    "ema_7_h1",
+    "funding_rate",
+    "h4_trend",
+    "hmm_regime_enc",
+    "log_ret_5",
+    "ofi_h4_accel",
+    "ofi_h4_delta",
+    "ofi_z_score",
+    "rsi_h4_slope",
+    "stochrsi_k",
+    "trend_accel_4h",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio",
+    "cvd_slope_h4_delta_entry",
+    "ofi_h4_delta_entry",
+    "flow_momentum_3bar"
+  ],
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.2069,
+      "f1_macro": 0.8094
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2323,
+      "f1_macro": 0.8387
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2165,
+      "f1_macro": 0.8506
+    },
+    {
+      "fold": 4,
+      "logloss": 0.213,
+      "f1_macro": 0.8542
+    },
+    {
+      "fold": 5,
+      "logloss": 0.2247,
+      "f1_macro": 0.8578
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2151,
+      "f1_macro": 0.8439
+    },
+    {
+      "fold": 7,
+      "logloss": 0.247,
+      "f1_macro": 0.8569
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2294,
+      "f1_macro": 0.86
+    }
+  ],
+  "best_logloss": 0.20694192068180678,
+  "exit2_pnl_mean_pct": 0.668
+}
