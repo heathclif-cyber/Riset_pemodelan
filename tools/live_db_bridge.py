@@ -95,7 +95,7 @@ def pull_live_db(force: bool = True, max_age_min: float = 10.0) -> Path:
     # atomic replace — cache tidak pernah setengah-tertulis
     os.replace(tmp, LOCAL_DB)
     size_kb = LOCAL_DB.stat().st_size / 1024
-    print(f"[bridge] OK — {size_kb:.0f} KB tersalin ke {LOCAL_DB}")
+    print(f"[bridge] OK - {size_kb:.0f} KB tersalin ke {LOCAL_DB}")
     return LOCAL_DB
 
 
