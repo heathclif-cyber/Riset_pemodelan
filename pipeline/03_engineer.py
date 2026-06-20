@@ -25,7 +25,7 @@ sys.path.insert(0, str(ROOT))
 
 from config import (
     TRAINING_COINS, NEW_COINS, ALL_COINS, SYMBOL_MAP,
-    PROC_DIR, LABEL_DIR, REPORT_DIR,
+    PROC_DIR, LABEL_DIR, REPORT_DIR, HOLDOUT_DIR,
     SWING_LABEL_MAX_HOLD, SWING_LABEL_MIN_RR,
     SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL,
     FEATURE_COLS_V3,
@@ -38,6 +38,9 @@ from core.utils import setup_logger, ensure_utc_index
 from core.features import engineer_features
 
 logger = setup_logger("03_engineer")
+
+_IN_DIR  = PROC_DIR
+_OUT_DIR = LABEL_DIR
 
 # Filter thresholds (disesuaikan jika belum ada di config)
 LONG_MAX_PRICE_IN_RANGE = 1.0
@@ -58,7 +61,7 @@ def _save(df: pd.DataFrame, path: Path) -> None:
 
 def engineer_symbol(symbol: str) -> dict[str, Any]:
     report = {"symbol": symbol}
-    in_path = PROC_DIR / f"{symbol}_clean.parquet"
+    in_path = _IN_DIR / f"{symbol}_clean.parquet"
     
     if not in_path.exists():
         logger.error(f"[{symbol}] File clean tidak ditemukan: {in_path}")
@@ -102,7 +105,7 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
                 etf_h1 = etf_df.reindex(etf_df.index.union(feat_df.index)).sort_index().ffill().reindex(feat_df.index)
                 for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
                     if c in etf_h1.columns:
-                        feat_df[c] = etf_h1[c]
+                        feat_df[c] = etf_h1[c].shift(24)  # T-1 lag: 24 H1 bars = 1 trading day
 
             # Fill missing ETF features safely for historical data before 2024
             for c in ["etf_total_change_usd", "etf_gbtc_change_usd"]:
@@ -120,7 +123,7 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
             report["missing_features"] = missing_cols
 
         # ── Merge HMM regime labels (jika sudah di-generate oleh 03b) ──────
-        regime_path = LABEL_DIR / f"{symbol}_regime_h1.parquet"
+        regime_path = _OUT_DIR / f"{symbol}_regime_h1.parquet"
         if regime_path.exists():
             try:
                 reg_df = pd.read_parquet(regime_path)
@@ -153,7 +156,7 @@ def engineer_symbol(symbol: str) -> dict[str, Any]:
         dropped = initial_len - len(feat_df)
 
         # Output ke _features_v3.parquet
-        out_path = LABEL_DIR / f"{symbol}_features_v3.parquet"
+        out_path = _OUT_DIR / f"{symbol}_features_v3.parquet"
         _save(feat_df, out_path)
 
         n_features = len([c for c in FEATURE_COLS_V3 if c in feat_df.columns])
@@ -187,11 +190,20 @@ def parse_args():
     group.add_argument("--new",  action="store_true")
     group.add_argument("--all",  action="store_true")
     group.add_argument("--coins", nargs="+", metavar="SYMBOL")
+    parser.add_argument("--holdout-test", action="store_true", dest="holdout_test",
+                        help="Engineer holdout-test data (data/holdout-test/)")
     return parser.parse_args()
 
 
 def main():
+    global _IN_DIR, _OUT_DIR
     args = parse_args()
+
+    if args.holdout_test:
+        _IN_DIR  = HOLDOUT_DIR / "processed"
+        _OUT_DIR = HOLDOUT_DIR / "labeled"
+        logger.info(f"Holdout-test mode: in={_IN_DIR}  out={_OUT_DIR}")
+
     if args.new:
         coins = NEW_COINS
     elif args.all:
@@ -201,12 +213,13 @@ def main():
     else:
         coins = TRAINING_COINS
 
-    LABEL_DIR.mkdir(parents=True, exist_ok=True)
+    _OUT_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
     # Parallelisasi — tiap koin independen (baca/tulis file terpisah)
     # n_workers: sisakan 1 CPU untuk sistem, maksimal sejumlah koin
-    n_workers = max(1, min(len(coins), multiprocessing.cpu_count() - 1))
+    # holdout-test: force n_workers=1 karena globals tidak diwariskan ke child processes
+    n_workers = 1 if args.holdout_test else max(1, min(len(coins), multiprocessing.cpu_count() - 1))
     logger.info(f"Processing {len(coins)} coins | workers={n_workers} | cpu_count={multiprocessing.cpu_count()}")
 
     if n_workers <= 1:

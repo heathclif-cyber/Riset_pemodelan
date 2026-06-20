@@ -256,6 +256,145 @@ def _compute_guardian_dynamic(
     return base
 
 
+def _assemble_guardian_row(
+    feat_cols: list,
+    static_names: list,
+    g_static_cur: np.ndarray,
+    g_static_ent: np.ndarray,
+    bars_held: int,
+    entry_price: float,
+    current_price: float,
+    direction: int,
+    atr_val: float,
+    max_favorable_pnl: float,
+    flow_momentum_3bar: float = 0.0,
+) -> np.ndarray:
+    """Build guardian feature row in feat_cols order (static snapshot + dynamic)."""
+    pnl_pct = (current_price - entry_price) / entry_price
+    if direction == 0:
+        pnl_pct = -pnl_pct
+
+    bars_held_norm = bars_held / 24.0
+    current_pnl_atr = pnl_pct * entry_price / atr_val if atr_val > 0 else 0.0
+    dd_from_peak = (
+        (max_favorable_pnl - pnl_pct) / max_favorable_pnl
+        if max_favorable_pnl > 0.001 else 0.0
+    )
+    entry_ratio = entry_price / current_price if current_price > 0 else 1.0
+
+    static_idx = {n: i for i, n in enumerate(static_names)}
+    cvd_cur = g_static_cur[static_idx["cvd_slope_h4"]] if "cvd_slope_h4" in static_idx else 0.0
+    cvd_ent = g_static_ent[static_idx["cvd_slope_h4"]] if "cvd_slope_h4" in static_idx else 0.0
+    ofi_cur = g_static_cur[static_idx["ofi_h4_delta"]] if "ofi_h4_delta" in static_idx else 0.0
+    ofi_ent = g_static_ent[static_idx["ofi_h4_delta"]] if "ofi_h4_delta" in static_idx else 0.0
+
+    dynamic_vals = {
+        "bars_held_norm": bars_held_norm,
+        "current_pnl_pct": pnl_pct,
+        "current_pnl_atr": current_pnl_atr,
+        "max_favorable_pnl_pct": max_favorable_pnl,
+        "drawdown_from_peak_pct": dd_from_peak,
+        "direction": 1.0 if direction == 2 else 0.0,
+        "entry_price_ratio": entry_ratio,
+        "cvd_slope_h4_delta_entry": float(cvd_cur - cvd_ent),
+        "ofi_h4_delta_entry": float(ofi_cur - ofi_ent),
+        "flow_momentum_3bar": float(flow_momentum_3bar),
+    }
+
+    row = np.zeros(len(feat_cols), dtype=np.float64)
+    for i, col in enumerate(feat_cols):
+        if col in static_idx:
+            row[i] = g_static_cur[static_idx[col]]
+        elif col in dynamic_vals:
+            row[i] = dynamic_vals[col]
+        else:
+            row[i] = 0.0
+    return row
+
+
+def _compute_guardian_delta_vector(
+    bar: int, entry_bar: int,
+    raw_features: dict,       # {feat_name: np.ndarray}
+    gd_feats: list,           # ordered feature names model expects
+    close_arr: np.ndarray,
+    entry_price: float,
+    direction: int,           # 1=LONG, -1=SHORT
+    momentum_window: int = 3,
+) -> np.ndarray:
+    """Build Guardian Delta feature vector (delta + curr + rolling momentum + context)."""
+    n = len(close_arr)
+    features: dict = {}
+
+    for f in gd_feats:
+        # Skip context features — handled separately below
+        if f in ("pnl_pct", "bars_held", "direction", "price_momentum_3bar"):
+            continue
+        arr = raw_features.get(f)  # exact match (e.g. ofi_z_score_delta)
+        if arr is not None:
+            v = arr[bar] if bar < len(arr) else 0.0
+            features[f] = 0.0 if np.isnan(v) else float(v)
+            continue
+        # Derived: _delta  →  curr - entry
+        if f.endswith("_delta"):
+            base = f[:-6]
+            src = raw_features.get(base)
+            if src is not None:
+                nb = len(src)
+                ev = src[entry_bar] if entry_bar < nb else 0.0
+                cv = src[bar]       if bar < nb else 0.0
+                ev = 0.0 if np.isnan(ev) else ev
+                cv = 0.0 if np.isnan(cv) else cv
+                features[f] = cv - ev
+            else:
+                features[f] = 0.0
+        # Derived: _curr  →  current value
+        elif f.endswith("_curr"):
+            base = f[:-5]
+            src = raw_features.get(base)
+            if src is not None:
+                cv = src[bar] if bar < len(src) else 0.0
+                features[f] = 0.0 if np.isnan(cv) else float(cv)
+            else:
+                features[f] = 0.0
+        # Derived: _mean3 / _trend3 (or other window sizes)
+        elif f"_mean{momentum_window}" in f or f"_trend{momentum_window}" in f:
+            tag = f"_mean{momentum_window}" if f"_mean{momentum_window}" in f else f"_trend{momentum_window}"
+            base = f[:f.index(tag)]
+            src = raw_features.get(base)
+            if src is not None:
+                nb = len(src)
+                start = max(entry_bar, bar - momentum_window + 1)
+                vals = [src[b] for b in range(start, bar + 1)
+                        if b < nb and not np.isnan(src[b])]
+                if vals:
+                    if "_mean" in tag:
+                        features[f] = float(np.mean(vals))
+                    else:
+                        features[f] = float(vals[-1] - vals[0]) if len(vals) >= 2 else 0.0
+                else:
+                    features[f] = 0.0
+            else:
+                features[f] = 0.0
+        else:
+            features[f] = 0.0
+
+    # Context features
+    bars_held = bar - entry_bar
+    pnl_pct   = (close_arr[bar] - entry_price) / entry_price * direction if entry_price > 0 else 0.0
+    if bars_held >= 3:
+        pch = [(close_arr[b] - close_arr[b-1]) / close_arr[b-1] * direction
+               for b in range(entry_bar + 1, bar + 1) if b < n]
+        price_mom = float(np.mean(pch[-3:])) if len(pch) >= 3 else 0.0
+    else:
+        price_mom = 0.0
+    features["pnl_pct"]             = pnl_pct
+    features["bars_held"]           = float(bars_held)
+    features["direction"]           = float(direction)
+    features["price_momentum_3bar"] = price_mom
+
+    return np.array([features.get(f, 0.0) for f in gd_feats], dtype=np.float64)
+
+
 # ─── ★ BARU v3: Simulasi Trade (Dinamis dari H4 Swing Points) ────────────────
 
 def simulate_trades_swing(
@@ -278,6 +417,7 @@ def simulate_trades_swing(
     tp_fallback_atr: float = TP_SL_FALLBACK_TP,  # TP fallback (× ATR) jika swing NaN
     sl_fallback_atr: float = TP_SL_FALLBACK_SL,  # SL fallback (× ATR) jika swing NaN
     confidence               = None,  # np.ndarray — needed for sizing_mode="tiered"
+    modal_arr                = None,  # np.ndarray — per-bar dynamic modal (overrides modal+sizing_mode)
     # ── Aspect toggles (from config.py) ────────────────────────────────────
     hybrid_mode:          bool = TP_SL_HYBRID_MODE,       # #1
     swing_freshness_check: bool = TP_SL_SWING_FRESHNESS,  # #2
@@ -296,6 +436,7 @@ def simulate_trades_swing(
     volr_disable_max_sl:      bool = False,  # disable max_sl total di low-vol (1c)
     max_sl_pct_enabled:       bool = False,  # #17: enable SL % distance cap (1d)
     max_sl_pct:               float = 0.30,  # max SL = 30% dari entry
+    min_sl_pct:               float = 0.0,   # #18: floor jarak SL (min % dari entry); 0 = off
     # ── NEW: Grup 3 — Swing Freshness ──────────────────────────────────────
     max_swing_deviation_pct:       float = 0.15,  # #19: max deviasi swing (3b)
     individual_swing_freshness:    bool = False,  # #20: cek freshness per swing (3c)
@@ -313,6 +454,15 @@ def simulate_trades_swing(
     guardian_min_hold_bars    = GUARDIAN_MIN_HOLD_BARS,
     guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
     guardian_enabled          = GUARDIAN_ENABLED,
+    guardian_feat_cols        = None,   # full feature order for custom guardian models
+    guardian_static_names     = None,   # static column names matching X_guardian
+    flow_momentum_arr         = None,   # optional per-bar flow_momentum_3bar array
+    # ── Guardian Delta mode (binary, delta features) ─────────────────────
+    guardian_delta_raw        = None,   # dict {feat_name: np.ndarray}
+    guardian_delta_feats      = None,   # list[str] — model's feature order
+    guardian_mom_thresh       = 0.45,   # P(EXIT) to confirm exit AFTER TP
+    guardian_def_thresh       = 0.70,   # P(EXIT) to cut early loss
+    guardian_def_min_loss     = -0.010, # min pnl_pct before defense activates
     # ── Trailing Stop ─────────────────────────────────────────────────
     trailing_stop_enabled     = TRAILING_STOP_ENABLED,
     trailing_stop_atr         = TRAILING_STOP_ATR,
@@ -325,6 +475,8 @@ def simulate_trades_swing(
     pyramiding_enabled:     bool = False,
     pyramiding_max_per_coin: int = 1,
     pyramiding_same_dir:    bool = True,
+    pyramiding_exit_mode:   str = "independent",  # independent | shared_sl_first | close_with_first | scale_in
+    entry_price_override     = None,  # np.ndarray — harga entry M15 per bar H1 (opsional)
 ) -> dict:
     """
     Simulasi trade dengan TP/SL dinamis — 2-tier priority:
@@ -351,6 +503,46 @@ def simulate_trades_swing(
 
     Semua tier melalui validasi R:R yang sama — skip trade jika gagal.
     """
+    if pyramiding_enabled and pyramiding_exit_mode == "scale_in":
+        from core.scale_in_sim import run_scale_in_simulation
+        return run_scale_in_simulation(
+            y_pred=y_pred, close=close, high=high, low=low, atr=atr,
+            h4_swing_highs=h4_swing_highs, h4_swing_lows=h4_swing_lows,
+            modal=modal, leverage=leverage, fee_per_side=fee_per_side, slippage=slippage,
+            min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr, max_hold=max_hold,
+            tp_fallback_atr=tp_fallback_atr, sl_fallback_atr=sl_fallback_atr,
+            confidence=confidence, modal_arr=modal_arr,
+            vol_ratio=vol_ratio, volr_conditional_enabled=volr_conditional_enabled,
+            volr_threshold=volr_threshold, max_sl_volr_low=max_sl_volr_low,
+            volr_disable_max_sl=volr_disable_max_sl,
+            max_sl_pct_enabled=max_sl_pct_enabled, max_sl_pct=max_sl_pct,
+            max_swing_deviation_pct=max_swing_deviation_pct,
+            individual_swing_freshness=individual_swing_freshness,
+            hybrid_mode=hybrid_mode, swing_freshness_check=swing_freshness_check,
+            structural_filter=structural_filter,
+            structural_tolerance_pct=structural_tolerance_pct,
+            slippage_enabled=slippage_enabled, sl_trigger_mode=sl_trigger_mode,
+            sizing_mode=sizing_mode, cooldown_enabled=cooldown_enabled,
+            swing_sl_bumper_atr=swing_sl_bumper_atr,
+            guardian_model=guardian_model, guardian_scaler=guardian_scaler,
+            X_guardian=X_guardian, guardian_exit_threshold=guardian_exit_threshold,
+            guardian_min_hold_bars=guardian_min_hold_bars,
+            guardian_activation_atr=guardian_activation_atr, guardian_enabled=guardian_enabled,
+            guardian_feat_cols=guardian_feat_cols, guardian_static_names=guardian_static_names,
+            flow_momentum_arr=flow_momentum_arr,
+            guardian_delta_raw=guardian_delta_raw, guardian_delta_feats=guardian_delta_feats,
+            guardian_mom_thresh=guardian_mom_thresh, guardian_def_thresh=guardian_def_thresh,
+            guardian_def_min_loss=guardian_def_min_loss,
+            trailing_stop_enabled=trailing_stop_enabled, trailing_stop_atr=trailing_stop_atr,
+            trailing_stop_min_bars=trailing_stop_min_bars, min_sl_pct=min_sl_pct,
+            vcb_enabled=vcb_enabled, vcb_atr_multiplier=vcb_atr_multiplier,
+            vcb_lookback_bars=vcb_lookback_bars,
+            pyramiding_max_per_coin=pyramiding_max_per_coin,
+            pyramiding_same_dir=pyramiding_same_dir,
+            sizing_with_trend_half=sizing_with_trend_half, h4_trend=h4_trend,
+            entry_price_override=entry_price_override,
+        )
+
     n          = len(close)
     trades     = []
     equity     = modal
@@ -359,7 +551,7 @@ def simulate_trades_swing(
 
     LONG, SHORT, FLAT = 2, 0, 1   # sesuai LABEL_MAP
     cooldown_until = -1            # #15: bar index sampai kapan skip entry
-    open_positions = []            # pyramiding: list of (bar_out, direction)
+    open_positions = []            # pyramiding: list of {exit_bar, sig, sl_price, entry_bar}
 
     for i in range(n - 1):
         sig = y_pred[i]
@@ -373,7 +565,10 @@ def simulate_trades_swing(
             equity_curve.append(equity)
             continue
 
-        raw_price = close[i]
+        if entry_price_override is not None and np.isfinite(entry_price_override[i]):
+            raw_price = float(entry_price_override[i])
+        else:
+            raw_price = close[i]
         # Apply slippage on entry — LONG buy at ask, SHORT sell at bid
         if slippage_enabled:
             if sig == LONG:
@@ -385,7 +580,9 @@ def simulate_trades_swing(
         atr_i  = atr[i]
 
         # ── #12 Sizing ───────────────────────────────────────────────────
-        if sizing_mode == "tiered" and confidence is not None:
+        if modal_arr is not None:
+            trade_modal = float(modal_arr[i])
+        elif sizing_mode == "tiered" and confidence is not None:
             conf_i = confidence[i]
             if conf_i > 0.75:
                 trade_modal = modal
@@ -448,21 +645,20 @@ def simulate_trades_swing(
                 equity_curve.append(equity)
                 continue
 
-        # ── Pyramiding check ── match production (Binance: akumulasi size) ──
-        # Hapus posisi yang sudah tutup (bar_out <= current bar)
-        open_positions = [p for p in open_positions if p[0] > i]
+        # ── Pyramiding check ── match production (separate Trade per leg) ──
+        open_positions = [p for p in open_positions if p["exit_bar"] > i]
         if pyramiding_enabled and open_positions:
-            existing_dir = "LONG" if open_positions[0][1] == LONG else "SHORT"
+            existing_dir = "LONG" if open_positions[0]["sig"] == LONG else "SHORT"
             new_dir = "LONG" if sig == LONG else "SHORT"
             if new_dir != existing_dir:
-                # Binance: tidak bisa buka arah berlawanan saat posisi masih ada
                 equity_curve.append(equity)
                 continue
-            # Same direction → akumulasi size, tidak buka posisi baru terpisah
             if len(open_positions) >= pyramiding_max_per_coin:
                 equity_curve.append(equity)
                 continue
-            # Allow — modal akan diakumulasi ke posisi existing
+        elif open_positions:
+            equity_curve.append(equity)
+            continue
 
         # ── Tentukan TP/SL — Gate: Swing/ATR ────────────────────────────
 
@@ -506,8 +702,29 @@ def simulate_trades_swing(
                 tp_dist  = price    - tp_price
                 sl_dist  = sl_price - price
 
+        # ── #18 SL% Floor — lebarkan SL jika lebih dekat dari min_sl_pct dari entry ──
+        # Koin low-vol (ATR rendah) menghasilkan band SL terlalu sempit → kena noise.
+        # Floor ini independen dari ATR. Diterapkan SEBELUM RR gate (efek RR ikut terukur).
+        if min_sl_pct > 0.0:
+            floor_dist = price * min_sl_pct
+            if sl_dist < floor_dist:
+                sl_dist = floor_dist
+                if sig == LONG:
+                    sl_price = price - floor_dist
+                else:
+                    sl_price = price + floor_dist
+
+        # ── Pyramiding exit schema: anchor SL / cap hold to first leg ──
+        if pyramiding_enabled and open_positions and pyramiding_exit_mode == "shared_sl_first":
+            sl_price = open_positions[0]["sl_price"]
+            if sig == LONG:
+                sl_dist = price - sl_price
+            else:
+                sl_dist = sl_price - price
+
         # ── Guardian active flag (tidak override TP/SL — pakai swing H4 / ATR fallback)
-        guardian_active = guardian_enabled and guardian_model is not None and X_guardian is not None
+        guardian_active       = guardian_enabled and guardian_model is not None and X_guardian is not None
+        guardian_delta_active = guardian_model is not None and guardian_delta_raw is not None and guardian_delta_feats is not None
 
         # Validasi R:R (GATE — gagal = trade di-skip)
         if TP_SL_RR_GATE_ENABLED:
@@ -559,6 +776,8 @@ def simulate_trades_swing(
         position_remaining = 1.0  # 1.0 = full, 0.5 = half after partial
 
         end = min(i + max_hold, n)
+        if pyramiding_enabled and open_positions and pyramiding_exit_mode == "close_with_first":
+            end = min(end, open_positions[0]["exit_bar"] + 1)
         for j in range(i + 1, end):
             if np.isnan(close[j]):
                 continue
@@ -575,9 +794,13 @@ def simulate_trades_swing(
                 tp_hit = low[j] <= tp_price
                 sl_hit = (high[j] >= sl_price) if sl_trigger_mode == "highlow" else (close[j] >= sl_price)
 
-            # ── SL hard exit ── match production paper_trading.py ────────
+            # ── SL hard exit ── trigger & exit price per sl_trigger_mode
+            # "close"  : SL triggered saat close lewati SL → exit @ close (ga bisa fill di SL)
+            # "highlow": SL triggered saat wick sentuh SL → exit @ sl_price (bisa fill via stop order)
             if sl_hit:
-                outcome = "LOSS"; raw_exit = sl_price; break
+                outcome = "LOSS"
+                raw_exit = close[j] if sl_trigger_mode == "close" else sl_price
+                break
 
             # ── TP → momentum mode (match production) ──────────────────
             # TP tidak hard-close — trigger Guardian momentum (bypass gates)
@@ -599,21 +822,33 @@ def simulate_trades_swing(
                         # Build guardian feature vector: static + dynamic (+ delta)
                         g_static_cur = X_guardian[j, :]
                         g_static_ent = X_guardian[i, :]  # entry bar static
-                        # Build delta_map: {delta_name: idx_in_static_array}
-                        try:
-                            from config import GUARDIAN_DELTA_MAP, GUARDIAN_EXTENDED_STATIC
-                            _dmap = {
-                                dname: GUARDIAN_EXTENDED_STATIC.index(src)
-                                if src in GUARDIAN_EXTENDED_STATIC else None
-                                for dname, src in GUARDIAN_DELTA_MAP.items()
-                            }
-                        except Exception:
-                            _dmap = None
-                        g_dynamic = _compute_guardian_dynamic(
-                            bars_held, price, close[j], sig, atr_i, mfe_pnl,
-                            g_static_cur, g_static_ent, _dmap,
-                        )
-                        g_feat = np.concatenate([g_static_cur, g_dynamic]).reshape(1, -1)
+                        if guardian_feat_cols and guardian_static_names:
+                            fm_val = 0.0
+                            if flow_momentum_arr is not None and j < len(flow_momentum_arr):
+                                fm_val = float(flow_momentum_arr[j])
+                            g_row = _assemble_guardian_row(
+                                guardian_feat_cols, guardian_static_names,
+                                g_static_cur, g_static_ent,
+                                bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                                flow_momentum_3bar=fm_val,
+                            )
+                            g_feat = g_row.reshape(1, -1)
+                        else:
+                            # Build delta_map: {delta_name: idx_in_static_array}
+                            try:
+                                from config import GUARDIAN_DELTA_MAP, GUARDIAN_EXTENDED_STATIC
+                                _dmap = {
+                                    dname: GUARDIAN_EXTENDED_STATIC.index(src)
+                                    if src in GUARDIAN_EXTENDED_STATIC else None
+                                    for dname, src in GUARDIAN_DELTA_MAP.items()
+                                }
+                            except Exception:
+                                _dmap = None
+                            g_dynamic = _compute_guardian_dynamic(
+                                bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                                g_static_cur, g_static_ent, _dmap,
+                            )
+                            g_feat = np.concatenate([g_static_cur, g_dynamic]).reshape(1, -1)
                         g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
                         g_proba = guardian_model._Booster.predict(g_feat_s)[0]  # [p_hold, p_partial, p_full]
                         g_pred = int(g_proba.argmax())
@@ -644,6 +879,36 @@ def simulate_trades_swing(
                             partial_pnl = gross_partial - fee_partial
                             position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
                             # Continue scanning — do NOT break
+
+            # ── Guardian Delta (binary: HOLD=1 / EXIT=0) ─────────────────
+            if guardian_delta_active and bars_held >= guardian_min_hold_bars and partial_bar is None:
+                direction_num = 1 if sig == LONG else -1
+                pnl_pct_now   = (close[j] - price) / price * direction_num if price > 0 else 0.0
+                tp_hit_now    = (sig == LONG and high[j] >= tp_price) or (sig == SHORT and low[j] <= tp_price)
+
+                run_delta = tp_hit_now or (pnl_pct_now <= guardian_def_min_loss)
+                if run_delta:
+                    gd_vec = _compute_guardian_delta_vector(
+                        bar=j, entry_bar=i,
+                        raw_features=guardian_delta_raw,
+                        gd_feats=guardian_delta_feats,
+                        close_arr=close,
+                        entry_price=price,
+                        direction=direction_num,
+                        momentum_window=3,
+                    ).reshape(1, -1)
+                    p_exit = guardian_model.predict_proba(gd_vec)[0][0]  # P(EXIT)
+
+                    gd_exit = False
+                    if tp_hit_now and p_exit > guardian_mom_thresh:
+                        gd_exit = True   # momentum mode: TP hit but Guardian says exit
+                    elif pnl_pct_now <= guardian_def_min_loss and p_exit > guardian_def_thresh:
+                        gd_exit = True   # defense mode: in loss, Guardian confident to cut
+
+                    if gd_exit:
+                        outcome  = "GUARDIAN_DELTA_EXIT"
+                        raw_exit = close[j]
+                        break
 
             # ── Trailing Stop ────────────────────────────────────────────
             if trailing_stop_enabled and bars_held >= trailing_stop_min_bars:
@@ -694,6 +959,7 @@ def simulate_trades_swing(
             "outcome":   ("TIMEOUT_MOMENTUM" if (outcome == "TIMEOUT" and tp_touched) else outcome),
             "net_pnl":   round(net_pnl, 4),
             "equity":    round(equity, 4),
+            "modal_used": round(trade_modal, 2),
         }
         if partial_bar is not None:
             trade_record["partial_bar"] = partial_bar
@@ -706,9 +972,10 @@ def simulate_trades_swing(
 
         trades.append(trade_record)
 
-        # Track open position untuk pyramiding
         exit_bar = j if outcome != "TIMEOUT" else end
-        open_positions.append((exit_bar, sig))
+        open_positions.append({
+            "exit_bar": exit_bar, "sig": sig, "sl_price": sl_price, "entry_bar": i,
+        })
 
         # ── #15 Cooldown ─────────────────────────────────────────────────
         if cooldown_enabled:
@@ -732,6 +999,7 @@ def simulate_trades_swing(
 
     guardian_outcomes = ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL",
                          "GUARDIAN_MOMENTUM_EXIT", "GUARDIAN_MOMENTUM_PARTIAL",
+                         "GUARDIAN_DELTA_EXIT",
                          "TIMEOUT", "TIMEOUT_MOMENTUM")
     wins   = [t for t in trades if t["outcome"] == "WIN"
               or (t["outcome"] in guardian_outcomes and t["net_pnl"] > 0)]
@@ -1016,6 +1284,7 @@ def full_trading_report(
     tp_fallback_atr: float = TP_SL_FALLBACK_TP,
     sl_fallback_atr: float = TP_SL_FALLBACK_SL,
     confidence         = None,  # for sizing_mode="tiered"
+    modal_arr          = None,  # per-bar dynamic modal (overrides modal+sizing_mode)
     # Parameters for Dynamic TP/SL Regressor (Priority 1):
     tp_regressor     = None,
     sl_regressor     = None,
@@ -1055,9 +1324,23 @@ def full_trading_report(
     guardian_min_hold_bars    = GUARDIAN_MIN_HOLD_BARS,
     guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
     guardian_enabled          = GUARDIAN_ENABLED,
+    guardian_feat_cols        = None,
+    guardian_static_names     = None,
+    flow_momentum_arr         = None,
+    entry_price_override      = None,  # np.ndarray — M15 entry price per H1 bar (optional)
+    # ── Guardian Delta mode ───────────────────────────────────────────────
+    guardian_delta_raw        = None,
+    guardian_delta_feats      = None,
+    guardian_mom_thresh       = 0.45,
+    guardian_def_thresh       = 0.70,
+    guardian_def_min_loss     = -0.010,
     trailing_stop_enabled     = TRAILING_STOP_ENABLED,
     trailing_stop_atr         = TRAILING_STOP_ATR,
     trailing_stop_min_bars    = TRAILING_STOP_MIN_BARS,
+    pyramiding_enabled        = False,
+    pyramiding_max_per_coin   = 1,
+    pyramiding_same_dir       = True,
+    pyramiding_exit_mode      = "independent",
 ) -> dict:
     """
     Jalankan full trading simulation dan return metrics lengkap.
@@ -1077,7 +1360,7 @@ def full_trading_report(
                 min_rr=min_rr, min_tp_atr=min_tp_atr, max_sl_atr=max_sl_atr,
                 max_hold=max_hold,
                 tp_fallback_atr=tp_fallback_atr, sl_fallback_atr=sl_fallback_atr,
-                confidence=confidence,
+                confidence=confidence, modal_arr=modal_arr,
                 # New params Grup 1, 3, 4
                 vol_ratio=vol_ratio,
                 volr_conditional_enabled=volr_conditional_enabled,
@@ -1110,9 +1393,22 @@ def full_trading_report(
                 guardian_min_hold_bars=guardian_min_hold_bars,
                 guardian_activation_atr=guardian_activation_atr,
                 guardian_enabled=guardian_enabled,
+                guardian_feat_cols=guardian_feat_cols,
+                guardian_static_names=guardian_static_names,
+                flow_momentum_arr=flow_momentum_arr,
+                guardian_delta_raw=guardian_delta_raw,
+                guardian_delta_feats=guardian_delta_feats,
+                guardian_mom_thresh=guardian_mom_thresh,
+                guardian_def_thresh=guardian_def_thresh,
+                guardian_def_min_loss=guardian_def_min_loss,
                 trailing_stop_enabled=trailing_stop_enabled,
                 trailing_stop_atr=trailing_stop_atr,
                 trailing_stop_min_bars=trailing_stop_min_bars,
+                entry_price_override=entry_price_override,
+                pyramiding_enabled=pyramiding_enabled,
+                pyramiding_max_per_coin=pyramiding_max_per_coin,
+                pyramiding_same_dir=pyramiding_same_dir,
+                pyramiding_exit_mode=pyramiding_exit_mode,
             )
         else:
             return simulate_trades(

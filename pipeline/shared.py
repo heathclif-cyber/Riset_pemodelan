@@ -47,6 +47,57 @@ def build_purged_folds(df_index: pd.DatetimeIndex, n_folds: int = N_FOLDS, purge
     return folds
 
 
+def build_rolling_folds(df_index: pd.DatetimeIndex, n_folds: int = N_FOLDS,
+                         purge: int = PURGE_GAP_BARS, window_splits: int = 3) -> list:
+    """
+    Build rolling-window folds with purging in timestamp space.
+
+    Setiap fold melatih pada `window_splits` split terakhir sebelum fold uji
+    (fixed-size rolling window). Fold awal yang belum punya cukup history
+    menggunakan expanding fallback (semua split yang tersedia).
+
+    Args:
+        df_index:   datetime index dari seluruh data
+        n_folds:    jumlah fold CV
+        purge:      jumlah bar yang dibuang di batas train/test
+        window_splits: jumlah split untuk rolling window (default 3)
+
+    Returns:
+        list of (train_indices, test_indices)
+    """
+    unique_ts = np.sort(df_index.unique())
+    splits_ts = np.array_split(unique_ts, n_folds + 1)
+
+    row_indices = np.arange(len(df_index))
+    ts_to_idx = pd.Series(row_indices, index=df_index)
+
+    folds = []
+    for k in range(1, n_folds + 1):
+        # Rolling: gunakan `window_splits` split sebelum test, minimal 1
+        start_split = max(0, k - window_splits)
+        train_ts = np.concatenate(splits_ts[start_split:k])
+        test_ts = splits_ts[k]
+
+        train_ts_purged = train_ts[:-purge] if len(train_ts) > purge else train_ts
+        test_ts_purged = test_ts[purge:] if len(test_ts) > purge else test_ts
+
+        train_idx = ts_to_idx.loc[train_ts_purged].values
+        test_idx = ts_to_idx.loc[test_ts_purged].values
+
+        if isinstance(train_idx, (int, np.integer)):
+            train_idx = np.array([train_idx])
+        elif len(train_idx.shape) > 1:
+            train_idx = train_idx.flatten()
+
+        if isinstance(test_idx, (int, np.integer)):
+            test_idx = np.array([test_idx])
+        elif len(test_idx.shape) > 1:
+            test_idx = test_idx.flatten()
+
+        folds.append((train_idx, test_idx))
+    return folds
+
+
 class SequenceDataset(Dataset):
     def __init__(self, X: np.ndarray, y: np.ndarray, seq_len: int = LSTM_SEQ_LEN):
         self.X       = torch.from_numpy(X.astype(np.float32))

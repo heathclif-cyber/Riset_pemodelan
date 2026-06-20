@@ -47,13 +47,13 @@ from pathlib import Path
 ROOT_DIR         = Path(__file__).parent
 DATA_DIR         = ROOT_DIR / "data"
 
-# Training data (2020-01-01 -> 2025-11-01)
+# Training data (2020-01-01 -> TRAIN_CUTOFF_DATE = 2026-04-01, i.e. sampai Mar 2026)
 TRAINING_DIR     = DATA_DIR / "training"          # root training
 RAW_DIR          = TRAINING_DIR                   # alias — titik simpan klines, macro, dll.
 PROC_DIR         = TRAINING_DIR / "processed"
 LABEL_DIR        = TRAINING_DIR / "labeled"
 
-# Holdout-test data (2025-11-01 -> 2026-04-01)
+# Holdout-test data (2026-04-01 -> OOS_END = 2026-07-01, i.e. Apr-Jun 2026)
 HOLDOUT_DIR      = DATA_DIR / "holdout-test"      # root holdout-test
 
 MODEL_DIR        = ROOT_DIR / "models"
@@ -164,9 +164,12 @@ N_FOLDS        = 8
 # Diubah ke 16 bar (2026-05-31) untuk mengurangi pemborosan data di fold boundary
 # sambil tetap memberikan buffer terhadap horizon labeling 24 bar.
 # Catatan: Guardian menggunakan GUARDIAN_PURGE_GAP_BARS = 5 (terpisah).
-PURGE_GAP_BARS = 20   # min safe = ceil(SWING_LABEL_MAX_HOLD/2) = 18 → pakai 20 untuk buffer
-                      # Dengan max_hold=36: last label forward reach = T_fold-20+35 = T_fold+15
-                      # Test fold starts = T_fold+20 → buffer 5 bar ✓
+PURGE_GAP_BARS = 20   # ic32 swing labels — min safe = ceil(SWING_LABEL_MAX_HOLD/2) = 18 → 20
+
+# TB-specific purge gap — harus >= TB max_hold (36) agar label bar T (yg butuh data
+# sampai T+36) tidak overlap ke test fold. Dipakai oleh 04_train_lgbm_tb_v3.py
+# dan 06k_train_guardian_swing_h4.py. JANGAN dipakai untuk ic32 pipeline.
+TB_PURGE_GAP_BARS = 36
 
 # LightGBM Params (H1)
 # device_type="gpu" → pakai OpenCL (kompatibel AMD/Intel/NVIDIA)
@@ -221,7 +224,7 @@ LGBM_H4_PARAMS = {
 #
 # Nilai ini adalah sweet spot awal. Perlu diuji di backtest recent choppy period + paper trading.
 LGBM_THRESHOLD_LONG  = 0.69   # V2.5 Hybrid: turun dari 0.75 (terlalu matikan LONG)
-LGBM_THRESHOLD_SHORT = 0.59   # V2.5 Hybrid: sedikit lebih longgar dari 0.60
+LGBM_THRESHOLD_SHORT = 0.64   # 2026-06-12: naik dari 0.59. EV analysis: SHORT 0.59-0.64 Kelly+0.002~+0.035 (hampir nol), SHORT 0.64+ Kelly+0.076+ (bermakna). Est. +$241/5mo.
 # ──────────────────────────────────────────────────────────────────────────────
 # FLAT review threshold — saat LGBM output FLAT dengan max_conf < threshold ini,
 # LSTM dipanggil untuk review. Jika LSTM deteksi sinyal → override FLAT.
@@ -468,21 +471,16 @@ FEATURE_COLS_V3 = [
     # vol_accel_3h      : perubahan vol_ratio_20 dalam 3 bar — volume acceleration
     "price_accel_1h", "ofi_momentum_ratio", "vol_accel_3h",
 
-    # Kronos-mini Foundation Model Features (v4.3) — predict_len=36H = max_hold
-    # kronos_pred_return_1h  : expected return 1H ke depan
-    # kronos_pred_return_36h : expected return kumulatif 36H (match SWING_LABEL_MAX_HOLD)
-    # kronos_direction       : arah trend 36H (-1/0/+1)
-    # kronos_momentum        : slope linear prediksi
-    # kronos_volatility      : uncertainty model
-    # kronos_bull_prob       : probabilitas naik > 0.5% di t+36
-    # kronos_range_ratio     : (pred_high - pred_low) / price
-    # kronos_confidence      : 1 - CV (makin tinggi = makin yakin)
-    "kronos_pred_return_1h", "kronos_pred_return_36h",
-    "kronos_direction", "kronos_momentum", "kronos_volatility",
-    "kronos_bull_prob", "kronos_range_ratio", "kronos_confidence",
+    # Excursion Features (v4.3-b) — Path Quality & Directional Persistence
+    # mfe_8/12          : max favorable excursion dari entry N bar lalu (ATR-norm)
+    # mae_8/12          : max adverse excursion dari entry N bar lalu (ATR-norm)
+    # time_above_entry_8: #bar terakhir 8 di mana close > close[i-8] (bullish persistence)
+    # time_below_entry_8: #bar terakhir 8 di mana close < close[i-8] (bearish persistence)
+    "mfe_8", "mfe_12", "mae_8", "mae_12",
+    "time_above_entry_8", "time_below_entry_8",
 
     # Coinank Premium Features
-    "etf_total_change_usd", "etf_gbtc_change_usd", "coinank_oi_change_24h",
+    "etf_total_change_usd", "etf_gbtc_change_usd",
 ]
 
 # ─── TP/SL Architecture (Final — tested via ASPECT_COMPARISON.md) ───────────
@@ -514,7 +512,7 @@ TP_SL_FALLBACK_SL = 1.5  # SL = 1.5 x ATR (Winrate lebih tinggi)
 TP_SL_SLIPPAGE_ENABLED = True
 
 # #8: SL Trigger — "highlow" karena eksekusi manual order book
-TP_SL_TRIGGER_MODE = "highlow"  # "close" | "highlow"
+TP_SL_TRIGGER_MODE = "close"    # live: rr_gate.sl_trigger_mode=close (sync inference_config)
 TP_SL_SWING_BUMPER = 0.5        # Bumper SL 0.5x ATR pencegah stop-hunt
 
 # #12: Position Sizing — "fixed" = $100/trade
@@ -535,6 +533,13 @@ TP_SL_VOLR_DISABLE_MAX_SL      = False  # jika True, disable max_sl total di low
 # Alternatif metrik: batas SL berbasis persentase dari entry, bukan ATR.
 TP_SL_MAX_SL_PCT_ENABLED = False  # enable SL % cap
 TP_SL_MAX_SL_PCT         = 0.30   # max SL = 30% dari entry price
+
+# ─── #18: SL % Floor Minimum (low-vol stop-out mitigation) ───────────────────
+# SL tidak boleh lebih DEKAT dari MIN_SL_PCT dari entry (independen ATR). Koin low-vol
+# (ATR rendah) menghasilkan band SL terlalu sempit -> kena noise. Validasi OOF+holdout
+# 2026-06-17: 0.008 naikkan WR low-vol +3-6pp, turunkan SL-hit, PnL portfolio flat.
+# Lihat EXPERIMENTS.md 2026-06-17. 0.0 = off.
+MIN_SL_PCT = 0.008
 
 # ─── #18: Trend Alignment Penalties (Grup 2) ─────────────────────────────────
 # With-trend trades WR rendah (33.3%) → penalty untuk kurangi sinyal with-trend.
@@ -578,7 +583,7 @@ GUARDIAN_EXIT_THRESHOLD        = 0.65   # min EXIT proba mid-level
 GUARDIAN_SL_EXIT_THRESHOLD     = 0.40   # min EXIT proba saat di swing SL (lebih longgar)
 GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
-GUARDIAN_MIN_HOLD_BARS         = 2      # optimal: biarkan trade bernafas, kurangi exit prematur
+GUARDIAN_MIN_HOLD_BARS         = 4      # OOF +9% PPT vs 2; holdout +4% PPT; early-cut losers eliminated
 GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif instant (tanpa ATR minimum)
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
@@ -638,11 +643,13 @@ GUARDIAN_LGBM_PARAMS = {
 GUARDIAN_PARTIAL_EXIT_RATIO = 0.5  # % posisi ditutup saat PARTIAL_EXIT
 GUARDIAN_EARLY_STOPPING    = 100   # dinaikkan dari 50 — kasih lebih banyak kesempatan konvergen
 GUARDIAN_N_FOLDS           = 8
-GUARDIAN_PURGE_GAP_BARS    = 5
+GUARDIAN_PURGE_GAP_BARS    = 36  # = MAX_HOLDING_BARS, cegah best_future_pnl label span fold boundary
 GUARDIAN_MIN_SAMPLES_COIN  = 30  # min in-trade bars per coin untuk training
 
 # ─── Trading Simulation Parameters (Sesuai Klarifikasi Pengguna) ─────────────
-MODAL_PER_TRADE            = 10.0    # 10 USD per trade, 5x leverage = $50 exposure
+MODAL_PER_TRADE            = 5.0     # live: risk.modal_per_trade (sync inference_config)
+LIVE_MAX_OPEN_POSITIONS    = 10      # live: risk.max_open_positions — gate execution.py
+LIVE_DAILY_LOSS_LIMIT      = 8       # live: risk.daily_loss_limit — gate execution.py
 LEVERAGE_SIM               = [5.0]    # leverage 5x = 500 USD exposure (sebelumnya [3.0, 5.0])
 FEE_PER_SIDE               = 0.0004
 SLIPPAGE_PER_SIDE          = 0.0005   # 0.05% slippage per trade side (entry/exit)

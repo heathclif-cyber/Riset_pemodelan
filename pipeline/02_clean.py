@@ -24,11 +24,15 @@ sys.path.insert(0, str(ROOT))
 
 from config import (
     TRAINING_COINS, NEW_COINS, ALL_COINS,
-    RAW_DIR, PROC_DIR, REPORT_DIR,
+    RAW_DIR, PROC_DIR, REPORT_DIR, HOLDOUT_DIR,
 )
 from core.utils import setup_logger, ensure_utc_index
 
 logger = setup_logger("02_clean")
+
+# Override-able dirs — main() sets these to holdout paths when --holdout-test is used
+_SRC_DIR = RAW_DIR
+_OUT_DIR = PROC_DIR
 
 # ── H1 Base Timeframe Update (M15 dihapus dari pipeline) ──
 INTERVALS      = ["1h", "4h"]
@@ -112,7 +116,7 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
     # ── Load klines ───────────────────────────────────────────────────────────
     klines = {}
     for tf in INTERVALS:
-        path = RAW_DIR / "klines" / symbol / f"{tf}_all.parquet"
+        path = _SRC_DIR / "klines" / symbol / f"{tf}_all.parquet"
         df   = _load(path)
         klines[tf] = df
         if df is None:
@@ -128,12 +132,11 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
         }
         logger.info(f"[{symbol}] {tf}: {len(df):,} rows, {len(gaps)} gaps")
 
-    # ── Load auxiliary data ───────────────────────────────────────────────────
-    # taker_ratio dan long_short_ratio di-drop karena tidak tersedia di H1
+    # ── Load auxiliary data (OI + L/S hourly dari 01_fetch / 01c) ─────────────
     aux_sources = {
-        "open_interest":    RAW_DIR / "open_interest"    / f"{symbol}_1h.parquet",
-        "funding_rate":     RAW_DIR / "funding_rate"     / f"{symbol}_8h.parquet",
-        "long_short_ratio": RAW_DIR / "long_short_ratio" / f"{symbol}_1h.parquet",
+        "open_interest":    _SRC_DIR / "open_interest"    / f"{symbol}_1h.parquet",
+        "funding_rate":     _SRC_DIR / "funding_rate"     / f"{symbol}_8h.parquet",
+        "long_short_ratio": _SRC_DIR / "long_short_ratio" / f"{symbol}_1h.parquet",
     }
     aux = {}
     for name, path in aux_sources.items():
@@ -149,8 +152,8 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
 
     # ── Load macro ────────────────────────────────────────────────────────────
     macro_paths = {
-        "btc_dominance":    RAW_DIR / "macro" / "btc_dominance.parquet",
-        "fear_greed_index": RAW_DIR / "macro" / "fear_greed_index.parquet",
+        "btc_dominance":    _SRC_DIR / "macro" / "btc_dominance.parquet",
+        "fear_greed_index": _SRC_DIR / "macro" / "fear_greed_index.parquet",
     }
     macro = {}
     for name, path in macro_paths.items():
@@ -184,7 +187,7 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
 
     # Join BTC close price (untuk kalkulasi Relative Strength) jika bukan BTCUSDT sendiri
     if symbol != "BTCUSDT":
-        btc_path = PROC_DIR / "BTCUSDT_clean.parquet"
+        btc_path = _OUT_DIR / "BTCUSDT_clean.parquet"
         if btc_path.exists():
             try:
                 btc_df = pd.read_parquet(btc_path)
@@ -221,7 +224,7 @@ def clean_symbol(symbol: str) -> dict[str, Any]:
         logger.warning(f"[{symbol}] Potential leakage: {flagged}")
 
     # Save
-    out_path = PROC_DIR / f"{symbol}_clean.parquet"
+    out_path = _OUT_DIR / f"{symbol}_clean.parquet"
     _save(master, out_path)
     report["output"]         = str(out_path)
     report["output_rows"]    = len(master)
@@ -240,11 +243,20 @@ def parse_args():
     group.add_argument("--new",  action="store_true")
     group.add_argument("--all",  action="store_true")
     group.add_argument("--coins", nargs="+", metavar="SYMBOL")
+    parser.add_argument("--holdout-test", action="store_true", dest="holdout_test",
+                        help="Clean holdout-test data (data/holdout-test/)")
     return parser.parse_args()
 
 
 def main():
+    global _SRC_DIR, _OUT_DIR
     args = parse_args()
+
+    if args.holdout_test:
+        _SRC_DIR = HOLDOUT_DIR / "raw"
+        _OUT_DIR = HOLDOUT_DIR / "processed"
+        logger.info(f"Holdout-test mode: src={_SRC_DIR}  out={_OUT_DIR}")
+
     if args.new:
         coins = NEW_COINS
     elif args.all:
@@ -254,7 +266,7 @@ def main():
     else:
         coins = TRAINING_COINS
 
-    PROC_DIR.mkdir(parents=True, exist_ok=True)
+    _OUT_DIR.mkdir(parents=True, exist_ok=True)
     REPORT_DIR.mkdir(parents=True, exist_ok=True)
 
     full_report = {"symbols": {}}

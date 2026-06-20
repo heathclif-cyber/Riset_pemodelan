@@ -37,6 +37,7 @@ DEPLOY_MAPPING = {
     # 2. Configs & Features
     "models/feature_cols_v2.json": "models/feature_cols_v2.json",
     "models/guardian_feature_cols.json": "models/guardian_feature_cols.json",
+    "models/training_feature_standards.json": "models/training_feature_standards.json",
     "models/inference_config.json": "models/inference_config.json",
     
     # 3. Communication Bridge Contract
@@ -70,6 +71,8 @@ for _fp in _glob.glob(os.path.join(SOURCE_REPO_DIR, "models", "hmm", "*_hmm.pkl"
 PRESERVE_KEYS = [
     "risk.modal_per_trade",
     "risk.leverage_recommended",
+    "risk.max_open_positions",
+    "risk.daily_loss_limit",
     "rr_gate.sl_trigger_mode",
 ]
 

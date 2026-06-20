@@ -256,6 +256,15 @@ Format: `YYYY-MM-DD-N_category_object` — diurutkan kronologis.
 
 ---
 
+## 2026-06-15
+
+### 2026-06-15-1_meta_fb_v2_closed
+- **File**: `pipeline/08–09`, `14–16_*_meta_fb_v2.py`, `core/meta_labeling.py`
+- **Deskripsi**: Meta-labeling LGBM binary gate di atas `tb_widyawardhana_v2` (flatboost_v2 + HMM). Simon Gate #1 + ablation + 3 varian fitur + soft multiplier
+- **Hasil**: ❌ **CLOSED / NO-GO**. Holdout marginal IC t=0.9 (FAIL). Best meta arm -$4 vs primary_hmm +$276. Gate #2 tidak dijalankan. Detail: `EXPERIMENTS.md` §11
+
+---
+
 ## Ringkasan Status Eksperimen
 
 | Status | Count | Contoh |
@@ -272,5 +281,5 @@ Format: `YYYY-MM-DD-N_category_object` — diurutkan kronologis.
 3. **FLIP alignment > Regime router** — alignment sederhana lebih robust dari model spesialis
 4. **Jangan sweep di holdout** — multiple testing bias. Parameter harus divalidasi di validation set independen
 5. **LSTM H1 nyaris 0 kontribusi** — soft multiplier tidak pernah cross threshold
-6. **Meta-labeling butuh live data** — training dari simulasi = in-sample bias
+6. **Meta-labeling entry gate ditutup** — `tb_meta_fb_v2` gagal holdout IC; redundan dengan LGBM conf. Fokus: Guardian exit + fitur primary baru
 7. **Swing labels > Triple Barrier** — untuk crypto dengan liquidation mechanics

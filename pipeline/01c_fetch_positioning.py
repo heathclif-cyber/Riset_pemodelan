@@ -5,7 +5,8 @@ pipeline/01c_fetch_positioning.py — Fetch Positioning + Macro Data
 1. Binance: Taker Buy/Sell Volume Ratio (aggressor flow)
 2. Binance: Top Trader Long/Short Position Ratio (elite positioning)
 3. Binance: Global Long/Short Account Ratio (retail positioning)
-4. Bybit:   Open Interest History (total market exposure)
+4. Binance: Open Interest History (sumOpenInterest — parity 01_fetch)
+5. Bybit:   Open Interest History (fallback cross-exchange)
 
 === GLOBAL MACRO (daily): CoinGecko + Fear&Greed + ETF Flow ===
 5. CoinGecko Global: BTC dominance, USDT market cap, total market cap
@@ -30,10 +31,14 @@ import urllib3, requests
 urllib3.disable_warnings(urllib3.exceptions.InsecureRequestWarning)
 
 ROOT = Path(__file__).parent.parent; sys.path.insert(0, str(ROOT))
-from config import TRAINING_COINS
+from config import TRAINING_COINS, RAW_DIR
 
 POSITIONING_DIR = ROOT / "data" / "positioning"
 POSITIONING_DIR.mkdir(parents=True, exist_ok=True)
+OI_DIR = RAW_DIR / "open_interest"
+LS_DIR = RAW_DIR / "long_short_ratio"
+OI_DIR.mkdir(parents=True, exist_ok=True)
+LS_DIR.mkdir(parents=True, exist_ok=True)
 MACRO_DIR = ROOT / "data" / "macro"
 MACRO_DIR.mkdir(parents=True, exist_ok=True)
 
@@ -479,9 +484,31 @@ def fetch_all_coins(coins):
             })
             n = update_parquet(POSITIONING_DIR / f"{coin}_global_ls.parquet", df_gls)
             print(f"  Global L/S: {len(df_gls)} new -> {n} total")
+            # Sync ke path 02_clean.py (data asli, bukan synthetic)
+            if "global_ls_ratio" in df_gls.columns:
+                ls_clean = df_gls[["global_ls_ratio"]].rename(
+                    columns={"global_ls_ratio": "long_short_ratio"}
+                )
+                n_ls = update_parquet(LS_DIR / f"{coin}_1h.parquet", ls_clean)
+                print(f"  Global L/S -> 02_clean: {n_ls} rows")
             time.sleep(SLEEP_BETWEEN)
 
-        # 4. Bybit Open Interest
+        # 4. Binance Open Interest (parity 01_fetch / 02_clean)
+        df_oi_bn = fetch_binance("/futures/data/openInterestHist", symbol)
+        if df_oi_bn is not None and "sumOpenInterest" in df_oi_bn.columns:
+            df_oi_bn["sumOpenInterest"] = pd.to_numeric(df_oi_bn["sumOpenInterest"], errors="coerce")
+            oi_clean = df_oi_bn[["sumOpenInterest"]].rename(
+                columns={"sumOpenInterest": "open_interest"}
+            ).dropna()
+            if not oi_clean.empty:
+                n_oi = update_parquet(OI_DIR / f"{coin}_1h.parquet", oi_clean)
+                n_pos = update_parquet(
+                    POSITIONING_DIR / f"{coin}_binance_oi.parquet", oi_clean
+                )
+                print(f"  Binance OI: {len(oi_clean)} new -> clean={n_oi} pos={n_pos}")
+            time.sleep(SLEEP_BETWEEN)
+
+        # 5. Bybit Open Interest (fallback)
         df_oi = fetch_bybit("/v5/market/open-interest", symbol)
         if df_oi is not None:
             if "openInterest" in df_oi.columns:

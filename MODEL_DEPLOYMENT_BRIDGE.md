@@ -4,6 +4,56 @@ Dokumen kontrak sinkronisasi untuk memastikan parameter hasil riset pemodelan (`
 
 ---
 
+## ⚡ Deploy Seamless ke VPS (2026-06-17)
+
+**Satu perintah** dari mesin dev (PowerShell):
+
+```powershell
+cd D:\Apps-Dev\Riset_pemodelan
+python tools/deploy_production.py
+```
+
+| Langkah | Script | Apa yang terjadi |
+|---------|--------|------------------|
+| 1 | `deploy_model.py` | Riset → `swint_tradev2` lokal + backup timestamped |
+| 2 | `git push` | File kode `.py` / `.md` ke GitHub |
+| 3 | `scp` | Model binary + `inference_config.json` langsung ke VPS |
+| 4 | `deploy/update.sh` | VPS: `git pull` + `chown swint` + restart + `/api/health` |
+
+**Opsi:**
+
+| Flag | Gunakan saat |
+|------|----------------|
+| `--code-only` | Hanya ubah kode swint (mis. `app/services/inference.py`) |
+| `--models-only` | Hanya update model/config; kode sudah di VPS |
+| `--local-only` | Salin ke swint lokal, tanpa VPS |
+| `--dry-run` | Lihat langkah tanpa eksekusi |
+| `-m "pesan"` | Pesan git commit custom |
+
+**Prasyarat:** SSH key ke `root@139.180.157.176`. Env: `SWINT_VPS_HOST`, `SWINT_VPS_USER`, `SWINT_VPS_SSH_KEY`.
+
+**Dua jalur file (penting):**
+- **Git** — kode Python (`core/`, `app/services/`, `pipeline/`)
+- **SCP** — `.pkl`, `.pt`, `inference_config.json` (di-`.gitignore` di swint, tidak ikut push)
+
+**`deploy_model.py` preserve keys** (tidak ditimpa saat merge config):
+`risk.modal_per_trade`, `risk.leverage_recommended`, `rr_gate.sl_trigger_mode`
+
+**Permission denied di UI (Risk & Sizing)?** File jadi `root:root` jika deploy manual sebagai root.
+`deploy/update.sh` otomatis `chown -R swint:swint`. Jangan restore snapshot lama tanpa sadar rollback model.
+
+**Verifikasi pasca-deploy:**
+```powershell
+# Lokal swint
+python verify_deploy.py
+
+# VPS (SSH)
+curl http://127.0.0.1:5000/api/health
+PYTHONPATH=. python3 -c "from app.services.model_snapshot import sync_history; ..."
+```
+
+---
+
 ## 🚀 Active Model: Cascade v4.1 (Deployed: 2026-05-29)
 
 *   **Model Version:** `cascade_v4.1` (LGBM Entry → LSTM Confirmation → Exit Guardian v3 + Volatility Regime)

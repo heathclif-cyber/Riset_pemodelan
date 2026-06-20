@@ -206,13 +206,13 @@ stochrsi_d
 
 ```
 ┌─────────────────────────────────────────────────┐
-│              WIDYAWARDHANA v1                     │
-│                                                   │
+│              WIDYAWARDHANA v1                    │
+│                                                  │
 │  Entry: LGBM ic32_hybrid_ic_v1 (32 feat)         │
 │         ├─ 23 IC32 KEEP                          │
 │         ├─ 2 ETF Flow (yfinance, FREE)           │
 │         └─ 7 WEAK (non-linear interaction)       │
-│                                                   │
+│                                                  │
 │  Filter: LSTM ic32_hybrid_lstm (18 feat, 72-seq) │
 │         ├─ 5 Order Flow                          │
 │         ├─ 4 Momentum/Trend                      │

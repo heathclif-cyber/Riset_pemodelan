@@ -837,6 +837,54 @@ def calc_vsa_features(
     }
 
 
+def calc_excursion_features(
+    high:      pd.Series,
+    low:       pd.Series,
+    close:     pd.Series,
+    atr:       pd.Series,
+    window_8:  int = 8,
+    window_12: int = 12,
+) -> dict[str, pd.Series]:
+    """
+    MFE / MAE dan time-excursion — sinyal persistensi & asimetri directional.
+
+    Semua fitur backward-looking (entry = close N bar lalu):
+
+    mfe_8 / mfe_12  : max upside dari entry N bar lalu vs current close (ATR-norm)
+                      positif besar = strong bullish momentum dalam window
+    mae_8 / mae_12  : max downside dari entry N bar lalu vs current close (ATR-norm)
+                      positif besar = ada drawdown signifikan dalam window
+    time_above_entry_8 : #bar dalam 8 terakhir di mana close > close[i-8]
+                         (momentum persistence: seberapa sering price stay bullish)
+    time_below_entry_8 : #bar dalam 8 terakhir di mana close < close[i-8]
+
+    Prinsip Simon: independent signal — excursion tidak berkorelasi kuat dengan
+    momentum (log_ret) maupun volatility (ATR) karena mengukur path quality.
+    """
+    atr_safe  = atr.replace(0, np.nan)
+    entry_8   = close.shift(window_8)
+    entry_12  = close.shift(window_12)
+
+    mfe_8  = (high.rolling(window_8,  min_periods=3).max() - entry_8)  / atr_safe
+    mfe_12 = (high.rolling(window_12, min_periods=5).max() - entry_12) / atr_safe
+    mae_8  = (entry_8  - low.rolling(window_8,  min_periods=3).min())  / atr_safe
+    mae_12 = (entry_12 - low.rolling(window_12, min_periods=5).min())  / atr_safe
+
+    above_mask = (close > entry_8).astype(float)
+    below_mask = (close < entry_8).astype(float)
+    time_above_entry_8 = above_mask.rolling(window_8, min_periods=1).sum()
+    time_below_entry_8 = below_mask.rolling(window_8, min_periods=1).sum()
+
+    return {
+        "mfe_8":               mfe_8.fillna(0.0).clip(-20.0, 20.0),
+        "mfe_12":              mfe_12.fillna(0.0).clip(-20.0, 20.0),
+        "mae_8":               mae_8.fillna(0.0).clip(-20.0, 20.0),
+        "mae_12":              mae_12.fillna(0.0).clip(-20.0, 20.0),
+        "time_above_entry_8":  time_above_entry_8.fillna(0.0),
+        "time_below_entry_8":  time_below_entry_8.fillna(0.0),
+    }
+
+
 def calc_rsi_divergence(
     close:    pd.Series,
     rsi_h4:   pd.Series,
@@ -1528,23 +1576,25 @@ def engineer_features(
 
     # ── 23. Long/Short Ratio ──────────────────────────────────────────────────
     # Gunakan data real jika tersedia dan memiliki variasi cukup (>10% non-NaN).
-    # Fallback ke synthetic proxy jika data tidak ada atau semua 0/NaN —
-    # mencegah feature distribution shift antara training dan inference.
+    # Bar invalid (0/NaN) diganti synthetic — mencegah LSR=0 masuk inference.
+    vol_delta = v * (c - o) / c.replace(0, np.nan)
+    vol_ma24  = v.rolling(24, min_periods=5).mean().replace(0, np.nan)
+    synth_ls  = (1.0 + vol_delta / vol_ma24).clip(0.1, 5.0)
+
     ls_col = _col(df, "long_short_ratio", "long_short_ratio_long_short_ratio", "globalLongShortAccountRatio")
-    real_ls = df[ls_col] if ls_col else None
+    real_ls = pd.to_numeric(df[ls_col], errors="coerce") if ls_col else None
     use_real = (
         real_ls is not None
         and real_ls.notna().mean() > 0.1
         and real_ls.abs().gt(0).mean() > 0.1
     )
     if use_real:
-        feat["long_short_ratio"] = real_ls
+        merged = real_ls.astype(float).copy()
+        bad = merged.isna() | (merged.abs() <= 0)
+        merged.loc[bad] = synth_ls.loc[bad]
+        feat["long_short_ratio"] = merged.clip(0.1, 5.0)
     else:
-        # Synthetic proxy: directional volume pressure, normalized terhadap MA-24.
-        # Distribusi: ~0.5–2.0 (mirip real L/S ratio), center di 1.0 = netral.
-        vol_delta = v * (c - o) / c.replace(0, np.nan)
-        vol_ma24  = v.rolling(24, min_periods=5).mean().replace(0, np.nan)
-        feat["long_short_ratio"] = (1.0 + vol_delta / vol_ma24).clip(0.1, 5.0)
+        feat["long_short_ratio"] = synth_ls
 
     # ── 24. Swing Structure Features (v2, dipertahankan) ──────────────────────
     roll_high = h.rolling(swing_rolling_bars, min_periods=5).max()
@@ -1793,6 +1843,17 @@ def engineer_features(
     vol_ratio_series   = feat.get("vol_ratio_20", pd.Series(1.0, index=df.index))
     feat["vol_accel_3h"] = (vol_ratio_series - vol_ratio_series.shift(3)).fillna(0.0).clip(-5.0, 5.0)
 
+    # ── 28d. Excursion Features (MFE / MAE / Time-Above-Entry) ───────────────
+    excursion_feats = calc_excursion_features(
+        high      = h,
+        low       = l,
+        close     = c,
+        atr       = atr_h1,
+        window_8  = 8,
+        window_12 = 12,
+    )
+    feat.update(excursion_feats)
+
     # ── 29. Build DataFrame ───────────────────────────────────────────────────
     feat_df = pd.DataFrame(feat, index=df.index)
     feat_df = ensure_utc_index(feat_df)
@@ -1849,5 +1910,34 @@ def engineer_features(
     # Simpan untuk evaluasi/backtest (TIDAK masuk FEATURE_COLS_V3)
     feat_df["h4_swing_high"] = h4_swing_highs
     feat_df["h4_swing_low"]  = h4_swing_lows
+
+    # ETF macro features — zero-fill when not pre-merged by pipeline.
+    # Production data_service.py does not fetch ETF flows; TB model trained with
+    # 0.0 for pre-2024 bars so zero-fill is a safe fallback (some degradation post-2024).
+    for _etf_col in ("etf_gbtc_change_usd", "etf_total_change_usd"):
+        if _etf_col not in feat_df.columns:
+            feat_df[_etf_col] = 0.0
+
+    return feat_df
+
+
+def compute_genuine_v2_derived_features(feat_df: pd.DataFrame) -> pd.DataFrame:
+    """
+    Fitur turunan genuine_v2 — sama dengan pipeline/04c_train_lgbm_genuine_v2.py
+    COMPUTED_FEATS. Dihitung setelah engineer_features() karena bergantung pada
+    kolom close, PDH, PDL dari output parquet.
+    """
+    if "close" not in feat_df.columns:
+        return feat_df
+
+    close = feat_df["close"]
+    feat_df["ret_7d"]  = np.log(close / close.shift(672).replace(0, np.nan))
+    feat_df["ret_14d"] = np.log(close / close.shift(1344).replace(0, np.nan))
+    feat_df["ret_30d"] = np.log(close / close.shift(2880).replace(0, np.nan))
+
+    if "PDH" in feat_df.columns:
+        feat_df["dist_pdh"] = close / feat_df["PDH"].replace(0, np.nan) - 1
+    if "PDL" in feat_df.columns:
+        feat_df["dist_pdl"] = close / feat_df["PDL"].replace(0, np.nan) - 1
 
     return feat_df

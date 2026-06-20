@@ -16,6 +16,10 @@
     "mode": "hard_consensus",
     "note": "hard_consensus: LGBM primary entry → LSTM soft filter → regime-aware alignment → confidence gate. BUKAN dual_dominant (terlalu selektif, 81 trade/5koin/bln). LSTM sebagai survival filter: -35% trade, + PnL, -42% volatility di extended backtest."
   },
+  "feature_engineering": {
+    "positioning_mode": "training_parity",
+    "note": "Harus sama dengan live data_service._get_positioning_mode(). Jangan set INFERENCE_POSITIONING_MODE di .env kecuali override sementara."
+  },
   "data_mining": {
     "enabled": true,
     "endpoints": {
@@ -44,9 +48,9 @@
     "enabled": true,
     "exit_threshold": 0.65,
     "features_file": "guardian_feature_cols.json",
-    "min_hold_bars": 2,
+    "min_hold_bars": 4,
     "model_file": "guardian_best.pkl",
-    "note": "ic32_guardian_continuation_v1: 32 feat (22 static + 10 dynamic). Flow/momentum HOLD override. OOF PF 1.59 vs clean_v2 1.48.",
+    "note": "ic32_guardian_continuation_v1: 32 feat. min_hold=4 promoted 2026-06-18 (OOF PPT +9%, holdout +4%, early-cut losers 310->11 OOF, 11->0 holdout).",
     "partial_exit_ratio": 0.5,
     "scaler_file": "guardian_scaler.pkl"
   },
@@ -58,7 +62,14 @@
     "enabled": true,
     "feature": "hmm_regime_enc",
     "n_states": 4,
-    "note": "GaussianHMM 4-state walk-forward OOF. IC=-0.074 di LGBM. Juga mengontrol regime_alignment (FLIP).",
+    "note": "B-dir-combined per-state thresholds (frozen 2026-06-18). S0/S1/S2=0.72/0.72, S3=0.65/0.72, fallback=0.69/0.59.",
+    "per_state_thresholds": {
+      "0": [0.72, 0.72],
+      "1": [0.72, 0.72],
+      "2": [0.72, 0.72],
+      "3": [0.65, 0.72],
+      "-1": [0.69, 0.59]
+    },
     "states": [
       "TRENDING_DOWN",
       "RANGING_LOW_VOL",
@@ -73,7 +84,7 @@
   },
   "live_stats_reset_at": null,
   "model_type": "ic32_regime_v1",
-  "model_version": "ic32_regime_v1",
+  "model_version": "ic32_b_dir_combined",
   "models": {
     "guardian": "guardian_best.pkl",
     "guardian_features": "guardian_feature_cols.json",
@@ -85,8 +96,14 @@
     "lstm_scaler": "lstm_scaler.pkl"
   },
   "n_features": 33,
-  "note": "FLIP alignment: RANGING=counter-trend, TRENDING=with-trend. LSTM ON survival filter. Guardian clean_v2 min_hold=2. Validated 2026-06-06: holdout WR 67.5% PF 2.54, extended +59% vs baseline. Z3 dual_dominant dicabut — terlalu selektif (81 trade/5koin/bln).",
-  "pyramiding": {},
+  "note": "Deploy 2026-06-18: ic32 B-dir-combined HMM thr + SL close candle. Holdout Apr-Jun: WR 66.5% PF 2.69 PPT +$0.340 (492 trades). SL trigger: close (bukan wick).",
+  "pyramiding": {
+    "enabled": true,
+    "max_positions_per_coin": 2,
+    "same_direction_only": true,
+    "exit_mode": "scale_in",
+    "note": "pyr2_scale_in — holdout Apr-Jun: WR 71.6% PF 3.90 ppt_norm +$0.547 (+36% PnL vs no_pyr). 1 trade DB, VWAP modal, TP/SL/hold leg 1."
+  },
   "regime_alignment": {
     "enabled": true,
     "note": "FLIP: HMM regime-aware trend alignment. RANGING(1,2) counter-trend swing mode. TRENDING(0,3) with-trend momentum mode. Satu model, dua mode, tanpa retrain. + PnL (59% improvement) di extended backtest 63 bulan.",
@@ -99,11 +116,23 @@
       "with_trend_boost": 0.1
     }
   },
+  "compound_strategy": {
+    "deploy_buffer": 0.85,
+    "enabled": true,
+    "initial_trading_balance": 210,
+    "live_from_month": "2026-06",
+    "live_trades_only": true,
+    "max_slots": 21,
+    "note": "Compound live mulai Juni 2026. Bulan sebelumnya paper test (diabaikan). Reinvest 75%, tarik 25% profit live.",
+    "reinvest_pct": 0.75,
+    "withdraw_pct": 0.25
+  },
   "risk": {
-    "daily_loss_limit": 3,
+    "daily_loss_limit": 8,
     "fee_per_side": 0.0004,
     "leverage_recommended": 5,
-    "modal_per_trade": 10,
+    "max_open_positions": 10,
+    "modal_per_trade": 5,
     "slippage_per_side": 0.0005
   },
   "rr_gate": {
@@ -111,6 +140,7 @@
     "max_sl_atr": 4,
     "min_rr": 0.6,
     "min_tp_atr": 1.2,
+    "sl_trigger_mode": "close",
     "swing_bumper_atr": 0.5
   },
   "scorecard": {

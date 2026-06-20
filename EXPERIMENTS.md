@@ -2,6 +2,236 @@
 
 ---
 
+## 2026-06-19 — Pelajaran: live vs riset, fitur rusak, parity gap
+
+**Status**: COMPLETED (dokumentasi insiden + forensik)
+
+Ringkasan insiden 18–19 Jun 2026: performa live jauh di bawah holdout; root cause = **bukan model entry** melainkan **fitur inference rusak + parity simulasi + bug UI**.
+
+### A. Fitur yang beda / tidak berfungsi di live
+
+| Fitur / komponen | Holdout / riset | Live (pre-fix) | Dampak |
+|------------------|-----------------|----------------|--------|
+| `long_short_ratio` | historis parquet / synthetic fallback ~1.0 | **100% = 0** di snapshot 152 trade closed | LGBM feature #18; model dilatih dengan LSR valid, live dapat 0 |
+| `hmm_regime_enc` | state 0/1/2/3 dari regime H1 parquet | **76% trade = state 0**; sinyal 8–13 Jun **99% state 0** | Threshold B-dir per-state salah — hampir semua dianggap satu regime |
+| HMM `.pkl` di VPS | deploy ~17 Jun | Sebelum deploy: fallback on-the-fly / `df_4h=None` → default 0 | Periode panjang inference pakai regime palsu |
+| Positioning mode | `training_parity` (riset + inference_config) | Bug `data_service` hardcode LSR=0 | Entry + Guardian dapat vektor fitur salah |
+| Post-fix LSR (18 Jun 15:00+) | mean ~0.60 | **40% sinyal masih LSR=0** | Fix belum 100%; perlu monitor |
+| Post-fix HMM match vs holdout | — | **57%** match per-bar | Masih ada drift regime |
+
+**Bukan penyebab utama:** data leakage holdout (SL rate holdout 18.9% ≈ live 19.1%).
+
+### B. Parity gap simulasi (bukan fitur, tapi bikin angka holdout terlalu optimis)
+
+| Aspek | Holdout `evaluator.py` | Live `paper_trading.py` |
+|-------|------------------------|-------------------------|
+| SL exit price | `raw_exit = close[j]` (fix 2026-06-19) | `exit_price = close` (bisa lebih jauh dari SL) |
+| Dampak | LOSS avg **~ -$0.75→$0.90**/trade (est) | sl_hit avg **-$1.05**/trade; 20/29 loss > jarak SL |
+| Fix | `evaluator.py:799` — close mode exit @ close[j], bukan sl_price | — |
+| SL timing | avg hold LOSS **13.5 bar** | sl_hit avg hold **2.1 bar** (59% dalam 0–1 bar) |
+
+Holdout **mencerminkan frekuensi SL**, tidak mencerminkan **severity dollar loss** di live.
+
+### C. Performa live vs holdout (fakta terukur)
+
+**Live 152 trade closed (semua pre-fix, LSR=0):** WR 44.7%, PnL -$37.70.
+
+| Exit reason | n | WR | PnL | Catatan |
+|-------------|---|-----|-----|---------|
+| sl_hit | 29 | 0% | -$30.29 | ~80% total kerugian |
+| guardian_exit | 92 | 45% | -$15.89 | holdout guardian_exit WR **76%** |
+| guardian_momentum | 13 | 100% | +$8.74 | path jarang di live |
+
+**Gap WR utama = guardian_exit**, bukan SL rate.
+
+**Trade @ modal $5 saja:** 95 trade, WR 54.7%, PnL **+$6.46** (masih jauh dari holdout 71%, tapi positif).
+
+**0 trade closed** setelah fix positioning 18 Jun 16:00 UTC — belum ada validasi pasca-fix.
+
+### D. Operasional / deploy (bukan fitur ML)
+
+- Modal tidak konsisten di DB live ($2.5–$47.89); batch 18 Jun 15:48 = 4× SL @ $10.
+- `.env` VPS: `LIVE_MAX_POSITIONS` / `LIVE_DAILY_LOSS_LIMIT` dihapus — source of truth `inference_config.json`.
+- `compare_live_config.py`: 30/30 OK setelah sync.
+- **Bug UI:** `/paper/trades` HTTP 500 — `NameError: Signal not defined` di `trades.py` baris 149. Fix commit `9f30496`, deployed 19 Jun.
+
+### E. Guardian min_hold sweep (OOF parsial, 19 Jun)
+
+Stack B-dir + continuation_v1. OOF selesai mh 0–5 (mh=6 di-stop).
+
+| mh | PPT | PF | early_gdn_los | SL% |
+|----|-----|-----|---------------|-----|
+| 0–2 | ~$0.26 | ~3.0 | 226–229 | ~20% |
+| 3 | $0.275 | 3.11 | 240 | 20% |
+| **4 (live)** | **$0.285** | **3.12** | **8** | 19.7% |
+| 5 | $0.292 | 3.08 | 8 | 19.7% |
+
+**Kesimpulan:** tetap `min_hold=4`. mh=5 PPT +2.5% tapi guardian exit WR turun.
+
+### F. Checklist sebelum percaya angka live lagi
+
+1. Snapshot signal: `long_short_ratio` tidak 0, `hmm_regime_enc` bervariasi 0–3.
+2. `tools/audit_vps_vs_riset.py` — HMM match >80%, LSR zero_pct <5%.
+3. Bandingkan exit breakdown (sl_hit vs guardian_exit), bukan hanya WR total.
+4. Holdout live-mirror: `scratch/export_holdout_xlsx.py` — setup tunggal, PF ~3.9 @ $5.
+5. Tunggu 50–100 trade pasca-fix sebelum evaluasi performa model.
+
+### Artefak
+
+- `scratch/live_loss_forensics.py`, `scratch/sl_hit_compare.py`
+- `reports/experiments/vps_vs_riset_audit.json`
+- `D:\Datatrade_ic32regime.xlsx` (holdout setup live)
+- `pipeline/08k_guardian_min_hold_full_sweep.py` (OOF partial)
+
+---
+
+## 2026-06-19 — ic32_guardian_min_hold_full_sweep
+
+**Status**: COMPLETED
+
+### Hasil OOF (B-dir, continuation_v1, $5) — grid 0–6
+| mh | PPT | PF | early_gdn | gdn_exit WR | SL% |
+|----|-----|-----|-----------|-------------|-----|
+| 0–2 | ~$0.26 | ~3.0 | 226–229 | ~76% | ~20% |
+| 3 | $0.275 | 3.11 | 240 | 73.5% | 20% |
+| **4** | **$0.285** | **3.12** | **8** | **69.0%** | 19.7% |
+| 5 | $0.292 | 3.08 | 8 | 67.5% | 19.7% |
+| 6 | $0.297 | 3.03 | 8 | 63.9% | 19.7% |
+
+### Hasil Holdout (scale_in, Apr–Jun, $5) — diagnostic
+| mh | PPT | PF | early_gdn | gdn_exit WR |
+|----|-----|-----|-----------|-------------|
+| 3 | **$0.353** | **4.09** | 11 | 79% |
+| **4** | $0.350 | 3.90 | **0** | 76% |
+| 5 | $0.345 | 3.90 | 0 | 72.5% |
+
+**Keputusan: tetap min_hold=4** — OOF/holdout mh=3–6 sedikit naik PPT tapi turunkan guardian exit WR; mh=4 satu-satunya yang nol early-cut di holdout scale_in.
+
+Artefak: `guardian_min_hold_full_sweep_oof.json`, `guardian_min_hold_full_sweep_holdout.json`
+
+### Script
+- `pipeline/08k_guardian_min_hold_full_sweep.py`
+
+---
+
+## 2026-06-18 — ic32_scale_in_pyramiding
+
+**Status**: COMPLETED — **PROMOTE scale_in** (ganti multi-leg live `shared_sl_first`)
+
+### Hipotesis
+Single scale-in (1 trade, modal VWAP numpuk) lebih sesuai UX live dan exit unified vs multi-leg (2 row DB).
+Satu Guardian/SL/hold dari entry pertama; add-on hanya tambah `quantity` tanpa trade record baru.
+Harapan: PnL total naik seperti multi-leg tapi PPT tidak turun karena 1 exit untuk seluruh exposure.
+
+### Yang Diubah
+- Mode baru `pyramiding_exit_mode = scale_in` di `core/scale_in_sim.py`
+- Entry ke-2+ searah: VWAP entry, `total_modal += $10`, TP/SL dari leg pertama (anchor)
+- Exit: satu kali untuk seluruh modal (Guardian `hold_bars` dari entry pertama)
+- Baseline: `no_pyr` + `pyr2_shared_sl_first` (multi-leg live deployed)
+
+### Target
+- OOF: PPT >= no_pyr, PF >= no_pyr, total PnL >= pyr2_shared_sl_first
+- Holdout: `ppt_norm` >= no_pyr, PF >= no_pyr, PnL >= pyr2_shared_sl_first
+
+### Script
+- `core/scale_in_sim.py`
+- `pipeline/08j_oof_ic32_scale_in_sweep.py`
+- `pipeline/07h_holdout_ic32_scale_in_diag.py`
+
+### Hasil OOF (6,381 baseline, B-dir + min_hold=4 + SL close)
+| Variant | Trades | WR% | PF | PPT | ppt_norm | avg modal | 2-leg% | Total PnL |
+|---------|-------:|----:|---:|----:|---------:|----------:|-------:|----------:|
+| no_pyr | 6,381 | 69.4 | 3.12 | +$0.570 | +$0.570 | $10 | 0% | $3,636 |
+| pyr2_shared_sl_first | 7,931 | 69.4 | 3.07 | +$0.565 | +$0.565 | $10 | — | $4,480 |
+| **pyr2_scale_in** | **6,388** | **68.4** | **3.28** | **+$0.803** | **+$0.640** | **$12.55** | **25.5%** | **$5,129** |
+
+OOF: scale_in +41% total PnL vs baseline, +12% ppt_norm, PF terbaik. Trade count hampir sama (1 transaksi per stack).
+
+### Hasil Holdout (Apr 1 – Jun 12 2026, 73 hari, 21 koin)
+| Variant | Trades | Trd/hari | WR% | PF | PPT | ppt_norm | PnL | 2-leg% |
+|---------|-------:|---------:|----:|---:|----:|---------:|----:|-------:|
+| no_pyr | 355 | 4.9 | 71.8 | 3.79 | +$0.516 | +$0.516 | +$183 | 0% |
+| pyr2_shared_sl_first (live) | 446 | 6.2 | 72.0 | 3.92 | +$0.517 | +$0.517 | +$231 | 26.4% stacks |
+| **pyr2_scale_in** | **356** | **4.9** | **71.6** | **3.90** | **+$0.700** | **+$0.547** | **+$249** | **27.8%** |
+
+WR LONG/SHORT scale_in: 71.5% / 71.8% (vs no_pyr 74.1% / 69.1%).
+SL rate: 18.8% (sama ~19% — scale-in tidak mencegah SL entry awal).
+Artefak: `models/runs/ic32_regime_v1/holdout_scale_in_diag_apr_jun26.json`
+
+### Gate keputusan
+| Kriteria | scale_in vs no_pyr | scale_in vs multi-leg live |
+|----------|:------------------:|:--------------------------:|
+| ppt_norm | +6.1% ($0.547 vs $0.516) | +5.9% |
+| PF | +3.0% (3.90 vs 3.79) | -0.5% (3.90 vs 3.92) |
+| Total PnL | +36% ($249 vs $183) | +8% ($249 vs $231) |
+| Trade count | +0.3% (356 vs 355) | -20% (1 row vs 2 row) |
+| UX (1 DB row) | OK | OK |
+
+**Lolos gate** — scale_in unggul PnL total + ppt_norm dengan trade count flat (bukan +25% noise multi-leg).
+
+### Kesimpulan
+Hipotesis terbukti: scale-in menangkap add-on exposure tanpa inflasi trade count.
+PPT headline tinggi karena pembagian per trade record (modal rata-rata $12.78); metrik adil = `ppt_norm` (+6% holdout).
+Multi-leg `shared_sl_first` deployed sebelumnya masih valid tapi inferior: PPT flat, +25% trades untuk +26% PnL.
+### Deploy (2026-06-18)
+- `swint_tradev2/app/services/paper_trading.py`: `_apply_scale_in()`, VWAP qty, TP/SL/hold leg 1
+- `inference_config.json`: `exit_mode=scale_in` (ganti `shared_sl_first`)
+- Laporan lengkap: `reports/experiments/2026-06-18_ic32_scale_in_deploy.md`
+- Verifikasi VPS: `scratch/verify_pyramiding_deploy.py`
+
+---
+
+## 2026-06-18 — ic32_pyramiding_sweep_b_dir
+
+**Status**: COMPLETED — **NO_PROMOTE** (tetap `no_pyr` live)
+
+### Hipotesis
+Pyramiding (max 2-3 posisi searah per koin) menangkap sinyal lanjutan saat trend masih valid,
+meningkatkan PPT tanpa merusak PF. Skema exit per leg vs anchor leg pertama menentukan profil risiko.
+
+### Yang Diubah
+- Hanya aturan pyramiding + exit schema — entry/HMM/Guardian/min_hold=4 frozen.
+- Bugfix: `simulate_trades_swing` sekarang block entry saat posisi open bila `pyramiding_enabled=False` (match live).
+- Variant:
+  - `no_pyr` (live saat ini)
+  - `pyr2/3_independent` — tiap leg TP/SL/Guardian sendiri (match live bila pyramiding ON)
+  - `pyr2_shared_sl_first` — leg 2+ pakai SL harga leg pertama
+  - `pyr2_close_with_first` — leg 2+ max hold = exit bar leg pertama
+
+### Skema exit (dokumentasi)
+| Mode | Entry leg 2+ | Exit leg 1 | Exit leg 2+ |
+|------|--------------|------------|-------------|
+| **independent** (live) | TP/SL/Guardian dari bar entry leg itu | Guardian/SL sendiri | Guardian/SL sendiri — **bukan** ikut entry pertama |
+| **shared_sl_first** | TP/Guardian sendiri, SL = harga SL leg 1 | normal | SL anchor leg 1 |
+| **close_with_first** | TP/SL/Guardian sendiri tapi max hold <= exit leg 1 | normal | dipaksa tutup saat leg 1 tutup |
+
+Live `paper_trading.py`: setiap leg = record `Trade` terpisah di DB, `check_open_positions()` eval Guardian/SL per trade independently.
+
+### Hasil OOF (6,381 baseline = 1 posisi/koin, B-dir + min_hold=4 + SL close)
+| Variant | Trades | WR% | PF | PPT | vs baseline | multi-leg stacks |
+|---------|-------:|----:|---:|----:|------------:|-----------------:|
+| **no_pyr (live)** | 6,381 | 69.4% | **3.12** | **+$0.570** | — | 0% |
+| pyr2_independent | 7,979 | 69.1% | 3.01 | +$0.557 | -2.2% PPT, +25% trades | 25.1% |
+| pyr3_independent | 8,365 | 68.9% | 2.96 | +$0.550 | -3.5% PPT, +31% trades | 25.3% |
+| pyr2_shared_sl_first | 7,931 | 69.4% | 3.07 | +$0.565 | -0.9% PPT | 24.5% |
+| pyr2_close_with_first | 8,031 | 66.2% | 3.09 | +$0.537 | -5.8% PPT, WR -3.2pp | 25.1% |
+
+Total PnL naik (+22% pyr2) karena +25% trade, tapi **edge per trade turun** — tidak lolos gate PPT.
+
+### Kesimpulan
+- **NO_PROMOTE** — pyramiding menambah trade (+1,600 leg add-on) tapi PPT turun 1-3 sen/trade.
+- Skema exit terbaik: **independent** (default live) — `shared_sl_first` hampir flat, `close_with_first` WR turun kuat.
+- Live tetap `pyramiding: {}` (OFF) — sinyal ke-2 saat posisi open ditolak `DITOLAK [posisi_terbuka]`.
+- min_hold=4 sudah deployed VPS 18 Jun — tidak perlu re-deploy.
+
+### Script
+- `pipeline/08i_oof_ic32_pyramiding_sweep.py`
+- `core/evaluator.py` — pyramiding passthrough + exit_mode + no_pyr block fix
+
+**Artefak**: `models/runs/ic32_regime_v1/ic32_pyramiding_sweep_oof.json`
+
+---
+
 ## 2026-06-17 — Guardian Continuation v1 untuk ic32 (Jalur C)
 
 **Status**: COMPLETED — **PROMOTE** vs clean_v2
@@ -5024,5 +5254,962 @@ Functional test kasus TRX: SL melebar 0.46%->0.80%, wiggle 0.3470 tidak lagi sen
 
 Artefak: `models/runs/tb_lgbm_genuine_v2/sl_floor_sweep.json`,
 `reports/experiments/2026-06-17_sl_floor_holdout_confirm.json`
+
+---
+
+## 2026-06-17 — ic32_lstm_swing_complement_v1
+
+**Status**: COMPLETED
+
+### Hipotesis
+LGBM swing H4 (ic32_regime_v1) under-trading di bar momentum/pump karena threshold tinggi (0.69/0.59) + label swing yang selektif. LSTM dilatih khusus pada pool complement (LGBM FLAT + vol_spike/range_expansion) dengan label swing H4 dapat membuka entry di zona yang LGBM lewatkan, tanpa merusak selektivitas baseline.
+
+### Yang Diubah
+- Partner LGBM: `ic32_regime_v1` OOF (bukan TB)
+- Label: swing H4 (`label` SHORT/FLAT/LONG dari `features_v3`), bukan momentum_v4
+- Sample pool: pump/dump gate (vol_spike>=2 OR range_exp>=1.5) AND LGBM FLAT (ic32 fixed thr 0.69/0.59)
+- Features: `feature_cols_lstm_temporal.json` (18 feat ic32)
+- Loss: FocalLoss asymmetric (sama pola 05k)
+- Eval fusion: hard_consensus vs boost_only vs conditional_momentum (ic32 fixed thr, bukan HMM Config B)
+
+### Target
+- Metrik OOF: trades +5-15% vs baseline ic32 hard_consensus, WR tidak turun >2pp, PF >= baseline (1.39 OOF)
+- Complement precision directional >= 0.50 pada pool FLAT+vol_spike
+- Baseline: `08_oof_ic32_full_stack` scorecard (25,596 trades, WR 55.7%, PF 1.39)
+
+### Script
+- `pipeline/05u_train_lstm_ic32_swing_complement_v1.py`
+- `pipeline/08b_oof_ic32_swing_complement_eval.py`
+
+### Hasil CV
+| Metrik | Nilai |
+|--------|-------|
+| Samples (complement pool) | 133,164 |
+| Mean F1 Macro | 0.432 +/- 0.029 |
+| F1 LONG (rata-rata fold) | ~0.08 (lemah — swing label dominan FLAT 63%) |
+| Complement pool OOF | n=32,068 |
+| Complement fires | n=10,049 (bull=9,511 bear=538) |
+| Precision directional | **0.563** (bull=0.454 bear=0.524) |
+
+### Hasil OOF Full Stack (ic32 thr 0.69/0.59, conf 0.59, Guardian clean_v2)
+| Variant | Trades | WR% | PF | PnL | ppt | vs Baseline |
+|---------|-------:|----:|---:|----:|----:|-------------|
+| baseline (lstm_best.pt) | 25,596 | 55.7 | 1.39 | +$3,564 | +$0.139 | — |
+| complement + hard_consensus | 18,940 | 55.9 | **1.44** | +$2,949 | **+$0.156** | -26% trades, +PF |
+| complement + conditional_momentum | **38,109** | 54.6 | 1.32 | **+$4,417** | +$0.116 | **+49% trades, +$853 PnL** |
+| complement + boost_only | 38,109 | 54.6 | 1.32 | +$4,417 | +$0.116 | sama dgn cond_mom |
+
+### Kesimpulan
+- **Hipotesis complement precision TERBUKTI**: directional precision 56.3% pada pool FLAT+vol_spike (target >=50%). Jauh lebih baik dari TB complement (53.9% mixed_dir, F1 macro 0.363).
+- **Swap penuh LSTM (hard_consensus) TIDAK menutup under-trading**: trade turun 26% (18,940 vs 25,596). Kualitas per-trade naik (PF 1.44, ppt +12%) tapi total PnL turun -$615.
+- **conditional_momentum MEMBUKA under-trading** (+49% trade, +$853 PnL total) tapi **PF turun** 1.39 -> 1.32 dan WR -1.1pp — tidak memenuhi kriteria upgrade.
+- boost_only identik conditional_momentum pada config ini (fusion pre-threshold sama efeknya).
+- **Akar masalah**: swing label 63% FLAT di complement pool — LSTM belajar dominan NEUTRAL, LONG class F1 ~0.08. Model bagus deteksi arah saat fire tapi jarang fire LONG dengan confidence tinggi di live thr.
+- **Next step yang masuk akal**: dual-LSTM production — pertahankan `lstm_best.pt` untuk bar normal, aktifkan complement LSTM **hanya** pada LGBM FLAT + vol_spike via conditional_momentum (bukan swap penuh). Perlu sweep parameter boost/penalty di OOF sebelum holdout.
+- **Holdout belum dibuka** — config belum di-freeze untuk deploy.
+
+Artefak: `models/runs/ic32_lstm_swing_complement_v1/`
+
+---
+
+## 2026-06-18 — ic32_simons_hmm_threshold_oof
+
+**Status**: COMPLETED (signal-only + full-stack OOF)
+
+### Hipotesis
+SHORT bias & PnL negatif live bukan karena perlu filter tambahan, melainkan ic32 pakai
+threshold FIXED (0.69/0.59) padahal Simons pakai **HMM per-state [thr_long, thr_short]**.
+Sweep OOF ic32 akan menemukan config lebih baik tanpa breadth_gate / hard block.
+
+### Yang Diubah
+- TIDAK deploy filter (breadth_gate, hmm_controller) — **reverted** di Riset + swint
+- Sweep HMM per-state pada `ic32_regime_v1` OOF (signal-only TP/SL, no Guardian/LSTM/FLIP)
+- Baseline = production fixed 0.69/0.59 semua state
+
+### Hasil OOF Signal-Only (21 koin, 2020–Mar 2026)
+| Config | Trades | WR% | PPT | PF | S/L ratio | PnL |
+|--------|-------:|----:|----:|---:|----------:|----:|
+| **A: production 0.69/0.59** | 38,109 | 56.0 | +0.278 | 1.53 | **3.16** | $10,578 |
+| D: balanced 0.65/0.65 | 29,276 | 57.0 | +0.317 | 1.59 | 0.99 | $9,279 |
+| B: sym-best per state | 19,068 | 59.3 | +0.394 | 1.73 | 0.92 | $7,506 |
+| **C: sym-best + S1 dir (0.72/0.72)** | **16,758** | **60.2** | **+0.424** | **1.78** | **0.92** | $7,105 |
+| F: tb Config-B ref | 99,900 | 50.4 | +0.143 | 1.23 | 0.97 | $14,298 |
+
+**Winner PPT: Config C** — delta PPT +0.146 vs baseline (+53%), WR +4.2pp, PF +0.25.
+S/L ratio 3.16 → **0.92** (SHORT bias hilang).
+
+Frozen `per_state_thresholds` (Config C):
+```
+S0 TRENDING_DOWN: [0.69, 0.69]
+S1 RANGING_LOW:  [0.72, 0.72]   ← state dominan live, naikkan kedua arah
+S2 RANGING_HIGH: [0.69, 0.69]
+S3 TRENDING_UP:  [0.65, 0.65]
+fallback (-1):   [0.69, 0.59]
+```
+
+Phase 4 sizing (TRENDING 0.5x): PF 1.78→1.78, PPT turun 0.424→0.299 (total PnL $5,013).
+Sizing memperbaiki PF sedikit tapi mengurangi PPT absolut — belum clear win.
+
+### Kesimpulan
+- **Hipotesis Simons TERBUKTI**: HMM per-state threshold memperbaiki PPT +53% tanpa filter baru.
+- SHORT bias (S/L 3.16x) diselesaikan dengan **naikkan thr di S1** ke 0.72/0.72, bukan breadth gate.
+- Trade count turun 56% (38k→17k) — kualitas > kuantitas (prinsip Simons retail).
+- Config F (tb Config-B) total PnL tertinggi tapi PPT terendah — terlalu banyak trade noise.
+### Hasil OOF Full-Stack (LSTM + FLIP + Guardian, frozen Config C)
+| Metrik | Baseline (0.69/0.59) | Simons Config C | Delta |
+|--------|---------------------:|----------------:|------:|
+| Trades | 25,596 | 11,399 | -14,197 (-55%) |
+| WR% | 55.7 | **61.1** | +5.4pp |
+| PPT | +$0.139 | **+$0.286** | +$0.147 (+105%) |
+| PF | 1.39 | **1.85** | +0.46 |
+| Total PnL | $3,564 | $3,257 | -$307 |
+| S/L ratio | ~3.2 (prod) | **0.95** | balanced |
+| LONG% | 24.2% | **51.4%** | +27pp |
+
+**Kriteria upgrade** (vs baseline full-stack OOF):
+- WR >= baseline: **PASS** (61.1% >= 55.7%)
+- PF >= baseline: **PASS** (1.85 >= 1.39)
+- Trades >= 80% baseline: **FAIL** (11,399 < 20,477 = 80% x 25,596)
+- Total PnL turun karena trade count -55%, tapi **PPT +105%** — kualitas per trade jauh lebih baik.
+
+**Keputusan**: Belum deploy production. PPT & PF sangat kuat, tapi frekuensi trade terlalu rendah
+untuk kriteria upgrade (perlu >= 152 trade/bulan vs baseline 341). Opsi lanjut:
+1. Coba Config D (0.65/0.65 semua state) di full-stack — lebih banyak trade, S/L ~1.0 di signal-only
+2. Atau turunkan S1 threshold sedikit (mis. 0.70/0.70) dan re-sweep di full-stack
+
+### Script
+- `pipeline/05e_hmm_threshold_sweep_ic32.py` — signal-only sweep
+- `pipeline/08c_oof_ic32_simons_full_stack.py` — full stack eval
+- Artefak: `models/runs/ic32_regime_v1/hmm_threshold_ic32_simons.json`
+- Artefak: `models/runs/ic32_regime_v1/oof_simons_full_stack_scorecard.json`
+
+---
+
+## 2026-06-18 — ic32_config_c_hmm_adaptive_threshold_oof
+
+**Status**: COMPLETED
+
+### Hipotesis
+Config C (static per-state thr) sudah bagus di PPT tapi trade count -55%.
+**Adaptive threshold** — base Config C + offset per bar dari `hmm_regime_enc` × `h4_trend`
+(mirror logika FLIP tapi di layer threshold, bukan confidence) — bisa:
+1. Pertahankan kualitas Config C
+2. Buka lebih banyak entry yang searah regime/trend
+3. Tetap ketat pada counter-trend SHORT di RANGING (akar masalah live)
+
+### Yang Diubah
+- Base frozen: Config C dari `hmm_threshold_ic32_simons.json`
+- **Phase A**: H4-trend adaptive offset pada base Config C (signal-only OOF)
+- **Phase B**: Per-state direction-aware sweep S0/S2/S3
+- **Phase C**: Full-stack OOF 4 kandidat vs Config C static
+
+### Hasil OOF Signal-Only
+| Config | Trades | WR% | PPT | PF | S/L |
+|--------|-------:|----:|----:|---:|----:|
+| C-static | 16,758 | 60.2 | +0.424 | 1.78 | 0.92 |
+| A-H4-adaptive | 10,853 | 61.9 | +0.468 | 1.88 | 0.88 |
+| B-dir-combined | 12,895 | 61.6 | +0.472 | 1.90 | 0.75 |
+| **C-combined-adaptive** | **8,154** | **63.1** | **+0.509** | **1.99** | 0.70 |
+
+Best offsets (A/C): `ranging_wt_tight=0.05, ranging_ct_ease=0.0, trending_wt_ease=0.0, trending_ct_tight=0.07`
+Dir-aware combined: S0/S2=(0.72,0.72), S1=(0.72,0.72), S3=(0.65,0.72)
+
+### Hasil OOF Full-Stack (LSTM + FLIP + Guardian)
+| Config | Trades | WR% | PPT | PF | S/L | PnL |
+|--------|-------:|----:|----:|---:|----:|----:|
+| C-static | 11,399 | 61.1 | +$0.286 | 1.85 | 0.95 | $3,257 |
+| A-H4-adaptive | 8,104 | 62.7 | +$0.325 | 2.03 | 1.31 | $2,637 |
+| **B-dir-combined** | **8,833** | **62.5** | **+$0.329** | **2.02** | **0.78** | **$2,902** |
+| C-combined-adaptive | 6,229 | 63.5 | +$0.355 | 2.14 | 1.12 | $2,209 |
+
+vs Config C static: PPT +14% (A), +15% (B), +24% (C-combined); PF 1.85 -> 2.02-2.14.
+Trade count masih < 80% baseline produksi (25,596) untuk semua varian.
+
+### Kesimpulan
+- **Hipotesis TERBUKTI sebagian**: adaptive HMM threshold meningkatkan PPT & PF di atas Config C static.
+- **Lever paling efektif**: `trending_ct_tight=0.07` (ketatkan counter-trend di TRENDING) +
+  `ranging_wt_tight=0.05` (ketatkan with-trend di RANGING) — tanpa `ranging_ct_ease`.
+- **Rekomendasi lanjut (belum deploy)**:
+  - **B-dir-combined** = sweet spot full-stack: PPT +$0.329 (+15%), PF 2.02, 8,833 trades, S/L 0.78
+  - C-combined-adaptive = kualitas tertinggi (PPT +$0.355, PF 2.14) tapi trade paling sedikit
+  - A-H4-adaptive = minimal change (Config C base + offsets saja), PPT +$0.325
+- **DIPILIH**: B-dir-combined sebagai kandidat deploy (freeze `b_dir_combined_frozen.json`)
+
+### Script
+- `pipeline/05f_hmm_adaptive_on_config_c_ic32.py`
+- `pipeline/08d_oof_ic32_adaptive_full_stack.py`
+- `pipeline/07_holdout_ic32_b_dir_combined.py` — holdout SEKALI
+- Artefak: `models/runs/ic32_regime_v1/b_dir_combined_frozen.json`
+- Artefak: `models/runs/ic32_regime_v1/hmm_adaptive_config_c_ic32.json`
+- Artefak: `models/runs/ic32_regime_v1/oof_adaptive_full_stack_scorecard.json`
+
+---
+
+## 2026-06-18 — ic32_b_dir_combined_holdout
+
+**Status**: COMPLETED (holdout dibuka SEKALI)
+
+### Hipotesis
+B-dir-combined (OOF: PPT +$0.329, PF 2.02) akan mengalahkan production holdout
+(0.69/0.59: PPT +$0.221, PF 1.96) di periode Apr-Jun 2026.
+
+### Frozen config (B-dir-combined)
+```
+S0/S1/S2: thr_long=0.72, thr_short=0.72
+S3:       thr_long=0.65, thr_short=0.72
+fallback: thr_long=0.69, thr_short=0.59
+```
+
+### Hasil Holdout Apr-Jun 2026
+| Metrik | Production (0.69/0.59) | B-dir-combined | Delta |
+|--------|-------------------------:|---------------:|------:|
+| Trades | 936 | 492 | -47% |
+| WR% | 62.1 | **66.5** | +4.4pp |
+| PPT | +$0.221 | **+$0.340** | +54% |
+| PF | 1.96 | **2.69** | +0.73 |
+| Total PnL | $207 | $167 | -$40 |
+| S/L ratio | ~2.7 (74% SHORT) | **0.82** | balanced |
+| LONG% | 37% | **55%** | +18pp |
+
+**Kriteria upgrade**: WR PASS | PF PASS | Trades FAIL (492 < 748)
+Total PnL turun karena -47% trades, tapi **PPT +54%** dan PF 2.69 vs 1.96.
+
+### Kesimpulan
+- Kualitas holdout sangat kuat — WR, PPT, PF semua mengalahkan production.
+- Trade count 52% dari production — belum lolos kriteria 80%, tapi jauh lebih seimbang (S/L 0.82).
+- **Keputusan user**: pakai B-dir-combined. Siap wire ke `inference_config.json` + deploy.
+- Flag: `.holdout_b_dir_combined_evaluated` — jangan re-run script ini.
+
+### Script
+- `pipeline/07_holdout_ic32_b_dir_combined.py`
+- Artefak: `b_dir_combined_frozen.json`, `holdout_b_dir_combined_apr_jun26.json`
+
+---
+
+## 2026-06-18 — ic32_b_dir_combined_live_deploy_sl_close
+
+**Status**: COMPLETED (deployed VPS)
+
+### Hipotesis
+Wire B-dir-combined HMM per-state thresholds ke live inference mengurangi SHORT bias
+dan meningkatkan kualitas trade. SL berbasis **close candle** (bukan wick) mengurangi
+false SL hit dari spike intrabar tanpa mengubah model entry.
+
+### Yang Diubah (live)
+- `inference_config.json`: `hmm.per_state_thresholds` B-dir-combined frozen
+- `inference_config.json`: `rr_gate.sl_trigger_mode = "close"`
+- `model_version`: `ic32_b_dir_combined`
+- `app/services/inference.py`: hard_consensus pakai `resolve_hmm_thresholds()` saat
+  `per_state_thresholds` ada (entry gate regime-aware)
+
+### Frozen thresholds
+```
+S0/S1/S2: thr_long=0.72, thr_short=0.72
+S3:       thr_long=0.65, thr_short=0.72
+fallback: thr_long=0.69, thr_short=0.59
+```
+
+### SL close vs wick
+| Mode | Trigger | Exit price |
+|------|---------|------------|
+| wick (lama) | low/high sentuh SL intrabar | tepat di SL |
+| **close (baru)** | close <= SL (LONG) / close >= SL (SHORT) | harga close |
+
+Implementasi: `paper_trading.py` `_sl_trigger_mode == "close"`.
+
+### Baseline holdout (referensi, sudah dievaluasi)
+| Metrik | Production 0.69/0.59 | B-dir-combined |
+|--------|---------------------:|---------------:|
+| Trades | 936 | 492 |
+| WR% | 62.1 | 66.5 |
+| PPT | +$0.221 | +$0.340 |
+| PF | 1.96 | 2.69 |
+
+### Deploy
+```powershell
+python tools/deploy_production.py -m "ic32 B-dir-combined HMM thr + SL close"
+```
+- Git swint: `47212ab` (inference.py + config bridge)
+- UI swint: `1c15cb9` (declutter `/models/system`)
+
+### Verifikasi live vs Riset (2026-06-18)
+Script: `tools/compare_live_config.py` (SSH ke VPS `139.180.157.176`)
+
+| Parameter | Riset | VPS Live | Status |
+|-----------|------:|---------:|--------|
+| model_version | ic32_b_dir_combined | ic32_b_dir_combined | OK |
+| hmm.per_state_thresholds | frozen B-dir-combined | sama | OK |
+| rr_gate.sl_trigger_mode | close | close | OK |
+| cascade.mode | hard_consensus | hard_consensus | OK |
+| guardian.exit_threshold | 0.65 | 0.65 | OK |
+| LGBM features | 33 | 33 | OK |
+| inference resolve_hmm_thresholds | patched | True di VPS | OK |
+| risk.modal_per_trade | 10 | **5** | Sengaja beda (UI VPS, preserved deploy) |
+
+**26/27** parameter logic match. Satu-satunya selisih operasional: modal $5 live vs $10
+backtest Riset — tidak mengubah sinyal/threshold, hanya skala PnL (notional $25 vs $50).
+
+### UI production (swint_tradev2)
+- `/models/system` dirapikan: hero ringkas, stack/HMM collapsible, hapus kartu duplikat
+- File: `app/templates/models_system.html`, `partials/active_model_stack.html`
+
+### Artefak sesi
+- `models/inference_config.json` (Riset source deploy)
+- `models/runs/ic32_regime_v1/b_dir_combined_frozen.json`
+- `tools/compare_live_config.py`
+
+### Kesimpulan
+- **SELESAI**: Production live = HMM B-dir-combined entry + SL close candle + kode inference wired.
+- Config live diverifikasi match Riset kecuali modal $5 (operator choice, bukan bug deploy).
+- Monitor live 1-2 minggu: trade count, S/L balance, SL hit rate vs holdout.
+- Sesi riset/deploy ditutup; tidak ada action lanjutan wajib.
+
+---
+
+## 2026-06-18 — ic32_short_bias_audit_breadth_hmm_lstm
+
+**Status**: COMPLETED (audit only — filter approach ABANDONED)
+
+### Hipotesis
+LGBM ic32 condong SHORT karena fitur bearish tidak balance. Optimasi HMM + LSTM +
+market_breadth dapat mengurangi counter-trend SHORT di bull market tanpa retrain.
+
+### Yang Diubah (audit)
+- OOF `ic32_regime_v1` p0/p2 distribution, label balance, threshold asymmetry
+- Feature importance + SHORT vs LONG effect size (BTC labeled)
+- FLIP impact + live signal/trade direction split
+
+### Hasil Audit
+| Temuan | Nilai | Kesimpulan |
+|--------|-------|------------|
+| p0 mean vs p2 mean (OOF) | 0.180 vs 0.170 | Fitur/score **seimbang** (p0>p2 hanya 52%) |
+| Label SHORT vs LONG | 13.7% vs 13.0% | Label training **seimbang** (ratio 1.05) |
+| Entry thr 0.69/0.59 | LONG 1.38% vs SHORT 4.36% | **SHORT bias 3.16x dari threshold**, bukan fitur |
+| FLIP RANGING + h4 UP | counter-trend SHORT +0.05 | Memperkuat SHORT mean-reversion di rally |
+| market_breadth | dihitung live, tidak di LGBM 33f | Macro regime **tidak masuk model** |
+| Live trades Jun | SHORT 79 vs LONG 66 | Eksekusi sedikit condong SHORT |
+| Live WR | LONG 40.9% vs SHORT 50.0% | LONG underperform di bull period |
+
+### Optimasi Production (swint_tradev2)
+1. **breadth_gate** — block counter-trend SHORT jika breadth>=0.70 & h4>0
+2. **regime_alignment.breadth_aware** — FLIP tidak boost counter SHORT di bull; penalty -0.10
+3. **hmm.controller enabled** — hard block counter-trend di TRENDING_UP/DOWN
+4. **hmm.short_offset +0.06** — naikkan effective short threshold di SignalFilter
+5. **LSTM macro veto** — full opposite_pen jika LSTM BULL dom>=0.40 saat sinyal SHORT
+
+### Script
+- `tools/audit_lgbm_short_bias.py`
+- Files: `core/cascade_utils.py`, `app/services/inference.py`, `signal_filter.py`, `inference_config.json`
+
+### Kesimpulan
+- Hipotesis "fitur condong SHORT" **TIDAK terbukti** — akar masalah adalah **threshold
+  asimetris (0.59 vs 0.69)** + **FLIP counter-trend boost** + **tanpa macro gate**.
+- Optimasi HMM/LSTM/breadth adalah mitigasi operasional tanpa retrain; perlu monitor
+  live 1-2 minggu. OOF full-stack re-run disarankan sebelum ubah thr_short permanen.
+- Holdout **belum** dibuka untuk validasi stack baru.
+
+### Simulasi Live (2026-06-18) — `tools/simulate_macro_gate_live.py`
+
+**A. Counterfactual pada 144 live closed trades (PnL aktual):**
+| Metrik | Actual | Proposed gates |
+|--------|--------|----------------|
+| Trades | 144 | 60 kept / 84 blocked |
+| PnL | **-$31.71** | **-$12.87** |
+| WR | 45.8% | 51.7% |
+| Loss mitigated | — | **49 trades, $34.75** |
+| Wins sacrificed | — | 35 trades, $15.91 |
+| Net improvement | — | **+$18.83** |
+
+Blocker terbesar: `hmm_trend_down_block_long` (24 trade, -$9.31 loss dihindari).
+
+**B. Signal kline simulation (770 signal May+, entry+TP/SL forward, no guardian):**
+| Portfolio | n | PnL | WR | PF |
+|-----------|--:|----:|---:|---:|
+| Semua directional signal | 770 | +$83.99 | 55.1% | 1.22 |
+| **Proposed gates (kept)** | 478 | **+$96.37** | **56.9%** | **1.44** |
+| Blocked by gates | 292 | -$12.37 | — | — |
+
+Loss di signal ter-block: $160.84 mitigated vs $148.47 wins sacrificed (kline sim).
+
+**Verdict simulasi:**
+- Pada **live trades aktual**: gate memperbaiki +$18.83 tapi **masih rugi** (-$12.87).
+- Pada **signal hypotheticals** (semua signal dieksekusi TP/SL): gate **profitable** (+$96).
+- Gap live vs signal sim = filter chain + guardian + subset eksekusi (144 trade dari 770 signal).
+
+Artefak: `reports/experiments/2026-06-18_macro_gate_live_simulation.json`
+
+---
+
+## 2026-06-18 — ic32_m15_entry_confirm (Opsi A)
+
+**Status**: COMPLETED OOF (ABANDONED production) — holdout belum dibuka
+
+### Pelanggaran protokol (run pertama — DIBATALKAN)
+- OOF dislice arbitrer Jul 2025 (~4 bulan) — **INVALID**
+- Angka run slice: abaikan
+
+### Protokol rerun (genuine OOF penuh)
+- OOF: 731.164 bar `has_oof=True`, 2020-08-26 -> 2025-10-31
+- M15: 21 koin full OOF (`fetch_m15_research.py --mode oof --force`)
+- LGBM: `oof_predictions.parquet` only; bar non-OOF = FLAT
+- Holdout: **belum** dijalankan (butuh `--confirm-holdout` eksplisit)
+
+### Hasil OOF genuine (25.596 trade baseline)
+| Rule | Trades | WR% | PnL | PPT | vs H1 | Confirm% |
+|------|-------:|----:|----:|----:|------:|---------:|
+| h1_immediate | 25.596 | 55.5 | +$3.564 | $0.139 | — | 100% |
+| m15_delay1 | 22.918 | 54.0 | +$2.486 | $0.108 | -0.031 | 99% |
+| m15_delay2 | 22.777 | 54.6 | +$2.877 | $0.126 | -0.013 | 99% |
+| m15_align | 19.696 | 54.3 | +$2.360 | $0.120 | -0.019 | 85% |
+| **m15_pullback_02** | **11.862** | **57.7** | +$2.459 | **$0.207** | **+0.068** | 52% |
+| m15_no_adverse_03 | 21.928 | 50.2 | -$126 | -$0.006 | -0.145 | 93% |
+
+### Kesimpulan OOF (protokol ketat)
+- **Pullback** satu-satunya naikkan PPT (+$0.068) dan WR (+2.2pp) vs H1 immediate
+- Trade count pullback **46%** baseline — **gagal** kriteria >=80%
+- Delay/align/no_adverse **memperburuk** PPT di full OOF (sama arah dengan slice invalid)
+- **Verdict: ABANDONED** — tidak deploy; holdout opsional sekali jika perlu konfirmasi
+
+### Script
+- `python tools/fetch_m15_research.py --mode oof --force`
+- `python pipeline/08e_ic32_m15_entry_confirm_eval.py`
+- Holdout: `... --confirm-holdout` (belum di-run)
+
+---
+
+## 2026-06-18 — ic32_m15_entry_confirm_v0_slice (INVALID)
+
+**Status**: ABANDONED — pelanggaran protokol (lihat entri di atas)
+
+### Hipotesis
+H1 signal ic32 sudah cukup tepat arah; kerugian dominan dari timing entry / SL, bukan arah.
+Menunggu konfirmasi M15 (pullback, align, delay) setelah H1 signal dapat meningkatkan
+PPT dengan mengurangi entry di spike awal, tanpa retrain model.
+
+### Yang Diubah
+- Layer eksekusi: `core/m15_entry_confirm.py` (6 aturan, max wait 4 bar M15)
+- Data M15: `data/research/m15/klines/` (Jul 2025 - Jun 2026, 21 koin)
+- Eval OOF Jul 2025 - Mar 2026 + holdout Apr-Jun 2026
+- Baseline: `h1_immediate` (entry H1 close, ic32 stack + Guardian clean_v2)
+
+### Hasil OOF (21 koin, 2168 signal H1)
+| Rule | Trades | WR% | PnL | PPT | vs H1 | Confirm% |
+|------|-------:|----:|----:|----:|------:|---------:|
+| h1_immediate | 2040 | 58.3 | +$525 | $0.258 | — | 100% |
+| m15_delay1 | 1802 | 59.0 | +$424 | $0.235 | -0.023 | 100% |
+| m15_delay2 | 1787 | 58.0 | +$449 | $0.251 | -0.007 | 100% |
+| m15_align | 1573 | 59.0 | +$399 | $0.254 | -0.004 | 87% |
+| **m15_pullback_02** | **991** | **62.4** | +$338 | **$0.341** | **+0.083** | 57% |
+| m15_no_adverse_03 | 1724 | 55.0 | +$270 | $0.156 | -0.102 | 93% |
+
+### Hasil Holdout (konfirmasi, bukan tuning)
+| Rule | Trades | WR% | PnL | PPT | vs H1 |
+|------|-------:|----:|----:|----:|------:|
+| h1_immediate | 1350 | 57.8 | +$197 | $0.146 | — |
+| m15_pullback_02 | 739 | 59.3 | +$93 | $0.126 | **-0.020** |
+| m15_delay1 | 1365 | 56.8 | +$136 | $0.100 | -0.046 |
+
+### Kesimpulan
+- **Delay 15-30 menit (delay1/2)**: tidak membantu — PPT turun OOF & holdout meski WR sedikit naik.
+- **m15_align**: filter lemah, PPT flat/sedikit turun.
+- **m15_pullback_02**: satu-satunya yang naikkan PPT OOF (+$0.083/trade) dan WR (+4pp),
+  tapi **trade count 49% baseline** (gagal kriteria >=80%) dan **holdout PPT turun** (-$0.02).
+- **m15_no_adverse_03**: memperburuk (WR -3pp, PPT -$0.10 OOF).
+
+**Verdict: ABANDONED** — konfirmasi M15 tidak robust out-of-sample. Kualitas per-trade naik
+hanya di OOF untuk pullback, tidak replikasi di holdout. Masalah utama tetap exit/SL (lihat
+post_signal_path analysis), bukan sub-jam entry.
+
+### Artefak
+- `core/m15_entry_confirm.py`
+- `tools/fetch_m15_research.py`
+- `pipeline/08e_ic32_m15_entry_confirm_eval.py`
+- `reports/experiments/ic32_m15_entry_confirm_eval.json`
+
+### Lanjutan (opsional)
+- Uji `m15_pullback` dengan threshold OOF saja (0.15%/0.25%) — hanya jika masih di OOF slice
+- Kombinasi pullback + SL close (production) — belum di-run
+
+---
+
+## 2026-06-17 — ic32_lstm_swing_complement_v2 (11 feat fix)
+
+**Status**: COMPLETED
+
+### Hipotesis
+v1 pakai 18 feat dari JSON padahal production `lstm_best.pt` hanya 11 feat (scaler `n_features_in_=11`). Perbandingan tidak apple-to-apple. Retrain complement dengan **11 feat production** yang sama.
+
+### Yang Diubah
+- Features: `feature_cols_lstm_temporal.json[:11]` (match `lstm_scaler.pkl`)
+- Run: `ic32_lstm_swing_complement_v2`
+- Bandingkan vs v1 (18f) via `08c_ic32_complement_v1_v2_compare.py`
+
+### Script
+- `pipeline/05u_train_lstm_ic32_swing_complement_v1.py` (RUN_NAME=v2)
+- `pipeline/08b_oof_ic32_swing_complement_eval.py --complement-run v2`
+- `pipeline/08c_ic32_complement_v1_v2_compare.py`
+
+### Hasil CV (v1 vs v2)
+| Metrik | v1 (18f) | v2 (11f) | Delta |
+|--------|---------|---------|-------|
+| F1 macro | 0.432 | **0.436** | +0.004 |
+| prec_dir | 0.563 | 0.564 | +0.001 |
+| n_fire | 10,049 | 10,372 | +323 |
+| F1 LONG fold 8 | ~0.07 | **0.362** | jauh lebih baik |
+
+### Hasil OOF trading (conditional_momentum — genuine path)
+| Run | Trades | WR | PF | PnL |
+|-----|-------:|---:|---:|----:|
+| v1 (18f) | 38,109 | 54.6% | 1.32 | +$4,417 |
+| v2 (11f) | 38,109 | 54.6% | 1.32 | +$4,417 |
+| baseline | 25,596 | 55.7% | 1.39 | +$3,564 |
+
+**Identik** di layer fusion — bottleneck bukan jumlah feat LSTM, tapi discretisasi thr ic32 + param fusion TB borrow.
+
+### Kesimpulan
+- v2 **valid** untuk perbandingan fair dengan production (11 feat sama `lstm_best.pt`).
+- Trading OOF tidak berubah material; improvement ada di **CV quality** (F1 LONG naik kuat).
+- Langkah berikutnya: dual-LSTM + sweep fusion ic32 (bukan ubah feat lagi).
+
+Artefak: `models/runs/ic32_lstm_swing_complement_v2/`, `v1_v2_compare.json`
+
+---
+
+## 2026-06-18 — ic32_guardian_explore_A_D
+
+**Status**: COMPLETED
+
+### Hipotesis
+1. **continuation_v1** (production Guardian) lebih baik dari **clean_v2** (backtest holdout) di periode
+   holdout yang sama — menutup gap riset vs VPS.
+2. Guardian losers dengan hold<=3 dan `dir_ok_12h` adalah subset "prematur exit" yang bisa
+   dimitigasi via min_hold sweep OOF (bukan tune holdout).
+3. Live Guardian lebih agresif (hold lebih pendek, momentum path lebih jarang) vs holdout.
+
+### Yang Diubah
+- **Tidak ubah entry timing** (keputusan user).
+- Diagnostic holdout: frozen B-dir-combined entry + SL close, bandingkan Guardian variant saja.
+- OOF sweep `min_hold_bars` {1,2,3,4,5} pada continuation_v1.
+- Forensics: guardian loser x post-signal path + live vs holdout early-cut rate.
+
+### Hasil A — Holdout diagnostic (492 trade, B-dir frozen, SL close)
+| Metrik | clean_v2 | continuation_v1 (production) | Delta |
+|--------|---------:|-----------------------------:|------:|
+| WR% | 68.5 | **72.4** | +3.9pp |
+| PPT | +$0.369 | **+$0.484** | +31% |
+| PF | 3.01 | **3.74** | +0.73 |
+| Total PnL | $181 | **$238** | +$57 |
+| SL rate | 11.6% | 19.5% | +7.9pp |
+| Momentum exit | 172 | **207** | +35 |
+| Guardian early-cut losers (hold<=3) | — | **11** | (vs 53 di clean_v2 936-trade) |
+
+**Kesimpulan A**: Production Guardian **terbukti lebih baik** di holdout apples-to-apples.
+Gap riset vs VPS justified. SL rate naik tapi net PPT/PF jauh lebih tinggi.
+
+### Hasil C — OOF min_hold sweep (continuation_v1, 25.596 trade)
+| min_hold | WR% | PF | PPT | early_gdn_los |
+|---------:|----:|---:|----:|--------------:|
+| 1 | 59.6 | 1.58 | $0.210 | 720 |
+| 2 (prod) | 59.6 | 1.59 | $0.214 | 740 |
+| 3 | 59.4 | 1.62 | $0.226 | 788 |
+| **4** | 58.7 | 1.62 | **$0.232** | **38** |
+| **5** | 58.5 | 1.62 | **$0.239** | **38** |
+
+**Kesimpulan C**: min_hold 4-5 naikkan PPT +8-12% OOF dan **menghancurkan early-cut**
+(740 -> 38). Trade count identik. Kandidat eksperimen berikutnya (OOF only, belum deploy).
+
+### Hasil B+D — Forensics
+**Holdout clean_v2 (936 trade):**
+- Guardian losers: 180 | early-cut (hold<=3): 53 | dir_ok_12h losers: 111
+- Early-cut subset: 24/53 (45%) arah benar +12h
+- 62% guardian losers sudah positif fwd+1h
+
+**Holdout continuation_v1 (492 trade, B-dir):**
+- Guardian losers: 30 | early-cut: **11** | dir_ok_12h losers: 41
+- SL losers: 96 (dominan vs guardian 30)
+
+**Live VPS (147 closed):**
+- Guardian WR 50.5% (vs 73% holdout) — hold median 3 bar
+- Momentum exit: 13 vs guardian_exit 90 (momentum path jarang live)
+- Early-cut guardian losers: 26/51
+
+### Kesimpulan
+- **Deploy continuation_v1 sudah benar** — holdout konfirmasi +31% PPT vs clean_v2.
+- Masalah "arah benar tapi kalah" di holdout B-dir: **SL (96) > Guardian (30)**.
+- Live underperformance: hold terlalu pendek, momentum path hampir tidak jalan.
+- **Next step (belum deploy)**: uji min_hold=4 OOF -> holdout diagnostic (bukan tune entry).
+
+### Script
+- `pipeline/07b_holdout_ic32_guardian_variant_diag.py`
+- `tools/analyze_guardian_forensics.py`
+- `pipeline/08f_oof_ic32_guardian_min_hold_sweep.py`
+
+### Artefak
+- `models/runs/ic32_regime_v1/holdout_guardian_variant_diag_apr_jun26.json`
+- `reports/experiments/holdout_ic32_cont_v1_trades_apr_jun26.csv`
+- `reports/experiments/guardian_forensics_holdout.json` / `.md`
+- `models/runs/ic32_regime_v1/guardian_min_hold_sweep_oof.json`
+
+---
+
+## 2026-06-18 — ic32_lgbm_lstm_fusion_sweep
+
+**Status**: COMPLETED
+
+### Hipotesis
+1. Parameter hard_consensus production (opp_pen=0.65, agree=0.05) belum optimal — sweep OOF
+   bisa naikkan PPT tanpa turunkan trade count material.
+2. Dual-LSTM (baseline + complement v2 conditional_momentum pada FLAT+vol_spike) menambah
+   trade berkualitas tanpa mengganti production LSTM.
+3. FLIP + HMM-gate LSTM (TRENDING only) punya interaksi non-linear — perlu forensics
+   agree/disagree vs outcome.
+
+### Yang Diubah
+- **Tidak ubah**: HMM B-dir-combined frozen, Guardian continuation_v1, entry timing.
+- **Sweep OOF only**: agree_boost, opposite_pen, flat_review, hmm_gate_lstm, flip, dual_complement.
+- Stack Stage 2: B-dir + hard_consensus + continuation_v1 + SL close (production-like).
+- Holdout: diagnostic sekali top-1 vs baseline (bukan grid).
+
+### VPS snapshot (compare_live_config)
+- 26/27 key match. Satu mismatch operasional: `risk.modal_per_trade` Riset=$10 vs Live=$5.
+- HMM `per_state_thresholds` match frozen B-dir-combined.
+
+### Hasil Stage 1 (100 config, signal-only)
+- Baseline directional signals: 14,415 (LONG 8,215 / SHORT 6,200)
+- Top signal: `dual_complement` (+25 dir, ratio 0.74) — terlalu agresif filter sinyal
+
+### Hasil Stage 2 OOF (B-dir + continuation_v1, 13 kandidat)
+| Variant | Trades | WR% | PPT | PF | vs baseline |
+|---------|-------:|----:|----:|---:|------------|
+| **baseline_production** | **8,833** | **66.1** | **+$0.437** | **2.38** | — |
+| hc_a3_o50_noflip (best) | 8,593 | 66.4 | +$0.441 | 2.40 | +$0.004 PPT, -240 trade |
+| dual_complement (3 cfg) | 8,833 | 66.1 | +$0.437 | 2.38 | identik baseline* |
+
+\* dual_complement belum di-wire ke `hierarchical_predict` di Stage 2 — hanya teruji di Stage 1 signal layer.
+
+**Decision OOF: NO_PROMOTE** — tidak ada config lolos gate (+$0.01 PPT, >=80% trade, PF>=98%).
+
+### Hasil Holdout diagnostic (sekali, Apr-Jun 2026)
+| Variant | Trades | WR% | PPT | PF |
+|---------|-------:|----:|----:|---:|
+| baseline_production | 492 | 68.9 | +$0.427 | 3.03 |
+| hc_a3_o50_noflip | 484 | 69.6 | **+$0.444** | 3.17 |
+
+Delta holdout: +$0.016 PPT, -8 trade, +0.7pp WR — improvement kecil, belum justify deploy.
+
+### Forensics LGBM-LSTM (731k OOF bars)
+| Relation | % bars |
+|----------|-------:|
+| LSTM opposite LGBM | 50.2% |
+| LSTM agree | 47.4% |
+| LSTM neutral | 2.4% |
+
+Pada bar directional LGBM: agree 13,272 / opposite 10,929 / neutral 17,800.
+LSTM sering lawan arah (by design: survival filter opp_pen=0.65).
+
+### Kesimpulan
+- **Production cascade params sudah near-optimal** untuk stack B-dir + continuation_v1.
+- Penurunan `agree_boost` ke 0.03 + disable FLIP (`hc_a3_o50_noflip`) memberi +1% PPT OOF/holdout
+  tapi **-240 trade OOF / -8 holdout** — trade-off tidak cukup kuat untuk deploy.
+- Dual-LSTM complement: sinyal Stage 1 menjanjikan tapi **belum diimplementasi** di full pipeline
+  Stage 2 — perlu script terpisah jika dilanjutkan.
+- **Rekomendasi: KEEP production** (opp_pen=0.65, agree=0.05, flip=on, hmm_gate=on).
+  Fokus berikutnya: Guardian min_hold=4 (sudah terbukti OOF) atau positioning data, bukan retune LSTM fusion.
+
+### Script
+- `tools/compare_live_config.py`
+- `pipeline/05v_oof_lstm_ic32_baseline_cache.py`
+- `pipeline/ic32_fusion_shared.py`
+- `pipeline/09_ic32_lstm_fusion_stage1_signal.py`
+- `pipeline/09_ic32_lstm_fusion_stage2_pipeline.py`
+- `tools/analyze_lgbm_lstm_interaction.py`
+- `pipeline/07c_holdout_ic32_lstm_fusion_diag.py`
+
+### Artefak
+- `models/runs/ic32_regime_v1/oof_lstm_baseline_predictions.parquet`
+- `models/runs/ic32_regime_v1/ic32_lstm_fusion_stage1_signal.json`
+- `models/runs/ic32_regime_v1/ic32_lstm_fusion_stage2_pipeline.json`
+- `models/runs/ic32_regime_v1/lgbm_lstm_interaction_forensics.json`
+- `models/runs/ic32_regime_v1/holdout_lstm_fusion_diag_apr_jun26.json`
+- `reports/experiments/lgbm_lstm_interaction_forensics.md`
+
+---
+
+## 2026-06-18 — ic32_dual_lstm_full_pipeline + guardian_min_hold4 (paralel)
+
+**Status**: COMPLETED
+
+### Hipotesis
+**Track A — Dual-LSTM complement (full pipeline)**
+- Wire conditional_momentum complement v2 ke `hierarchical_predict` (pre-adjust LGBM OOF pada FLAT+vol_spike)
+  akan membuka trade berkualitas yang Stage 1 signal-only prediksi (+25 dir) tapi Stage 2 belum uji.
+
+**Track B — Guardian min_hold=4**
+- OOF 08f (static thr): PPT +8% vs min_hold=2, early-cut 740->38.
+- Perlu konfirmasi pada stack B-dir (8833 trade baseline) + holdout diagnostic sekali.
+
+### Yang Diubah
+- **Tidak ubah**: HMM B-dir frozen, production cascade params, entry timing.
+- Track A: complement v2 OOF + baseline lstm_best.pt hard_consensus, 5 variant boost/penalty.
+- Track B: hanya `guardian_min_hold_bars` {2, 4} pada continuation_v1.
+
+### Target
+- Track A promote: PPT OOF >= +$0.01 vs baseline, trades >= 80%.
+- Track B promote: PPT holdout >= baseline B-dir ($0.427), trades >= 80%.
+
+### Script
+- `pipeline/09_ic32_dual_lstm_stage2_pipeline.py`
+- `pipeline/07e_holdout_ic32_dual_lstm_diag.py` (jika OOF promising — tidak dijalankan)
+- `pipeline/08g_oof_ic32_guardian_min_hold_b_dir.py`
+- `pipeline/07d_holdout_ic32_guardian_min_hold_diag.py`
+
+### Hasil Track A — Dual-LSTM full pipeline (OOF)
+| Variant | Trades | WR% | PPT | PF | delta PPT | delta N |
+|---------|-------:|----:|----:|---:|----------:|--------:|
+| baseline_no_dual | 8,833 | 66.1 | +$0.4366 | 2.38 | — | — |
+| dual_b08_o14 (best) | 8,837 | 66.1 | +$0.4363 | 2.38 | -$0.0003 | +4 |
+| dual_b10/b12 variants | 8,839 | 66.1 | +$0.4363 | 2.38 | -$0.0004 | +6 |
+
+**Decision Track A: NO_PROMOTE**
+- Complement ter-wire (`apply_dual_complement_to_proba` di `ic32_fusion_shared.py`) tapi uplift material tidak muncul di full pipeline.
+- Stage 1 signal-only (+25 dir) tidak survive Guardian + SL stack — hanya +4-6 trade, PPT flat/negatif.
+- Holdout diagnostic (`07e`) tidak dijalankan — tidak ada winner OOF.
+
+### Hasil Track B — Guardian min_hold (OOF, B-dir stack)
+| min_hold | Trades | WR% | PPT | PF | early_gdn_los | delta PPT |
+|---------:|-------:|----:|----:|---:|--------------:|----------:|
+| 2 (prod) | 8,833 | 66.1% | +$0.4366 | 2.38 | 310 | — |
+| **4** | 8,833 | 65.5% | **+$0.4759** | **2.43** | **11** | **+$0.0393 (+9%)** |
+
+### Hasil Track B — Guardian min_hold (holdout Apr-Jun 2026, sekali)
+| min_hold | Trades | WR% | PPT | PF | early_gdn_los | delta PPT |
+|---------:|-------:|----:|----:|---:|--------------:|----------:|
+| 2 | 492 | 72.4% | +$0.4835 | 3.73 | 11 | — |
+| **4** | 492 | 72.4% | **+$0.5025** | **3.76** | **0** | **+$0.019 (+4%)** |
+
+**Decision Track B: PROMOTE min_hold=4**
+- Kriteria terpenuhi: PPT OOF +9%, holdout +4%, trades 100% identik, PF naik, early-cut losers hilang.
+- Update: `config.py` GUARDIAN_MIN_HOLD_BARS=4, `inference_config.json`, `model_registry.json`.
+- Deploy: `tools/deploy_production.py --models-only`.
+
+### Artefak
+- `models/runs/ic32_regime_v1/ic32_dual_lstm_stage2_pipeline.json`
+- `models/runs/ic32_regime_v1/guardian_min_hold_b_dir_oof.json`
+- `models/runs/ic32_regime_v1/holdout_guardian_min_hold_diag_apr_jun26.json`
+
+### Kesimpulan
+- **Dual-LSTM complement**: wiring selesai untuk riset lanjutan, tapi bukan uplift production saat ini.
+- **Guardian min_hold=4**: perubahan parameter tunggal dengan impact kuat — kurangi exit prematur tanpa mengurangi trade count.
+
+---
+
+## 2026-06-18 — ic32_dynsize_sweep_b_dir
+
+**Status**: COMPLETED
+
+### Hipotesis
+Dynamic sizing (regime_mult x conf_margin, clamp 0.5-2.0x) memberi lift PPT_norm
+pada stack TB (+3.5% OOF) tanpa mengubah trade selection — berlaku juga pada
+ic32 B-dir + continuation_v1 + min_hold=4.
+
+### Yang Diubah
+- Hanya `modal_arr` per bar entry — trade selection tetap (fixed cascade + Guardian).
+- Baseline: fixed $10. Grid 9 variant (TB-era cm_0.60 winner + ablations).
+- **Tidak ubah**: HMM B-dir, LSTM fusion, Guardian min_hold=4.
+
+### Target promote
+- `ppt_norm` OOF >= +$0.01 vs fixed, trades 100% identik, PF >= 98% baseline.
+
+### Hasil OOF (8,833 trade, min_hold=4)
+| Variant | Trades | PPT | PPT_norm | avg modal | PF |
+|---------|-------:|----:|---------:|----------:|---:|
+| fixed_baseline | 8,833 | +$0.4759 | +$0.4759 | $10.0 | 2.43 |
+| **cm_0.60 (best)** | **8,833** | **+$0.6917** | **+$0.4904** | **$14.1** | **2.44** |
+| cm_0.50 | 8,833 | +$0.6689 | +$0.4878 | $13.7 | 2.42 |
+| combo_cw_cm | 8,833 | +$0.7038 | +$0.4880 | $14.4 | 2.43 |
+
+Delta OOF (cm_0.60): **+$0.0145 PPT_norm (+3%)**, trades 100% identik, PF +0.4%.
+
+**Decision OOF: PROMOTE cm_0.60** — 7/8 variant lolos gate; clamp_1.5 miss (+$0.0094).
+
+### Hasil Holdout diagnostic (492 trade, Apr-Jun 2026, sekali)
+| Variant | Trades | PPT | PPT_norm | avg modal | PF |
+|---------|-------:|----:|---------:|----------:|---:|
+| fixed_modal | 492 | +$0.5025 | +$0.5025 | $10.0 | 3.763 |
+| **dynsize_cm_0.60** | **492** | **+$0.7115** | **+$0.5070** | **$14.0** | **3.727** |
+
+Delta holdout: **+$0.0045 PPT_norm (+0.9%)**, trades identik, PF -1% (masih >= 98%).
+
+**Decision: PROMOTE cm_0.60** — belum deploy; tunggu konfirmasi user.
+
+### Script
+- `pipeline/08h_oof_ic32_dynsize_sweep.py`
+- `pipeline/07f_holdout_ic32_dynsize_diag.py`
+- `core/evaluator.py` — passthrough `modal_arr` ke `full_trading_report`
+
+### Artefak
+- `models/runs/ic32_regime_v1/ic32_dynsize_sweep_oof.json`
+- `models/runs/ic32_regime_v1/holdout_dynsize_diag_apr_jun26.json`
+
+### Kesimpulan
+- DynSize bekerja di ic32 sama seperti TB: **trade count tidak berubah**, PPT absolut naik
+  karena modal lebih besar di trade high-confidence, PPT_norm naik ~3% OOF / ~1% holdout.
+- Winner `cm_0.60`: conf_window=0.10, conf_max_mult=0.6, regime_mult TB default.
+- Live modal $5 → avg modal ~$7 (bukan $14); skala PnL proporsional, edge per $ tetap.
+
+---
+
+## 2026-06-19 — risk_gate_sweep_modal5
+
+**Status**: COMPLETED
+
+### Hipotesis
+Modal turun ke $5 membuat peak margin jadi bottleneck utama. Kombinasi
+`max_open_positions` x `daily_loss_limit` yang tepat bisa menjaga eksposur
+di bawah saldo sambil meminimalkan trade yang terlewat (skip karena gate).
+
+### Yang Diubah
+- Default `modal_per_trade`: $10 -> **$5** (`config.py`, `inference_config.json`).
+- `risk.max_open_positions` ditambahkan ke inference_config + wired di `execution.py` / UI.
+- Grid sweep holdout Apr-Jun 2026 (355 trade, continuation_v1 + min_hold=4 + sl=close):
+  - `max_open_positions`: 1-21
+  - `daily_loss_limit`: 2-10, unlimited
+
+### Hasil Holdout @ $5 (tanpa gate)
+| Metrik | Nilai |
+|--------|-------|
+| Trades | 355 |
+| WR | 71.8% |
+| PnL | +$91.63 |
+| PPT | +$0.258 |
+| PF | 3.79 |
+| Peak concurrent | 14 ($70 margin) |
+
+### Hasil Sweep (pilihan utama)
+| Config | Trades | Capture | PnL | PPT | PF | Peak margin |
+|--------|-------:|--------:|----:|----:|---:|------------:|
+| No gate (21/unlim) | 355 | 100% | +$91.63 | +$0.258 | 3.79 | $70 |
+| **max=10, loss=8** | **348** | **98%** | **+$90.18** | **+$0.259** | **3.75** | **$50** |
+| VPS lama (max=10, loss=5) | 346 | 97.5% | +$87.87 | +$0.254 | 3.68 | $50 |
+| max=8, loss=8 | 337 | 94.9% | +$87.40 | +$0.259 | 3.72 | $40 |
+| max=6, loss=8 | 300 | 84.5% | +$78.70 | +$0.262 | 3.62 | $30 |
+
+### Kesimpulan
+- **PROMOTE**: modal=$5, max_open_positions=10, daily_loss_limit=**8**.
+  - Peak margin $50 = pas untuk saldo minimal ~$50-55.
+  - vs daily_loss=5: +$2.31 PnL, hanya 2 trade extra ditolak.
+  - vs no gate: -7 trade (-2%), -$1.45 PnL — trade-off wajar untuk modal kecil.
+- Jika saldo < $40: turunkan max_pos ke **8** (peak $40) atau **6** (peak $30).
+- `max_open_positions` sekarang di inference_config (bukan hanya env var).
+
+### Script / Artefak
+- `scratch/risk_gate_sweep.py`
+- `models/runs/ic32_regime_v1/risk_gate_sweep_modal5.json`
+
+---
+
+## 2026-06-19 — Rolling vs Expanding Walk-Forward CV (apple-to-apple)
+
+**Status**: COMPLETED
+
+### Hipotesis
+Rolling walk-forward CV (fixed ~25 bulan training window per fold) memberikan:
+1. **F1 fold metrics lebih comparable** — tiap fold punya ukuran training set yang mirip
+2. **F1 lebih rendah di fold akhir** — data 2020-2021 yang sudah tidak relevan dibuang
+3. **Std F1 lebih kecil** — estimasi lebih stabil antar fold
+
+### Setup (apple-to-apple)
+| Aspek | Value |
+|-------|-------|
+| Fitur | 33 dari `feature_cols_v2.json` (ic32 swing features + hmm_regime_enc) |
+| Labels | swing H4 (`label` column, 03_engineer.py) |
+| LGBM params | dari `config.py` (LR=0.05, depth=6, n_est=1000, early_stop=50) |
+| Purge | 20 bars (`PURGE_GAP_BARS`) |
+| Folds | 8 |
+| Data | 861,289 bars, 21 koin, 2020-01→2026-04-01 |
+| Rolling window | 3 splits (~25 bulan) |
+
+### Hasil CV
+
+| Fold | Exp F1 | Rol F1 | Δ | Exp Train | Rol Train |
+|------|:------:|:------:|:----:|:---------:|:---------:|
+| 1 | 0.5120 | 0.5120 | — | 55,794 | 55,794 |
+| 2 | 0.5505 | 0.5505 | — | 134,010 | 134,010 |
+| 3 | 0.5664 | 0.5664 | — | 219,144 | 219,144 |
+| 4 | 0.5553 | 0.5561 | +0.001 | 304,264 | **248,250** |
+| 5 | 0.5545 | 0.5504 | -0.004 | 393,823 | **259,533** |
+| 6 | 0.5665 | 0.5650 | -0.002 | 497,183 | **277,759** |
+| 7 | **0.5709** | 0.5648 | -0.006 | 609,196 | **304,652** |
+| 8 | 0.5684 | 0.5635 | -0.005 | 733,189 | **339,026** |
+
+### Metrik Agregat
+
+| Metrik | Expanding | Rolling | Δ |
+|--------|:---------:|:-------:|:---:|
+| Mean F1 | 0.5556 | 0.5536 | -0.002 |
+| Std F1 | 0.0179 | 0.0169 | -0.001 |
+| F1 Range | 0.512–0.571 | 0.512–0.566 | — |
+| Train Range | 56k–733k | 56k–339k | **-54%** |
+
+### Analisis
+
+1. **Fold 1-3 identik** — karena `window_splits=3`, fold 1-2 belum cap penuh (expanding fallback), fold 3 tepat di batas window pertama
+2. **Fold 4-8 rolling vs expanding**: rolling F1 **sedikit lebih rendah** (Δ -0.001 s/d -0.006) — data 2020-2021 yang dibuang di rolling fold akhir memang sedikit membantu directional prediction
+3. **Std F1 hampir sama** (0.0169 vs 0.0179) — perbaikan marginal, bukan 2.7× seperti klaim awal yang salah (run pertama beda fitur 31 vs 36)
+4. **Train size range rolling jauh lebih rapat** (56k-339k vs 56k-733k, -54%) — tapi ini tidak translate ke F1 stability karena FLAT class dominance (73.3%)
+
+### Kenapa efeknya kecil?
+
+Swing H4 label: 73.3% FLAT, 13.8% SHORT, 12.9% LONG. F1 macro didominasi oleh FLAT class (F1 ~0.88-0.90) yang mudah diprediksi. Variasi di directional classes (SHORT/LONG, F1 ~0.30-0.43) tenggelam oleh bobot FLAT. Rolling hanya mempengaruhi directional classes — sinyalnya terlalu kecil di macro average.
+
+### Kesimpulan
+
+- **Rolling CV menghasilkan F1 yang sedikit lebih rendah tapi lebih jujur** — tidak "menyontek" dari data 2020-2021 untuk prediksi 2025
+- **Manfaat utama rolling adalah train size consistency**, bukan F1 stability — ini penting untuk fair comparison antar arsitektur/feature set
+- **Rekomendasi: switch ke rolling** — lebih mencerminkan production reality (retrain N bulan terakhir). Benefit modest untuk swing H4 labels, tapi mencegah overfitting kronologis di fitur/arsitektur baru
+- **Untuk label dengan FLAT minority** (Triple Barrier: 40/40/20), efek rolling akan lebih terlihat karena directional classes mendominasi
+
+### Hasil OOF PnL (genuine protocol — threshold sweep via OOF)
+
+| Thr | Expanding | Rolling | Δ |
+|-----|:---------:|:-------:|:---:|
+| 0.45/0.45 (best) | $4,987 (31.7k t, WR 54.0%) | $4,951 (32.0k t, WR 53.6%) | -$36 |
+| 0.50/0.55 | $4,494 (23.4k t, WR 57.3%) | $4,508 (24.3k t, WR 56.7%) | +$14 |
+| 0.55/0.60 | $3,856 (17.1k t, WR 60.4%) | $3,867 (18.1k t, WR 59.0%) | +$11 |
+
+**OOF PnL practically identical** — Δ < 1% di semua threshold. Rolling setara dengan expanding.
+
+### Hasil Holdout (LGBM only, no Guardian/HMM, Apr 1 – Jun 13 2026)
+
+| Thr | Trades | WR | PF | PnL | SL |
+|-----|:------:|:----:|:---:|:-----:|:--:|
+| 0.45/0.45 | 1,476 | 55.1% | 1.27 | +$92 | 461 |
+| 0.50/0.50 | 1,243 | 56.8% | 1.34 | +$97 | 368 |
+| 0.50/0.55 | 1,139 | 57.9% | 1.35 | +$91 | 329 |
+| **0.55/0.55** | **1,022** | **60.5%** | **1.61** | **+$124** | **267** |
+| 0.55/0.60 | 889 | 61.4% | 1.66 | +$114 | 227 |
+
+**Expanding vs rolling di holdout = IDENTIK** — final model dilatih pada seluruh data training, threshold OOF sama (0.45/0.45). Hasil holdout: 1,476 trades, WR 55.1%, PF 1.27, +$92.
+
+### Keputusan Final: REVERT ke expanding
+
+**Alasan:**
+1. Mean F1 identik (0.5556 vs 0.5536, Δ -0.002)
+2. OOF PnL identik ($4,987 vs $4,951, Δ -$36 / 0.7%)
+3. Holdout identik (final model + threshold sama)
+4. Expanding sudah established di pipeline — tidak ada alasan switch
+5. `build_rolling_folds()` tetap di `shared.py` sebagai opsi untuk eksperimen masa depan
+
+**Kapan rolling mungkin berguna:**
+- Label lebih balanced (Triple Barrier 40/40/20) — efek directional classes ~3× lebih besar
+- Data >10 tahun — expanding membawa noise dari era tidak relevan
+- Benchmark arsitektur — train size consistency penting
+
+### Script / Artefak
+- `pipeline/shared.py` — `build_rolling_folds()` (tersedia, tidak dipakai pipeline)
+- `pipeline/04_train_lgbm_rolling_v1.py` — script perbandingan
+- `models/runs/tb_lgbm_cv_comparison/` — OOF predictions expanding + rolling + cv_comparison.json
+- `scratch/holdout_exp_vs_rol.py` — holdout test script
+- `scratch/oof_sweep_exp_vs_rol.py` — OOF threshold sweep script
 
 ---

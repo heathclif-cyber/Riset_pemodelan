@@ -456,10 +456,19 @@ def fetch_open_interest_hist(
 
     start_ms = to_ms(start)
     end_ms   = to_ms(end)
+    # Binance openInterestHist max ~500 bar hourly — clamp lookback dari end
+    max_lookback_ms = 3_600_000 * min(limit, 500)
+    effective_start_ms = max(start_ms, end_ms - max_lookback_ms)
+    if effective_start_ms > start_ms:
+        logger.info(
+            f"[{symbol}] OI lookback dibatasi {min(limit, 500)} jam "
+            f"(API limit) — {datetime.fromtimestamp(effective_start_ms/1000, tz=timezone.utc).date()} -> "
+            f"{datetime.fromtimestamp(end_ms/1000, tz=timezone.utc).date()}"
+        )
     step_per_chunk = 3600000 * limit
 
     all_frames = []
-    current = start_ms
+    current = effective_start_ms
 
     while current < end_ms:
         chunk_end = min(current + step_per_chunk, end_ms)
@@ -537,10 +546,16 @@ def fetch_long_short_ratio_hist(
 
     start_ms = to_ms(start)
     end_ms   = to_ms(end)
+    max_lookback_ms = 3_600_000 * min(limit, 500)
+    effective_start_ms = max(start_ms, end_ms - max_lookback_ms)
+    if effective_start_ms > start_ms:
+        logger.info(
+            f"[{symbol}] L/S lookback dibatasi {min(limit, 500)} jam (API limit)"
+        )
     step_per_chunk = 3600000 * limit
 
     all_frames = []
-    current = start_ms
+    current = effective_start_ms
 
     while current < end_ms:
         chunk_end = min(current + step_per_chunk, end_ms)

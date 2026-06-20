@@ -232,6 +232,9 @@ def hierarchical_predict(
     regime_aware_alignment:  bool = REGIME_AWARE_ALIGNMENT,  # FLIP from config
     model_dir:               Path = MODEL_DIR,              # Path to regime models
     lstm_feat_cols:          list = None,
+    lgbm_proba:              np.ndarray | None = None,  # precomputed OOF probas (n, 3)
+    per_bar_thr_long:        np.ndarray | None = None,  # optional HMM per-state thr_long
+    per_bar_thr_short:       np.ndarray | None = None,  # optional HMM per-state thr_short
 ) -> tuple[np.ndarray, np.ndarray]:
     """
     2-Model cascade: LGBM (primary) → LSTM (soft confirmation / FLAT review)
@@ -285,8 +288,14 @@ def hierarchical_predict(
     # STEP 1: LGBM entry signal (primary)
     valid_cols  = [c for c in feat_cols if c in df_slice.columns]
 
+    if lgbm_proba is not None:
+        if lgbm_proba.shape != (n, NUM_CLASSES):
+            raise ValueError(
+                f"lgbm_proba shape {lgbm_proba.shape} != ({n}, {NUM_CLASSES})"
+            )
+        lgbm_proba = np.asarray(lgbm_proba, dtype=np.float64)
     # Jika per-regime: kita perlu proba per baris menggunakan model yang sesuai
-    if use_per_regime and regime_col is not None:
+    elif use_per_regime and regime_col is not None:
         # Batch predict per regime
         lgbm_proba = np.full((n, NUM_CLASSES), 1.0 / NUM_CLASSES)
         regimes    = df_slice[regime_col].fillna("RANGING_LOW_VOL").values
@@ -370,8 +379,18 @@ def hierarchical_predict(
             elif h4_t < 0 and t_str < -TREND_STRENGTH_MIN and e_sl < 0:
                 _trend_short_reduce = TREND_REDUCE_AMOUNT   # downtrend: bantu SHORT masuk
 
-        eff_long_thr  = max(0.0, LGBM_THRESHOLD_LONG  - _momentum_reduce - _trend_long_reduce)
-        eff_short_thr = max(0.0, LGBM_THRESHOLD_SHORT - _momentum_reduce - _trend_short_reduce)
+        _base_long = (
+            float(per_bar_thr_long[i])
+            if per_bar_thr_long is not None
+            else LGBM_THRESHOLD_LONG
+        )
+        _base_short = (
+            float(per_bar_thr_short[i])
+            if per_bar_thr_short is not None
+            else LGBM_THRESHOLD_SHORT
+        )
+        eff_long_thr  = max(0.0, _base_long  - _momentum_reduce - _trend_long_reduce)
+        eff_short_thr = max(0.0, _base_short - _momentum_reduce - _trend_short_reduce)
 
         # ── Smart Entry: Simultaneous LGBM+LSTM Fusion ───────────────────────
         # Kedua model berkontribusi SETARA — LGBM bukan gatekeeper tunggal.
@@ -730,8 +749,8 @@ def hierarchical_predict(
                     lgbm_short_conf=lgbm_short_conf,
                     up_momentum_score=lstm_up_score,
                     exhaustion_score=lstm_exh_score,
-                    base_threshold_long=LGBM_THRESHOLD_LONG,
-                    base_threshold_short=LGBM_THRESHOLD_SHORT,
+                    base_threshold_long=_base_long,
+                    base_threshold_short=_base_short,
                     correction_power=LSTM_CORRECTION_POWER,
                     boost_multiplier=LSTM_BOOST_MULTIPLIER,
                     min_score_to_correct=LSTM_MIN_SCORE_TO_CORRECT,
@@ -947,3 +966,63 @@ def compute_guardian_static_array(
         if col in df.columns:
             out[:, idx] = df[col].ffill().fillna(0).values.astype(np.float64)
     return out
+
+
+# ── Training Parity Overrides ──────────────────────────────────────────────────
+# Sama persis dengan _apply_training_parity_overrides + _clamp_ood_features
+# di swint_tradev2/app/services/data_service.py.
+# Wajib dipanggil di SEMUA holdout/backtest scripts sebelum features dimasukkan ke model
+# agar distribusi fitur match dengan apa yang model terima di live.
+
+# LSR: ic32 dilatih dengan synthetic LSR (mean~1.0, std~0.034). Historical parquet
+#      menggunakan real LSR (bisa 0.5–3.0+). Clamp ke band training.
+_LSR_TRAIN_P5  = 0.978
+_LSR_TRAIN_P95 = 1.020
+
+# CVD: live menghitung dari window pendek (~3000 bar) sehingga absolute CVD kecil
+#      dan slope jadi besar vs training (full history, CVD besar → slope ~0).
+#      Clamp ke ±3 sigma dari training_feature_standards.json.
+_CVD_CLAMP: dict[str, tuple[float, float]] = {
+    "cvd_slope_h4":     (-1.04, 1.04),
+    "cvd_momentum_adv": (-0.73, 0.73),
+}
+
+
+def apply_training_parity(df: "np.ndarray | pd.DataFrame") -> "pd.DataFrame":
+    """Apply same feature overrides seperti live inference ke holdout DataFrame.
+
+    Harus dipanggil setelah load features_v3.parquet dan sebelum X dibangun
+    dari feat_cols. Modifikasi in-place dan return DataFrame.
+
+    Overrides:
+    1. long_short_ratio: clip ke [LSR_P5, LSR_P95] → match training distribution
+    2. cvd_slope_h4, cvd_momentum_adv: clip ke ±3σ → cegah LSTM OOD veto
+    """
+    import pandas as _pd
+
+    if not isinstance(df, _pd.DataFrame):
+        return df
+
+    # 1. LSR parity
+    if "long_short_ratio" in df.columns:
+        df["long_short_ratio"] = df["long_short_ratio"].clip(
+            lower=_LSR_TRAIN_P5, upper=_LSR_TRAIN_P95
+        )
+        # Recompute whale_retail_divergence karena bergantung pada LSR
+        if "cvd" in df.columns:
+            ls_ratio  = df["long_short_ratio"].astype(float)
+            cvd_s     = df["cvd"].astype(float)
+            ls_sma24  = ls_ratio.rolling(24, min_periods=5).mean()
+            ls_std24  = ls_ratio.rolling(24, min_periods=5).std().replace(0, float("nan"))
+            ls_z      = (ls_ratio - ls_sma24) / ls_std24
+            cvd_sma24 = cvd_s.rolling(24, min_periods=5).mean()
+            cvd_std24 = cvd_s.rolling(24, min_periods=5).std().replace(0, float("nan"))
+            cvd_z     = (cvd_s - cvd_sma24) / cvd_std24
+            df["whale_retail_divergence"] = (cvd_z - ls_z).fillna(0.0).clip(-5.0, 5.0)
+
+    # 2. CVD clamp
+    for col, (lo, hi) in _CVD_CLAMP.items():
+        if col in df.columns:
+            df[col] = df[col].clip(lower=lo, upper=hi)
+
+    return df
