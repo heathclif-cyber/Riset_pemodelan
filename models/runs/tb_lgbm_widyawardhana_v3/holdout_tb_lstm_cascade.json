@@ -1,0 +1,86 @@
+{
+  "run": "holdout_tb_lstm_widyawardhana_cascade",
+  "lgbm_model": "tb_lgbm_widyawardhana_v3",
+  "lstm_model": "tb_lstm_widyawardhana_v1",
+  "lstm_cv_f1": 0.3622,
+  "period": "Nov 2025 - Apr 2026",
+  "flip_thr_soft": 0.4,
+  "variant_labels": {
+    "A": "LGBM only",
+    "B": "FLIP veto soft (P>0.40)",
+    "C": "FLIP veto hard (argmax)",
+    "D": "Consensus only"
+  },
+  "decorrelation": {
+    "total_signals": 8297,
+    "flip_count": 2016,
+    "flip_pct": 24.3,
+    "consensus_count": 6068,
+    "consensus_pct": 73.13,
+    "neutral_count": 213,
+    "neutral_pct": 2.57
+  },
+  "scorecard": {
+    "A": {
+      "trades": 1501,
+      "wr": 46.2358,
+      "long_wr": 43.7018,
+      "short_wr": 47.1223,
+      "long_pct": 25.9161,
+      "pnl": 940.4232,
+      "ppt": 0.6265,
+      "ppm": 188.0846,
+      "pf": 2.3993,
+      "sl_rate": 50.8994,
+      "avg_hold": 24.2318,
+      "max_dd": 13.733
+    },
+    "B": {
+      "trades": 1302,
+      "wr": 47.1582,
+      "long_wr": 46.7153,
+      "short_wr": 47.2103,
+      "long_pct": 10.5223,
+      "pnl": 855.6226,
+      "ppt": 0.6572,
+      "ppm": 171.1245,
+      "pf": 2.4901,
+      "sl_rate": 50.0,
+      "avg_hold": 24.1743,
+      "max_dd": 12.4056
+    },
+    "C": {
+      "trades": 1250,
+      "wr": 47.6,
+      "long_wr": 48.913,
+      "short_wr": 47.4957,
+      "long_pct": 7.36,
+      "pnl": 851.7186,
+      "ppt": 0.6814,
+      "ppm": 170.3437,
+      "pf": 2.5849,
+      "sl_rate": 49.68,
+      "avg_hold": 24.336,
+      "max_dd": 10.7701
+    },
+    "D": {
+      "trades": 1224,
+      "wr": 46.8954,
+      "long_wr": 50.0,
+      "short_wr": 46.6957,
+      "long_pct": 6.0458,
+      "pnl": 837.0654,
+      "ppt": 0.6839,
+      "ppm": 167.4131,
+      "pf": 2.5931,
+      "sl_rate": 50.5719,
+      "avg_hold": 24.1389,
+      "max_dd": 10.7701
+    }
+  },
+  "best": {
+    "pnl_variant": "A",
+    "pf_variant": "D",
+    "wr_variant": "C"
+  }
+}

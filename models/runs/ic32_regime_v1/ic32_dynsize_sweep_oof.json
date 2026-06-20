@@ -1,0 +1,488 @@
+{
+  "protocol": "genuine_oof",
+  "holdout_used": false,
+  "train_cutoff": "2026-04-01",
+  "stack": "B-dir + hard_consensus + continuation_v1 + min_hold=4",
+  "guardian_min_hold": 4,
+  "base_modal": 10.0,
+  "created": "2026-06-18T14:49:14.744412",
+  "baseline": {
+    "trades": 8833,
+    "wr": 65.46,
+    "pf": 2.431,
+    "pnl": 4203.56,
+    "ppt": 0.4759,
+    "ppt_norm": 0.4759,
+    "avg_modal": 10.0,
+    "label": "fixed_baseline",
+    "config": {
+      "fixed": true
+    }
+  },
+  "best_by_ppt_norm": {
+    "trades": 8833,
+    "wr": 65.46,
+    "pf": 2.441,
+    "pnl": 6109.72,
+    "ppt": 0.6917,
+    "ppt_norm": 0.4904,
+    "avg_modal": 14.1,
+    "label": "cm_0.60",
+    "config": {
+      "conf_window": 0.1,
+      "conf_max_mult": 0.6,
+      "regime_mult": {
+        "0": 0.75,
+        "1": 1.0,
+        "2": 1.0,
+        "3_long": 1.5,
+        "3_short": 0.75,
+        "-1": 0.8
+      },
+      "clamp_min": 0.5,
+      "clamp_max": 2.0
+    },
+    "delta_ppt": 0.2158,
+    "delta_ppt_norm": 0.0145,
+    "delta_pnl": 1906.16,
+    "trade_pct": 100.0
+  },
+  "winners": [
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.424,
+      "pnl": 5908.22,
+      "ppt": 0.6689,
+      "ppt_norm": 0.4878,
+      "avg_modal": 13.71,
+      "label": "cm_0.50",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.193,
+      "delta_ppt_norm": 0.0119,
+      "delta_pnl": 1704.66,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.441,
+      "pnl": 6109.72,
+      "ppt": 0.6917,
+      "ppt_norm": 0.4904,
+      "avg_modal": 14.1,
+      "label": "cm_0.60",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.6,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.2158,
+      "delta_ppt_norm": 0.0145,
+      "delta_pnl": 1906.16,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.417,
+      "pnl": 5965.35,
+      "ppt": 0.6753,
+      "ppt_norm": 0.4859,
+      "avg_modal": 13.9,
+      "label": "cw_0.08",
+      "config": {
+        "conf_window": 0.08,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1994,
+      "delta_ppt_norm": 0.01,
+      "delta_pnl": 1761.79,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.429,
+      "pnl": 5850.4,
+      "ppt": 0.6623,
+      "ppt_norm": 0.4894,
+      "avg_modal": 13.53,
+      "label": "cw_0.12",
+      "config": {
+        "conf_window": 0.12,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1864,
+      "delta_ppt_norm": 0.0135,
+      "delta_pnl": 1646.84,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.442,
+      "pnl": 5796.14,
+      "ppt": 0.6562,
+      "ppt_norm": 0.4883,
+      "avg_modal": 13.44,
+      "label": "s3l_1.25",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.25,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1803,
+      "delta_ppt_norm": 0.0124,
+      "delta_pnl": 1592.58,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.417,
+      "pnl": 5936.27,
+      "ppt": 0.6721,
+      "ppt_norm": 0.4872,
+      "avg_modal": 13.8,
+      "label": "s3l_1.75",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.75,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1962,
+      "delta_ppt_norm": 0.0113,
+      "delta_pnl": 1732.71,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.43,
+      "pnl": 6217.01,
+      "ppt": 0.7038,
+      "ppt_norm": 0.488,
+      "avg_modal": 14.42,
+      "label": "combo_cw_cm",
+      "config": {
+        "conf_window": 0.08,
+        "conf_max_mult": 0.6,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.75,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.2279,
+      "delta_ppt_norm": 0.0121,
+      "delta_pnl": 2013.45,
+      "trade_pct": 100.0
+    }
+  ],
+  "decision": "PROMOTE",
+  "results": [
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.431,
+      "pnl": 4203.56,
+      "ppt": 0.4759,
+      "ppt_norm": 0.4759,
+      "avg_modal": 10.0,
+      "label": "fixed_baseline",
+      "config": {
+        "fixed": true
+      }
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.424,
+      "pnl": 5908.22,
+      "ppt": 0.6689,
+      "ppt_norm": 0.4878,
+      "avg_modal": 13.71,
+      "label": "cm_0.50",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.193,
+      "delta_ppt_norm": 0.0119,
+      "delta_pnl": 1704.66,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.441,
+      "pnl": 6109.72,
+      "ppt": 0.6917,
+      "ppt_norm": 0.4904,
+      "avg_modal": 14.1,
+      "label": "cm_0.60",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.6,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.2158,
+      "delta_ppt_norm": 0.0145,
+      "delta_pnl": 1906.16,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.417,
+      "pnl": 5965.35,
+      "ppt": 0.6753,
+      "ppt_norm": 0.4859,
+      "avg_modal": 13.9,
+      "label": "cw_0.08",
+      "config": {
+        "conf_window": 0.08,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1994,
+      "delta_ppt_norm": 0.01,
+      "delta_pnl": 1761.79,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.429,
+      "pnl": 5850.4,
+      "ppt": 0.6623,
+      "ppt_norm": 0.4894,
+      "avg_modal": 13.53,
+      "label": "cw_0.12",
+      "config": {
+        "conf_window": 0.12,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1864,
+      "delta_ppt_norm": 0.0135,
+      "delta_pnl": 1646.84,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.442,
+      "pnl": 5796.14,
+      "ppt": 0.6562,
+      "ppt_norm": 0.4883,
+      "avg_modal": 13.44,
+      "label": "s3l_1.25",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.25,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1803,
+      "delta_ppt_norm": 0.0124,
+      "delta_pnl": 1592.58,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.417,
+      "pnl": 5936.27,
+      "ppt": 0.6721,
+      "ppt_norm": 0.4872,
+      "avg_modal": 13.8,
+      "label": "s3l_1.75",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.75,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.1962,
+      "delta_ppt_norm": 0.0113,
+      "delta_pnl": 1732.71,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.457,
+      "pnl": 5596.37,
+      "ppt": 0.6336,
+      "ppt_norm": 0.4853,
+      "avg_modal": 13.05,
+      "label": "clamp_1.5",
+      "config": {
+        "conf_window": 0.1,
+        "conf_max_mult": 0.5,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.5,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 1.5
+      },
+      "delta_ppt": 0.1577,
+      "delta_ppt_norm": 0.0094,
+      "delta_pnl": 1392.81,
+      "trade_pct": 100.0
+    },
+    {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.43,
+      "pnl": 6217.01,
+      "ppt": 0.7038,
+      "ppt_norm": 0.488,
+      "avg_modal": 14.42,
+      "label": "combo_cw_cm",
+      "config": {
+        "conf_window": 0.08,
+        "conf_max_mult": 0.6,
+        "regime_mult": {
+          "0": 0.75,
+          "1": 1.0,
+          "2": 1.0,
+          "3_long": 1.75,
+          "3_short": 0.75,
+          "-1": 0.8
+        },
+        "clamp_min": 0.5,
+        "clamp_max": 2.0
+      },
+      "delta_ppt": 0.2279,
+      "delta_ppt_norm": 0.0121,
+      "delta_pnl": 2013.45,
+      "trade_pct": 100.0
+    }
+  ]
+}

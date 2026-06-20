@@ -1,0 +1,42 @@
+---
+pid: 27984
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05q_lstm_lgbm_seq_compare_tweak.py"
+started_at: 2026-06-16T11:22:55.400Z
+running_for_ms: 3724994  
+---
+
+==============================================================================
+  05q: LSTM ref vs LGBM-seq compare + single-param tweaks
+==============================================================================
+
+  PHASE 1 — Slice comparison (frozen 05j winner config)
+
+  Model                         boost    pen  conflict   pen%  rally_S pump_S d
+  ref_tb_lstm_genuine_v2           72    108       352  30.1%      188     -106
+  seq_tb_lstm_lgbm_seq_v1          88     61       252  24.2%      188      -61
+
+  Interpretasi slice:
+    conflict = LGBM SHORT + LSTM bull>=0.38 pada vol>=2
+    pen%     = % conflict yang berhasil di-block ke FLAT
+    rally_S  = SHORT signals saat frac_up>=0.8 (wide pump)
+    pump_S d = delta SHORT di vol>=2 bars (fused vs base)
+
+  PHASE 2 — Single-param tweaks (LSTM=tb_lstm_lgbm_seq_v1)
+
+  Baseline seq+frozen: port PPT_norm=0.5048 delta=+0.0007
+  Tweak                            dPPT  pen_blk  boost  newMom  PASS
+  tweak_opp_pen_16              +0.0007       68     88      53     N
+  tweak_opp_pen_18              +0.0008       74     88      53     Y
+  tweak_bear_thr_55             +0.0007       61     78      46     N
+  tweak_bear_thr_58             +0.0007       61     75      45     N
+  tweak_bull_thr_40             +0.0005       48     74      46     N
+  tweak_boost_08                +0.0004       61     65      38     N
+  tweak_near_gap_05             +0.0007       61     88      53     Y
+  tweak_pen_only_opp16          +0.0001       68      0       0     N
+
+  Best tweak: tweak_opp_pen_18 delta=+0.0008
+  vs ref genuine_v2 (+0.00075): +0.0001
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\lstm_lgbm_seq_compare_tweak.json
+==============================================================================
+

@@ -1,0 +1,282 @@
+{
+  "run_id": "ic32_regime_v1",
+  "created": "2026-06-17T13:07:11.836631",
+  "methodology": "genuine_oof_purged_cv",
+  "train_cutoff": "2026-04-01",
+  "n_folds": 8,
+  "gap_bars": 20,
+  "feature_cols": [
+    "dist_from_8h_high",
+    "rsi_6",
+    "swing_momentum",
+    "rsi_h4",
+    "stochrsi_k",
+    "dist_liq_50x_long",
+    "trend_accel_4h",
+    "rsi_slope_h4",
+    "Fib_786",
+    "Fib_618",
+    "stochrsi_d",
+    "ofi_h4_delta",
+    "dist_liq_50x_short",
+    "Buy_Liq",
+    "relative_strength_z",
+    "dist_liq_20x_long",
+    "cvd_momentum_adv",
+    "Sell_Liq",
+    "long_short_ratio",
+    "cvd_slope_h4",
+    "ema_21_slope_h4",
+    "ema_50_h1",
+    "h4_trend",
+    "log_ret_20",
+    "whale_retail_divergence",
+    "dist_liq_20x_short",
+    "vol_price_confirm",
+    "ema_50_slope_h4",
+    "MSB_BOS",
+    "cvd",
+    "ofi_acceleration",
+    "cvd_div_h4",
+    "hmm_regime_enc"
+  ],
+  "n_samples": 785185,
+  "oof_coverage": 731164,
+  "mean_f1_macro": 0.5908,
+  "std_f1_macro": 0.0138,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 51361,
+      "n_val": 71715,
+      "best_iteration": 476,
+      "train_f1_macro": 0.8211,
+      "accuracy": 0.7461,
+      "f1_macro": 0.5615,
+      "f1_SHORT": 0.3789,
+      "f1_FLAT": 0.8702,
+      "f1_LONG": 0.4354,
+      "confusion_matrix": [
+        [
+          3486,
+          3672,
+          2235
+        ],
+        [
+          3155,
+          45628,
+          3116
+        ],
+        [
+          2366,
+          3667,
+          4390
+        ]
+      ]
+    },
+    {
+      "fold": 2,
+      "n_train": 123256,
+      "n_val": 78722,
+      "best_iteration": 773,
+      "train_f1_macro": 0.7801,
+      "accuracy": 0.7574,
+      "f1_macro": 0.5815,
+      "f1_SHORT": 0.4026,
+      "f1_FLAT": 0.876,
+      "f1_LONG": 0.4659,
+      "confusion_matrix": [
+        [
+          3941,
+          3950,
+          2924
+        ],
+        [
+          2893,
+          50340,
+          4205
+        ],
+        [
+          1927,
+          3197,
+          5345
+        ]
+      ]
+    },
+    {
+      "fold": 3,
+      "n_train": 202218,
+      "n_val": 79212,
+      "best_iteration": 994,
+      "train_f1_macro": 0.756,
+      "accuracy": 0.7555,
+      "f1_macro": 0.597,
+      "f1_SHORT": 0.4531,
+      "f1_FLAT": 0.8742,
+      "f1_LONG": 0.4636,
+      "confusion_matrix": [
+        [
+          5069,
+          3148,
+          2738
+        ],
+        [
+          3966,
+          49486,
+          3962
+        ],
+        [
+          2386,
+          3164,
+          5293
+        ]
+      ]
+    },
+    {
+      "fold": 4,
+      "n_train": 281710,
+      "n_val": 79370,
+      "best_iteration": 998,
+      "train_f1_macro": 0.7266,
+      "accuracy": 0.7449,
+      "f1_macro": 0.5919,
+      "f1_SHORT": 0.4828,
+      "f1_FLAT": 0.8653,
+      "f1_LONG": 0.4276,
+      "confusion_matrix": [
+        [
+          6117,
+          3301,
+          2356
+        ],
+        [
+          4628,
+          48401,
+          4064
+        ],
+        [
+          2823,
+          3078,
+          4602
+        ]
+      ]
+    },
+    {
+      "fold": 5,
+      "n_train": 361340,
+      "n_val": 94528,
+      "best_iteration": 998,
+      "train_f1_macro": 0.7036,
+      "accuracy": 0.7519,
+      "f1_macro": 0.5852,
+      "f1_SHORT": 0.4518,
+      "f1_FLAT": 0.8739,
+      "f1_LONG": 0.4298,
+      "confusion_matrix": [
+        [
+          6347,
+          3991,
+          3190
+        ],
+        [
+          5084,
+          59315,
+          4488
+        ],
+        [
+          3138,
+          3557,
+          5418
+        ]
+      ]
+    },
+    {
+      "fold": 6,
+      "n_train": 456128,
+      "n_val": 98446,
+      "best_iteration": 1000,
+      "train_f1_macro": 0.6862,
+      "accuracy": 0.7672,
+      "f1_macro": 0.5981,
+      "f1_SHORT": 0.4586,
+      "f1_FLAT": 0.8815,
+      "f1_LONG": 0.4542,
+      "confusion_matrix": [
+        [
+          6298,
+          4372,
+          2784
+        ],
+        [
+          4640,
+          63445,
+          4151
+        ],
+        [
+          3073,
+          3898,
+          5785
+        ]
+      ]
+    },
+    {
+      "fold": 7,
+      "n_train": 554894,
+      "n_val": 111162,
+      "best_iteration": 998,
+      "train_f1_macro": 0.675,
+      "accuracy": 0.7746,
+      "f1_macro": 0.6038,
+      "f1_SHORT": 0.4724,
+      "f1_FLAT": 0.8882,
+      "f1_LONG": 0.4507,
+      "confusion_matrix": [
+        [
+          7220,
+          4387,
+          3562
+        ],
+        [
+          4921,
+          72432,
+          5012
+        ],
+        [
+          3255,
+          3915,
+          6458
+        ]
+      ]
+    },
+    {
+      "fold": 8,
+      "n_train": 666376,
+      "n_val": 118009,
+      "best_iteration": 999,
+      "train_f1_macro": 0.6667,
+      "accuracy": 0.7823,
+      "f1_macro": 0.6076,
+      "f1_SHORT": 0.4853,
+      "f1_FLAT": 0.8903,
+      "f1_LONG": 0.4471,
+      "confusion_matrix": [
+        [
+          7844,
+          4627,
+          2844
+        ],
+        [
+          5607,
+          78232,
+          4713
+        ],
+        [
+          3560,
+          4334,
+          6248
+        ]
+      ]
+    }
+  ],
+  "note": "Swing labels (not TB). Does not overwrite lgbm.pkl."
+}

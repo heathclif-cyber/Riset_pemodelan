@@ -1,0 +1,60 @@
+---
+pid: 21520
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05_train_lstm_genuine_v2.py --all"
+started_at: 2026-06-15T16:44:36.250Z
+running_for_ms: 34534995 
+---
+
+==================================================================
+  LSTM Momentum Complement -- tb_lstm_genuine_v2
+  Partner: tb_lgbm_genuine_v2
+  Role  : momentum flow detector (pump/dump complement)
+  Label : momentum_v2 (flow-based)
+  Feat  : 22 (18 base + 4 pump/dump)
+  Coins : 21 | Seq=72 | Device=privateuseone:0
+==================================================================
+
+2026-06-16 00:44:39 | INFO     | 05_lstm_genuine_v2 | Features: 21/22
+2026-06-16 00:44:39 | INFO     | 05_lstm_genuine_v2 |   [BTCUSDT] 51,099 bars | BULL=35% NEU=32% BEAR=33%
+2026-06-16 00:44:40 | INFO     | 05_lstm_genuine_v2 |   [SOLUSDT] 45,753 bars | BULL=34% NEU=31% BEAR=34%
+2026-06-16 00:44:40 | INFO     | 05_lstm_genuine_v2 |   [ETHUSDT] 51,099 bars | BULL=35% NEU=31% BEAR=34%
+2026-06-16 00:44:40 | INFO     | 05_lstm_genuine_v2 |   [BNBUSDT] 51,099 bars | BULL=35% NEU=32% BEAR=33%
+2026-06-16 00:44:41 | INFO     | 05_lstm_genuine_v2 |   [XRPUSDT] 51,099 bars | BULL=33% NEU=34% BEAR=33%
+2026-06-16 00:44:41 | INFO     | 05_lstm_genuine_v2 |   [DOGEUSDT] 51,099 bars | BULL=33% NEU=34% BEAR=33%
+2026-06-16 00:44:42 | INFO     | 05_lstm_genuine_v2 |   [TONUSDT] 10,777 bars | BULL=33% NEU=35% BEAR=31%
+2026-06-16 00:44:42 | INFO     | 05_lstm_genuine_v2 |   [ADAUSDT] 51,099 bars | BULL=35% NEU=31% BEAR=34%
+2026-06-16 00:44:42 | INFO     | 05_lstm_genuine_v2 |   [TRXUSDT] 51,099 bars | BULL=36% NEU=30% BEAR=33%
+2026-06-16 00:44:43 | INFO     | 05_lstm_genuine_v2 |   [1000SHIBUSDT] 39,233 bars | BULL=34% NEU=32% BEAR=34%
+2026-06-16 00:44:43 | INFO     | 05_lstm_genuine_v2 |   [AVAXUSDT] 44,745 bars | BULL=34% NEU=32% BEAR=34%
+2026-06-16 00:44:44 | INFO     | 05_lstm_genuine_v2 |   [LINKUSDT] 51,099 bars | BULL=34% NEU=33% BEAR=33%
+2026-06-16 00:44:44 | INFO     | 05_lstm_genuine_v2 |   [DOTUSDT] 45,568 bars | BULL=34% NEU=33% BEAR=34%
+2026-06-16 00:44:44 | INFO     | 05_lstm_genuine_v2 |   [SUIUSDT] 21,887 bars | BULL=33% NEU=33% BEAR=34%
+2026-06-16 00:44:44 | INFO     | 05_lstm_genuine_v2 |   [POLUSDT] 9,913 bars | BULL=32% NEU=36% BEAR=32%
+2026-06-16 00:44:45 | INFO     | 05_lstm_genuine_v2 |   [NEARUSDT] 44,218 bars | BULL=35% NEU=32% BEAR=34%
+2026-06-16 00:44:45 | INFO     | 05_lstm_genuine_v2 |   [1000PEPEUSDT] 21,833 bars | BULL=34% NEU=32% BEAR=34%
+2026-06-16 00:44:45 | INFO     | 05_lstm_genuine_v2 |   [TAOUSDT] 13,631 bars | BULL=33% NEU=33% BEAR=34%
+2026-06-16 00:44:45 | INFO     | 05_lstm_genuine_v2 |   [ARBUSDT] 22,867 bars | BULL=33% NEU=33% BEAR=33%
+2026-06-16 00:44:46 | INFO     | 05_lstm_genuine_v2 |   [HBARUSDT] 51,099 bars | BULL=34% NEU=33% BEAR=34%
+2026-06-16 00:44:46 | INFO     | 05_lstm_genuine_v2 |   [ONDOUSDT] 4,869 bars | BULL=31% NEU=36% BEAR=32%
+2026-06-16 00:45:07 | INFO     | 05_lstm_genuine_v2 | Dataset: 783,694 sequences, 21 features
+2026-06-16 00:45:07 | INFO     | 05_lstm_genuine_v2 |   BEARISH: 263,145 (33.6%)
+2026-06-16 00:45:07 | INFO     | 05_lstm_genuine_v2 |   NEUTRAL: 252,263 (32.2%)
+2026-06-16 00:45:07 | INFO     | 05_lstm_genuine_v2 |   BULLISH: 268,286 (34.2%)
+2026-06-16 00:45:38 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   1 | F1=0.3847 | Best=0.3847
+2026-06-16 00:46:37 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   5 | F1=0.3964 | Best=0.3964
+2026-06-16 00:47:50 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  10 | F1=0.3836 | Best=0.3964
+2026-06-16 00:49:03 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  15 | F1=0.4037 | Best=0.4037
+2026-06-16 00:50:16 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  20 | F1=0.3822 | Best=0.4037
+2026-06-16 00:51:32 | INFO     | 05_lstm_genuine_v2 |   Fold 1 DONE: F1=0.4037 BEAR=0.460 NEU=0.266 BULL=0.485
+Traceback (most recent call last):
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 489, in <module>
+    main()
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 424, in main
+    cg = complement_gate_analysis(oof_proba, meta_df, te_idx)
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 312, in complement_gate_analysis
+    ts  = pd.Timestamp(row["ts"], tz="UTC")
+          ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "pandas/_libs/tslibs/timestamps.pyx", line 1855, in pandas._libs.tslibs.timestamps.Timestamp.__new__
+ValueError: Cannot pass a datetime or Timestamp with tzinfo with the tz parameter. Use tz_convert instead.

@@ -1,0 +1,168 @@
+{
+  "run_name": "tb_guardian_genuine_v2_hmm_v2",
+  "created": "2026-06-16T11:23:32.730032",
+  "lgbm_source": "tb_lgbm_genuine_v2",
+  "version": "v2 \u2014 tighter labeling (profit_lock, r3, r5)",
+  "labeling_changes": {
+    "profit_lock": "mfe>0.03 pnl>0.003 ratio<0.30  (was: mfe>0.02 pnl>0 ratio<0.40)",
+    "r3": "mfe>0.025 pnl>0.001 ratio<0.20 (was: mfe>0.015 NO_pnl_check ratio<0.25)",
+    "r5_partial": "mfe>0.025 ratio<0.40            (was: mfe>0.015 ratio<0.55)"
+  },
+  "hmm_thresholds": {
+    "0": [
+      0.55,
+      0.55
+    ],
+    "1": [
+      0.55,
+      0.55
+    ],
+    "2": [
+      0.5,
+      0.5
+    ],
+    "3": [
+      0.45,
+      0.5
+    ],
+    "-1": [
+      0.45,
+      0.45
+    ]
+  },
+  "n_samples": 249796,
+  "n_features": 25,
+  "features": [
+    "etf_gbtc_change_usd",
+    "etf_total_change_usd",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "Sell_Liq",
+    "atr_percentile_h1",
+    "stochrsi_k",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_low",
+    "VAH",
+    "cvd_momentum_adv",
+    "dist_from_8h_high",
+    "ema_200_h1",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio"
+  ],
+  "n_folds": 8,
+  "purge_bars": 36,
+  "mean_logloss": 0.2315,
+  "best_logloss": 0.2041,
+  "mean_f1_macro": 0.8265,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 27720,
+      "n_val": 27719,
+      "logloss": 0.2041,
+      "f1_macro": 0.816,
+      "best_iter": 215
+    },
+    {
+      "fold": 2,
+      "n_train": 55475,
+      "n_val": 27719,
+      "logloss": 0.2209,
+      "f1_macro": 0.8203,
+      "best_iter": 233
+    },
+    {
+      "fold": 3,
+      "n_train": 83230,
+      "n_val": 27719,
+      "logloss": 0.2118,
+      "f1_macro": 0.8296,
+      "best_iter": 391
+    },
+    {
+      "fold": 4,
+      "n_train": 110985,
+      "n_val": 27719,
+      "logloss": 0.2261,
+      "f1_macro": 0.8347,
+      "best_iter": 483
+    },
+    {
+      "fold": 5,
+      "n_train": 138740,
+      "n_val": 27719,
+      "logloss": 0.2424,
+      "f1_macro": 0.8279,
+      "best_iter": 765
+    },
+    {
+      "fold": 6,
+      "n_train": 166495,
+      "n_val": 27719,
+      "logloss": 0.2412,
+      "f1_macro": 0.8358,
+      "best_iter": 764
+    },
+    {
+      "fold": 7,
+      "n_train": 194250,
+      "n_val": 27719,
+      "logloss": 0.2596,
+      "f1_macro": 0.8154,
+      "best_iter": 469
+    },
+    {
+      "fold": 8,
+      "n_train": 222005,
+      "n_val": 27719,
+      "logloss": 0.2456,
+      "f1_macro": 0.8327,
+      "best_iter": 898
+    }
+  ],
+  "label_dist": {
+    "HOLD": 199122,
+    "PARTIAL": 9170,
+    "EXIT": 41504
+  },
+  "exit2_neg_pnl_pct": 0.0,
+  "static_feats": [
+    "etf_gbtc_change_usd",
+    "etf_total_change_usd",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "Sell_Liq",
+    "atr_percentile_h1",
+    "stochrsi_k",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_low",
+    "VAH",
+    "cvd_momentum_adv",
+    "dist_from_8h_high",
+    "ema_200_h1"
+  ],
+  "dynamic_feats": [
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio"
+  ]
+}

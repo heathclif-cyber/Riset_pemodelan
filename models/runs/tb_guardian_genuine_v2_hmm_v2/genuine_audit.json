@@ -1,0 +1,46 @@
+{
+  "methodology": "guardian_genuine_oof_v1",
+  "holdout_evaluated": false,
+  "train_cutoff_enforced": true,
+  "entry_signal": {
+    "source": "OOF_LGBM_predictions",
+    "lgbm_run": "tb_lgbm_genuine_v2",
+    "has_oof_filter": true,
+    "guardian_enabled_during_trade_gen": false,
+    "hmm_threshold": "Config B frozen",
+    "holdout_used_for_entry": false
+  },
+  "oof_source_audit": {
+    "lgbm_run": "tb_lgbm_genuine_v2",
+    "n_lgbm_features": 36,
+    "dow_features_present": ["dow_cos", "dow_sin"],
+    "oof_bars": 729212,
+    "threshold_method": "OOF_simulation",
+    "holdout_used_for_threshold": false
+  },
+  "sample_audit": {
+    "n_samples": 249796,
+    "min_samples_ok": true
+  },
+  "cv": {
+    "n_folds": 8,
+    "purge_bars": 36,
+    "scaler_per_fold": true,
+    "labeling_version": "v2_tight"
+  },
+  "promotion_gate": {
+    "f1_ok": true,
+    "exit2_neg_ok": true,
+    "n_samples_ok": true,
+    "passed": true,
+    "mean_f1_macro": 0.8265,
+    "exit2_neg_pnl_pct": 0.0,
+    "n_samples": 249796,
+    "thresholds": {
+      "min_cv_f1_macro": 0.8,
+      "max_exit2_neg_pct": 10.0,
+      "min_samples": 100000
+    }
+  },
+  "promoted": true
+}

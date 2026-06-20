@@ -1,0 +1,41 @@
+{
+  "evaluated_at": "2026-06-15T15:40:09.162106",
+  "model": "tb_widyawardhana_v2",
+  "meta_run": "tb_meta_fb_v2",
+  "thresholds": {
+    "standalone_ic": 0.02,
+    "marginal_ic": 0.015,
+    "t_stat": 2.0
+  },
+  "oof": {
+    "dataset": "OOF_trades",
+    "n": 25026,
+    "ic_lgbm_conf": 0.0813,
+    "t_lgbm_conf": 12.9,
+    "ic_meta_standalone": 0.228,
+    "t_meta_standalone": 37.05,
+    "corr_meta_conf": 0.5316,
+    "marginal_ic_meta_given_conf": 0.2299,
+    "t_marginal": 37.38,
+    "gate_conf_standalone": true,
+    "gate_meta_standalone": true,
+    "gate_marginal": true,
+    "verdict": "PASS"
+  },
+  "holdout": {
+    "dataset": "holdout_AprJun2026",
+    "n": 918,
+    "ic_lgbm_conf": 0.1133,
+    "t_lgbm_conf": 3.45,
+    "ic_meta_standalone": 0.0707,
+    "t_meta_standalone": 2.14,
+    "corr_meta_conf": 0.5335,
+    "marginal_ic_meta_given_conf": 0.0294,
+    "t_marginal": 0.89,
+    "gate_conf_standalone": true,
+    "gate_meta_standalone": true,
+    "gate_marginal": false,
+    "verdict": "FAIL"
+  },
+  "overall_verdict": "FAIL"
+}

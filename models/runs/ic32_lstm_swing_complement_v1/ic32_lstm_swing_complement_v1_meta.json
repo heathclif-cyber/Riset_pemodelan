@@ -1,0 +1,127 @@
+{
+  "run_name": "ic32_lstm_swing_complement_v1",
+  "model_type": "lstm_swing_complement_flat_only",
+  "lgbm_partner": "ic32_regime_v1",
+  "label_source": "swing_h4 (features_v3 label column)",
+  "sample_filter": "pump_dump_gate AND ic32_lgbm_flat",
+  "ic32_thr_long": 0.69,
+  "ic32_thr_short": 0.59,
+  "loss": "focal_loss",
+  "complement_cfg": {
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "vol_spike_thr": 2.0,
+    "focal_gamma": 2.0,
+    "alpha_bear_boost": 1.6,
+    "alpha_bull_boost": 1.3,
+    "alpha_neu_scale": 0.9
+  },
+  "n_features": 18,
+  "features": [
+    "long_short_ratio",
+    "rsi_slope_h4",
+    "cvd_slope_h4",
+    "cvd_momentum_adv",
+    "volume_delta",
+    "vol_price_confirm",
+    "Buy_Liq",
+    "absorption_at_swing",
+    "trend_accel_4h",
+    "etf_total_change_usd",
+    "dist_liq_50x_long",
+    "etf_gbtc_change_usd",
+    "ofi_z_score",
+    "whale_retail_divergence",
+    "log_ret_20",
+    "swing_momentum",
+    "ofi_h4_delta",
+    "stochrsi_d"
+  ],
+  "seq_len": 72,
+  "purge_gap": 36,
+  "n_folds": 8,
+  "n_samples": 133164,
+  "mean_f1_macro": 0.4315,
+  "std_f1_macro": 0.0291,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.3775,
+      "f1_SHORT": 0.35,
+      "f1_FLAT": 0.55,
+      "f1_LONG": 0.21,
+      "best_epoch": 45
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.4292,
+      "f1_SHORT": 0.43,
+      "f1_FLAT": 0.59,
+      "f1_LONG": 0.13,
+      "best_epoch": 45
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.4399,
+      "f1_SHORT": 0.39,
+      "f1_FLAT": 0.67,
+      "f1_LONG": 0.05,
+      "best_epoch": 50
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.3925,
+      "f1_SHORT": 0.28,
+      "f1_FLAT": 0.74,
+      "f1_LONG": 0.03,
+      "best_epoch": 20
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.4409,
+      "f1_SHORT": 0.33,
+      "f1_FLAT": 0.68,
+      "f1_LONG": 0.05,
+      "best_epoch": 50
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.4468,
+      "f1_SHORT": 0.38,
+      "f1_FLAT": 0.69,
+      "f1_LONG": 0.07,
+      "best_epoch": 55
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.4667,
+      "f1_SHORT": 0.4,
+      "f1_FLAT": 0.7,
+      "f1_LONG": 0.08,
+      "best_epoch": 30
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.4582,
+      "f1_SHORT": 0.42,
+      "f1_FLAT": 0.68,
+      "f1_LONG": 0.07,
+      "best_epoch": 40
+    }
+  ],
+  "complement_asymmetric_oof": {
+    "n_pool": 32068,
+    "n_complement": 10049,
+    "n_bull": 9511,
+    "n_bear": 538,
+    "bull_precision": 0.4542,
+    "bear_precision": 0.5242,
+    "mixed_precision_dir": 0.5633,
+    "bull_thr": 0.38,
+    "bear_thr": 0.5
+  },
+  "baseline_compare": "lstm_best.pt hard_consensus (08_oof_ic32_full_stack)",
+  "created": "2026-06-17T20:30:09.997148",
+  "train_cutoff": "2026-04-01",
+  "methodology": "purged CV OOF, scaler per fold, complement flat-only, holdout not used"
+}

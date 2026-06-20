@@ -1,0 +1,41 @@
+{
+  "total_trades": 8833,
+  "all_avg_modal": 14.1,
+  "profit_net_pnl_gt_0": {
+    "n": 5782,
+    "avg_modal": 14.15,
+    "median_modal": 14.49,
+    "avg_pnl": 1.79,
+    "pct_of_trades": 65.5
+  },
+  "loss_net_pnl_le_0": {
+    "n": 3051,
+    "avg_modal": 14.01,
+    "median_modal": 13.71,
+    "avg_pnl": -1.3897,
+    "pct_of_trades": 34.5
+  },
+  "sl_hit_LOSS": {
+    "n": 2219,
+    "avg_modal": 13.85,
+    "median_modal": 13.39,
+    "avg_pnl": -1.6073,
+    "pct_of_trades": 25.1
+  },
+  "guardian_exit_profit": {
+    "n": 5171,
+    "avg_modal": 14.15,
+    "median_modal": 14.52,
+    "avg_pnl": 1.952,
+    "pct_of_trades": 58.5
+  },
+  "guardian_exit_loss": {
+    "n": 795,
+    "avg_modal": 14.49,
+    "median_modal": 15.01,
+    "avg_pnl": -0.83,
+    "pct_of_trades": 9.0
+  },
+  "delta_win_vs_loss_modal": 0.15,
+  "delta_win_vs_sl_modal": 0.3
+}

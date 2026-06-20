@@ -1,0 +1,31 @@
+{
+  "methodology": "holdout_diagnostic_once",
+  "period": "Apr-Jun 2026",
+  "stack": "B-dir + continuation_v1 + min_hold=4",
+  "dynsize_winner": "cm_0.60",
+  "results": {
+    "fixed_modal": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 72.36,
+      "total_pnl": 247.23,
+      "pnl_per_trade": 0.5025,
+      "ppt_norm": 0.5025,
+      "profit_factor": 3.763,
+      "avg_modal": 10.0
+    },
+    "dynsize_cm_0.60": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 72.36,
+      "total_pnl": 350.04,
+      "pnl_per_trade": 0.7115,
+      "ppt_norm": 0.507,
+      "profit_factor": 3.727,
+      "avg_modal": 14.03
+    }
+  },
+  "delta_ppt": 0.209,
+  "delta_ppt_norm": 0.0045,
+  "created": "2026-06-18T14:50:03.799214"
+}

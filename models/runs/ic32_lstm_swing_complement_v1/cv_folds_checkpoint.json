@@ -1,0 +1,10 @@
+[
+  {"fold": 1, "val_f1": 0.3775, "f1_SHORT": 0.35, "f1_FLAT": 0.55, "f1_LONG": 0.21, "best_epoch": 45},
+  {"fold": 2, "val_f1": 0.4292, "f1_SHORT": 0.43, "f1_FLAT": 0.59, "f1_LONG": 0.13, "best_epoch": 45},
+  {"fold": 3, "val_f1": 0.4399, "f1_SHORT": 0.39, "f1_FLAT": 0.67, "f1_LONG": 0.05, "best_epoch": 50},
+  {"fold": 4, "val_f1": 0.3925, "f1_SHORT": 0.28, "f1_FLAT": 0.74, "f1_LONG": 0.03, "best_epoch": 20},
+  {"fold": 5, "val_f1": 0.4409, "f1_SHORT": 0.33, "f1_FLAT": 0.68, "f1_LONG": 0.05, "best_epoch": 50},
+  {"fold": 6, "val_f1": 0.4468, "f1_SHORT": 0.38, "f1_FLAT": 0.69, "f1_LONG": 0.07, "best_epoch": 55},
+  {"fold": 7, "val_f1": 0.4667, "f1_SHORT": 0.40, "f1_FLAT": 0.70, "f1_LONG": 0.08, "best_epoch": 30},
+  {"fold": 8, "val_f1": 0.4582, "f1_SHORT": 0.42, "f1_FLAT": 0.68, "f1_LONG": 0.07, "best_epoch": 40}
+]

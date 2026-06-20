@@ -1,0 +1,72 @@
+{
+  "meta": {
+    "type": "guardian_variant_diagnostic",
+    "note": "Entry frozen B-dir-combined; NOT a new holdout tune. Guardian variant compare only.",
+    "holdout_period": "2026-04-01 to 2026-06-13",
+    "sl_trigger_mode": "close",
+    "generated_at": "2026-06-18T03:21:58.080410"
+  },
+  "variants": {
+    "guardian_clean_v2": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 68.5,
+      "total_pnl": 181.48,
+      "pnl_per_trade": 0.3689,
+      "profit_factor": 3.008,
+      "guardian_exit_pct": 78.25,
+      "momentum_exit_pct": 48.17,
+      "sl_rate_pct": 11.59,
+      "avg_hold_bars": 11.92,
+      "median_hold_bars": 6.0,
+      "outcome_counts": {
+        "GUARDIAN_MOMENTUM_EXIT": 172,
+        "GUARDIAN_MOMENTUM_PARTIAL": 30,
+        "GUARDIAN_EXIT": 183,
+        "LOSS": 57,
+        "TIMEOUT": 15,
+        "TIMEOUT_MOMENTUM": 35
+      }
+    },
+    "ic32_guardian_continuation_v1": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 72.36,
+      "total_pnl": 238.05,
+      "pnl_per_trade": 0.4838,
+      "profit_factor": 3.735,
+      "guardian_exit_pct": 72.36,
+      "momentum_exit_pct": 51.22,
+      "sl_rate_pct": 19.51,
+      "avg_hold_bars": 12.22,
+      "median_hold_bars": 7.0,
+      "outcome_counts": {
+        "GUARDIAN_MOMENTUM_EXIT": 207,
+        "GUARDIAN_MOMENTUM_PARTIAL": 21,
+        "GUARDIAN_EXIT": 128,
+        "TIMEOUT": 16,
+        "LOSS": 96,
+        "TIMEOUT_MOMENTUM": 24
+      }
+    }
+  },
+  "vs_prior_clean_v2_holdout": {
+    "total_trades": 492,
+    "trades_per_month": 196.8,
+    "win_rate": 66.46,
+    "long_pct": 55.08,
+    "short_long_ratio": 0.815,
+    "total_pnl": 167.23,
+    "pnl_per_trade": 0.3399,
+    "profit_factor": 2.687,
+    "guardian_exit_pct": 73.17,
+    "outcome_counts": {
+      "GUARDIAN_MOMENTUM_EXIT": 167,
+      "GUARDIAN_MOMENTUM_PARTIAL": 30,
+      "GUARDIAN_EXIT": 163,
+      "LOSS": 86,
+      "TIMEOUT": 13,
+      "TIMEOUT_MOMENTUM": 33
+    }
+  }
+}

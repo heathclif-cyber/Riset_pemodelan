@@ -1,0 +1,237 @@
+{
+  "cases_analyzed": 14,
+  "top_feature_divergence": [
+    {
+      "feature": "ofi_h4_delta",
+      "mean": 1594357.851642857,
+      "max": 11470128.0,
+      "count": 14
+    },
+    {
+      "feature": "rsi_h4",
+      "mean": 4.768368785714286,
+      "max": 8.658758,
+      "count": 14
+    },
+    {
+      "feature": "stochrsi_d",
+      "mean": 1.3938739285714286,
+      "max": 2.630254,
+      "count": 14
+    },
+    {
+      "feature": "vol_spike_zscore",
+      "mean": 1.2429299285714286,
+      "max": 2.930683,
+      "count": 14
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "mean": 1.2142857142857142,
+      "max": 3.0,
+      "count": 14
+    },
+    {
+      "feature": "long_short_ratio",
+      "mean": 1.000779642857143,
+      "max": 1.008262,
+      "count": 14
+    },
+    {
+      "feature": "vol_ratio_20",
+      "mean": 0.6749167142857143,
+      "max": 1.36773,
+      "count": 14
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "mean": 0.31647492857142856,
+      "max": 0.596925,
+      "count": 14
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "mean": 0.2591751428571429,
+      "max": 0.483481,
+      "count": 14
+    },
+    {
+      "feature": "close",
+      "mean": 0.1507635714285714,
+      "max": 1.05,
+      "count": 14
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "mean": 0.14948935714285713,
+      "max": 0.620258,
+      "count": 14
+    },
+    {
+      "feature": "log_ret_20",
+      "mean": 0.004328285714285714,
+      "max": 0.009106,
+      "count": 14
+    }
+  ],
+  "per_case": [
+    {
+      "case": "2026-06-08 09 ADAUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.6651,
+      "live_lgbm": "LONG",
+      "live_lstm": "SHORT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-08 09 SUIUSDT",
+      "hold_dir": "SHORT",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BEARISH",
+      "hold_lgbm_conf": 0.8484,
+      "live_lgbm": "LONG",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-08 12 LINKUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.7297,
+      "live_lgbm": "LONG",
+      "live_lstm": "SHORT",
+      "live_reason": "",
+      "root_cause_tags": "holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-09 13 LINKUSDT",
+      "hold_dir": "SHORT",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BEARISH",
+      "hold_lgbm_conf": 0.7912,
+      "live_lgbm": "LONG",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-10 06 SUIUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.7786,
+      "live_lgbm": "LONG",
+      "live_lstm": "SHORT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 SOLUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.7338,
+      "live_lgbm": "FLAT",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 ADAUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.7745,
+      "live_lgbm": "FLAT",
+      "live_lstm": "LONG",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 LINKUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.809,
+      "live_lgbm": "FLAT",
+      "live_lstm": null,
+      "live_reason": "",
+      "root_cause_tags": "lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 SUIUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.8157,
+      "live_lgbm": "FLAT",
+      "live_lstm": "LONG",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 ARBUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.8012,
+      "live_lgbm": "LONG",
+      "live_lstm": "LONG",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 TAOUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.8172,
+      "live_lgbm": "FLAT",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 08 XRPUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.8113,
+      "live_lgbm": "FLAT",
+      "live_lstm": "LONG",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|lgbm_decision_diff|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-11 09 TONUSDT",
+      "hold_dir": "LONG",
+      "live_dir": "FLAT",
+      "hold_lgbm": "BULLISH",
+      "hold_lgbm_conf": 0.7372,
+      "live_lgbm": "LONG",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "hmm_regime_mismatch|holdout_lgbm_vs_trade_dir"
+    },
+    {
+      "case": "2026-06-12 20 TAOUSDT",
+      "hold_dir": "SHORT",
+      "live_dir": "SHORT",
+      "hold_lgbm": "BEARISH",
+      "hold_lgbm_conf": 0.809,
+      "live_lgbm": "SHORT",
+      "live_lstm": "FLAT",
+      "live_reason": "",
+      "root_cause_tags": "holdout_lgbm_vs_trade_dir"
+    }
+  ],
+  "findings": [
+    "hmm_regime_enc beda di 14 kasus \u2014 holdout pakai precomputed parquet, live hitung ulang per jam",
+    "long_short_ratio live selalu 0 (by design data_service.py); holdout pakai nilai historis parquet"
+  ]
+}

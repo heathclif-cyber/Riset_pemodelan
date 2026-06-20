@@ -1,0 +1,76 @@
+{
+  "run_name": "tb_lstm_probe_asym_a",
+  "probe": "A_asymmetric_complement_strong_reg",
+  "hyperparams": {
+    "run_name": "tb_lstm_probe_asym_a",
+    "hidden": 64,
+    "layers": 1,
+    "dropout": 0.55,
+    "weight_decay": 0.0005,
+    "lr": 0.0005,
+    "n_folds": 4,
+    "epochs": 60,
+    "patience": 8,
+    "bull_thr": 0.4,
+    "bear_thr": 0.55,
+    "vol_spike_thr": 2.0
+  },
+  "mean_f1_macro": 0.3816,
+  "std_f1_macro": 0.0088,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.37,
+      "f1_BEARISH": 0.2914,
+      "f1_NEUTRAL": 0.4766,
+      "f1_BULLISH": 0.342,
+      "best_epoch": 25
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.3778,
+      "f1_BEARISH": 0.2598,
+      "f1_NEUTRAL": 0.5959,
+      "f1_BULLISH": 0.2778,
+      "best_epoch": 11
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.3939,
+      "f1_BEARISH": 0.2824,
+      "f1_NEUTRAL": 0.5973,
+      "f1_BULLISH": 0.3021,
+      "best_epoch": 6
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.3847,
+      "f1_BEARISH": 0.3229,
+      "f1_NEUTRAL": 0.519,
+      "f1_BULLISH": 0.3121,
+      "best_epoch": 22
+    }
+  ],
+  "complement_asymmetric": {
+    "bull_thr": 0.4,
+    "bear_thr": 0.55,
+    "n_complement": 11829,
+    "n_bull": 11829,
+    "n_bear": 0,
+    "n_pool": 36406,
+    "bull_precision": 0.249,
+    "bear_precision": 0.0,
+    "mixed_precision_dir": 0.3806
+  },
+  "features": [
+    "cvd_slope_h4",
+    "ofi_acceleration",
+    "ofi_raw",
+    "ofi_z_score",
+    "buy_volume",
+    "sell_volume",
+    "trend_accel_4h",
+    "cvd"
+  ],
+  "created": "2026-06-16T09:18:46.503825"
+}

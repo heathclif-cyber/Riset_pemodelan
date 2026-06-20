@@ -1,0 +1,23 @@
+{
+  "run_name": "tb_meta_v1",
+  "base_model": "tb_lgbm_widyawardhana_v3",
+  "total_oof_trades": 22988,
+  "win_rate": 0.4124,
+  "loss_rate": 0.5876,
+  "oof_bar_coverage": 731164,
+  "meta_features": [
+    "p_short",
+    "p_flat",
+    "p_long",
+    "confidence",
+    "direction",
+    "atr_percentile_h1",
+    "funding_rate",
+    "wyckoff_phase",
+    "stochrsi_k",
+    "ofi_h4_delta",
+    "Sell_Liq"
+  ],
+  "conf_threshold": 0.45,
+  "generated_at": "2026-06-11T16:37:08.111619"
+}

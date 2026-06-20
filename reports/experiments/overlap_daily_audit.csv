@@ -1,0 +1,7 @@
+date_wita,hold_trades,hold_long,hold_short,hold_pnl,live_trades,live_long,live_short,live_pnl,live_signals_total,live_signals_flat,live_signals_long,live_signals_short,only_holdout_count,only_live_count,dir_conflict_coins,matched_coins
+2026-06-08,7,4,3,7.3,7,4,3,0.21,480,436,23,21,6,5,1,0
+2026-06-09,5,0,5,10.38,13,6,7,1.1,480,451,7,22,1,9,1,3
+2026-06-10,3,2,1,4.97,11,0,11,3.39,480,448,5,27,1,10,1,0
+2026-06-11,9,8,1,22.32,10,3,7,-2.31,480,468,5,7,4,3,5,0
+2026-06-12,7,0,7,-1.87,12,4,8,-1.13,480,457,5,18,4,9,2,1
+2026-06-13,1,0,1,1.39,6,4,2,-1.03,480,464,11,5,1,6,0,0

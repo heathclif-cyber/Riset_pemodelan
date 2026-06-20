@@ -1,0 +1,46 @@
+---
+pid: 13788
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "python D:\\Apps-Dev\\Riset_pemodelan\\pipeline\\05i_lstm_fusion_stage1_signal.py"
+started_at: 2026-06-16T05:04:07.751Z
+running_for_ms: 26410005 
+---
+
+==============================================================================
+  STAGE 1: LSTM Score Fusion — SIGNAL ONLY (OOF genuine)
+  LGBM OOF + LSTM OOF | HMM Config B | NO Guardian | holdout sealed
+  Configs: 145 | Top-12 -> Stage 2
+==============================================================================
+  Preloading coins (TRAIN_CUTOFF enforced)...
+  Coins: 21 | LGBM OOF bars: 729,212
+  LSTM OOF bars aligned: 141,562
+  Rally diagnostic bars (frac_up>=0.8, max_p2<0.45): 1,888
+
+  BASELINE signals: LONG=15,994 SHORT=20,708 FLAT=692,510
+  ... 30/144 configs done
+  ... 60/144 configs done
+  ... 90/144 configs done
+  ... 120/144 configs done
+
+==============================================================================
+  TOP 12 BY RALLY/MOMENTUM SCORE (Stage 1)
+==============================================================================
+  Label                                       dLONG  dSHORT Rally+    n_dir  ratio
+  pre_hmm_all_oof_b10_n4_o6                  +3,957  +4,528     75   41,990  1.144
+  pre_hmm_all_oof_b10_n6_o6                  +3,957  +4,528     75   41,471  1.130
+  pre_hmm_all_oof_b10_n8_o6                  +3,957  +4,528     75   41,120  1.120
+  pre_hmm_all_oof_b10_n4_o10                 +3,957  +4,529     75   41,621  1.134
+  pre_hmm_all_oof_b10_n4_o14                 +3,957  +4,529     75   41,468  1.130
+  pre_hmm_all_oof_b10_n6_o10                 +3,957  +4,529     75   41,102  1.120
+  pre_hmm_all_oof_b10_n6_o14                 +3,957  +4,529     75   40,949  1.116
+  pre_hmm_all_oof_b10_n8_o10                 +3,957  +4,529     75   40,751  1.110
+  pre_hmm_all_oof_b10_n8_o14                 +3,957  +4,529     75   40,598  1.106
+  pre_hmm_all_oof_b8_n4_o6                   +2,659  +3,153     48   39,317  1.071
+  pre_hmm_all_oof_b8_n4_o10                  +2,659  +3,153     48   38,947  1.061
+  pre_hmm_all_oof_b8_n4_o14                  +2,659  +3,153     48   38,794  1.057
+
+  Elapsed: 104.9s
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\lstm_fusion_stage1_signal.json
+  Next: python pipeline/05i_lstm_fusion_stage2_pipeline.py
+==============================================================================
+

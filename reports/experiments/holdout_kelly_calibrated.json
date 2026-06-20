@@ -1,0 +1,94 @@
+{
+  "model": "tb_widyawardhana_v2_continuation",
+  "period": "Apr-Jun 2026",
+  "total_trades": 918,
+  "win_rate": 70.3,
+  "avg_rr": 1.0852,
+  "mae_raw_conf": 0.1062,
+  "mae_platt": 0.0455,
+  "f_baseline_uncal": 0.2245,
+  "f_baseline_platt": 0.3149,
+  "f_baseline_iso": 0.3158,
+  "results": {
+    "Fixed $10": {
+      "total_pnl": 284.06,
+      "monthly": {
+        "2026-04": 163.69,
+        "2026-05": 101.53,
+        "2026-06": 18.84
+      },
+      "avg_factor": 1.0,
+      "avg_modal": 10.0,
+      "max_dd": -8.65,
+      "f_range": [
+        1.0,
+        1.0
+      ],
+      "pct_above1": 0.0
+    },
+    "D_shift3": {
+      "total_pnl": 416.15,
+      "monthly": {
+        "2026-04": 228.36,
+        "2026-05": 153.71,
+        "2026-06": 34.08
+      },
+      "avg_factor": 1.333,
+      "avg_modal": 13.33,
+      "max_dd": -7.48,
+      "f_range": [
+        0.5,
+        1.9
+      ],
+      "pct_above1": 84.4
+    },
+    "Kelly-norm (uncal, avg_b)": {
+      "total_pnl": 320.72,
+      "monthly": {
+        "2026-04": 179.89,
+        "2026-05": 121.29,
+        "2026-06": 19.54
+      },
+      "avg_factor": 1.004,
+      "avg_modal": 10.04,
+      "max_dd": -6.89,
+      "f_range": [
+        0.3,
+        2.46
+      ],
+      "pct_above1": 48.0
+    },
+    "Kelly-Platt + per-b": {
+      "total_pnl": 304.89,
+      "monthly": {
+        "2026-04": 117.42,
+        "2026-05": 158.26,
+        "2026-06": 29.21
+      },
+      "avg_factor": 1.035,
+      "avg_modal": 10.35,
+      "max_dd": -10.4,
+      "f_range": [
+        0.3,
+        2.05
+      ],
+      "pct_above1": 56.6
+    },
+    "Kelly-Isotonic + per-b": {
+      "total_pnl": 309.56,
+      "monthly": {
+        "2026-04": 117.13,
+        "2026-05": 163.32,
+        "2026-06": 29.11
+      },
+      "avg_factor": 1.036,
+      "avg_modal": 10.36,
+      "max_dd": -8.78,
+      "f_range": [
+        0.3,
+        2.8
+      ],
+      "pct_above1": 53.3
+    }
+  }
+}

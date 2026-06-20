@@ -1,0 +1,80 @@
+{
+  "lstm_comp_thr": 0.4,
+  "vol_spike_thr": 2.0,
+  "hmm_thr_cfg": {
+    "0": [
+      0.55,
+      0.55
+    ],
+    "1": [
+      0.55,
+      0.55
+    ],
+    "2": [
+      0.5,
+      0.5
+    ],
+    "3": [
+      0.45,
+      0.5
+    ],
+    "-1": [
+      0.45,
+      0.45
+    ]
+  },
+  "sweep_method": "OOF_complement_simulation",
+  "sweep_all": [
+    {
+      "lstm_thr": 0.4,
+      "n_complement": 18441,
+      "n_candidates": 39160,
+      "precision_all": 0.3133,
+      "precision_directional": 0.5152,
+      "coverage_pct": 47.09,
+      "bull_pct": 0.6332,
+      "bear_pct": 0.3668
+    },
+    {
+      "lstm_thr": 0.45,
+      "n_complement": 9671,
+      "n_candidates": 39160,
+      "precision_all": 0.3178,
+      "precision_directional": 0.4919,
+      "coverage_pct": 24.7,
+      "bull_pct": 0.7646,
+      "bear_pct": 0.2354
+    },
+    {
+      "lstm_thr": 0.5,
+      "n_complement": 4660,
+      "n_candidates": 39160,
+      "precision_all": 0.3191,
+      "precision_directional": 0.4645,
+      "coverage_pct": 11.9,
+      "bull_pct": 0.8783,
+      "bear_pct": 0.1217
+    },
+    {
+      "lstm_thr": 0.55,
+      "n_complement": 1710,
+      "n_candidates": 39160,
+      "precision_all": 0.3368,
+      "precision_directional": 0.4597,
+      "coverage_pct": 4.37,
+      "bull_pct": 0.9491,
+      "bear_pct": 0.0509
+    },
+    {
+      "lstm_thr": 0.6,
+      "n_complement": 503,
+      "n_candidates": 39160,
+      "precision_all": 0.34,
+      "precision_directional": 0.4685,
+      "coverage_pct": 1.28,
+      "bull_pct": 0.9861,
+      "bear_pct": 0.0139
+    }
+  ],
+  "created": "2026-06-16T17:46:19.658066"
+}

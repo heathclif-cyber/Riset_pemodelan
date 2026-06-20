@@ -1,0 +1,2112 @@
+{
+  "run_id": "tb_fs_shap_v1",
+  "n_features_in": 115,
+  "top_n": 35,
+  "corr_thresh": 0.8,
+  "top_features": [
+    "dist_liq_50x_long",
+    "dist_liq_50x_short",
+    "vol_spike_zscore",
+    "dist_from_8h_high",
+    "absorption_at_swing",
+    "dist_liq_20x_long",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "trend_accel_4h",
+    "stochrsi_k",
+    "swing_momentum",
+    "atr_percent_h4",
+    "rsi_slope_h4",
+    "dist_liq_20x_short",
+    "relative_strength_z",
+    "cvd_momentum_adv",
+    "stochrsi_d",
+    "relative_strength_momentum",
+    "rsi_divergence",
+    "whale_retail_divergence",
+    "log_ret_5",
+    "POC",
+    "ema_7_h1",
+    "ofi_z_score",
+    "cvd_div_h4",
+    "rsi_6",
+    "MSB_BOS",
+    "log_ret_1",
+    "PDL",
+    "time_below_entry_8",
+    "time_above_entry_8",
+    "ultra_high_vol",
+    "dist_swing_low",
+    "dow_cos",
+    "long_short_ratio"
+  ],
+  "ranking": [
+    {
+      "feature": "dist_liq_50x_long",
+      "gain_norm": 0.7122,
+      "shap_norm": 1.0,
+      "ic_norm": 0.6712,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "dist_liq_20x_long"
+      ],
+      "score": 0.8006,
+      "penalty": 0.05,
+      "score_adj": 0.7506,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "gain_norm": 0.6079,
+      "shap_norm": 0.9587,
+      "ic_norm": 0.4808,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "dist_liq_20x_short"
+      ],
+      "score": 0.6925,
+      "penalty": 0.05,
+      "score_adj": 0.6425,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "vol_spike_zscore",
+      "gain_norm": 1.0,
+      "shap_norm": 0.6111,
+      "ic_norm": 0.0529,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "vol_ratio_20",
+        "vol_regime",
+        "effort_vs_result"
+      ],
+      "score": 0.5798,
+      "penalty": 0.15,
+      "score_adj": 0.4298,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "gain_norm": 0.3143,
+      "shap_norm": 0.3561,
+      "ic_norm": 1.0,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "ema_7_h1",
+        "ema_7_h4",
+        "rsi_6"
+      ],
+      "score": 0.5347,
+      "penalty": 0.15,
+      "score_adj": 0.3847,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "absorption_at_swing",
+      "gain_norm": 0.3123,
+      "shap_norm": 0.2375,
+      "ic_norm": 0.2827,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.2772,
+      "penalty": 0.0,
+      "score_adj": 0.2772,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "gain_norm": 0.1715,
+      "shap_norm": 0.3665,
+      "ic_norm": 0.4375,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "dist_liq_50x_long"
+      ],
+      "score": 0.3195,
+      "penalty": 0.05,
+      "score_adj": 0.2695,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "gain_norm": 0.0951,
+      "shap_norm": 0.2395,
+      "ic_norm": 0.3635,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.2262,
+      "penalty": 0.0,
+      "score_adj": 0.2262,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "gain_norm": 0.0503,
+      "shap_norm": 0.0977,
+      "ic_norm": 0.5096,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.2047,
+      "penalty": 0.0,
+      "score_adj": 0.2047,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "trend_accel_4h",
+      "gain_norm": 0.0035,
+      "shap_norm": 0.0059,
+      "ic_norm": 0.6606,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.2015,
+      "penalty": 0.0,
+      "score_adj": 0.2015,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_k",
+      "gain_norm": 0.0448,
+      "shap_norm": 0.0505,
+      "ic_norm": 0.6894,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "stochrsi_d"
+      ],
+      "score": 0.2402,
+      "penalty": 0.05,
+      "score_adj": 0.1902,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "swing_momentum",
+      "gain_norm": 0.0157,
+      "shap_norm": 0.0138,
+      "ic_norm": 0.7538,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "rsi_slope_h4"
+      ],
+      "score": 0.2365,
+      "penalty": 0.05,
+      "score_adj": 0.1865,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "atr_percent_h4",
+      "gain_norm": 0.1778,
+      "shap_norm": 0.2221,
+      "ic_norm": 0.1144,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.1743,
+      "penalty": 0.0,
+      "score_adj": 0.1743,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "rsi_slope_h4",
+      "gain_norm": 0.0507,
+      "shap_norm": 0.0376,
+      "ic_norm": 0.5962,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "swing_momentum"
+      ],
+      "score": 0.2097,
+      "penalty": 0.05,
+      "score_adj": 0.1597,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "gain_norm": 0.1552,
+      "shap_norm": 0.2794,
+      "ic_norm": 0.1856,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "dist_liq_50x_short"
+      ],
+      "score": 0.2078,
+      "penalty": 0.05,
+      "score_adj": 0.1578,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "relative_strength_z",
+      "gain_norm": 0.0037,
+      "shap_norm": 0.0125,
+      "ic_norm": 0.4577,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.143,
+      "penalty": 0.0,
+      "score_adj": 0.143,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "gain_norm": 0.009,
+      "shap_norm": 0.0131,
+      "ic_norm": 0.4346,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.1381,
+      "penalty": 0.0,
+      "score_adj": 0.1381,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_d",
+      "gain_norm": 0.0219,
+      "shap_norm": 0.0514,
+      "ic_norm": 0.5212,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "stochrsi_k"
+      ],
+      "score": 0.182,
+      "penalty": 0.05,
+      "score_adj": 0.132,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "relative_strength_momentum",
+      "gain_norm": 0.001,
+      "shap_norm": 0.001,
+      "ic_norm": 0.4019,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.1213,
+      "penalty": 0.0,
+      "score_adj": 0.1213,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "rsi_divergence",
+      "gain_norm": 0.0003,
+      "shap_norm": 0.0008,
+      "ic_norm": 0.3644,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.1097,
+      "penalty": 0.0,
+      "score_adj": 0.1097,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "gain_norm": 0.0145,
+      "shap_norm": 0.0661,
+      "ic_norm": 0.2346,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0986,
+      "penalty": 0.0,
+      "score_adj": 0.0986,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "log_ret_5",
+      "gain_norm": 0.0134,
+      "shap_norm": 0.0248,
+      "ic_norm": 0.776,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "ema_7_h1",
+        "ema_7_h4",
+        "rsi_6"
+      ],
+      "score": 0.2461,
+      "penalty": 0.15,
+      "score_adj": 0.0961,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "POC",
+      "gain_norm": 0.0013,
+      "shap_norm": 0.0014,
+      "ic_norm": 0.5894,
+      "n_corr_partners": 2,
+      "corr_partners": [
+        "VAH",
+        "VAL"
+      ],
+      "score": 0.1778,
+      "penalty": 0.1,
+      "score_adj": 0.0778,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_7_h1",
+      "gain_norm": 0.176,
+      "shap_norm": 0.1327,
+      "ic_norm": 0.8875,
+      "n_corr_partners": 7,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_7_h4",
+        "ema_21_h4",
+        "rsi_6",
+        "log_ret_5",
+        "rsi_h4",
+        "dist_from_8h_high"
+      ],
+      "score": 0.3743,
+      "penalty": 0.3,
+      "score_adj": 0.0743,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ofi_z_score",
+      "gain_norm": 0.0024,
+      "shap_norm": 0.0105,
+      "ic_norm": 0.225,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.072,
+      "penalty": 0.0,
+      "score_adj": 0.072,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "cvd_div_h4",
+      "gain_norm": 0.0549,
+      "shap_norm": 0.0867,
+      "ic_norm": 0.0587,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0671,
+      "penalty": 0.0,
+      "score_adj": 0.0671,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "rsi_6",
+      "gain_norm": 0.0225,
+      "shap_norm": 0.0221,
+      "ic_norm": 0.9288,
+      "n_corr_partners": 5,
+      "corr_partners": [
+        "ema_7_h1",
+        "ema_7_h4",
+        "log_ret_5",
+        "rsi_h4",
+        "dist_from_8h_high"
+      ],
+      "score": 0.2943,
+      "penalty": 0.25,
+      "score_adj": 0.0443,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "MSB_BOS",
+      "gain_norm": 0.0006,
+      "shap_norm": 0.0016,
+      "ic_norm": 0.1394,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0426,
+      "penalty": 0.0,
+      "score_adj": 0.0426,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "log_ret_1",
+      "gain_norm": 0.002,
+      "shap_norm": 0.0052,
+      "ic_norm": 0.4615,
+      "n_corr_partners": 2,
+      "corr_partners": [
+        "volume_delta",
+        "long_short_ratio"
+      ],
+      "score": 0.141,
+      "penalty": 0.1,
+      "score_adj": 0.041,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "PDL",
+      "gain_norm": 0.0078,
+      "shap_norm": 0.0064,
+      "ic_norm": 0.2865,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "ema_21_slope_h4"
+      ],
+      "score": 0.0909,
+      "penalty": 0.05,
+      "score_adj": 0.0409,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "time_below_entry_8",
+      "gain_norm": 0.0025,
+      "shap_norm": 0.0079,
+      "ic_norm": 0.2904,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "time_above_entry_8"
+      ],
+      "score": 0.0907,
+      "penalty": 0.05,
+      "score_adj": 0.0407,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "time_above_entry_8",
+      "gain_norm": 0.0017,
+      "shap_norm": 0.0107,
+      "ic_norm": 0.2875,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "time_below_entry_8"
+      ],
+      "score": 0.0906,
+      "penalty": 0.05,
+      "score_adj": 0.0406,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ultra_high_vol",
+      "gain_norm": 0.0666,
+      "shap_norm": 0.0306,
+      "ic_norm": 0.0173,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0392,
+      "penalty": 0.0,
+      "score_adj": 0.0392,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "dist_swing_low",
+      "gain_norm": 0.1553,
+      "shap_norm": 0.3057,
+      "ic_norm": 0.5817,
+      "n_corr_partners": 8,
+      "corr_partners": [
+        "Buy_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "Fib_786",
+        "VAL",
+        "price_in_range",
+        "rsi_h4"
+      ],
+      "score": 0.3359,
+      "penalty": 0.3,
+      "score_adj": 0.0359,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "dow_cos",
+      "gain_norm": 0.0102,
+      "shap_norm": 0.0291,
+      "ic_norm": 0.0625,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0325,
+      "penalty": 0.0,
+      "score_adj": 0.0325,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "long_short_ratio",
+      "gain_norm": 0.0034,
+      "shap_norm": 0.0168,
+      "ic_norm": 0.4144,
+      "n_corr_partners": 2,
+      "corr_partners": [
+        "volume_delta",
+        "log_ret_1"
+      ],
+      "score": 0.1314,
+      "penalty": 0.1,
+      "score_adj": 0.0314,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "price_accel_1h",
+      "gain_norm": 0.0008,
+      "shap_norm": 0.0024,
+      "ic_norm": 0.099,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0308,
+      "penalty": 0.0,
+      "score_adj": 0.0308,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "ofi_momentum_ratio",
+      "gain_norm": 0.0003,
+      "shap_norm": 0.0009,
+      "ic_norm": 0.0913,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0278,
+      "penalty": 0.0,
+      "score_adj": 0.0278,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "ofi_acceleration",
+      "gain_norm": 0.0042,
+      "shap_norm": 0.0173,
+      "ic_norm": 0.0673,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0277,
+      "penalty": 0.0,
+      "score_adj": 0.0277,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "cvd",
+      "gain_norm": 0.0038,
+      "shap_norm": 0.0092,
+      "ic_norm": 0.074,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0268,
+      "penalty": 0.0,
+      "score_adj": 0.0268,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "mae_8",
+      "gain_norm": 0.0131,
+      "shap_norm": 0.0479,
+      "ic_norm": 0.1817,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "mfe_8"
+      ],
+      "score": 0.0759,
+      "penalty": 0.05,
+      "score_adj": 0.0259,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "Buy_Liq",
+      "gain_norm": 0.0752,
+      "shap_norm": 0.1726,
+      "ic_norm": 0.4606,
+      "n_corr_partners": 4,
+      "corr_partners": [
+        "Fib_618",
+        "Fib_786",
+        "dist_swing_low",
+        "price_in_range"
+      ],
+      "score": 0.2249,
+      "penalty": 0.2,
+      "score_adj": 0.0249,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "open_interest",
+      "gain_norm": 0.0053,
+      "shap_norm": 0.009,
+      "ic_norm": 0.0615,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0235,
+      "penalty": 0.0,
+      "score_adj": 0.0235,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "vwdp_smooth",
+      "gain_norm": 0.0016,
+      "shap_norm": 0.0043,
+      "ic_norm": 0.0712,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0234,
+      "penalty": 0.0,
+      "score_adj": 0.0234,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "volume_delta",
+      "gain_norm": 0.0011,
+      "shap_norm": 0.0023,
+      "ic_norm": 0.4,
+      "n_corr_partners": 2,
+      "corr_partners": [
+        "log_ret_1",
+        "long_short_ratio"
+      ],
+      "score": 0.1212,
+      "penalty": 0.1,
+      "score_adj": 0.0212,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "market_session",
+      "gain_norm": 0.0008,
+      "shap_norm": 0.0009,
+      "ic_norm": 0.0615,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0191,
+      "penalty": 0.0,
+      "score_adj": 0.0191,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "hour_sin",
+      "gain_norm": 0.007,
+      "shap_norm": 0.0078,
+      "ic_norm": 0.0462,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.019,
+      "penalty": 0.0,
+      "score_adj": 0.019,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "Sell_Liq",
+      "gain_norm": 0.1601,
+      "shap_norm": 0.2421,
+      "ic_norm": 0.426,
+      "n_corr_partners": 5,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_21_h4",
+        "VAH",
+        "dist_swing_high",
+        "price_in_range"
+      ],
+      "score": 0.2686,
+      "penalty": 0.25,
+      "score_adj": 0.0186,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "vwdp",
+      "gain_norm": 0.0003,
+      "shap_norm": 0.0011,
+      "ic_norm": 0.224,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "ofi_raw"
+      ],
+      "score": 0.0677,
+      "penalty": 0.05,
+      "score_adj": 0.0177,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "dynamic_position_pressure",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0001,
+      "ic_norm": 0.0558,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0168,
+      "penalty": 0.0,
+      "score_adj": 0.0168,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "etf_total_change_usd",
+      "gain_norm": 0.0387,
+      "shap_norm": 0.039,
+      "ic_norm": 0.1308,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "etf_gbtc_change_usd"
+      ],
+      "score": 0.0664,
+      "penalty": 0.05,
+      "score_adj": 0.0164,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "vol_accel_3h",
+      "gain_norm": 0.0112,
+      "shap_norm": 0.0254,
+      "ic_norm": 0.0115,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0163,
+      "penalty": 0.0,
+      "score_adj": 0.0163,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "PWL",
+      "gain_norm": 0.0065,
+      "shap_norm": 0.0122,
+      "ic_norm": 0.0308,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0158,
+      "penalty": 0.0,
+      "score_adj": 0.0158,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "dow_sin",
+      "gain_norm": 0.0132,
+      "shap_norm": 0.018,
+      "ic_norm": 0.0135,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.015,
+      "penalty": 0.0,
+      "score_adj": 0.015,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "range_expansion_h4",
+      "gain_norm": 0.009,
+      "shap_norm": 0.0106,
+      "ic_norm": 0.026,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0147,
+      "penalty": 0.0,
+      "score_adj": 0.0147,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "funding_price_div",
+      "gain_norm": 0.001,
+      "shap_norm": 0.0013,
+      "ic_norm": 0.0442,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0141,
+      "penalty": 0.0,
+      "score_adj": 0.0141,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "ofi_raw",
+      "gain_norm": 0.0005,
+      "shap_norm": 0.0012,
+      "ic_norm": 0.2087,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "vwdp"
+      ],
+      "score": 0.0632,
+      "penalty": 0.05,
+      "score_adj": 0.0132,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "funding_rate",
+      "gain_norm": 0.006,
+      "shap_norm": 0.0117,
+      "ic_norm": 0.0212,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0125,
+      "penalty": 0.0,
+      "score_adj": 0.0125,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "hidden_divergence",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0413,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0124,
+      "penalty": 0.0,
+      "score_adj": 0.0124,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "absorption_z",
+      "gain_norm": 0.0068,
+      "shap_norm": 0.0086,
+      "ic_norm": 0.0183,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0109,
+      "penalty": 0.0,
+      "score_adj": 0.0109,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "time_to_funding_norm",
+      "gain_norm": 0.0048,
+      "shap_norm": 0.006,
+      "ic_norm": 0.0202,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0098,
+      "penalty": 0.0,
+      "score_adj": 0.0098,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "PWH",
+      "gain_norm": 0.005,
+      "shap_norm": 0.0056,
+      "ic_norm": 0.0163,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0086,
+      "penalty": 0.0,
+      "score_adj": 0.0086,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "vol_price_confirm",
+      "gain_norm": 0.0134,
+      "shap_norm": 0.0132,
+      "ic_norm": 0.1625,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "h4_trend"
+      ],
+      "score": 0.0581,
+      "penalty": 0.05,
+      "score_adj": 0.0081,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "no_demand",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.025,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0075,
+      "penalty": 0.0,
+      "score_adj": 0.0075,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "bars_since_BOS",
+      "gain_norm": 0.0052,
+      "shap_norm": 0.008,
+      "ic_norm": 0.0077,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0069,
+      "penalty": 0.0,
+      "score_adj": 0.0069,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "mfe_8",
+      "gain_norm": 0.0052,
+      "shap_norm": 0.0105,
+      "ic_norm": 0.1712,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "mae_8"
+      ],
+      "score": 0.0568,
+      "penalty": 0.05,
+      "score_adj": 0.0068,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "spring_upthrust",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0202,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0061,
+      "penalty": 0.0,
+      "score_adj": 0.0061,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "no_supply",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0183,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0055,
+      "penalty": 0.0,
+      "score_adj": 0.0055,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "wyckoff_phase",
+      "gain_norm": 0.0072,
+      "shap_norm": 0.0069,
+      "ic_norm": 0.001,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0052,
+      "penalty": 0.0,
+      "score_adj": 0.0052,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "hour_cos",
+      "gain_norm": 0.003,
+      "shap_norm": 0.0059,
+      "ic_norm": 0.0048,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0046,
+      "penalty": 0.0,
+      "score_adj": 0.0046,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "SFP_sweep",
+      "gain_norm": 0.0001,
+      "shap_norm": 0.0003,
+      "ic_norm": 0.0115,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0036,
+      "penalty": 0.0,
+      "score_adj": 0.0036,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "etf_gbtc_change_usd",
+      "gain_norm": 0.0361,
+      "shap_norm": 0.0293,
+      "ic_norm": 0.1019,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "etf_total_change_usd"
+      ],
+      "score": 0.0535,
+      "penalty": 0.05,
+      "score_adj": 0.0035,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "CHoCH",
+      "gain_norm": 0.0007,
+      "shap_norm": 0.0039,
+      "ic_norm": 0.0038,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0028,
+      "penalty": 0.0,
+      "score_adj": 0.0028,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "FVG_up",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0,
+      "penalty": 0.0,
+      "score_adj": 0.0,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "FVG_down",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0,
+      "penalty": 0.0,
+      "score_adj": 0.0,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "btc_dominance",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0,
+      "penalty": 0.0,
+      "score_adj": 0.0,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "fear_greed",
+      "gain_norm": 0.0,
+      "shap_norm": 0.0,
+      "ic_norm": 0.0,
+      "n_corr_partners": 0,
+      "corr_partners": [],
+      "score": 0.0,
+      "penalty": 0.0,
+      "score_adj": 0.0,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "gain_norm": 0.008,
+      "shap_norm": 0.0145,
+      "ic_norm": 0.1221,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "atr_zscore_20d"
+      ],
+      "score": 0.0445,
+      "penalty": 0.05,
+      "score_adj": -0.0055,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "atr_zscore_20d",
+      "gain_norm": 0.0094,
+      "shap_norm": 0.0141,
+      "ic_norm": 0.1163,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "atr_percentile_h1"
+      ],
+      "score": 0.0431,
+      "penalty": 0.05,
+      "score_adj": -0.0069,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "ema_7_h4",
+      "gain_norm": 0.0445,
+      "shap_norm": 0.0252,
+      "ic_norm": 0.8875,
+      "n_corr_partners": 7,
+      "corr_partners": [
+        "ema_7_h1",
+        "ema_21_h1",
+        "ema_21_h4",
+        "rsi_6",
+        "log_ret_5",
+        "rsi_h4",
+        "dist_from_8h_high"
+      ],
+      "score": 0.2906,
+      "penalty": 0.3,
+      "score_adj": -0.0094,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "vol_regime",
+      "gain_norm": 0.193,
+      "shap_norm": 0.1345,
+      "ic_norm": 0.0615,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "vol_ratio_20",
+        "effort_vs_result",
+        "vol_spike_zscore"
+      ],
+      "score": 0.1331,
+      "penalty": 0.15,
+      "score_adj": -0.0169,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "mae_12",
+      "gain_norm": 0.0095,
+      "shap_norm": 0.0183,
+      "ic_norm": 0.074,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "mfe_12"
+      ],
+      "score": 0.0319,
+      "penalty": 0.05,
+      "score_adj": -0.0181,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "h4_trend",
+      "gain_norm": 0.0003,
+      "shap_norm": 0.0011,
+      "ic_norm": 0.251,
+      "n_corr_partners": 2,
+      "corr_partners": [
+        "ema_21_slope_h4",
+        "vol_price_confirm"
+      ],
+      "score": 0.0758,
+      "penalty": 0.1,
+      "score_adj": -0.0242,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "ema_200_h1",
+      "gain_norm": 0.0052,
+      "shap_norm": 0.0071,
+      "ic_norm": 0.0462,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "ema_200_h4"
+      ],
+      "score": 0.0182,
+      "penalty": 0.05,
+      "score_adj": -0.0318,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "mfe_12",
+      "gain_norm": 0.0021,
+      "shap_norm": 0.0031,
+      "ic_norm": 0.049,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "mae_12"
+      ],
+      "score": 0.0165,
+      "penalty": 0.05,
+      "score_adj": -0.0335,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "ema_200_h4",
+      "gain_norm": 0.0021,
+      "shap_norm": 0.0028,
+      "ic_norm": 0.0462,
+      "n_corr_partners": 1,
+      "corr_partners": [
+        "ema_200_h1"
+      ],
+      "score": 0.0156,
+      "penalty": 0.05,
+      "score_adj": -0.0344,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "dist_swing_high",
+      "gain_norm": 0.0884,
+      "shap_norm": 0.1527,
+      "ic_norm": 0.5356,
+      "n_corr_partners": 9,
+      "corr_partners": [
+        "Sell_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.2451,
+      "penalty": 0.3,
+      "score_adj": -0.0549,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_h4",
+      "gain_norm": 0.0164,
+      "shap_norm": 0.0182,
+      "ic_norm": 0.749,
+      "n_corr_partners": 12,
+      "corr_partners": [
+        "ema_7_h1",
+        "ema_21_h1",
+        "ema_7_h4",
+        "ema_21_h4",
+        "rsi_6",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "dist_swing_high",
+        "dist_swing_low",
+        "price_in_range",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.2368,
+      "penalty": 0.3,
+      "score_adj": -0.0632,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "VAL",
+      "gain_norm": 0.0047,
+      "shap_norm": 0.0056,
+      "ic_norm": 0.5519,
+      "n_corr_partners": 5,
+      "corr_partners": [
+        "Fib_618",
+        "Fib_786",
+        "POC",
+        "dist_swing_low",
+        "price_in_range"
+      ],
+      "score": 0.1692,
+      "penalty": 0.25,
+      "score_adj": -0.0808,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "price_in_range",
+      "gain_norm": 0.0051,
+      "shap_norm": 0.0099,
+      "ic_norm": 0.6288,
+      "n_corr_partners": 13,
+      "corr_partners": [
+        "Buy_Liq",
+        "Sell_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "VAL",
+        "log_ret_20",
+        "dist_swing_high",
+        "dist_swing_low",
+        "rsi_h4",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.1939,
+      "penalty": 0.3,
+      "score_adj": -0.1061,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "vol_ratio_20",
+      "gain_norm": 0.0274,
+      "shap_norm": 0.0263,
+      "ic_norm": 0.0615,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "vol_regime",
+        "effort_vs_result",
+        "vol_spike_zscore"
+      ],
+      "score": 0.0373,
+      "penalty": 0.15,
+      "score_adj": -0.1127,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "VAH",
+      "gain_norm": 0.0085,
+      "shap_norm": 0.0136,
+      "ic_norm": 0.5942,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "Sell_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "Fib_786",
+        "POC",
+        "dist_swing_high",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.186,
+      "penalty": 0.3,
+      "score_adj": -0.114,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_21_h1",
+      "gain_norm": 0.0064,
+      "shap_norm": 0.012,
+      "ic_norm": 0.5846,
+      "n_corr_partners": 16,
+      "corr_partners": [
+        "Sell_Liq",
+        "ema_7_h1",
+        "ema_50_h1",
+        "ema_7_h4",
+        "ema_21_h4",
+        "ema_50_h4",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "log_ret_20",
+        "dist_swing_high",
+        "dist_swing_low",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.1818,
+      "penalty": 0.3,
+      "score_adj": -0.1182,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_21_h4",
+      "gain_norm": 0.001,
+      "shap_norm": 0.0018,
+      "ic_norm": 0.5846,
+      "n_corr_partners": 16,
+      "corr_partners": [
+        "Sell_Liq",
+        "ema_7_h1",
+        "ema_21_h1",
+        "ema_50_h1",
+        "ema_7_h4",
+        "ema_50_h4",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "log_ret_20",
+        "dist_swing_high",
+        "dist_swing_low",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.1764,
+      "penalty": 0.3,
+      "score_adj": -0.1236,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "Fib_786",
+      "gain_norm": 0.0062,
+      "shap_norm": 0.0091,
+      "ic_norm": 0.5692,
+      "n_corr_partners": 12,
+      "corr_partners": [
+        "Buy_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "VAH",
+        "VAL",
+        "log_ret_20",
+        "dist_swing_high",
+        "dist_swing_low",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.1761,
+      "penalty": 0.3,
+      "score_adj": -0.1239,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "effort_vs_result",
+      "gain_norm": 0.004,
+      "shap_norm": 0.0067,
+      "ic_norm": 0.0471,
+      "n_corr_partners": 3,
+      "corr_partners": [
+        "vol_ratio_20",
+        "vol_regime",
+        "vol_spike_zscore"
+      ],
+      "score": 0.0179,
+      "penalty": 0.15,
+      "score_adj": -0.1321,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "Fib_618",
+      "gain_norm": 0.0024,
+      "shap_norm": 0.003,
+      "ic_norm": 0.5519,
+      "n_corr_partners": 12,
+      "corr_partners": [
+        "Buy_Liq",
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_786",
+        "VAH",
+        "VAL",
+        "log_ret_20",
+        "dist_swing_high",
+        "dist_swing_low",
+        "price_in_range",
+        "rsi_h4",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.1675,
+      "penalty": 0.3,
+      "score_adj": -0.1325,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "PDH",
+      "gain_norm": 0.0069,
+      "shap_norm": 0.0106,
+      "ic_norm": 0.2423,
+      "n_corr_partners": 5,
+      "corr_partners": [
+        "ema_50_h1",
+        "ema_50_h4",
+        "ema_21_slope_h4",
+        "ema_50_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.0788,
+      "penalty": 0.25,
+      "score_adj": -0.1712,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "log_ret_20",
+      "gain_norm": 0.0518,
+      "shap_norm": 0.086,
+      "ic_norm": 0.25,
+      "n_corr_partners": 6,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_21_h4",
+        "Fib_618",
+        "Fib_786",
+        "price_in_range",
+        "ema_21_slope_h4"
+      ],
+      "score": 0.1232,
+      "penalty": 0.3,
+      "score_adj": -0.1768,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "gain_norm": 0.0035,
+      "shap_norm": 0.0057,
+      "ic_norm": 0.351,
+      "n_corr_partners": 17,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_50_h1",
+        "ema_21_h4",
+        "ema_50_h4",
+        "PDH",
+        "PDL",
+        "Fib_618",
+        "Fib_786",
+        "VAH",
+        "log_ret_20",
+        "dist_swing_high",
+        "price_in_range",
+        "h4_trend",
+        "trend_strength",
+        "rsi_h4",
+        "ema_50_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.1085,
+      "penalty": 0.3,
+      "score_adj": -0.1915,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_50_h1",
+      "gain_norm": 0.0009,
+      "shap_norm": 0.0011,
+      "ic_norm": 0.276,
+      "n_corr_partners": 8,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_21_h4",
+        "ema_50_h4",
+        "PDH",
+        "trend_strength",
+        "ema_21_slope_h4",
+        "ema_50_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.0835,
+      "penalty": 0.3,
+      "score_adj": -0.2165,
+      "ic_verdict": "KEEP"
+    },
+    {
+      "feature": "price_vs_ema_50_h4",
+      "gain_norm": 0.0004,
+      "shap_norm": 0.001,
+      "ic_norm": 0.276,
+      "n_corr_partners": 8,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_50_h1",
+        "ema_21_h4",
+        "ema_50_h4",
+        "PDH",
+        "trend_strength",
+        "ema_21_slope_h4",
+        "ema_50_slope_h4"
+      ],
+      "score": 0.0833,
+      "penalty": 0.3,
+      "score_adj": -0.2167,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_50_h4",
+      "gain_norm": 0.0001,
+      "shap_norm": 0.0002,
+      "ic_norm": 0.276,
+      "n_corr_partners": 8,
+      "corr_partners": [
+        "ema_21_h1",
+        "ema_50_h1",
+        "ema_21_h4",
+        "PDH",
+        "trend_strength",
+        "ema_21_slope_h4",
+        "ema_50_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.0829,
+      "penalty": 0.3,
+      "score_adj": -0.2171,
+      "ic_verdict": "REDUNDANT"
+    },
+    {
+      "feature": "trend_strength",
+      "gain_norm": 0.0029,
+      "shap_norm": 0.0036,
+      "ic_norm": 0.0481,
+      "n_corr_partners": 5,
+      "corr_partners": [
+        "ema_50_h1",
+        "ema_50_h4",
+        "ema_21_slope_h4",
+        "ema_50_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.0167,
+      "penalty": 0.25,
+      "score_adj": -0.2333,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "ema_50_slope_h4",
+      "gain_norm": 0.0014,
+      "shap_norm": 0.0014,
+      "ic_norm": 0.1279,
+      "n_corr_partners": 6,
+      "corr_partners": [
+        "ema_50_h1",
+        "ema_50_h4",
+        "PDH",
+        "trend_strength",
+        "ema_21_slope_h4",
+        "price_vs_ema_50_h4"
+      ],
+      "score": 0.0394,
+      "penalty": 0.3,
+      "score_adj": -0.2606,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "close",
+      "gain_norm": 0.0013,
+      "shap_norm": 0.0061,
+      "ic_norm": 0.0183,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0081,
+      "penalty": 0.3,
+      "score_adj": -0.2919,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "low",
+      "gain_norm": 0.0011,
+      "shap_norm": 0.0034,
+      "ic_norm": 0.0183,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0071,
+      "penalty": 0.3,
+      "score_adj": -0.2929,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "open",
+      "gain_norm": 0.0012,
+      "shap_norm": 0.003,
+      "ic_norm": 0.0173,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0067,
+      "penalty": 0.3,
+      "score_adj": -0.2933,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "high",
+      "gain_norm": 0.0009,
+      "shap_norm": 0.0021,
+      "ic_norm": 0.0173,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0062,
+      "penalty": 0.3,
+      "score_adj": -0.2938,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "atr_14_h1",
+      "gain_norm": 0.0015,
+      "shap_norm": 0.0037,
+      "ic_norm": 0.0106,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.005,
+      "penalty": 0.3,
+      "score_adj": -0.295,
+      "ic_verdict": "WEAK"
+    },
+    {
+      "feature": "volume",
+      "gain_norm": 0.0007,
+      "shap_norm": 0.0009,
+      "ic_norm": 0.0087,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0032,
+      "penalty": 0.3,
+      "score_adj": -0.2968,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "atr_14_h4",
+      "gain_norm": 0.0015,
+      "shap_norm": 0.0027,
+      "ic_norm": 0.0048,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0029,
+      "penalty": 0.3,
+      "score_adj": -0.2971,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "sell_volume",
+      "gain_norm": 0.0001,
+      "shap_norm": 0.0001,
+      "ic_norm": 0.0087,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0027,
+      "penalty": 0.3,
+      "score_adj": -0.2973,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "spread_to_volume",
+      "gain_norm": 0.0014,
+      "shap_norm": 0.0038,
+      "ic_norm": 0.0019,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency"
+      ],
+      "score": 0.0024,
+      "penalty": 0.3,
+      "score_adj": -0.2976,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "buy_volume",
+      "gain_norm": 0.0007,
+      "shap_norm": 0.0016,
+      "ic_norm": 0.0019,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "vol_efficiency",
+        "spread_to_volume"
+      ],
+      "score": 0.0014,
+      "penalty": 0.3,
+      "score_adj": -0.2986,
+      "ic_verdict": "DROP"
+    },
+    {
+      "feature": "vol_efficiency",
+      "gain_norm": 0.0013,
+      "shap_norm": 0.002,
+      "ic_norm": 0.001,
+      "n_corr_partners": 10,
+      "corr_partners": [
+        "open",
+        "high",
+        "low",
+        "close",
+        "volume",
+        "buy_volume",
+        "sell_volume",
+        "atr_14_h1",
+        "atr_14_h4",
+        "spread_to_volume"
+      ],
+      "score": 0.0014,
+      "penalty": 0.3,
+      "score_adj": -0.2986,
+      "ic_verdict": "DROP"
+    }
+  ],
+  "redundant_pairs": [
+    {
+      "feat_a": "open",
+      "feat_b": "high",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "low",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "close",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "volume",
+      "spearman": 0.907
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "buy_volume",
+      "spearman": 0.9043
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "sell_volume",
+      "spearman": 0.907
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.9901
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.9895
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.9122
+    },
+    {
+      "feat_a": "open",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9824
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "low",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "close",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "volume",
+      "spearman": 0.9067
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "buy_volume",
+      "spearman": 0.904
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "sell_volume",
+      "spearman": 0.9067
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.9903
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.9897
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.912
+    },
+    {
+      "feat_a": "high",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9824
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "close",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "volume",
+      "spearman": 0.9073
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "buy_volume",
+      "spearman": 0.9046
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "sell_volume",
+      "spearman": 0.9073
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.9899
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.9894
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.9124
+    },
+    {
+      "feat_a": "low",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9824
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "volume",
+      "spearman": 0.907
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "buy_volume",
+      "spearman": 0.9043
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "sell_volume",
+      "spearman": 0.907
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.9901
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.9895
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.9122
+    },
+    {
+      "feat_a": "close",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9824
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "buy_volume",
+      "spearman": 0.9987
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "sell_volume",
+      "spearman": 1.0
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.8807
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.8834
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.993
+    },
+    {
+      "feat_a": "volume",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9536
+    },
+    {
+      "feat_a": "volume_delta",
+      "feat_b": "log_ret_1",
+      "spearman": 0.8107
+    },
+    {
+      "feat_a": "volume_delta",
+      "feat_b": "long_short_ratio",
+      "spearman": 0.8084
+    },
+    {
+      "feat_a": "buy_volume",
+      "feat_b": "sell_volume",
+      "spearman": 0.9987
+    },
+    {
+      "feat_a": "buy_volume",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.8779
+    },
+    {
+      "feat_a": "buy_volume",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.8806
+    },
+    {
+      "feat_a": "buy_volume",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.9918
+    },
+    {
+      "feat_a": "buy_volume",
+      "feat_b": "spread_to_volume",
+      "spearman": 0.9514
+    },
+    {
+      "feat_a": "sell_volume",
+      "feat_b": "atr_14_h1",
+      "spearman": 0.8807
+    },
+    {
+      "feat_a": "sell_volume",
+      "feat_b": "atr_14_h4",
+      "spearman": 0.8834
+    },
+    {
+      "feat_a": "sell_volume",
+      "feat_b": "vol_efficiency",
+      "spearman": 0.993
+    }
+  ]
+}

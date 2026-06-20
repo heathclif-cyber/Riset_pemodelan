@@ -1,0 +1,197 @@
+{
+  "dynsize_config": {
+    "conf_window": 0.1,
+    "conf_max_mult": 0.6,
+    "regime_mult": {
+      "0": 0.75,
+      "1": 1.0,
+      "2": 1.0,
+      "3_long": 1.5,
+      "3_short": 0.75,
+      "-1": 0.8
+    },
+    "clamp_min": 0.5,
+    "clamp_max": 2.0
+  },
+  "base_modal": 10.0,
+  "live_modal_equiv": {
+    "min": 5.0,
+    "max": 20.0,
+    "note": "Live $5 -> range $2.50-$10"
+  },
+  "oof": {
+    "period": "OOF_train",
+    "total_trades": 8833,
+    "all_avg_modal": 14.1,
+    "profit": {
+      "n": 5782,
+      "pct": 65.5,
+      "avg_modal": 14.15,
+      "median_modal": 14.49,
+      "p25_modal": 12.0,
+      "p75_modal": 16.0,
+      "total_pnl": 10349.72,
+      "avg_pnl": 1.79
+    },
+    "loss": {
+      "n": 3051,
+      "pct": 34.5,
+      "avg_modal": 14.01,
+      "median_modal": 13.71,
+      "p25_modal": 11.56,
+      "p75_modal": 16.0,
+      "total_pnl": -4240.0,
+      "avg_pnl": -1.3897
+    },
+    "sl_hit": {
+      "n": 2219,
+      "pct": 25.1,
+      "avg_modal": 13.85,
+      "median_modal": 13.39,
+      "p25_modal": 11.44,
+      "p75_modal": 16.0,
+      "total_pnl": -3566.51,
+      "avg_pnl": -1.6073
+    },
+    "guardian_profit": {
+      "n": 5171,
+      "pct": 58.5,
+      "avg_modal": 14.15,
+      "median_modal": 14.52,
+      "p25_modal": 12.0,
+      "p75_modal": 16.0,
+      "total_pnl": 10094.0,
+      "avg_pnl": 1.952
+    },
+    "guardian_loss": {
+      "n": 795,
+      "pct": 9.0,
+      "avg_modal": 14.49,
+      "median_modal": 15.01,
+      "p25_modal": 11.98,
+      "p75_modal": 16.0,
+      "total_pnl": -659.88,
+      "avg_pnl": -0.83
+    },
+    "delta_profit_vs_sl_modal": 0.3,
+    "delta_profit_vs_loss_modal": 0.15,
+    "total_sl_dollar_loss": -3566.51,
+    "total_profit_dollar": 10349.72,
+    "sl_loss_per_dollar_modal": -0.116,
+    "profit_per_dollar_modal": 0.1265,
+    "quartile_breakdown": {
+      "Q1_low": {
+        "n": 2209,
+        "avg_modal": 10.2,
+        "sl_rate_pct": 29.1,
+        "win_rate_pct": 61.5,
+        "avg_pnl": 0.3457
+      },
+      "Q2": {
+        "n": 2211,
+        "avg_modal": 12.47,
+        "sl_rate_pct": 25.5,
+        "win_rate_pct": 66.1,
+        "avg_pnl": 0.5962
+      },
+      "Q3": {
+        "n": 3148,
+        "avg_modal": 15.8,
+        "sl_rate_pct": 22.6,
+        "win_rate_pct": 69.0,
+        "avg_pnl": 0.86
+      },
+      "Q4_high": {
+        "n": 1265,
+        "avg_modal": 19.55,
+        "sl_rate_pct": 23.6,
+        "win_rate_pct": 62.5,
+        "avg_pnl": 1.044
+      }
+    }
+  },
+  "holdout": {
+    "period": "holdout_apr_jun26",
+    "total_trades": 492,
+    "all_avg_modal": 15.21,
+    "profit": {
+      "n": 338,
+      "pct": 68.7,
+      "avg_modal": 15.1,
+      "median_modal": 16.0,
+      "p25_modal": 15.12,
+      "p75_modal": 16.0,
+      "total_pnl": 501.85,
+      "avg_pnl": 1.4848
+    },
+    "loss": {
+      "n": 154,
+      "pct": 31.3,
+      "avg_modal": 15.44,
+      "median_modal": 16.0,
+      "p25_modal": 15.24,
+      "p75_modal": 16.0,
+      "total_pnl": -166.46,
+      "avg_pnl": -1.0809
+    },
+    "sl_hit": {
+      "n": 114,
+      "pct": 23.2,
+      "avg_modal": 15.31,
+      "median_modal": 16.0,
+      "p25_modal": 15.14,
+      "p75_modal": 16.0,
+      "total_pnl": -144.08,
+      "avg_pnl": -1.2639
+    },
+    "guardian_profit": {
+      "n": 311,
+      "pct": 63.2,
+      "avg_modal": 14.98,
+      "median_modal": 16.0,
+      "p25_modal": 15.07,
+      "p75_modal": 16.0,
+      "total_pnl": 491.44,
+      "avg_pnl": 1.5802
+    },
+    "guardian_loss": {
+      "n": 32,
+      "pct": 6.5,
+      "avg_modal": 15.91,
+      "median_modal": 16.0,
+      "p25_modal": 15.89,
+      "p75_modal": 16.0,
+      "total_pnl": -21.57,
+      "avg_pnl": -0.6742
+    },
+    "delta_profit_vs_sl_modal": -0.21,
+    "delta_profit_vs_loss_modal": -0.33,
+    "total_sl_dollar_loss": -144.08,
+    "total_profit_dollar": 501.85,
+    "sl_loss_per_dollar_modal": -0.0825,
+    "profit_per_dollar_modal": 0.0983,
+    "quartile_breakdown": {
+      "Q1_low": {
+        "n": 123,
+        "avg_modal": 11.81,
+        "sl_rate_pct": 23.6,
+        "win_rate_pct": 69.9,
+        "avg_pnl": 0.3172
+      },
+      "Q2": {
+        "n": 331,
+        "avg_modal": 15.96,
+        "sl_rate_pct": 21.5,
+        "win_rate_pct": 70.1,
+        "avg_pnl": 0.8704
+      },
+      "Q4_high": {
+        "n": 38,
+        "avg_modal": 19.7,
+        "sl_rate_pct": 36.8,
+        "win_rate_pct": 52.6,
+        "avg_pnl": 0.2181
+      }
+    }
+  }
+}

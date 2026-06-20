@@ -1,0 +1,20 @@
+{
+  "results": [
+    {
+      "symbol": "BTCUSDT",
+      "pred": "LONG",
+      "ts_wita": "16:00",
+      "ts_utc": "2026-06-19 08:00",
+      "conf": 0.8651,
+      "regime": "RANGING_HIGH_VOL",
+      "entry_px": 62575.7,
+      "tp_price": 63088.0,
+      "sl_price": 62237.2,
+      "rr": 1.51,
+      "atr": 368.9252,
+      "exit_px": 63088.0,
+      "bars_held": 5,
+      "exit_wita": "2026-06-19 21:00",
+      "outcome": "TP_HIT",
+      "net_pnl": 0.1597,
+      "win": 

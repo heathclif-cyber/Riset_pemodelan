@@ -1,0 +1,41 @@
+{
+  "created": "2026-06-15T18:59:56.506543",
+  "lgbm_run": "tb_lgbm_genuine_v1",
+  "guardian_run": "tb_guardian_genuine_v1",
+  "thr_long": 0.45,
+  "thr_short": 0.45,
+  "period_start": "2026-04-01",
+  "period_end": "2026-07-01",
+  "scorecard_no_guardian": {
+    "total_trades": 5650,
+    "trades_per_month": 1890.0,
+    "wins": 3244,
+    "wr": 0.5742,
+    "total_pnl": 848.01,
+    "pnl_per_month": 283.66,
+    "pnl_per_trade": 0.1501,
+    "profit_factor": 1.476,
+    "sl_hits": 2045,
+    "sl_hit_rate": 0.3619,
+    "guardian_exits": 0,
+    "guardian_exit_pct": 0.0,
+    "time_exits": 361,
+    "period_months": 3.0
+  },
+  "scorecard_with_guardian": {
+    "total_trades": 5650,
+    "trades_per_month": 1890.0,
+    "wins": 3300,
+    "wr": 0.5841,
+    "total_pnl": 661.48,
+    "pnl_per_month": 221.27,
+    "pnl_per_trade": 0.1171,
+    "profit_factor": 1.43,
+    "sl_hits": 2080,
+    "sl_hit_rate": 0.3681,
+    "guardian_exits": 3193,
+    "guardian_exit_pct": 0.5651,
+    "time_exits": 377,
+    "period_months": 3.0
+  }
+}

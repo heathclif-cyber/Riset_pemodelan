@@ -1,0 +1,44 @@
+{
+  "source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\ic32_regime_v1\\ic32_lstm_fusion_stage2_pipeline.json",
+  "baseline_ppt": 0.4366400090569433,
+  "best_candidate": "hc_a3_o50_noflip",
+  "n_bars_analyzed": 731164,
+  "n_directional_bars": 42001,
+  "relation_counts": {
+    "opposite": 367072,
+    "agree": 346292,
+    "neutral": 17800
+  },
+  "relation_pct": {
+    "opposite": 50.2,
+    "agree": 47.36,
+    "neutral": 2.43
+  },
+  "directional_relation_counts": {
+    "agree": 13272,
+    "neutral": 17800,
+    "opposite": 10929
+  },
+  "by_relation_stats": {
+    "agree": {
+      "n": 346292,
+      "pct": 47.3617,
+      "avg_lgbm_p2": 0.17,
+      "avg_lstm_dom": 0.4052
+    },
+    "neutral": {
+      "n": 17800,
+      "pct": 2.4345,
+      "avg_lgbm_p2": 0.2958,
+      "avg_lstm_dom": 0.4029
+    },
+    "opposite": {
+      "n": 367072,
+      "pct": 50.2038,
+      "avg_lgbm_p2": 0.1633,
+      "avg_lstm_dom": 0.461
+    }
+  },
+  "stage2_decision": "NO_PROMOTE",
+  "winners": []
+}

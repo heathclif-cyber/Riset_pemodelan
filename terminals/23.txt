@@ -1,0 +1,82 @@
+---
+pid: 17084
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05r_lstm_lgbm_seq_experiments_ab.py"
+started_at: 2026-06-16T11:32:28.611Z
+running_for_ms: 3150013  
+---
+
+==============================================================================
+  05r: LGBM-seq fusion experiments A/B | LSTM=tb_lstm_lgbm_seq_v1
+  Ref delta target: +0.0008 (tb_lstm_genuine_v2)
+==============================================================================
+
+  EXP A — 190 signal configs, pipeline top-10
+  Fixed: opposite_pen=0.18 | sweep bull/bear/boost/near_gap/modes
+  [1] cond_BP_bu38_be50_g3_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=53 (23s)
+  [2] cond_BP_bu38_be50_g5_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=53 (22s)
+  [3] cond_BP_bu38_be50_g8_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=53 (22s)
+  [4] cond_BP_bu38_be55_g3_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [5] cond_BP_bu38_be55_g5_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [6] cond_BP_bu38_be55_g8_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [7] cond_BP_bu38_be57_g3_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=45 (23s)
+  [8] cond_BP_bu38_be57_g5_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=45 (23s)
+  [9] cond_BP_bu38_be57_g8_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=45 (22s)
+  [10] cond_BP_bu38_be50_g3_b8_o18
+      port=+0.5046 dPort=+0.0005 newMom=38 (22s)
+
+  EXP A TOP 5 by delta_port_ppt:
+  Label                                         dPort   portPPT  newMom beats_ref
+  cond_BP_bu38_be50_g3_b10_o18                +0.0008   +0.5049      53         Y
+  cond_BP_bu38_be50_g5_b10_o18                +0.0008   +0.5049      53         Y
+  cond_BP_bu38_be50_g8_b10_o18                +0.0008   +0.5049      53         Y
+  cond_BP_bu38_be57_g3_b10_o18                +0.0008   +0.5049      45         Y
+  cond_BP_bu38_be57_g5_b10_o18                +0.0008   +0.5049      45         Y
+
+  EXP B — 64 signal configs, pipeline top-10
+  Fixed: opposite_pen=0.18, bear_thr=0.55 | sweep bull/boost/near_gap/modes
+  [1] cond_BP_bu38_be55_g3_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [2] cond_BP_bu38_be55_g5_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [3] cond_BP_bu38_be55_g8_b10_o18
+      port=+0.5049 dPort=+0.0008 newMom=46 (22s)
+  [4] cond_BP_bu38_be55_g3_b8_o18
+      port=+0.5046 dPort=+0.0004 newMom=33 (22s)
+  [5] cond_BP_bu38_be55_g5_b8_o18
+      port=+0.5046 dPort=+0.0004 newMom=33 (22s)
+  [6] cond_BP_bu38_be55_g8_b8_o18
+      port=+0.5046 dPort=+0.0004 newMom=33 (22s)
+  [7] cond_BP_bu38_be55_g3_b6_o18
+      port=+0.5048 dPort=+0.0006 newMom=24 (22s)
+  [8] cond_BP_bu38_be55_g5_b6_o18
+      port=+0.5048 dPort=+0.0006 newMom=24 (22s)
+  [9] cond_BP_bu38_be55_g8_b6_o18
+      port=+0.5048 dPort=+0.0006 newMom=24 (22s)
+  [10] cond_BP_bu42_be55_g3_b10_o18
+      port=+0.5045 dPort=+0.0004 newMom=34 (22s)
+
+  EXP B TOP 5 by delta_port_ppt:
+  Label                                         dPort   portPPT  newMom beats_ref
+  cond_BP_bu38_be55_g3_b10_o18                +0.0008   +0.5049      46         Y
+  cond_BP_bu38_be55_g5_b10_o18                +0.0008   +0.5049      46         Y
+  cond_BP_bu38_be55_g8_b10_o18                +0.0008   +0.5049      46         Y
+  cond_BP_bu38_be55_g3_b6_o18                 +0.0006   +0.5048      24         N
+  cond_BP_bu38_be55_g5_b6_o18                 +0.0006   +0.5048      24         N
+
+==============================================================================
+  SUMMARY
+  Exp A: decision=PROMOTE_CANDIDATE | best=cond_BP_bu38_be50_g3_b10_o18 dPort=+0.0008 beats_ref=True
+  Exp B: decision=PROMOTE_CANDIDATE | best=cond_BP_bu38_be55_g3_b10_o18 dPort=+0.0008 beats_ref=True
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\lstm_lgbm_seq_experiments_ab.json
+==============================================================================
+

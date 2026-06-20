@@ -1,0 +1,162 @@
+{
+  "_snapshot_time": "2026-06-06 22:30:00",
+  "cascade": {
+    "confidence_threshold_entry": 0.59,
+    "flat_review_threshold": 0,
+    "lgbm_threshold_long": 0.69,
+    "lgbm_threshold_short": 0.59,
+    "lstm_adjust_agree_boost": 0.05,
+    "lstm_adjust_neutral_pen": 0,
+    "lstm_adjust_opposite_pen": 0.65,
+    "lstm_confirmation_enabled": true,
+    "lstm_directional_review_threshold": 0.35,
+    "lstm_flat_review_enabled": true,
+    "lstm_fusion_mode": "hard_consensus",
+    "lstm_no_veto_threshold": 0.5,
+    "mode": "hard_consensus",
+    "note": "hard_consensus: LGBM primary entry → LSTM soft filter → regime-aware alignment → confidence gate. BUKAN dual_dominant (terlalu selektif, 81 trade/5koin/bln). LSTM sebagai survival filter: -35% trade, + PnL, -42% volatility di extended backtest."
+  },
+  "data_mining": {
+    "enabled": true,
+    "endpoints": {
+      "macro_daily": {
+        "coingecko_global": "BTC dominance + total market cap + USDT volume (daily)",
+        "etf_flow": "BTC/ETH ETF netflow from Dune Analytics (daily, needs DUNE_API_KEY env var)",
+        "fear_greed": "Fear & Greed Index from alternative.me (daily)"
+      },
+      "positioning_hourly": {
+        "binance_global_ls": "/futures/data/globalLongShortAccountRatio -> global_ls_ratio per jam (retail positioning)",
+        "binance_taker_ratio": "/futures/data/takerlongshortRatio -> taker_buy_sell_ratio per jam (aggressor flow)",
+        "binance_top_trader": "/futures/data/topLongShortPositionRatio -> top_trader_ls_ratio per jam (elite positioning)",
+        "bybit_oi": "/v5/market/open-interest -> bybit_oi raw per jam (total market exposure)"
+      }
+    },
+    "note": "Positioning + macro data untuk momentum model (Phase 4). Per-coin: 200 bar/hourly, target 4,000+ bar/6 bulan. Macro: daily, langsung tersedia. ETF flow butuh Dune API key (gratis 1k queries/bulan).",
+    "output_dirs": [
+      "data/positioning/",
+      "data/macro/"
+    ],
+    "schedule": "hourly (per-coin) + daily (macro)",
+    "script": "pipeline/01c_fetch_positioning.py"
+  },
+  "guardian": {
+    "activation_atr": 0,
+    "enabled": true,
+    "exit_threshold": 0.65,
+    "features_file": "guardian_feature_cols.json",
+    "min_hold_bars": 2,
+    "model_file": "guardian_best.pkl",
+    "note": "ic32_guardian_clean_v2: 40 feat (33 static + 7 dynamic). Exit WR 79.6%. Min hold 2 bar optimal — kurangi exit prematur vs min_hold=0.",
+    "partial_exit_ratio": 0.5,
+    "scaler_file": "guardian_scaler.pkl"
+  },
+  "hmm": {
+    "controller": {
+      "enabled": false,
+      "note": "Emergency brake: block counter-trend di TRENDING jika trending > 20% bars. Toggle manual via config."
+    },
+    "enabled": true,
+    "feature": "hmm_regime_enc",
+    "n_states": 4,
+    "note": "GaussianHMM 4-state walk-forward OOF. IC=-0.074 di LGBM. Juga mengontrol regime_alignment (FLIP).",
+    "states": [
+      "TRENDING_DOWN",
+      "RANGING_LOW_VOL",
+      "RANGING_HIGH_VOL",
+      "TRENDING_UP"
+    ]
+  },
+  "inference": {
+    "confidence_full_size": 0.69,
+    "confidence_half_size": 0.59,
+    "confidence_threshold_entry": 0.59
+  },
+  "live_stats_reset_at": null,
+  "model_type": "ic32_regime_v1",
+  "model_version": "ic32_regime_v1",
+  "models": {
+    "guardian": "guardian_best.pkl",
+    "guardian_features": "guardian_feature_cols.json",
+    "guardian_scaler": "guardian_scaler.pkl",
+    "lgbm": "lgbm_baseline.pkl",
+    "lgbm_features": "feature_cols_v2.json",
+    "lstm": "lstm_best.pt",
+    "lstm_features": "feature_cols_lstm_temporal.json",
+    "lstm_scaler": "lstm_scaler.pkl"
+  },
+  "n_features": 33,
+  "note": "FLIP alignment: RANGING=counter-trend, TRENDING=with-trend. LSTM ON survival filter. Guardian clean_v2 min_hold=2. Validated 2026-06-06: holdout WR 67.5% PF 2.54, extended +59% vs baseline. Z3 dual_dominant dicabut — terlalu selektif (81 trade/5koin/bln).",
+  "pyramiding": {},
+  "regime_alignment": {
+    "enabled": true,
+    "note": "FLIP: HMM regime-aware trend alignment. RANGING(1,2) counter-trend swing mode. TRENDING(0,3) with-trend momentum mode. Satu model, dua mode, tanpa retrain. + PnL (59% improvement) di extended backtest 63 bulan.",
+    "ranging": {
+      "counter_trend_boost": 0.05,
+      "with_trend_penalty": 0.1
+    },
+    "trending": {
+      "counter_trend_penalty": 0.05,
+      "with_trend_boost": 0.1
+    }
+  },
+  "risk": {
+    "daily_loss_limit": 3,
+    "fee_per_side": 0.0004,
+    "leverage_recommended": 5,
+    "modal_per_trade": 10,
+    "slippage_per_side": 0.0005
+  },
+  "rr_gate": {
+    "enabled": true,
+    "max_sl_atr": 4,
+    "min_rr": 0.6,
+    "min_tp_atr": 1.2,
+    "swing_bumper_atr": 0.5
+  },
+  "scorecard": {
+    "extended_63mo": {
+      "baseline_pnl": "-",
+      "flip_pnl": "-",
+      "improvement": "+ (59%)",
+      "note": "Per-fold retrained models. Trending market (2021) tetap loss. Tanpa positioning data, tidak ada model yang bisa profit di trending."
+    },
+    "holdout_5mo": {
+      "guardian_exit_wr": "79.6%",
+      "long_wr": "67.6%",
+      "negative_months": 0,
+      "pnl": " (/mo, /trade, 5x)",
+      "profit_factor": 2.54,
+      "short_wr": "67.4%",
+      "sl_hit_rate": "17.3%",
+      "trades": 2434,
+      "trades_per_month": 487,
+      "wr": "67.5%"
+    }
+  },
+  "structural_filter": {
+    "breakout_tolerance_pct": 0.03,
+    "enabled": true,
+    "max_swing_deviation_pct": 0.15,
+    "require_entry_in_swing_range": true,
+    "swing_max_age_hours": 48
+  },
+  "tp_sl": {
+    "max_sl_atr": 4,
+    "min_rr": 0.6,
+    "min_tp_atr": 1.2,
+    "sl_atr_mult": 1.5,
+    "tp_atr_mult": 2
+  },
+  "trading_mode": "live",
+  "trend_alignment": {
+    "counter_trend_boost": 0.05,
+    "enabled": false,
+    "note": "Disabled — digantikan regime_alignment. h4_trend alignment lama (counter-trend always) kalah di extended backtest (- vs - dengan FLIP).",
+    "with_trend_penalty": 0.1
+  },
+  "volatility_circuit_breaker": {
+    "atr_multiplier": 3,
+    "enabled": true,
+    "lookback_bars": 24
+  }
+}

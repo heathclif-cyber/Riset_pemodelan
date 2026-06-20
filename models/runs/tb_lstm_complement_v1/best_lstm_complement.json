@@ -1,0 +1,14 @@
+{
+  "mode": "asymmetric_flat_only",
+  "oof_metrics": {
+    "n_pool": 36481,
+    "n_complement": 1776,
+    "n_bull": 928,
+    "n_bear": 848,
+    "bull_precision": 0.2834,
+    "bear_precision": 0.4917,
+    "mixed_precision_dir": 0.5393,
+    "bull_thr": 0.38,
+    "bear_thr": 0.5
+  }
+}

@@ -1,0 +1,859 @@
+Directional signals: 777
+Live closed trades: 144
+
+[KLINES] Simulating signal outcomes (TP/SL forward)...
+2026-06-18 00:29:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:29:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:30:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 00:31:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+
+======================================================================
+SIMULASI MACRO GATE — DATA LIVE
+======================================================================
+
+[SIGNALS] Directional: 777
+  Would BLOCK: 293 (37.7%)
+  Would PASS:  484
+  Bull+counter SHORT (breadth>=0.7): 12 -> blocked 12
+
+[LIVE TRADES CLOSED] n=144
+  ACTUAL:  PnL $-31.71  WR 45.8%
+    LONG:  n=66 PnL $-24.85 WR 40.9%
+    SHORT: n=78 PnL $-6.86 WR 50.0%
+
+[COUNTERFACTUAL — apply proposed gates]
+  KEPT:    n=60  PnL $-12.87  WR 51.7%
+  BLOCKED: n=84
+  Losses mitigated: 49 trades, $34.75 saved
+  Wins sacrificed:  35 trades, $15.91 lost
+  NET improvement: $+18.83 (actual $-31.71 -> counterfactual $-12.87)
+
+[BLOCKER BREAKDOWN on blocked trades]
+  hmm_trend_down_block_long: n=24 pnl=$-9.31 losses=13
+  macro_veto-0.65: n=6 pnl=$-0.53 losses=4
+  conf_0.56<0.65: n=5 pnl=$+0.45 losses=1
+  conf_0.58<0.59: n=4 pnl=$-4.94 losses=4
+  conf_0.62<0.65: n=4 pnl=$+0.73 losses=3
+  conf_0.32<0.59: n=4 pnl=$-0.59 losses=3
+  conf_0.58<0.65: n=3 pnl=$+1.26 losses=1
+  conf_0.64<0.65: n=3 pnl=$+0.07 losses=2
+  hmm_trend_up_block_short: n=3 pnl=$+0.08 losses=1
+  conf_0.47<0.65: n=3 pnl=$-0.48 losses=2
+  conf_0.65<0.65: n=2 pnl=$-2.21 losses=1
+  conf_0.57<0.65: n=2 pnl=$-0.76 losses=2
+  conf_0.61<0.65: n=2 pnl=$+0.14 losses=1
+  conf_0.53<0.59: n=2 pnl=$+0.35 losses=0
+  conf_0.56<0.59: n=2 pnl=$-1.33 losses=2
+  conf_0.60<0.65: n=1 pnl=$+0.04 losses=0
+  conf_0.14<0.59: n=1 pnl=$+0.03 losses=0
+  conf_0.24<0.65: n=1 pnl=$+0.22 losses=0
+  conf_0.57<0.59: n=1 pnl=$-0.01 losses=1
+  conf_0.19<0.65: n=1 pnl=$-0.54 losses=1
+  conf_0.59<0.65: n=1 pnl=$+0.09 losses=0
+  conf_0.54<0.65: n=1 pnl=$-0.29 losses=1
+  conf_0.55<0.65: n=1 pnl=$-0.23 losses=1
+  conf_0.35<0.59: n=1 pnl=$-0.21 losses=1
+  conf_0.54<0.59: n=1 pnl=$-0.38 losses=1
+  conf_0.33<0.59: n=1 pnl=$-0.23 losses=1
+  conf_0.38<0.65: n=1 pnl=$+0.12 losses=0
+  conf_0.34<0.65: n=1 pnl=$+0.20 losses=0
+  conf_0.36<0.65: n=1 pnl=$-0.21 losses=1
+  conf_0.50<0.59: n=1 pnl=$+0.65 losses=0
+  conf_0.53<0.65: n=1 pnl=$-0.24 losses=1
+  conf_0.42<0.59: n=1 pnl=$+0.57 losses=0
+  conf_0.44<0.65: n=1 pnl=$-0.81 losses=1
+  conf_0.43<0.65: n=1 pnl=$-0.68 losses=1
+  conf_0.48<0.65: n=1 pnl=$+0.23 losses=0
+
+[WORST LOSSES THAT WOULD BE BLOCKED]
+  2026-06-16 02:06 DOTUSDT      LONG  PnL $-4.04 h4=UP mb=0.3 entry=1.010505 [conf_0.58<0.59]
+  2026-05-27 20:05 TAOUSDT      LONG  PnL $-2.74 h4=DOWN mb=0.5 entry=273.39662999999996 [hmm_trend_down_block_long]
+  2026-06-02 01:05 LINKUSDT     LONG  PnL $-2.57 h4=DOWN mb=0.5 entry=8.991493499999999 [hmm_trend_down_block_long]
+  2026-05-21 14:05 ARBUSDT      SHORT PnL $-2.31 h4=DOWN mb=0.5 entry=0.11024485 [conf_0.65<0.65]
+  2026-05-29 21:05 TONUSDT      LONG  PnL $-2.08 h4=DOWN mb=0.5 entry=1.7605798499999998 [hmm_trend_down_block_long]
+  2026-05-27 21:05 SUIUSDT      LONG  PnL $-1.90 h4=DOWN mb=0.5 entry=0.9844919999999999 [hmm_trend_down_block_long]
+  2026-06-02 00:05 BNBUSDT      LONG  PnL $-1.73 h4=DOWN mb=0.5 entry=692.7762149999999 [hmm_trend_down_block_long]
+  2026-05-27 21:05 LINKUSDT     LONG  PnL $-1.40 h4=DOWN mb=0.5 entry=9.3276615 [hmm_trend_down_block_long]
+  2026-06-16 12:07 DOTUSDT      LONG  PnL $-1.10 h4=UP mb=0.0 entry=1.02051 [conf_0.56<0.59]
+  2026-06-12 13:05 ETHUSDT      SHORT PnL $-0.82 h4=UP mb=0.5 entry=1664.3973850000002 [conf_0.56<0.65]
+
+[VERDICT] Setup proposed STILL LOSS on live closed trades ($-12.87)
+  But improves vs actual by $+18.83 (49 losses avoided)
+
+[SIGNAL KLINE SIMULATION] desde 2026-05-01 n=770
+  Simplified TP/SL/TIME exit, no guardian, $10/5x
+  ALL signals traded:     n=770 PnL $+83.99 WR 55.1% PF 1.22
+  PROPOSED gates (kept):  n=478 PnL $+96.37 WR 56.9% PF 1.44
+  Blocked by gates:       n=292 PnL $-12.37 (losses mitigated $160.84)
+  Breadth gate ONLY kept: n=758 PnL $+79.78 WR 54.7%
+  >> KLINE SIM: setup PROFITABLE jika hanya trade signal yang lolos gate
+
+Report: D:\Apps-Dev\Riset_pemodelan\reports\experiments\2026-06-18_macro_gate_live_simulation.json
+======================================================================

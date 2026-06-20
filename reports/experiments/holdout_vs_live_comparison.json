@@ -1,0 +1,427 @@
+{
+  "generated_at": "2026-06-18T22:31:52",
+  "model": "ic32_regime_v1",
+  "holdout_variant": "pyr2_scale_in",
+  "period": {
+    "holdout_start": "2026-04-01",
+    "live_end": "2026-06-18",
+    "holdout_trades": 356,
+    "live_trades_all": 67,
+    "live_trades_paper": 0,
+    "live_trades_real": 67,
+    "live_signals": 3877
+  },
+  "scorecard": {
+    "holdout_scale_in": {
+      "trades": 356,
+      "wins": 255,
+      "losses": 101,
+      "win_rate_pct": 71.63,
+      "profit_factor": 3.903,
+      "net_pnl": 249.05,
+      "pnl_per_trade": 0.6996,
+      "long_trades": 193,
+      "short_trades": 163,
+      "coins_traded": 21
+    },
+    "live_all": {
+      "trades": 67,
+      "wins": 34,
+      "losses": 28,
+      "win_rate_pct": 50.75,
+      "profit_factor": 1.002,
+      "net_pnl": 0.03,
+      "pnl_per_trade": 0.0005,
+      "long_trades": 27,
+      "short_trades": 40,
+      "coins_traded": 19
+    },
+    "live_paper": {
+      "trades": 0
+    },
+    "live_real": {
+      "trades": 67,
+      "wins": 34,
+      "losses": 28,
+      "win_rate_pct": 50.75,
+      "profit_factor": 1.002,
+      "net_pnl": 0.03,
+      "pnl_per_trade": 0.0005,
+      "long_trades": 27,
+      "short_trades": 40,
+      "coins_traded": 19
+    }
+  },
+  "coin_direction_mismatch": {
+    "coins_total": 21,
+    "coins_mismatch": 21,
+    "top_mismatch": [
+      {
+        "symbol": "1000PEPEUSDT",
+        "hold_long": 8,
+        "hold_short": 8,
+        "live_long": 3,
+        "live_short": 2,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "LINKUSDT",
+        "hold_long": 9,
+        "hold_short": 6,
+        "live_long": 0,
+        "live_short": 3,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "TRXUSDT",
+        "hold_long": 7,
+        "hold_short": 5,
+        "live_long": 0,
+        "live_short": 1,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "TONUSDT",
+        "hold_long": 11,
+        "hold_short": 9,
+        "live_long": 1,
+        "live_short": 2,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "TAOUSDT",
+        "hold_long": 9,
+        "hold_short": 10,
+        "live_long": 1,
+        "live_short": 3,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "SUIUSDT",
+        "hold_long": 16,
+        "hold_short": 7,
+        "live_long": 2,
+        "live_short": 3,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "SOLUSDT",
+        "hold_long": 7,
+        "hold_short": 7,
+        "live_long": 0,
+        "live_short": 0,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "POLUSDT",
+        "hold_long": 10,
+        "hold_short": 7,
+        "live_long": 1,
+        "live_short": 0,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "ONDOUSDT",
+        "hold_long": 13,
+        "hold_short": 7,
+        "live_long": 0,
+        "live_short": 1,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "NEARUSDT",
+        "hold_long": 11,
+        "hold_short": 11,
+        "live_long": 0,
+        "live_short": 3,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "HBARUSDT",
+        "hold_long": 8,
+        "hold_short": 6,
+        "live_long": 4,
+        "live_short": 0,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "1000SHIBUSDT",
+        "hold_long": 10,
+        "hold_short": 10,
+        "live_long": 2,
+        "live_short": 0,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "ETHUSDT",
+        "hold_long": 6,
+        "hold_short": 10,
+        "live_long": 3,
+        "live_short": 4,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "DOTUSDT",
+        "hold_long": 6,
+        "hold_short": 7,
+        "live_long": 3,
+        "live_short": 1,
+        "dir_mismatch": true
+      },
+      {
+        "symbol": "DOGEUSDT",
+        "hold_long": 14,
+        "hold_short": 11,
+        "live_long": 1,
+        "live_short": 1,
+        "dir_mismatch": true
+      }
+    ]
+  },
+  "day_direction_mismatch": {
+    "mismatch_days": [
+      {
+        "date_wita": "2026-06-09",
+        "hold_trades": 5,
+        "hold_long": 0,
+        "hold_short": 5,
+        "hold_pnl": 10.38,
+        "live_trades": 13,
+        "live_long": 6,
+        "live_short": 7,
+        "live_pnl": 1.1,
+        "live_signals_flat": 451,
+        "live_signals_trade": 29,
+        "hold_dominant": "SHORT",
+        "live_dominant": "SHORT"
+      },
+      {
+        "date_wita": "2026-06-10",
+        "hold_trades": 3,
+        "hold_long": 2,
+        "hold_short": 1,
+        "hold_pnl": 4.97,
+        "live_trades": 11,
+        "live_long": 0,
+        "live_short": 11,
+        "live_pnl": 3.39,
+        "live_signals_flat": 448,
+        "live_signals_trade": 32,
+        "hold_dominant": "LONG",
+        "live_dominant": "SHORT"
+      },
+      {
+        "date_wita": "2026-06-11",
+        "hold_trades": 9,
+        "hold_long": 8,
+        "hold_short": 1,
+        "hold_pnl": 22.32,
+        "live_trades": 10,
+        "live_long": 3,
+        "live_short": 7,
+        "live_pnl": -2.31,
+        "live_signals_flat": 468,
+        "live_signals_trade": 12,
+        "hold_dominant": "LONG",
+        "live_dominant": "SHORT"
+      },
+      {
+        "date_wita": "2026-06-12",
+        "hold_trades": 7,
+        "hold_long": 0,
+        "hold_short": 7,
+        "hold_pnl": -1.87,
+        "live_trades": 12,
+        "live_long": 4,
+        "live_short": 8,
+        "live_pnl": -1.13,
+        "live_signals_flat": 457,
+        "live_signals_trade": 23,
+        "hold_dominant": "SHORT",
+        "live_dominant": "SHORT"
+      },
+      {
+        "date_wita": "2026-06-13",
+        "hold_trades": 1,
+        "hold_long": 0,
+        "hold_short": 1,
+        "hold_pnl": 1.39,
+        "live_trades": 6,
+        "live_long": 4,
+        "live_short": 2,
+        "live_pnl": -1.03,
+        "live_signals_flat": 464,
+        "live_signals_trade": 16,
+        "hold_dominant": "SHORT",
+        "live_dominant": "LONG"
+      }
+    ],
+    "common_dates_count": 6
+  },
+  "explanation": {
+    "why_different": [
+      "Holdout pakai parquet batch (data/holdout-test); live pakai feature real-time dari cron fetch \u2014 nilai fitur bisa beda di bar yang sama.",
+      "Holdout variant scale_in: 1 posisi/koin, tidak boleh flip arah saat posisi terbuka; live juga scale_in tapi timing entry beda karena sinyal beda.",
+      "Live punya fase paper (is_live=0) sebelum Juni 2026; bandingkan live_real untuk apples-to-apples.",
+      "Agregat harian holdout Excel pakai date_entry UTC; analisis ini juga sediakan date_entry WITA.",
+      "LSTM flat-review + confidence threshold di live bisa ubah FLAT yang di holdout jadi LONG/SHORT (atau sebaliknya).",
+      "Data holdout HMM regime di-precompute; live pakai regime dari inference bar-by-bar \u2014 bisa beda state."
+    ],
+    "jun11_example": {
+      "holdout_trades": [
+        {
+          "symbol": "1000SHIBUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 01:00:00",
+          "net_pnl": 2.1859,
+          "n_legs": 2
+        },
+        {
+          "symbol": "ADAUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 1.5323,
+          "n_legs": 1
+        },
+        {
+          "symbol": "ARBUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 5.2262,
+          "n_legs": 2
+        },
+        {
+          "symbol": "LINKUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 1.8463,
+          "n_legs": 2
+        },
+        {
+          "symbol": "SOLUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 1.1541,
+          "n_legs": 1
+        },
+        {
+          "symbol": "SUIUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 1.9566,
+          "n_legs": 2
+        },
+        {
+          "symbol": "TAOUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 3.298,
+          "n_legs": 2
+        },
+        {
+          "symbol": "XRPUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 08:00:00",
+          "net_pnl": 1.5908,
+          "n_legs": 2
+        },
+        {
+          "symbol": "TONUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 09:00:00",
+          "net_pnl": 3.5334,
+          "n_legs": 2
+        }
+      ],
+      "live_trades": [
+        {
+          "symbol": "XRPUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 01:05:15",
+          "net_pnl": 0.2846,
+          "signal_confidence": 0.731
+        },
+        {
+          "symbol": "1000SHIBUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 03:05:28",
+          "net_pnl": -0.4137,
+          "signal_confidence": 0.74
+        },
+        {
+          "symbol": "AVAXUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 09:05:03",
+          "net_pnl": -0.6624,
+          "signal_confidence": 0.6902
+        },
+        {
+          "symbol": "TAOUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 09:05:31",
+          "net_pnl": -0.4484,
+          "signal_confidence": 0.6406
+        },
+        {
+          "symbol": "ARBUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 10:05:17",
+          "net_pnl": 0.7116,
+          "signal_confidence": 0.7771
+        },
+        {
+          "symbol": "SUIUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 16:05:02",
+          "net_pnl": -0.3162,
+          "signal_confidence": 0.7507
+        },
+        {
+          "symbol": "1000PEPEUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 16:05:10",
+          "net_pnl": -0.3559,
+          "signal_confidence": 0.6763
+        },
+        {
+          "symbol": "ARBUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 16:05:22",
+          "net_pnl": -0.3777,
+          "signal_confidence": 0.7162
+        },
+        {
+          "symbol": "SUIUSDT",
+          "direction": "SHORT",
+          "ts_in_wita": "2026-06-11 17:05:02",
+          "net_pnl": -0.4589,
+          "signal_confidence": 0.7141
+        },
+        {
+          "symbol": "HBARUSDT",
+          "direction": "LONG",
+          "ts_in_wita": "2026-06-11 21:05:24",
+          "net_pnl": -0.271,
+          "signal_confidence": 0.7747
+        }
+      ],
+      "live_signal_counts": {
+        "FLAT": 468,
+        "SHORT": 7,
+        "LONG": 5
+      },
+      "live_flat_hours_with_lgbm_long": [],
+      "live_trade_signals": 12
+    }
+  },
+  "output_files": {
+    "holdout_trades": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\holdout_scale_in_trades_full.csv",
+    "holdout_daily_utc": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\holdout_scale_in_daily_utc.csv",
+    "holdout_daily_wita": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\holdout_scale_in_daily_wita.csv",
+    "live_trades_all": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\live_ic32_trades_all.csv",
+    "live_trades_real": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\live_ic32_trades_is_live.csv",
+    "live_signals": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\live_ic32_signals.csv",
+    "coin_compare": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\holdout_vs_live_coin_direction.csv",
+    "daily_compare": "D:\\Apps-Dev\\Riset_pemodelan\\reports\\experiments\\holdout_vs_live_daily_wita.csv"
+  }
+}

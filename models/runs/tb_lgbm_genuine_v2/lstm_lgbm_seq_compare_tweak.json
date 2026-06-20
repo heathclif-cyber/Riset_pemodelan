@@ -1,0 +1,485 @@
+{
+  "created": "2026-06-16T19:30:04.829370",
+  "frozen_config": {
+    "fusion": "lstm",
+    "mode": "conditional_momentum",
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "boost": 0.1,
+    "opposite_pen": 0.14,
+    "near_miss_gap": 0.03,
+    "vol_thr": 2.0,
+    "proportional": true,
+    "enable_boost": true,
+    "enable_penalty": true,
+    "label": "ref_05j_frozen"
+  },
+  "ref_run": "tb_lstm_genuine_v2",
+  "seq_run": "tb_lstm_lgbm_seq_v1",
+  "phase1_slices": {
+    "ref_tb_lstm_genuine_v2": {
+      "boost_unlock": 72,
+      "penalty_block": 108,
+      "n_short_base": 20614,
+      "n_short_fused": 20508,
+      "conflict_lstm_bull_on_lgbm_short": 352,
+      "conflict_penalized_to_flat": 106,
+      "conflict_pen_pct": 30.1,
+      "rally_short_base": 195,
+      "rally_short_fused": 188,
+      "rally_short_delta": -7,
+      "pump_short_base": 1060,
+      "pump_short_fused": 954,
+      "pump_short_delta": -106
+    },
+    "seq_tb_lstm_lgbm_seq_v1": {
+      "boost_unlock": 88,
+      "penalty_block": 61,
+      "n_short_base": 20614,
+      "n_short_fused": 20569,
+      "conflict_lstm_bull_on_lgbm_short": 252,
+      "conflict_penalized_to_flat": 61,
+      "conflict_pen_pct": 24.2,
+      "rally_short_base": 191,
+      "rally_short_fused": 188,
+      "rally_short_delta": -3,
+      "pump_short_base": 1042,
+      "pump_short_fused": 981,
+      "pump_short_delta": -61
+    }
+  },
+  "seq_frozen_baseline": {
+    "delta_port_ppt": 0.0007001156051721358,
+    "portfolio_ppt_norm": 0.5048282178202586
+  },
+  "ref_05j_original": {
+    "delta_port_ppt": 0.0007515894262979383,
+    "note": "tb_lstm_genuine_v2 best from lstm_conditional_momentum_eval.json"
+  },
+  "tweak_results": [
+    {
+      "label": "ref_05j_frozen",
+      "fusion": "lstm",
+      "mode": "conditional_momentum",
+      "bull_thr": 0.38,
+      "bear_thr": 0.5,
+      "boost": 0.1,
+      "opposite_pen": 0.14,
+      "near_miss_gap": 0.03,
+      "vol_thr": 2.0,
+      "proportional": true,
+      "enable_boost": true,
+      "enable_penalty": true,
+      "pipeline": {
+        "portfolio": {
+          "n": 34138,
+          "wr": 68.98177983478821,
+          "pnl": 23439.49270000005,
+          "ppt": 0.6866100152322939,
+          "pf": 2.5669887725030804,
+          "sl_pct": 29.61216239967192,
+          "avg_modal": 13.600864432597106,
+          "ppt_norm": 0.5048282178202586
+        },
+        "momentum": {
+          "n": 1465,
+          "wr": 73.24232081911262,
+          "pnl": 1367.9804999999992,
+          "ppt": 0.9337750853242316,
+          "pf": 3.463602811140543,
+          "sl_pct": 24.505119453924916,
+          "avg_modal": 13.629918088737202,
+          "ppt_norm": 0.6850922208372162
+        },
+        "new_trades": {
+          "n": 53,
+          "wr": 77.35849056603774,
+          "pnl": 59.60680000000001,
+          "ppt": 1.124656603773585,
+          "pf": 3.619722147751295,
+          "sl_pct": 22.641509433962266,
+          "avg_modal": 12.561509433962264,
+          "ppt_norm": 0.8953196347031964
+        },
+        "new_momentum": {
+          "n": 53,
+          "wr": 77.35849056603774,
+          "pnl": 59.60680000000001,
+          "ppt": 1.124656603773585,
+          "pf": 3.619722147751295,
+          "sl_pct": 22.641509433962266,
+          "avg_modal": 12.561509433962264,
+          "ppt_norm": 0.8953196347031964
+        },
+        "n_new": 53,
+        "n_new_momentum": 53,
+        "delta_port_ppt": 0.0007001156051721358
+      },
+      "delta_port_ppt": 0.0007001156051721358
+    },
+    {
+      "label": "tweak_opp_pen_16",
+      "opposite_pen": 0.16,
+      "slice": {
+        "boost_unlock": 88,
+        "penalty_block": 68,
+        "n_short_base": 20614,
+        "n_short_fused": 20562,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 68,
+        "conflict_pen_pct": 27.0,
+        "rally_short_base": 191,
+        "rally_short_fused": 188,
+        "rally_short_delta": -3,
+        "pump_short_base": 1042,
+        "pump_short_fused": 974,
+        "pump_short_delta": -68
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34133,
+          "wr": 68.98016582193186,
+          "pnl": 23436.43340000004,
+          "ppt": 0.686620965048488,
+          "pf": 2.5669114718878228,
+          "sl_pct": 29.61357044502388,
+          "avg_modal": 13.601116514809714,
+          "ppt_norm": 0.504826912041268
+        },
+        "new_momentum": {
+          "n": 53,
+          "wr": 77.35849056603774,
+          "pnl": 59.60680000000001,
+          "ppt": 1.124656603773585,
+          "pf": 3.619722147751295,
+          "sl_pct": 22.641509433962266,
+          "avg_modal": 12.561509433962264,
+          "ppt_norm": 0.8953196347031964
+        },
+        "n_new_momentum": 53
+      },
+      "delta_port_ppt": 0.0006988098261815345,
+      "delta_vs_seq_frozen": -1.3057789906012474e-06,
+      "passes": "False"
+    },
+    {
+      "label": "tweak_opp_pen_18",
+      "opposite_pen": 0.18,
+      "slice": {
+        "boost_unlock": 88,
+        "penalty_block": 74,
+        "n_short_base": 20614,
+        "n_short_fused": 20556,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 74,
+        "conflict_pen_pct": 29.4,
+        "rally_short_base": 191,
+        "rally_short_fused": 185,
+        "rally_short_delta": -6,
+        "pump_short_base": 1042,
+        "pump_short_fused": 968,
+        "pump_short_delta": -74
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34128,
+          "wr": 68.9844116268167,
+          "pnl": 23438.336200000056,
+          "ppt": 0.6867773148148164,
+          "pf": 2.567514704836611,
+          "sl_pct": 29.60911861228317,
+          "avg_modal": 13.6013531411158,
+          "ppt_norm": 0.5049330810614303
+        },
+        "new_momentum": {
+          "n": 53,
+          "wr": 77.35849056603774,
+          "pnl": 59.60680000000001,
+          "ppt": 1.124656603773585,
+          "pf": 3.619722147751295,
+          "sl_pct": 22.641509433962266,
+          "avg_modal": 12.561509433962264,
+          "ppt_norm": 0.8953196347031964
+        },
+        "n_new_momentum": 53
+      },
+      "delta_port_ppt": 0.0008049788463438956,
+      "delta_vs_seq_frozen": 0.00010486324117175982,
+      "passes": "True"
+    },
+    {
+      "label": "tweak_bear_thr_55",
+      "bear_thr": 0.55,
+      "slice": {
+        "boost_unlock": 78,
+        "penalty_block": 61,
+        "n_short_base": 20614,
+        "n_short_fused": 20559,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 61,
+        "conflict_pen_pct": 24.2,
+        "rally_short_base": 191,
+        "rally_short_fused": 188,
+        "rally_short_delta": -3,
+        "pump_short_base": 1042,
+        "pump_short_fused": 981,
+        "pump_short_delta": -61
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34131,
+          "wr": 68.98127801705195,
+          "pnl": 23434.087300000054,
+          "ppt": 0.68659246139873,
+          "pf": 2.5668230945440684,
+          "sl_pct": 29.612375846005097,
+          "avg_modal": 13.601676774779527,
+          "ppt_norm": 0.5047851619822507
+        },
+        "new_momentum": {
+          "n": 46,
+          "wr": 78.26086956521739,
+          "pnl": 53.944900000000004,
+          "ppt": 1.1727152173913045,
+          "pf": 3.582961852821894,
+          "sl_pct": 21.73913043478261,
+          "avg_modal": 12.984347826086953,
+          "ppt_norm": 0.9031760648272171
+        },
+        "n_new_momentum": 46
+      },
+      "delta_port_ppt": 0.0006570597671642364,
+      "delta_vs_seq_frozen": -4.305583800789936e-05,
+      "passes": "False"
+    },
+    {
+      "label": "tweak_bear_thr_58",
+      "bear_thr": 0.58,
+      "slice": {
+        "boost_unlock": 75,
+        "penalty_block": 61,
+        "n_short_base": 20614,
+        "n_short_fused": 20556,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 61,
+        "conflict_pen_pct": 24.2,
+        "rally_short_base": 191,
+        "rally_short_fused": 188,
+        "rally_short_delta": -3,
+        "pump_short_base": 1042,
+        "pump_short_fused": 981,
+        "pump_short_delta": -61
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34130,
+          "wr": 68.98329915030764,
+          "pnl": 23434.971800000054,
+          "ppt": 0.6866384939935556,
+          "pf": 2.5669981828549853,
+          "sl_pct": 29.610313507178436,
+          "avg_modal": 13.601733079402289,
+          "ppt_norm": 0.5048169155983239
+        },
+        "new_momentum": {
+          "n": 45,
+          "wr": 80.0,
+          "pnl": 54.82940000000001,
+          "ppt": 1.2184311111111112,
+          "pf": 3.772213851614403,
+          "sl_pct": 20.0,
+          "avg_modal": 13.013333333333332,
+          "ppt_norm": 0.9362943989071041
+        },
+        "n_new_momentum": 45
+      },
+      "delta_port_ppt": 0.0006888133832374521,
+      "delta_vs_seq_frozen": -1.1302221934683665e-05,
+      "passes": "False"
+    },
+    {
+      "label": "tweak_bull_thr_40",
+      "bull_thr": 0.4,
+      "slice": {
+        "boost_unlock": 74,
+        "penalty_block": 48,
+        "n_short_base": 20614,
+        "n_short_fused": 20582,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 48,
+        "conflict_pen_pct": 19.0,
+        "rally_short_base": 191,
+        "rally_short_fused": 189,
+        "rally_short_delta": -2,
+        "pump_short_base": 1042,
+        "pump_short_fused": 994,
+        "pump_short_delta": -48
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34139,
+          "wr": 68.98268842086763,
+          "pnl": 23431.72800000005,
+          "ppt": 0.6863624593573348,
+          "pf": 2.5666595152563523,
+          "sl_pct": 29.611294999853538,
+          "avg_modal": 13.600286182957907,
+          "ppt_norm": 0.5046676592860186
+        },
+        "new_momentum": {
+          "n": 46,
+          "wr": 78.26086956521739,
+          "pnl": 48.0858,
+          "ppt": 1.0453434782608695,
+          "pf": 3.6753720755556794,
+          "sl_pct": 21.73913043478261,
+          "avg_modal": 12.159347826086957,
+          "ppt_norm": 0.8597035739187955
+        },
+        "n_new_momentum": 46
+      },
+      "delta_port_ppt": 0.0005395570709322284,
+      "delta_vs_seq_frozen": -0.0001605585342399074,
+      "passes": "False"
+    },
+    {
+      "label": "tweak_boost_08",
+      "boost": 0.08,
+      "slice": {
+        "boost_unlock": 65,
+        "penalty_block": 61,
+        "n_short_base": 20614,
+        "n_short_fused": 20565,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 61,
+        "conflict_pen_pct": 24.2,
+        "rally_short_base": 191,
+        "rally_short_fused": 188,
+        "rally_short_delta": -3,
+        "pump_short_base": 1042,
+        "pump_short_fused": 981,
+        "pump_short_delta": -61
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34123,
+          "wr": 68.97986695190927,
+          "pnl": 23414.89800000005,
+          "ppt": 0.6861910734695088,
+          "pf": 2.56626011509773,
+          "sl_pct": 29.613457198956716,
+          "avg_modal": 13.600618351258683,
+          "ppt_norm": 0.5045293204672598
+        },
+        "new_momentum": {
+          "n": 38,
+          "wr": 78.94736842105263,
+          "pnl": 35.012100000000004,
+          "ppt": 0.921371052631579,
+          "pf": 3.4992219398680864,
+          "sl_pct": 21.052631578947366,
+          "avg_modal": 11.930263157894737,
+          "ppt_norm": 0.772297342009485
+        },
+        "n_new_momentum": 38
+      },
+      "delta_port_ppt": 0.00040121825217342977,
+      "delta_vs_seq_frozen": -0.000298897352998706,
+      "passes": "False"
+    },
+    {
+      "label": "tweak_near_gap_05",
+      "near_miss_gap": 0.05,
+      "slice": {
+        "boost_unlock": 88,
+        "penalty_block": 61,
+        "n_short_base": 20614,
+        "n_short_fused": 20569,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 61,
+        "conflict_pen_pct": 24.2,
+        "rally_short_base": 191,
+        "rally_short_fused": 188,
+        "rally_short_delta": -3,
+        "pump_short_base": 1042,
+        "pump_short_fused": 981,
+        "pump_short_delta": -61
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34138,
+          "wr": 68.98177983478821,
+          "pnl": 23439.49270000005,
+          "ppt": 0.6866100152322939,
+          "pf": 2.5669887725030804,
+          "sl_pct": 29.61216239967192,
+          "avg_modal": 13.600864432597106,
+          "ppt_norm": 0.5048282178202586
+        },
+        "new_momentum": {
+          "n": 53,
+          "wr": 77.35849056603774,
+          "pnl": 59.60680000000001,
+          "ppt": 1.124656603773585,
+          "pf": 3.619722147751295,
+          "sl_pct": 22.641509433962266,
+          "avg_modal": 12.561509433962264,
+          "ppt_norm": 0.8953196347031964
+        },
+        "n_new_momentum": 53
+      },
+      "delta_port_ppt": 0.0007001156051721358,
+      "delta_vs_seq_frozen": 0.0,
+      "passes": "True"
+    },
+    {
+      "label": "tweak_pen_only_opp16",
+      "opposite_pen": 0.16,
+      "enable_boost": false,
+      "slice": {
+        "boost_unlock": 0,
+        "penalty_block": 68,
+        "n_short_base": 20614,
+        "n_short_fused": 20546,
+        "conflict_lstm_bull_on_lgbm_short": 252,
+        "conflict_penalized_to_flat": 68,
+        "conflict_pen_pct": 27.0,
+        "rally_short_base": 191,
+        "rally_short_fused": 187,
+        "rally_short_delta": -4,
+        "pump_short_base": 1042,
+        "pump_short_fused": 974,
+        "pump_short_delta": -68
+      },
+      "pipeline": {
+        "portfolio": {
+          "n": 34080,
+          "wr": 68.96713615023474,
+          "pnl": 23376.826600000044,
+          "ppt": 0.6859397476525835,
+          "pf": 2.5653074696936993,
+          "sl_pct": 29.624413145539908,
+          "avg_modal": 13.602733274647886,
+          "ppt_norm": 0.5042661160834527
+        },
+        "new_momentum": {
+          "n": 0,
+          "wr": 0,
+          "pnl": 0,
+          "ppt": 0,
+          "pf": 0,
+          "sl_pct": 0,
+          "avg_modal": 10.0,
+          "ppt_norm": 0
+        },
+        "n_new_momentum": 0
+      },
+      "delta_port_ppt": 0.00013801386836631568,
+      "delta_vs_seq_frozen": -0.0005621017368058201,
+      "passes": "False"
+    }
+  ],
+  "best_tweak": "tweak_opp_pen_18",
+  "best_delta_port_ppt": 0.0008049788463438956,
+  "elapsed_sec": 427.3
+}

@@ -1,0 +1,59 @@
+{
+  "config": "T50_R55 + LSTM veto",
+  "gd_params": {
+    "exit_thr": 0.7,
+    "min_hold": 3
+  },
+  "ic32": {
+    "trades": 936,
+    "wr": 62.07,
+    "pf": 2.54,
+    "pnl": 207.22
+  },
+  "results": [
+    {
+      "name": "no_guardian",
+      "feats": "-",
+      "trades": 905,
+      "wr": 69.6,
+      "pf": 2.43,
+      "pnl": 280.9,
+      "ppt": 0.31,
+      "gd_pct": 0.0,
+      "sl_pct": 0.0
+    },
+    {
+      "name": "profit_v1",
+      "feats": "18s+7d=25",
+      "trades": 905,
+      "wr": 68.2,
+      "pf": 2.79,
+      "pnl": 300.9,
+      "ppt": 0.332,
+      "gd_pct": 65.1,
+      "sl_pct": 0.0
+    },
+    {
+      "name": "fb_v1",
+      "feats": "27s+7d=34",
+      "trades": 905,
+      "wr": 68.2,
+      "pf": 2.73,
+      "pnl": 292.1,
+      "ppt": 0.323,
+      "gd_pct": 65.3,
+      "sl_pct": 0.0
+    },
+    {
+      "name": "fb_union_v1",
+      "feats": "36s+7d=43",
+      "trades": 905,
+      "wr": 69.1,
+      "pf": 2.77,
+      "pnl": 295.0,
+      "ppt": 0.326,
+      "gd_pct": 65.9,
+      "sl_pct": 0.0
+    }
+  ]
+}

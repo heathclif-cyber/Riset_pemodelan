@@ -1,0 +1,16 @@
+{
+  "mode": "asymmetric",
+  "lstm_bull_thr": 0.4,
+  "lstm_bear_thr": 0.5,
+  "oof_metrics": {
+    "bull_thr": 0.4,
+    "bear_thr": 0.5,
+    "n_complement": 1378,
+    "n_bull": 672,
+    "n_bear": 706,
+    "n_pool": 36406,
+    "bull_precision": 0.3125,
+    "bear_precision": 0.5042,
+    "mixed_precision_dir": 0.5632
+  }
+}

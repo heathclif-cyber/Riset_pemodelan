@@ -1,0 +1,182 @@
+{
+  "meta": {
+    "run": "ic32_b_dir_combined",
+    "holdout_period": "2026-04-01 to 2026-06-13",
+    "frozen_config": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\ic32_regime_v1\\b_dir_combined_frozen.json",
+    "hmm_per_state_thresholds": {
+      "0": [
+        0.72,
+        0.72
+      ],
+      "1": [
+        0.72,
+        0.72
+      ],
+      "2": [
+        0.72,
+        0.72
+      ],
+      "3": [
+        0.65,
+        0.72
+      ],
+      "-1": [
+        0.69,
+        0.59
+      ]
+    },
+    "generated_at": "2026-06-18 01:36:13"
+  },
+  "aggregate": {
+    "total_trades": 492,
+    "trades_per_month": 196.8,
+    "win_rate": 66.46,
+    "long_pct": 55.08,
+    "short_long_ratio": 0.815,
+    "total_pnl": 167.23,
+    "pnl_per_trade": 0.3399,
+    "profit_factor": 2.687,
+    "guardian_exit_pct": 73.17,
+    "outcome_counts": {
+      "GUARDIAN_MOMENTUM_EXIT": 167,
+      "GUARDIAN_MOMENTUM_PARTIAL": 30,
+      "GUARDIAN_EXIT": 163,
+      "LOSS": 86,
+      "TIMEOUT": 13,
+      "TIMEOUT_MOMENTUM": 33
+    }
+  },
+  "vs_production_holdout": {
+    "total_trades": 936,
+    "trades_per_month": 374.4,
+    "win_rate": 62.07,
+    "long_wr": 66.09,
+    "short_wr": 59.69,
+    "long_pct": 37.18,
+    "total_pnl": 207.22,
+    "pnl_per_month": 82.89,
+    "pnl_per_trade": 0.2214,
+    "profit_factor": 1.956,
+    "avg_hold_bars": 10.8,
+    "tp_rate_pct": 0.0,
+    "sl_rate_pct": 18.8,
+    "guardian_exit_pct": 73.29,
+    "time_exit_pct": 2.14,
+    "outcome_counts": {
+      "GUARDIAN_MOMENTUM_EXIT": 295,
+      "GUARDIAN_EXIT": 344,
+      "GUARDIAN_MOMENTUM_PARTIAL": 47,
+      "LOSS": 176,
+      "TIMEOUT": 20,
+      "TIMEOUT_MOMENTUM": 54
+    }
+  },
+  "per_coin": {
+    "BTCUSDT": {
+      "trades": 22,
+      "wr": 50.0,
+      "pnl": 2.44
+    },
+    "SOLUSDT": {
+      "trades": 17,
+      "wr": 64.71,
+      "pnl": 5.6
+    },
+    "ETHUSDT": {
+      "trades": 22,
+      "wr": 77.27,
+      "pnl": 12.98
+    },
+    "BNBUSDT": {
+      "trades": 17,
+      "wr": 64.71,
+      "pnl": 1.83
+    },
+    "XRPUSDT": {
+      "trades": 14,
+      "wr": 85.71,
+      "pnl": 4.69
+    },
+    "DOGEUSDT": {
+      "trades": 30,
+      "wr": 73.33,
+      "pnl": 10.93
+    },
+    "TONUSDT": {
+      "trades": 29,
+      "wr": 58.62,
+      "pnl": 23.06
+    },
+    "ADAUSDT": {
+      "trades": 25,
+      "wr": 72.0,
+      "pnl": 8.88
+    },
+    "TRXUSDT": {
+      "trades": 15,
+      "wr": 46.67,
+      "pnl": 0.79
+    },
+    "1000SHIBUSDT": {
+      "trades": 26,
+      "wr": 80.77,
+      "pnl": 10.7
+    },
+    "AVAXUSDT": {
+      "trades": 34,
+      "wr": 67.65,
+      "pnl": 7.34
+    },
+    "LINKUSDT": {
+      "trades": 18,
+      "wr": 72.22,
+      "pnl": 4.47
+    },
+    "DOTUSDT": {
+      "trades": 18,
+      "wr": 66.67,
+      "pnl": 3.81
+    },
+    "SUIUSDT": {
+      "trades": 38,
+      "wr": 65.79,
+      "pnl": 7.07
+    },
+    "POLUSDT": {
+      "trades": 26,
+      "wr": 57.69,
+      "pnl": 5.59
+    },
+    "NEARUSDT": {
+      "trades": 25,
+      "wr": 56.0,
+      "pnl": 15.25
+    },
+    "1000PEPEUSDT": {
+      "trades": 21,
+      "wr": 66.67,
+      "pnl": 6.25
+    },
+    "TAOUSDT": {
+      "trades": 30,
+      "wr": 63.33,
+      "pnl": 10.24
+    },
+    "ARBUSDT": {
+      "trades": 24,
+      "wr": 75.0,
+      "pnl": 5.91
+    },
+    "HBARUSDT": {
+      "trades": 17,
+      "wr": 64.71,
+      "pnl": 1.54
+    },
+    "ONDOUSDT": {
+      "trades": 24,
+      "wr": 66.67,
+      "pnl": 17.86
+    }
+  },
+  "failed": []
+}

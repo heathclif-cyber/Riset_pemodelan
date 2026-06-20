@@ -1,0 +1,271 @@
+{
+  "audit_time": "2026-06-18T15:31:19.104465+00:00",
+  "feature_cols": [
+    "dist_from_8h_high",
+    "rsi_6",
+    "swing_momentum",
+    "rsi_h4",
+    "stochrsi_k",
+    "dist_liq_50x_long",
+    "trend_accel_4h",
+    "rsi_slope_h4",
+    "Fib_786",
+    "Fib_618",
+    "stochrsi_d",
+    "ofi_h4_delta",
+    "dist_liq_50x_short",
+    "Buy_Liq",
+    "relative_strength_z",
+    "dist_liq_20x_long",
+    "cvd_momentum_adv",
+    "Sell_Liq",
+    "long_short_ratio",
+    "cvd_slope_h4",
+    "ema_21_slope_h4",
+    "ema_50_h1",
+    "h4_trend",
+    "log_ret_20",
+    "whale_retail_divergence",
+    "dist_liq_20x_short",
+    "vol_price_confirm",
+    "ema_50_slope_h4",
+    "MSB_BOS",
+    "cvd",
+    "ofi_acceleration",
+    "cvd_div_h4",
+    "hmm_regime_enc"
+  ],
+  "n_features": 33,
+  "coverage": {
+    "overlap_signals": 2860,
+    "with_snapshot": 2860,
+    "missing_any_feat": {},
+    "all_33_present": [
+      "dist_from_8h_high",
+      "rsi_6",
+      "swing_momentum",
+      "rsi_h4",
+      "stochrsi_k",
+      "dist_liq_50x_long",
+      "trend_accel_4h",
+      "rsi_slope_h4",
+      "Fib_786",
+      "Fib_618",
+      "stochrsi_d",
+      "ofi_h4_delta",
+      "dist_liq_50x_short",
+      "Buy_Liq",
+      "relative_strength_z",
+      "dist_liq_20x_long",
+      "cvd_momentum_adv",
+      "Sell_Liq",
+      "long_short_ratio",
+      "cvd_slope_h4",
+      "ema_21_slope_h4",
+      "ema_50_h1",
+      "h4_trend",
+      "log_ret_20",
+      "whale_retail_divergence",
+      "dist_liq_20x_short",
+      "vol_price_confirm",
+      "ema_50_slope_h4",
+      "MSB_BOS",
+      "cvd",
+      "ofi_acceleration",
+      "cvd_div_h4",
+      "hmm_regime_enc"
+    ]
+  },
+  "hmm_distribution": {
+    "overlap_8_13": {
+      "n": 2860,
+      "hmm_dist": {
+        "0.0": 2734,
+        "1.0": 77,
+        "3.0": 29,
+        "2.0": 20
+      }
+    },
+    "jun17_plus": {
+      "n": 734,
+      "hmm_dist": {
+        "2.0": 291,
+        "1.0": 186,
+        "3.0": 141,
+        "0.0": 116
+      }
+    },
+    "all": {
+      "n": 13850,
+      "hmm_dist": {
+        "0.0": 11811,
+        "2.0": 794,
+        "1.0": 714,
+        "3.0": 431,
+        "MISSING": 100
+      }
+    }
+  },
+  "holdout_lsr_baseline": {
+    "n": 381,
+    "mean": 1.0001,
+    "std": 0.0123,
+    "min": 0.9463,
+    "max": 1.0754,
+    "pct_zero": 0.0,
+    "note": "Holdout pakai nilai historis dari parquet (bukan hardcoded 0)"
+  },
+  "compare_summary": {
+    "compared": 2860,
+    "hmm_match_rate": 0.22867132867132867,
+    "hmm_mismatch_count": 2206,
+    "mean_abs_delta": {
+      "hmm_regime_enc": 1.132867,
+      "h4_trend": 0.544056,
+      "ofi_h4_delta": 25953603.550261,
+      "cvd_slope_h4": 0.269618,
+      "vol_ratio_20": 0.813447,
+      "vol_spike_zscore": 1.334362,
+      "rsi_h4": 12.666273,
+      "stochrsi_d": 35.293084,
+      "long_short_ratio": 1.000132,
+      "log_ret_20": 0.020892,
+      "atr_percentile_h1": 0.314905
+    },
+    "median_abs_delta": {
+      "hmm_regime_enc": 1.0,
+      "h4_trend": 0.0,
+      "ofi_h4_delta": 632367.8,
+      "cvd_slope_h4": 0.070151,
+      "vol_ratio_20": 0.644362,
+      "vol_spike_zscore": 1.06142,
+      "rsi_h4": 10.47534,
+      "stochrsi_d": 33.301389,
+      "long_short_ratio": 1.0,
+      "log_ret_20": 0.016045,
+      "atr_percentile_h1": 0.305171
+    },
+    "top_mismatch_cases": [
+      {
+        "signal_time": "2026-06-10 19:05:07.718980",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1392429786.1130672
+      },
+      {
+        "signal_time": "2026-06-12 03:05:09.079096",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1288780214.9994586
+      },
+      {
+        "signal_time": "2026-06-12 02:05:09.946080",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1233364622.036538
+      },
+      {
+        "signal_time": "2026-06-12 00:05:07.529754",
+        "symbol": "1000PEPEUSDT",
+        "direction": "SHORT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1219580644.4062452
+      },
+      {
+        "signal_time": "2026-06-12 01:05:09.138306",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1206616279.896959
+      },
+      {
+        "signal_time": "2026-06-10 18:05:07.855646",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1184526663.2816775
+      },
+      {
+        "signal_time": "2026-06-10 17:05:07.781281",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1099223686.2640188
+      },
+      {
+        "signal_time": "2026-06-10 16:05:08.381073",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1088835825.7330294
+      },
+      {
+        "signal_time": "2026-06-11 08:05:09.980108",
+        "symbol": "1000PEPEUSDT",
+        "direction": "SHORT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1057946419.0138742
+      },
+      {
+        "signal_time": "2026-06-09 15:05:07.646631",
+        "symbol": "1000PEPEUSDT",
+        "direction": "FLAT",
+        "live_hmm": 0.0,
+        "hold_hmm": 1,
+        "_total_delta": 1029148851.9799899
+      }
+    ]
+  },
+  "findings": [
+    {
+      "severity": "INFO",
+      "issue": "HMM recovered after Jun 17 deploy",
+      "detail": "Distribusi Jun17+: {2.0: 291, 1.0: 186, 3.0: 141, 0.0: 116}"
+    },
+    {
+      "severity": "CRITICAL",
+      "issue": "HMM mismatch vs holdout",
+      "detail": "Match rate 22.9%, mismatch=2206"
+    },
+    {
+      "severity": "HIGH",
+      "issue": "long_short_ratio hardcoded 0 in live data_service.py",
+      "detail": "Live selalu 0. Holdout overlap mean=1.0001, pct_zero=0.0. Meski swint docs bilang 'by design', holdout ic32 pakai nilai historis ~1.0."
+    },
+    {
+      "severity": "HIGH",
+      "issue": "ofi_h4_delta large delta vs holdout",
+      "detail": "mean_abs_delta=25953603.550261"
+    },
+    {
+      "severity": "HIGH",
+      "issue": "vol_ratio_20 large delta vs holdout",
+      "detail": "mean_abs_delta=0.813447"
+    },
+    {
+      "severity": "HIGH",
+      "issue": "vol_spike_zscore large delta vs holdout",
+      "detail": "mean_abs_delta=1.334362"
+    },
+    {
+      "severity": "HIGH",
+      "issue": "rsi_h4 large delta vs holdout",
+      "detail": "mean_abs_delta=12.666273"
+    }
+  ],
+  "design_diff_features": [
+    "long_short_ratio"
+  ]
+}

@@ -1,0 +1,12 @@
+[
+  "proba_margin",
+  "proba_entropy",
+  "conf_gap",
+  "direction",
+  "hmm_regime_enc",
+  "atr_percentile_h1",
+  "funding_rate",
+  "vol_spike_zscore",
+  "ofi_h4_delta",
+  "cvd_slope_h4"
+]

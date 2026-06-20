@@ -1,0 +1,18 @@
+[
+  "ofi_z_score",
+  "cvd_momentum_adv",
+  "cvd_slope_h4",
+  "ofi_h4_delta",
+  "absorption_z",
+  "price_accel_1h",
+  "log_ret_1",
+  "log_ret_5",
+  "rsi_6",
+  "vol_ratio_20",
+  "vol_spike_zscore",
+  "trend_strength",
+  "h4_trend",
+  "ema_21_slope_h4",
+  "atr_percentile_h1",
+  "funding_rate"
+]

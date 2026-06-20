@@ -1,0 +1,157 @@
+{
+  "protocol": "genuine_oof",
+  "holdout_used": false,
+  "stack": "B-dir + continuation_v1 + min_hold=4 + SL close",
+  "exit_schema_doc": {
+    "independent": "Tiap leg: TP/SL/Guardian dari bar entry leg itu (live paper_trading saat ini)",
+    "shared_sl_first": "Leg 2+ pakai SL price leg pertama (anchor risiko)",
+    "close_with_first": "Leg 2+ tidak boleh hold lebih lama dari exit bar leg pertama"
+  },
+  "created": "2026-06-18T16:11:10.128974",
+  "baseline": {
+    "label": "no_pyr",
+    "config": {
+      "label": "no_pyr",
+      "enabled": false,
+      "max_per_coin": 1,
+      "exit_mode": "independent"
+    },
+    "trades": 6381,
+    "wr": 69.41,
+    "pf": 3.12,
+    "pnl": 3636.15,
+    "ppt": 0.5698,
+    "ppt_norm": 0.057,
+    "avg_modal": 10.0,
+    "avg_hold_bars": 11.99,
+    "avg_legs_per_stack": 1.0,
+    "pct_stacks_multi_leg": 0.0,
+    "add_on_legs": 0,
+    "total_stacks": 6381,
+    "delta_trades_pct": 0.0,
+    "delta_ppt": 0.0,
+    "delta_ppt_norm": 0.0
+  },
+  "results": {
+    "no_pyr": {
+      "label": "no_pyr",
+      "config": {
+        "label": "no_pyr",
+        "enabled": false,
+        "max_per_coin": 1,
+        "exit_mode": "independent"
+      },
+      "trades": 6381,
+      "wr": 69.41,
+      "pf": 3.12,
+      "pnl": 3636.15,
+      "ppt": 0.5698,
+      "ppt_norm": 0.057,
+      "avg_modal": 10.0,
+      "avg_hold_bars": 11.99,
+      "avg_legs_per_stack": 1.0,
+      "pct_stacks_multi_leg": 0.0,
+      "add_on_legs": 0,
+      "total_stacks": 6381,
+      "delta_trades_pct": 0.0,
+      "delta_ppt": 0.0,
+      "delta_ppt_norm": 0.0
+    },
+    "pyr2_independent": {
+      "label": "pyr2_independent",
+      "config": {
+        "label": "pyr2_independent",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "independent"
+      },
+      "trades": 7979,
+      "wr": 69.12,
+      "pf": 3.01,
+      "pnl": 4446.54,
+      "ppt": 0.5573,
+      "ppt_norm": 0.0557,
+      "avg_modal": 10.0,
+      "avg_hold_bars": 12.01,
+      "avg_legs_per_stack": 1.26,
+      "pct_stacks_multi_leg": 25.1,
+      "add_on_legs": 1644,
+      "total_stacks": 6335,
+      "delta_trades_pct": 25.0,
+      "delta_ppt": -0.0125,
+      "delta_ppt_norm": -0.0013
+    },
+    "pyr3_independent": {
+      "label": "pyr3_independent",
+      "config": {
+        "label": "pyr3_independent",
+        "enabled": true,
+        "max_per_coin": 3,
+        "exit_mode": "independent"
+      },
+      "trades": 8365,
+      "wr": 68.94,
+      "pf": 2.961,
+      "pnl": 4600.08,
+      "ppt": 0.5499,
+      "ppt_norm": 0.055,
+      "avg_modal": 10.0,
+      "avg_hold_bars": 12.07,
+      "avg_legs_per_stack": 1.32,
+      "pct_stacks_multi_leg": 25.3,
+      "add_on_legs": 2036,
+      "total_stacks": 6329,
+      "delta_trades_pct": 31.1,
+      "delta_ppt": -0.0199,
+      "delta_ppt_norm": -0.002
+    },
+    "pyr2_shared_sl_first": {
+      "label": "pyr2_shared_sl_first",
+      "config": {
+        "label": "pyr2_shared_sl_first",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "shared_sl_first"
+      },
+      "trades": 7931,
+      "wr": 69.4,
+      "pf": 3.065,
+      "pnl": 4480.41,
+      "ppt": 0.5649,
+      "ppt_norm": 0.0565,
+      "avg_modal": 10.0,
+      "avg_hold_bars": 12.02,
+      "avg_legs_per_stack": 1.25,
+      "pct_stacks_multi_leg": 24.5,
+      "add_on_legs": 1594,
+      "total_stacks": 6337,
+      "delta_trades_pct": 24.3,
+      "delta_ppt": -0.0049,
+      "delta_ppt_norm": -0.0005
+    },
+    "pyr2_close_with_first": {
+      "label": "pyr2_close_with_first",
+      "config": {
+        "label": "pyr2_close_with_first",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "close_with_first"
+      },
+      "trades": 8031,
+      "wr": 66.23,
+      "pf": 3.09,
+      "pnl": 4313.03,
+      "ppt": 0.537,
+      "ppt_norm": 0.0537,
+      "avg_modal": 10.0,
+      "avg_hold_bars": 11.43,
+      "avg_legs_per_stack": 1.25,
+      "pct_stacks_multi_leg": 25.1,
+      "add_on_legs": 1630,
+      "total_stacks": 6401,
+      "delta_trades_pct": 25.9,
+      "delta_ppt": -0.0328,
+      "delta_ppt_norm": -0.0033
+    }
+  }
+}

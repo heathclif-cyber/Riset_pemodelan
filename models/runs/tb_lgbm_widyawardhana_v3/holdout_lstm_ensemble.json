@@ -1,0 +1,64 @@
+{
+  "run": "tb_lstm_soft_ensemble",
+  "lstm_alpha": 0.3,
+  "lstm_cv_f1": 0.3862,
+  "decorrelation": {
+    "agree_pct_all": 75.71,
+    "agree_pct_dir": 80.65,
+    "total_signal_bars": 8297
+  },
+  "scorecard": {
+    "tb": {
+      "trades": 1501,
+      "wr": 46.2358,
+      "long_wr": 43.7018,
+      "short_wr": 47.1223,
+      "long_pct": 25.9161,
+      "sl_rate": 50.8994,
+      "gdn_rate": 0.0,
+      "avg_hold": 24.2318,
+      "pnl": 940.4232,
+      "ppm": 188.0846,
+      "ppt": 0.6265
+    },
+    "tb_gdn": {
+      "trades": 1931,
+      "wr": 55.6189,
+      "long_wr": 52.3992,
+      "short_wr": 56.8085,
+      "long_pct": 26.9808,
+      "sl_rate": 24.2361,
+      "gdn_rate": 70.3263,
+      "avg_hold": 15.3081,
+      "pnl": 1125.3958,
+      "ppm": 225.0792,
+      "ppt": 0.5828
+    },
+    "tb_lstm": {
+      "trades": 1392,
+      "wr": 47.0546,
+      "long_wr": 45.0794,
+      "short_wr": 47.6323,
+      "long_pct": 22.6293,
+      "sl_rate": 50.2155,
+      "gdn_rate": 0.0,
+      "avg_hold": 24.3297,
+      "pnl": 994.671,
+      "ppm": 198.9342,
+      "ppt": 0.7146
+    },
+    "tb_gdn_lstm": {
+      "trades": 1756,
+      "wr": 57.2893,
+      "long_wr": 51.3317,
+      "short_wr": 59.1214,
+      "long_pct": 23.5194,
+      "sl_rate": 23.4624,
+      "gdn_rate": 71.697,
+      "avg_hold": 15.5581,
+      "pnl": 1154.8873,
+      "ppm": 230.9775,
+      "ppt": 0.6577
+    }
+  }
+}

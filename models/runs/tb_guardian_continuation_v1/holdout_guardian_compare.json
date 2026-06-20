@@ -1,0 +1,66 @@
+{
+  "period": "Apr 2026-Jun 2026 (~2.5 bln)",
+  "coins": 21,
+  "variants": [
+    {
+      "name": "FB v2 Standalone",
+      "trades": 918,
+      "trades_per_month": 367.0,
+      "win_rate": 69.1,
+      "long_wr": 70.2,
+      "short_wr": 66.4,
+      "short_pnl": 85.75,
+      "pnl": 276.35,
+      "pnl_per_month": 110.54,
+      "pnl_per_trade": 0.301,
+      "profit_factor": 2.36,
+      "sl_rate": 0.0,
+      "gd_exit_rate": 0.0
+    },
+    {
+      "name": "FB v2 + profit_v1",
+      "trades": 918,
+      "trades_per_month": 367.0,
+      "win_rate": 68.8,
+      "long_wr": 69.9,
+      "short_wr": 66.4,
+      "short_pnl": 82.66,
+      "pnl": 267.44,
+      "pnl_per_month": 106.98,
+      "pnl_per_trade": 0.291,
+      "profit_factor": 2.59,
+      "sl_rate": 0.0,
+      "gd_exit_rate": 65.4
+    },
+    {
+      "name": "FB v2 + momentum_v1",
+      "trades": 918,
+      "trades_per_month": 367.0,
+      "win_rate": 68.7,
+      "long_wr": 70.1,
+      "short_wr": 65.7,
+      "short_pnl": 80.68,
+      "pnl": 278.99,
+      "pnl_per_month": 111.6,
+      "pnl_per_trade": 0.304,
+      "profit_factor": 2.65,
+      "sl_rate": 0.0,
+      "gd_exit_rate": 65.4
+    },
+    {
+      "name": "FB v2 + continuation_v1",
+      "trades": 918,
+      "trades_per_month": 367.0,
+      "win_rate": 70.3,
+      "long_wr": 71.8,
+      "short_wr": 66.8,
+      "short_pnl": 86.2,
+      "pnl": 284.06,
+      "pnl_per_month": 113.62,
+      "pnl_per_trade": 0.309,
+      "profit_factor": 2.7,
+      "sl_rate": 0.0,
+      "gd_exit_rate": 67.8
+    }
+  ]
+}

@@ -1,0 +1,93 @@
+{
+  "run_name": "ic32_meta_v1",
+  "spec_version": "ic32_meta_v1",
+  "trained_at": "2026-06-15T15:16:51.202267",
+  "oof_source": "D:\\Apps-Dev\\Riset_pemodelan\\data\\meta_labels\\ic32_oof_trades.parquet",
+  "n_oof_trades": 27714,
+  "base_win_rate": 0.3416,
+  "features": [
+    "p_short",
+    "p_flat",
+    "p_long",
+    "confidence",
+    "direction",
+    "hmm_regime_enc",
+    "atr_percentile_h1",
+    "funding_rate",
+    "wyckoff_phase",
+    "stochrsi_k",
+    "ofi_h4_delta"
+  ],
+  "cv_mean_auc": 0.5562,
+  "best_fold_auc": 0.5772,
+  "best_fold": 6,
+  "cv_metrics": [
+    {
+      "fold": 1,
+      "auc": 0.5314,
+      "acc": 0.6437,
+      "f1": 0.0,
+      "wr_selected": 0.0,
+      "wr_rejected": 0.3563
+    },
+    {
+      "fold": 2,
+      "auc": 0.5335,
+      "acc": 0.6528,
+      "f1": 0.0,
+      "wr_selected": 0.0,
+      "wr_rejected": 0.3472
+    },
+    {
+      "fold": 3,
+      "auc": 0.562,
+      "acc": 0.6754,
+      "f1": 0.0465,
+      "wr_selected": 0.5476,
+      "wr_rejected": 0.3227
+    },
+    {
+      "fold": 4,
+      "auc": 0.5563,
+      "acc": 0.6741,
+      "f1": 0.0386,
+      "wr_selected": 0.5263,
+      "wr_rejected": 0.324
+    },
+    {
+      "fold": 5,
+      "auc": 0.5507,
+      "acc": 0.667,
+      "f1": 0.0366,
+      "wr_selected": 0.5758,
+      "wr_rejected": 0.332
+    },
+    {
+      "fold": 6,
+      "auc": 0.5772,
+      "acc": 0.6641,
+      "f1": 0.0617,
+      "wr_selected": 0.5556,
+      "wr_rejected": 0.3337
+    },
+    {
+      "fold": 7,
+      "auc": 0.5702,
+      "acc": 0.6502,
+      "f1": 0.0332,
+      "wr_selected": 0.5263,
+      "wr_rejected": 0.3484
+    },
+    {
+      "fold": 8,
+      "auc": 0.5684,
+      "acc": 0.6441,
+      "f1": 0.0877,
+      "wr_selected": 0.686,
+      "wr_rejected": 0.357
+    }
+  ],
+  "n_estimators_final": 226,
+  "leak_check": "Labels from walk-forward OOF only \u2014 see ic32_oof_trades_meta.json",
+  "next_step": "python pipeline/14_eval_meta_entry_ablation.py"
+}

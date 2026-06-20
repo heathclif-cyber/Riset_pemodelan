@@ -1,0 +1,12 @@
+[
+  "ofi_z_score",
+  "ofi_acceleration",
+  "ofi_raw",
+  "rsi_slope_h4",
+  "log_ret_1",
+  "swing_momentum",
+  "volume_delta",
+  "whale_retail_divergence",
+  "cvd_slope_h4",
+  "trend_accel_4h"
+]

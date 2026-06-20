@@ -1,0 +1,81 @@
+{
+  "period": "2026-04-01 to 2026-06-13",
+  "thr_long": 0.5,
+  "thr_short": 0.55,
+  "n_coins": 21,
+  "ic32_benchmark": {
+    "trades": 936,
+    "wr": 62.07,
+    "pnl": 207.22,
+    "pnl_per_trade": 0.2214
+  },
+  "results": [
+    {
+      "label": "fb_lgbm_only",
+      "trades": 1698,
+      "wr": 66.9,
+      "long_wr": 67.5,
+      "short_wr": 65.6,
+      "long_pct": 68.2,
+      "pnl": 455.4,
+      "pnl_per_month": 182.2,
+      "pnl_per_trade": 0.268
+    },
+    {
+      "label": "fb_guardian",
+      "trades": 1698,
+      "wr": 0.0,
+      "long_wr": 0.0,
+      "short_wr": 0.0,
+      "long_pct": 68.2,
+      "pnl": 426.9,
+      "pnl_per_month": 170.8,
+      "pnl_per_trade": 0.251
+    },
+    {
+      "label": "fb_lstm",
+      "trades": 1103,
+      "wr": 66.5,
+      "long_wr": 68.2,
+      "short_wr": 63.1,
+      "long_pct": 66.4,
+      "pnl": 272.3,
+      "pnl_per_month": 108.9,
+      "pnl_per_trade": 0.247
+    },
+    {
+      "label": "fb_lstm_guard",
+      "trades": 1103,
+      "wr": 0.0,
+      "long_wr": 0.0,
+      "short_wr": 0.0,
+      "long_pct": 66.4,
+      "pnl": 266.1,
+      "pnl_per_month": 106.4,
+      "pnl_per_trade": 0.241
+    },
+    {
+      "label": "fb_hmm_lstm",
+      "trades": 1584,
+      "wr": 66.8,
+      "long_wr": 67.8,
+      "short_wr": 64.8,
+      "long_pct": 67.6,
+      "pnl": 411.1,
+      "pnl_per_month": 164.4,
+      "pnl_per_trade": 0.26
+    },
+    {
+      "label": "fb_full",
+      "trades": 1584,
+      "wr": 0.0,
+      "long_wr": 0.0,
+      "short_wr": 0.0,
+      "long_pct": 67.6,
+      "pnl": 380.9,
+      "pnl_per_month": 152.4,
+      "pnl_per_trade": 0.24
+    }
+  ],
+  "note": "flatboost_v2 stack ablation: LSTM hard_consensus + HMM gate + guardian_clean_v2"
+}

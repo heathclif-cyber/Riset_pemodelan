@@ -1,0 +1,32 @@
+{
+  "guardian": "ic32_guardian_continuation_v1",
+  "stack": "B-dir-combined + production cascade",
+  "grid": [
+    2,
+    4
+  ],
+  "baseline_min_hold": 2,
+  "created": "2026-06-18T12:16:54.591758",
+  "results": {
+    "2": {
+      "trades": 8833,
+      "wr": 66.13,
+      "pf": 2.38,
+      "pnl": 3856.84,
+      "ppt": 0.4366,
+      "early_gdn_los": 310,
+      "trade_pct_vs_baseline": 100.0,
+      "delta_ppt": 0.0
+    },
+    "4": {
+      "trades": 8833,
+      "wr": 65.46,
+      "pf": 2.431,
+      "pnl": 4203.56,
+      "ppt": 0.4759,
+      "early_gdn_los": 11,
+      "trade_pct_vs_baseline": 100.0,
+      "delta_ppt": 0.0393
+    }
+  }
+}

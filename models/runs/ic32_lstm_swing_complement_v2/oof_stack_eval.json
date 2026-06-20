@@ -1,0 +1,111 @@
+{
+  "meta": {
+    "eval": "ic32_swing_complement_oof",
+    "complement_run": "ic32_lstm_swing_complement_v2",
+    "lstm_n_feat": 11,
+    "period": "2020-01-01 to 2026-04-01",
+    "guardian": "guardian_clean_v2.pkl",
+    "ic32_thr": [
+      0.69,
+      0.59
+    ],
+    "conf_entry": 0.59,
+    "momentum_cfg": {
+      "bull_thr": 0.38,
+      "bear_thr": 0.5,
+      "boost": 0.1,
+      "opposite_pen": 0.14,
+      "near_miss_gap": 0.05,
+      "vol_thr": 2.0,
+      "enable_boost": true,
+      "enable_penalty": true,
+      "proportional": true
+    },
+    "boost_only_cfg": {
+      "agree_boost": 0.08,
+      "vol_thr": 2.0
+    },
+    "generated_at": "2026-06-18 00:27:47"
+  },
+  "complement_cv": {
+    "mean_f1_macro": 0.436,
+    "complement_asymmetric_oof": {
+      "n_pool": 32068,
+      "n_complement": 10372,
+      "n_bull": 9720,
+      "n_bear": 652,
+      "bull_precision": 0.4552,
+      "bear_precision": 0.4939,
+      "mixed_precision_dir": 0.5636,
+      "bull_thr": 0.38,
+      "bear_thr": 0.5
+    }
+  },
+  "variants": {
+    "baseline_hard_consensus": {
+      "total_trades": 25596,
+      "win_rate": 55.68,
+      "total_pnl": 3563.87,
+      "pnl_per_trade": 0.1392,
+      "profit_factor": 1.393,
+      "sl_rate_pct": 0.0,
+      "guardian_exit_pct": 65.46,
+      "long_trades": 6187,
+      "short_trades": 19409
+    },
+    "complement_hard_consensus": {
+      "total_trades": 18897,
+      "win_rate": 55.88,
+      "total_pnl": 2951.93,
+      "pnl_per_trade": 0.1562,
+      "profit_factor": 1.442,
+      "sl_rate_pct": 0.0,
+      "guardian_exit_pct": 64.26,
+      "long_trades": 7309,
+      "short_trades": 11588
+    },
+    "complement_conditional_momentum": {
+      "total_trades": 38109,
+      "win_rate": 54.63,
+      "total_pnl": 4416.71,
+      "pnl_per_trade": 0.1159,
+      "profit_factor": 1.317,
+      "sl_rate_pct": 0.0,
+      "guardian_exit_pct": 66.31,
+      "long_trades": 8967,
+      "short_trades": 29142
+    },
+    "complement_boost_only": {
+      "total_trades": 38109,
+      "win_rate": 54.63,
+      "total_pnl": 4416.71,
+      "pnl_per_trade": 0.1159,
+      "profit_factor": 1.317,
+      "sl_rate_pct": 0.0,
+      "guardian_exit_pct": 66.31,
+      "long_trades": 8967,
+      "short_trades": 29142
+    }
+  },
+  "archived_baseline": {
+    "total_trades": 25596,
+    "trades_per_month": 341.3,
+    "win_rate": 55.68,
+    "long_wr": 59.06,
+    "short_wr": 54.6,
+    "long_pct": 24.17,
+    "total_pnl": 3563.87,
+    "pnl_per_trade": 0.1392,
+    "profit_factor": 1.393,
+    "sl_rate_pct": 0.0,
+    "guardian_exit_pct": 65.46,
+    "outcome_counts": {
+      "LOSS": 5959,
+      "GUARDIAN_EXIT": 9651,
+      "GUARDIAN_MOMENTUM_EXIT": 6245,
+      "TIMEOUT": 626,
+      "GUARDIAN_MOMENTUM_PARTIAL": 859,
+      "TIMEOUT_MOMENTUM": 2256
+    }
+  }
+}

@@ -1,0 +1,7 @@
+---
+pid: 24684
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05f_hmm_adaptive_on_config_c_ic32.py"
+started_at: 2026-06-17T16:53:58.928Z
+running_for_ms: 2960003  
+---

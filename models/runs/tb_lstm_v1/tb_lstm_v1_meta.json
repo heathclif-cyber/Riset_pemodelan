@@ -1,0 +1,73 @@
+{
+  "run_name": "tb_lstm_v1",
+  "labels": "Triple Barrier",
+  "label_params": {
+    "tp_mult": 2.0,
+    "sl_mult": 1.5,
+    "max_hold": 36
+  },
+  "architecture": "TradingLSTM(n_feat=41, hidden=96, layers=2, dropout=0.45)",
+  "seq_len": 48,
+  "batch_size": 64,
+  "n_samples": 391722,
+  "n_features": 41,
+  "label_dist": {
+    "0": 219335,
+    "1": 13253,
+    "2": 159134
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "f1": 0.3709,
+      "acc": 0.4677,
+      "best_epoch": 6
+    },
+    {
+      "fold": 2,
+      "f1": 0.3823,
+      "acc": 0.5003,
+      "best_epoch": 31
+    },
+    {
+      "fold": 3,
+      "f1": 0.384,
+      "acc": 0.4964,
+      "best_epoch": 40
+    },
+    {
+      "fold": 4,
+      "f1": 0.3707,
+      "acc": 0.4728,
+      "best_epoch": 18
+    },
+    {
+      "fold": 5,
+      "f1": 0.3893,
+      "acc": 0.4757,
+      "best_epoch": 7
+    },
+    {
+      "fold": 6,
+      "f1": 0.3959,
+      "acc": 0.5411,
+      "best_epoch": 23
+    },
+    {
+      "fold": 7,
+      "f1": 0.3961,
+      "acc": 0.522,
+      "best_epoch": 42
+    },
+    {
+      "fold": 8,
+      "f1": 0.4004,
+      "acc": 0.5154,
+      "best_epoch": 5
+    }
+  ],
+  "cv_f1_mean": 0.3862,
+  "cv_f1_std": 0.0106,
+  "training_period": "2020-01-01 \u2013 2026-04-01 00:00:00+00:00",
+  "trained_at": "2026-06-11 16:12:00"
+}

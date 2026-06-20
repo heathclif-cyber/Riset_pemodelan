@@ -1,0 +1,46 @@
+---
+pid: 13788
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python -c \"
+import numpy as np, pandas as pd
+from config import TRAIN_CUTOFF_DATE, LABEL_DIR, ALL_COINS, MODEL_DIR
+from core.utils import ensure_utc_index
+
+oof = pd.read_parquet(MODEL_DIR / 'runs/tb_lgbm_genuine_v2/oof_predictions.parquet')
+rows=[]
+for sym in ALL_COINS:
+    p=LABEL_DIR/f'{sym}_features_v3.parquet'
+    if not p.exists(): continue
+    df=ensure_utc_index(pd.read_parquet(p)).sort_index(); df=df[df.index<TRAIN_CUTOFF_DATE]
+    pr=oof[(oof.coin==sym)&(oof.has_oof==True)][['p0','p2']].reindex(df.index)
+    m=pr.p0.notna();
+    if m.sum()<100: continue
+    sub=df[m]
+    for ts,p2 in zip(sub.index, pr[m].p2.values):
+        rows.append({'ts':ts,'p2':float(p2)})
+df=pd.DataFrame(rows)
+g=df.groupby('ts').agg(max_p2=('p2','max'), mean_p2=('p2','mean'), n=('p2','count'))
+mkt=df.groupby('ts').apply(lambda x: x.merge(df.groupby('ts').size().rename('n'), left_on='ts', right_index=True))  # skip
+# ret4 market
+rets=[]
+for sym in ALL_COINS[:3]:
+    pass
+# reuse simpler: load mean ret from prior - approximate with p2 mean as proxy not ideal
+# compute market ret4 from BTC
+btc=ensure_utc_index(pd.read_parquet(LABEL_DIR/'BTCUSDT_features_v3.parquet')).sort_index()
+btc=btc[btc.index<TRAIN_CUTOFF_DATE]
+btc_ret4=np.log(btc.close/btc.close.shift(4)).fillna(0)
+g=g.join(btc_ret4.rename('btc_ret4'), on='ts')
+hi=g[g.btc_ret4>=g.btc_ret4.quantile(0.90)]
+print('High BTC momentum bars:', len(hi))
+for thr in [0.40,0.45,0.50,0.55]:
+    pct=(hi.max_p2>=thr).mean()*100
+    print(f'  max_p2 >= {thr}: {pct:.1f}% of bars')
+print(f'Hi-mom max_p2: mean={hi.max_p2.mean():.3f} p50={hi.max_p2.median():.3f} p75={hi.max_p2.quantile(0.75):.3f}')
+print(f'Hi-mom mean_p2: mean={hi.mean_p2.mean():.3f}')
+lo=g[g.btc_ret4<=g.btc_ret4.quantile(0.10)]
+print(f'Lo-mom max_p2: mean={lo.max_p2.mean():.3f}')
+\""
+started_at: 2026-06-16T03:36:42.091Z
+running_for_ms: 31634999 
+---

@@ -1,0 +1,203 @@
+{
+  "meta": {
+    "run": "ic32_regime_v1",
+    "methodology": "genuine_oof_full_stack_simons_config_c",
+    "period": "2020-01-01 to 2026-04-01",
+    "simons_config_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\ic32_regime_v1\\hmm_threshold_ic32_simons.json",
+    "live_config_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\inference_config.json",
+    "guardian_model": "guardian_clean_v2.pkl",
+    "dynamic_sizing": false,
+    "generated_at": "2026-06-18 00:49:39"
+  },
+  "hmm_per_state_thresholds": {
+    "0": [
+      0.69,
+      0.69
+    ],
+    "1": [
+      0.72,
+      0.72
+    ],
+    "2": [
+      0.69,
+      0.69
+    ],
+    "3": [
+      0.65,
+      0.65
+    ],
+    "-1": [
+      0.69,
+      0.59
+    ]
+  },
+  "live_params": {
+    "thr_long": 0.69,
+    "thr_short": 0.59,
+    "conf_entry": 0.59,
+    "gdn_exit": 0.65,
+    "gdn_min_hold": 2,
+    "flip": true
+  },
+  "aggregate": {
+    "total_trades": 11399,
+    "trades_per_month": 152.0,
+    "win_rate": 61.13,
+    "long_wr": 59.55,
+    "short_wr": 62.8,
+    "long_pct": 51.4,
+    "short_long_ratio": 0.946,
+    "total_pnl": 3256.56,
+    "pnl_per_trade": 0.2857,
+    "profit_factor": 1.851,
+    "sl_rate_pct": 0.0,
+    "guardian_exit_pct": 66.37,
+    "outcome_counts": {
+      "LOSS": 2352,
+      "GUARDIAN_EXIT": 4136,
+      "GUARDIAN_MOMENTUM_EXIT": 3040,
+      "GUARDIAN_MOMENTUM_PARTIAL": 389,
+      "TIMEOUT_MOMENTUM": 1144,
+      "TIMEOUT": 338
+    }
+  },
+  "vs_baseline_full_stack": {
+    "baseline_trades": 25596,
+    "baseline_wr": 55.68,
+    "baseline_pf": 1.393,
+    "baseline_ppt": 0.1392,
+    "delta_trades": -14197,
+    "delta_wr_pp": 5.45,
+    "delta_pf": 0.458,
+    "delta_ppt": 0.1465
+  },
+  "per_coin": {
+    "BTCUSDT": {
+      "trades": 505,
+      "wr": 60.59,
+      "pnl": 86.0,
+      "oof_bars": 45261
+    },
+    "SOLUSDT": {
+      "trades": 709,
+      "wr": 62.2,
+      "pnl": 254.6,
+      "oof_bars": 45261
+    },
+    "ETHUSDT": {
+      "trades": 638,
+      "wr": 66.14,
+      "pnl": 224.11,
+      "oof_bars": 45261
+    },
+    "BNBUSDT": {
+      "trades": 547,
+      "wr": 59.78,
+      "pnl": 102.82,
+      "oof_bars": 45261
+    },
+    "XRPUSDT": {
+      "trades": 746,
+      "wr": 60.72,
+      "pnl": 121.57,
+      "oof_bars": 45261
+    },
+    "DOGEUSDT": {
+      "trades": 828,
+      "wr": 54.83,
+      "pnl": 91.5,
+      "oof_bars": 45261
+    },
+    "TONUSDT": {
+      "trades": 206,
+      "wr": 60.68,
+      "pnl": 65.88,
+      "oof_bars": 10757
+    },
+    "ADAUSDT": {
+      "trades": 696,
+      "wr": 60.49,
+      "pnl": 120.63,
+      "oof_bars": 45261
+    },
+    "TRXUSDT": {
+      "trades": 731,
+      "wr": 60.19,
+      "pnl": 124.37,
+      "oof_bars": 45261
+    },
+    "1000SHIBUSDT": {
+      "trades": 832,
+      "wr": 57.21,
+      "pnl": 73.54,
+      "oof_bars": 39113
+    },
+    "AVAXUSDT": {
+      "trades": 628,
+      "wr": 64.01,
+      "pnl": 287.47,
+      "oof_bars": 44605
+    },
+    "LINKUSDT": {
+      "trades": 646,
+      "wr": 60.37,
+      "pnl": 212.18,
+      "oof_bars": 45261
+    },
+    "DOTUSDT": {
+      "trades": 750,
+      "wr": 61.07,
+      "pnl": 241.92,
+      "oof_bars": 45261
+    },
+    "SUIUSDT": {
+      "trades": 400,
+      "wr": 64.25,
+      "pnl": 178.58,
+      "oof_bars": 21827
+    },
+    "POLUSDT": {
+      "trades": 156,
+      "wr": 71.79,
+      "pnl": 77.2,
+      "oof_bars": 9893
+    },
+    "NEARUSDT": {
+      "trades": 810,
+      "wr": 59.51,
+      "pnl": 300.7,
+      "oof_bars": 44078
+    },
+    "1000PEPEUSDT": {
+      "trades": 400,
+      "wr": 60.0,
+      "pnl": 169.67,
+      "oof_bars": 21773
+    },
+    "TAOUSDT": {
+      "trades": 192,
+      "wr": 66.15,
+      "pnl": 80.88,
+      "oof_bars": 13591
+    },
+    "ARBUSDT": {
+      "trades": 372,
+      "wr": 66.4,
+      "pnl": 166.12,
+      "oof_bars": 22787
+    },
+    "HBARUSDT": {
+      "trades": 534,
+      "wr": 61.24,
+      "pnl": 235.72,
+      "oof_bars": 45261
+    },
+    "ONDOUSDT": {
+      "trades": 73,
+      "wr": 60.27,
+      "pnl": 41.1,
+      "oof_bars": 4869
+    }
+  },
+  "failed": []
+}

@@ -1,0 +1,32 @@
+{
+  "variant": "ic32_full_cascade",
+  "period": "Apr2026-Jun2026",
+  "stack": {
+    "lgbm": "ic32_regime_v1",
+    "lstm": "lstm_best.pt (11 feat, seq=32, hard_consensus)",
+    "guardian": "ic32_guardian_clean_v2 (40 feat, min_hold=2, thr=0.65)"
+  },
+  "thresholds": {
+    "lgbm_long": 0.69,
+    "lgbm_short": 0.59,
+    "conf_entry": 0.59
+  },
+  "results": {
+    "trades": 912,
+    "win_rate": 46.71,
+    "pnl": 243.52,
+    "pnl_per_month": 97.41,
+    "pnl_per_trade": 0.267,
+    "sl_rate": 28.95,
+    "gdn_rate": 63.05,
+    "avg_hold": 15.67
+  },
+  "cascade_stats": {
+    "agree": 1215,
+    "neutral": 0,
+    "opposite": 646,
+    "flat_review": 0,
+    "override": 0,
+    "total_lgbm_sig": 2382
+  }
+}

@@ -1,0 +1,22 @@
+{
+  "model": "tb_lgbm_widyawardhana_v3",
+  "simulation": "triple_barrier",
+  "tp_mult": 2.0,
+  "sl_mult": 1.5,
+  "max_hold": 36,
+  "trades": 2385,
+  "wins": 1628,
+  "wr": 68.26,
+  "long_wr": 66.56,
+  "short_wr": 68.85,
+  "long_pct": 25.7,
+  "tp_rate": 67.13,
+  "sl_rate": 31.28,
+  "timeout_rate": 1.59,
+  "avg_hold_bars": 7.3,
+  "pnl": 912.83,
+  "pnl_per_trade": 0.383,
+  "pnl_per_month": 182.57,
+  "period": "Nov2025-Apr2026",
+  "coins": 21
+}

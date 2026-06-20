@@ -1,0 +1,235 @@
+{
+  "period": "2026-04-01 to 2026-06-13",
+  "thr_long": 0.5,
+  "thr_short": 0.55,
+  "n_coins": 21,
+  "ic32_benchmark": {
+    "trades": 936,
+    "wr": 62.07,
+    "pnl": 207.22,
+    "pnl_per_trade": 0.2214
+  },
+  "results": [
+    {
+      "trades": 1697,
+      "wr": 66.9,
+      "pnl": 455.9,
+      "pnl_per_trade": 0.269,
+      "label": "veto_all_t60",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.6
+    },
+    {
+      "trades": 1697,
+      "wr": 66.9,
+      "pnl": 455.9,
+      "pnl_per_trade": 0.269,
+      "label": "soft_pen_all_t60",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.6
+    },
+    {
+      "trades": 1697,
+      "wr": 66.9,
+      "pnl": 455.9,
+      "pnl_per_trade": 0.269,
+      "label": "hard_consensus_all_t60",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.6
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "soft_pen_all_t65",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.65
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "veto_all_t65",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.65
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "lgbm_only",
+      "mode": "-",
+      "hmm_gate": "-",
+      "thr_lstm": "-"
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "hard_consensus_all_t70",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.7
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "hard_consensus_all_t65",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.65
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "soft_pen_all_t70",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.7
+    },
+    {
+      "trades": 1698,
+      "wr": 66.9,
+      "pnl": 455.4,
+      "pnl_per_trade": 0.268,
+      "label": "veto_all_t70",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.7
+    },
+    {
+      "trades": 1673,
+      "wr": 66.8,
+      "pnl": 444.8,
+      "pnl_per_trade": 0.266,
+      "label": "hard_consensus_all_t55",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.55
+    },
+    {
+      "trades": 1673,
+      "wr": 66.8,
+      "pnl": 444.8,
+      "pnl_per_trade": 0.266,
+      "label": "soft_pen_all_t55",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.55
+    },
+    {
+      "trades": 1507,
+      "wr": 67.0,
+      "pnl": 400.5,
+      "pnl_per_trade": 0.266,
+      "label": "veto_all_t50",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.5
+    },
+    {
+      "trades": 1659,
+      "wr": 66.8,
+      "pnl": 439.4,
+      "pnl_per_trade": 0.265,
+      "label": "veto_all_t55",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.55
+    },
+    {
+      "trades": 1582,
+      "wr": 66.9,
+      "pnl": 419.6,
+      "pnl_per_trade": 0.265,
+      "label": "hard_consensus_all_t50",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.5
+    },
+    {
+      "trades": 1521,
+      "wr": 66.8,
+      "pnl": 403.2,
+      "pnl_per_trade": 0.265,
+      "label": "hard_consensus_all_t45",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.45
+    },
+    {
+      "trades": 1521,
+      "wr": 66.8,
+      "pnl": 403.2,
+      "pnl_per_trade": 0.265,
+      "label": "soft_pen_all_t45",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.45
+    },
+    {
+      "trades": 1582,
+      "wr": 66.9,
+      "pnl": 419.6,
+      "pnl_per_trade": 0.265,
+      "label": "soft_pen_all_t50",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.5
+    },
+    {
+      "trades": 1381,
+      "wr": 66.8,
+      "pnl": 364.7,
+      "pnl_per_trade": 0.264,
+      "label": "veto_all_t45",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.45
+    },
+    {
+      "trades": 1425,
+      "wr": 66.7,
+      "pnl": 370.6,
+      "pnl_per_trade": 0.26,
+      "label": "soft_pen_all_t40",
+      "mode": "soft_pen",
+      "hmm_gate": false,
+      "thr_lstm": 0.4
+    },
+    {
+      "trades": 1425,
+      "wr": 66.7,
+      "pnl": 370.6,
+      "pnl_per_trade": 0.26,
+      "label": "hard_consensus_all_t40",
+      "mode": "hard_consensus",
+      "hmm_gate": false,
+      "thr_lstm": 0.4
+    },
+    {
+      "trades": 1171,
+      "wr": 66.0,
+      "pnl": 288.3,
+      "pnl_per_trade": 0.246,
+      "label": "veto_all_t40",
+      "mode": "veto",
+      "hmm_gate": false,
+      "thr_lstm": 0.4
+    }
+  ],
+  "note": "LGBM+LSTM sweep: veto vs soft_pen, all-regime vs HMM-gated, thr 0.40-0.70"
+}

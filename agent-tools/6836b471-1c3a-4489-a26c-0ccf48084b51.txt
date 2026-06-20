@@ -1,0 +1,904 @@
+2026-06-18 10:11:54 | INFO     | fetchers | [BTCUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:11:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:57 | INFO     | fetchers | [BTCUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:11:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:01 | WARNING  | fetchers | [BTCUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:02 | WARNING  | fetchers | [BTCUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:02 | INFO     | fetchers | [BTCUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:02 | INFO     | fetchers | [BTCUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\BTCUSDT\15m_all.parquet
+2026-06-18 10:12:02 | INFO     | fetch_m15_research | [BTCUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\BTCUSDT_15m.parquet
+2026-06-18 10:12:02 | INFO     | fetchers | [SOLUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:06 | INFO     | fetchers | [SOLUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | WARNING  | fetchers | [SOLUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:09 | WARNING  | fetchers | [SOLUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:09 | INFO     | fetchers | [SOLUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:10 | INFO     | fetchers | [SOLUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\SOLUSDT\15m_all.parquet
+2026-06-18 10:12:10 | INFO     | fetch_m15_research | [SOLUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\SOLUSDT_15m.parquet
+2026-06-18 10:12:10 | INFO     | fetchers | [ETHUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:13 | INFO     | fetchers | [ETHUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:16 | WARNING  | fetchers | [ETHUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:16 | WARNING  | fetchers | [ETHUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:16 | INFO     | fetchers | [ETHUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:16 | INFO     | fetchers | [ETHUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\ETHUSDT\15m_all.parquet
+2026-06-18 10:12:16 | INFO     | fetch_m15_research | [ETHUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\ETHUSDT_15m.parquet
+2026-06-18 10:12:16 | INFO     | fetchers | [BNBUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:20 | INFO     | fetchers | [BNBUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:23 | WARNING  | fetchers | [BNBUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:23 | WARNING  | fetchers | [BNBUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:23 | INFO     | fetchers | [BNBUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:23 | INFO     | fetchers | [BNBUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\BNBUSDT\15m_all.parquet
+2026-06-18 10:12:23 | INFO     | fetch_m15_research | [BNBUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\BNBUSDT_15m.parquet
+2026-06-18 10:12:23 | INFO     | fetchers | [XRPUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | fetchers | [XRPUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:29 | WARNING  | fetchers | [XRPUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:30 | WARNING  | fetchers | [XRPUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:30 | INFO     | fetchers | [XRPUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:30 | INFO     | fetchers | [XRPUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\XRPUSDT\15m_all.parquet
+2026-06-18 10:12:30 | INFO     | fetch_m15_research | [XRPUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\XRPUSDT_15m.parquet
+2026-06-18 10:12:30 | INFO     | fetchers | [DOGEUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:33 | INFO     | fetchers | [DOGEUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | WARNING  | fetchers | [DOGEUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:36 | WARNING  | fetchers | [DOGEUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:36 | INFO     | fetchers | [DOGEUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:36 | INFO     | fetchers | [DOGEUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\DOGEUSDT\15m_all.parquet
+2026-06-18 10:12:36 | INFO     | fetch_m15_research | [DOGEUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\DOGEUSDT_15m.parquet
+2026-06-18 10:12:36 | INFO     | fetchers | [TONUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:40 | INFO     | fetchers | [TONUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:43 | WARNING  | fetchers | [TONUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:43 | WARNING  | fetchers | [TONUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:43 | INFO     | fetchers | [TONUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:43 | INFO     | fetchers | [TONUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\TONUSDT\15m_all.parquet
+2026-06-18 10:12:43 | INFO     | fetch_m15_research | [TONUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\TONUSDT_15m.parquet
+2026-06-18 10:12:43 | INFO     | fetchers | [ADAUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:47 | INFO     | fetchers | [ADAUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:50 | WARNING  | fetchers | [ADAUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:50 | WARNING  | fetchers | [ADAUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:50 | INFO     | fetchers | [ADAUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:50 | INFO     | fetchers | [ADAUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\ADAUSDT\15m_all.parquet
+2026-06-18 10:12:50 | INFO     | fetch_m15_research | [ADAUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\ADAUSDT_15m.parquet
+2026-06-18 10:12:50 | INFO     | fetchers | [TRXUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | fetchers | [TRXUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:57 | WARNING  | fetchers | [TRXUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:12:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:57 | WARNING  | fetchers | [TRXUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:12:57 | INFO     | fetchers | [TRXUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:12:57 | INFO     | fetchers | [TRXUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\TRXUSDT\15m_all.parquet
+2026-06-18 10:12:57 | INFO     | fetch_m15_research | [TRXUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\TRXUSDT_15m.parquet
+2026-06-18 10:12:57 | INFO     | fetchers | [1000SHIBUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:12:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:12:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:01 | INFO     | fetchers | [1000SHIBUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:03 | WARNING  | fetchers | [1000SHIBUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:04 | WARNING  | fetchers | [1000SHIBUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:04 | INFO     | fetchers | [1000SHIBUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:04 | INFO     | fetchers | [1000SHIBUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\1000SHIBUSDT\15m_all.parquet
+2026-06-18 10:13:04 | INFO     | fetch_m15_research | [1000SHIBUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\1000SHIBUSDT_15m.parquet
+2026-06-18 10:13:04 | INFO     | fetchers | [AVAXUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | fetchers | [AVAXUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:10 | WARNING  | fetchers | [AVAXUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:11 | WARNING  | fetchers | [AVAXUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:11 | INFO     | fetchers | [AVAXUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:11 | INFO     | fetchers | [AVAXUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\AVAXUSDT\15m_all.parquet
+2026-06-18 10:13:11 | INFO     | fetch_m15_research | [AVAXUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\AVAXUSDT_15m.parquet
+2026-06-18 10:13:11 | INFO     | fetchers | [LINKUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:14 | INFO     | fetchers | [LINKUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:17 | WARNING  | fetchers | [LINKUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:18 | WARNING  | fetchers | [LINKUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:18 | INFO     | fetchers | [LINKUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:18 | INFO     | fetchers | [LINKUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\LINKUSDT\15m_all.parquet
+2026-06-18 10:13:18 | INFO     | fetch_m15_research | [LINKUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\LINKUSDT_15m.parquet
+2026-06-18 10:13:18 | INFO     | fetchers | [DOTUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:21 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | fetchers | [DOTUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:22 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:23 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:24 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:25 | WARNING  | fetchers | [DOTUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:25 | WARNING  | fetchers | [DOTUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:25 | INFO     | fetchers | [DOTUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:25 | INFO     | fetchers | [DOTUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\DOTUSDT\15m_all.parquet
+2026-06-18 10:13:25 | INFO     | fetch_m15_research | [DOTUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\DOTUSDT_15m.parquet
+2026-06-18 10:13:25 | INFO     | fetchers | [SUIUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:25 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:26 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:27 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:28 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:29 | INFO     | fetchers | [SUIUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:29 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:30 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:31 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:32 | WARNING  | fetchers | [SUIUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:32 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:32 | WARNING  | fetchers | [SUIUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:32 | INFO     | fetchers | [SUIUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:32 | INFO     | fetchers | [SUIUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\SUIUSDT\15m_all.parquet
+2026-06-18 10:13:32 | INFO     | fetch_m15_research | [SUIUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\SUIUSDT_15m.parquet
+2026-06-18 10:13:32 | INFO     | fetchers | [POLUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:33 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:34 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:35 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:36 | INFO     | fetchers | [POLUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:36 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:37 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:38 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:39 | WARNING  | fetchers | [POLUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:39 | WARNING  | fetchers | [POLUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:39 | INFO     | fetchers | [POLUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:39 | INFO     | fetchers | [POLUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\POLUSDT\15m_all.parquet
+2026-06-18 10:13:39 | INFO     | fetch_m15_research | [POLUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\POLUSDT_15m.parquet
+2026-06-18 10:13:39 | INFO     | fetchers | [NEARUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:39 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:40 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:41 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:42 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:43 | INFO     | fetchers | [NEARUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:43 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:44 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:45 | WARNING  | fetchers | [NEARUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:45 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:46 | WARNING  | fetchers | [NEARUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:46 | INFO     | fetchers | [NEARUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:46 | INFO     | fetchers | [NEARUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\NEARUSDT\15m_all.parquet
+2026-06-18 10:13:46 | INFO     | fetch_m15_research | [NEARUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\NEARUSDT_15m.parquet
+2026-06-18 10:13:46 | INFO     | fetchers | [1000PEPEUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:46 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:47 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:48 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:49 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:50 | INFO     | fetchers | [1000PEPEUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:50 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:51 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:52 | WARNING  | fetchers | [1000PEPEUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:53 | WARNING  | fetchers | [1000PEPEUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:53 | INFO     | fetchers | [1000PEPEUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:13:53 | INFO     | fetchers | [1000PEPEUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\1000PEPEUSDT\15m_all.parquet
+2026-06-18 10:13:53 | INFO     | fetch_m15_research | [1000PEPEUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\1000PEPEUSDT_15m.parquet
+2026-06-18 10:13:53 | INFO     | fetchers | [TAOUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:13:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:53 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:54 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:55 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:56 | INFO     | fetchers | [TAOUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:57 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:58 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | WARNING  | fetchers | [TAOUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:13:59 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:13:59 | WARNING  | fetchers | [TAOUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:13:59 | INFO     | fetchers | [TAOUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:14:00 | INFO     | fetchers | [TAOUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\TAOUSDT\15m_all.parquet
+2026-06-18 10:14:00 | INFO     | fetch_m15_research | [TAOUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\TAOUSDT_15m.parquet
+2026-06-18 10:14:00 | INFO     | fetchers | [ARBUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:14:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:00 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:01 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:02 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:03 | INFO     | fetchers | [ARBUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:14:03 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:04 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:05 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:06 | WARNING  | fetchers | [ARBUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:14:06 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:06 | WARNING  | fetchers | [ARBUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:14:06 | INFO     | fetchers | [ARBUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:14:06 | INFO     | fetchers | [ARBUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\ARBUSDT\15m_all.parquet
+2026-06-18 10:14:06 | INFO     | fetch_m15_research | [ARBUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\ARBUSDT_15m.parquet
+2026-06-18 10:14:06 | INFO     | fetchers | [HBARUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:07 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:08 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:09 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:10 | INFO     | fetchers | [HBARUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:14:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:10 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:11 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:12 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:13 | WARNING  | fetchers | [HBARUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:14:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:13 | WARNING  | fetchers | [HBARUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:14:13 | INFO     | fetchers | [HBARUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:14:13 | INFO     | fetchers | [HBARUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\HBARUSDT\15m_all.parquet
+2026-06-18 10:14:13 | INFO     | fetch_m15_research | [HBARUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\HBARUSDT_15m.parquet
+2026-06-18 10:14:13 | INFO     | fetchers | [ONDOUSDT] Fetching 15m klines 2025-07-01 -> 2026-07-01
+2026-06-18 10:14:13 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:14 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:15 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:16 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:17 | INFO     | fetchers | [ONDOUSDT] 15m: 20/36 chunks (56%)  last=2026-01-25
+2026-06-18 10:14:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:17 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:18 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:19 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:20 | WARNING  | fetchers | [ONDOUSDT] 15m chunk 35/36: tidak ada data (2026-06-20 -> 2026-06-30)
+2026-06-18 10:14:20 | INFO     | binance_client | ✅ klines via futures: fapi.binance.com
+2026-06-18 10:14:20 | WARNING  | fetchers | [ONDOUSDT] 15m chunk 36/36: tidak ada data (2026-06-30 -> 2026-07-01)
+2026-06-18 10:14:20 | INFO     | fetchers | [ONDOUSDT] [OK ] 15m  rows= 33,801  gaps=   0  ohlc_err=   0  zero_vol=   0
+2026-06-18 10:14:20 | INFO     | fetchers | [ONDOUSDT] 15m: 33,801 candle disimpan -> D:\Apps-Dev\Riset_pemodelan\data\training\klines\ONDOUSDT\15m_all.parquet
+2026-06-18 10:14:20 | INFO     | fetch_m15_research | [ONDOUSDT] saved 33801 bars -> D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines\ONDOUSDT_15m.parquet
+Done: ok=21 skip=0 fail=0 dir=D:\Apps-Dev\Riset_pemodelan\data\research\m15\klines

@@ -1,0 +1,1109 @@
+{
+  "run_name": "tb_ic_v2",
+  "n_rows": 785185,
+  "n_eff": 32716,
+  "thresholds": {
+    "min_standalone_ic": 0.02,
+    "min_tstat": 2.0,
+    "min_marginal_ic": 0.01
+  },
+  "summary": {
+    "KEEP": 18,
+    "REDUNDANT": 20,
+    "WEAK": 16,
+    "DROP": 65
+  },
+  "keep_features": [
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "ls_pos_zscore_20d",
+    "wyckoff_phase",
+    "oi_price_div_1d",
+    "atr_percentile_h1",
+    "stochrsi_d",
+    "Sell_Liq",
+    "ema_50_slope_h4",
+    "Buy_Liq",
+    "Fib_618",
+    "Fib_786",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_high",
+    "VAH",
+    "cvd_momentum_adv"
+  ],
+  "results": [
+    {
+      "feature": "cvd_slope_h4",
+      "standalone_ic": 0.0896,
+      "tstat": 16.28,
+      "marginal_ic": 0.0946,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "standalone_ic": 0.0864,
+      "tstat": 15.69,
+      "marginal_ic": 0.0807,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ls_pos_zscore_20d",
+      "standalone_ic": 0.0591,
+      "tstat": 10.71,
+      "marginal_ic": 0.0222,
+      "verdict": "KEEP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "wyckoff_phase",
+      "standalone_ic": -0.0495,
+      "tstat": -8.97,
+      "marginal_ic": -0.0214,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "oi_price_div_1d",
+      "standalone_ic": 0.028,
+      "tstat": 5.07,
+      "marginal_ic": 0.0122,
+      "verdict": "KEEP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "standalone_ic": 0.0268,
+      "tstat": 4.85,
+      "marginal_ic": 0.0209,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "stochrsi_d",
+      "standalone_ic": 0.0267,
+      "tstat": 4.84,
+      "marginal_ic": 0.0202,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "Sell_Liq",
+      "standalone_ic": -0.0259,
+      "tstat": -4.69,
+      "marginal_ic": -0.014,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ema_50_slope_h4",
+      "standalone_ic": 0.0256,
+      "tstat": 4.63,
+      "marginal_ic": 0.027,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "Buy_Liq",
+      "standalone_ic": 0.0246,
+      "tstat": 4.45,
+      "marginal_ic": -0.0137,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "Fib_618",
+      "standalone_ic": -0.0235,
+      "tstat": -4.25,
+      "marginal_ic": -0.0101,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "Fib_786",
+      "standalone_ic": -0.0227,
+      "tstat": -4.11,
+      "marginal_ic": -0.0109,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_7_h1",
+      "standalone_ic": -0.0225,
+      "tstat": -4.08,
+      "marginal_ic": -0.0114,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "dow_cos",
+      "standalone_ic": -0.0222,
+      "tstat": -4.01,
+      "marginal_ic": -0.0158,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "cvd_div_h4",
+      "standalone_ic": -0.0211,
+      "tstat": -3.82,
+      "marginal_ic": -0.0871,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "dist_swing_high",
+      "standalone_ic": 0.021,
+      "tstat": 3.79,
+      "marginal_ic": -0.0161,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "VAH",
+      "standalone_ic": -0.0205,
+      "tstat": -3.7,
+      "marginal_ic": 0.0174,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "standalone_ic": 0.0204,
+      "tstat": 3.68,
+      "marginal_ic": -0.0198,
+      "verdict": "KEEP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "smart_retail_div_delta_1d",
+      "standalone_ic": 0.0342,
+      "tstat": 6.19,
+      "marginal_ic": 0.0086,
+      "verdict": "REDUNDANT",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "oi_pct_1d",
+      "standalone_ic": 0.0287,
+      "tstat": 5.2,
+      "marginal_ic": 0.0034,
+      "verdict": "REDUNDANT",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_50_h1",
+      "standalone_ic": -0.0274,
+      "tstat": -4.95,
+      "marginal_ic": -0.002,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_50_h4",
+      "standalone_ic": -0.0274,
+      "tstat": -4.95,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "price_vs_ema_50_h4",
+      "standalone_ic": 0.0274,
+      "tstat": 4.95,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_21_h1",
+      "standalone_ic": -0.0271,
+      "tstat": -4.91,
+      "marginal_ic": 0.0026,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_21_h4",
+      "standalone_ic": -0.0271,
+      "tstat": -4.91,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "rsi_h4",
+      "standalone_ic": 0.0268,
+      "tstat": 4.85,
+      "marginal_ic": -0.0087,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "standalone_ic": 0.0261,
+      "tstat": 4.71,
+      "marginal_ic": 0.0031,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "standalone_ic": -0.0249,
+      "tstat": -4.5,
+      "marginal_ic": 0.0054,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "trend_strength",
+      "standalone_ic": 0.0248,
+      "tstat": 4.49,
+      "marginal_ic": 0.0067,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "stochrsi_k",
+      "standalone_ic": 0.0245,
+      "tstat": 4.43,
+      "marginal_ic": 0.0031,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "atr_zscore_20d",
+      "standalone_ic": 0.0245,
+      "tstat": 4.44,
+      "marginal_ic": -0.007,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "PDH",
+      "standalone_ic": -0.024,
+      "tstat": -4.34,
+      "marginal_ic": -0.0089,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "funding_rate",
+      "standalone_ic": -0.0237,
+      "tstat": -4.29,
+      "marginal_ic": -0.0041,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "standalone_ic": -0.0236,
+      "tstat": -4.27,
+      "marginal_ic": -0.0029,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "price_in_range",
+      "standalone_ic": 0.0235,
+      "tstat": 4.24,
+      "marginal_ic": 0.0052,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ema_7_h4",
+      "standalone_ic": -0.0225,
+      "tstat": -4.08,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dist_swing_low",
+      "standalone_ic": 0.0211,
+      "tstat": 3.82,
+      "marginal_ic": -0.0067,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "VAL",
+      "standalone_ic": -0.0203,
+      "tstat": -3.67,
+      "marginal_ic": -0.0035,
+      "verdict": "REDUNDANT",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "lower_wick_ratio",
+      "standalone_ic": -0.019,
+      "tstat": -3.45,
+      "marginal_ic": -0.015,
+      "verdict": "WEAK",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "h4_trend",
+      "standalone_ic": 0.0182,
+      "tstat": 3.29,
+      "marginal_ic": -0.0294,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "log_ret_5",
+      "standalone_ic": 0.0159,
+      "tstat": 2.88,
+      "marginal_ic": -0.0283,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "standalone_ic": 0.0158,
+      "tstat": 2.86,
+      "marginal_ic": -0.0308,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "swing_momentum",
+      "standalone_ic": 0.014,
+      "tstat": 2.53,
+      "marginal_ic": 0.0182,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "log_ret_20",
+      "standalone_ic": 0.0126,
+      "tstat": 2.29,
+      "marginal_ic": -0.0522,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "cvd",
+      "standalone_ic": -0.0122,
+      "tstat": -2.2,
+      "marginal_ic": -0.0248,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "atr_percent_h4",
+      "standalone_ic": 0.0112,
+      "tstat": 2.03,
+      "marginal_ic": -0.0162,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "PWH",
+      "standalone_ic": -0.011,
+      "tstat": -1.99,
+      "marginal_ic": 0.0167,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "PWL",
+      "standalone_ic": -0.0061,
+      "tstat": -1.1,
+      "marginal_ic": -0.014,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "atr_14_h1",
+      "standalone_ic": 0.0052,
+      "tstat": 0.93,
+      "marginal_ic": 0.0167,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "rsi_slope_h4",
+      "standalone_ic": 0.0051,
+      "tstat": 0.93,
+      "marginal_ic": -0.0153,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "spread_to_volume",
+      "standalone_ic": 0.0039,
+      "tstat": 0.71,
+      "marginal_ic": -0.011,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "etf_gbtc_change_usd",
+      "standalone_ic": 0.0038,
+      "tstat": 0.69,
+      "marginal_ic": -0.014,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ofi_acceleration",
+      "standalone_ic": -0.0034,
+      "tstat": -0.61,
+      "marginal_ic": -0.0337,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "long_short_ratio",
+      "standalone_ic": 0.0013,
+      "tstat": 0.23,
+      "marginal_ic": -0.0146,
+      "verdict": "WEAK",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_price_confirm",
+      "standalone_ic": 0.0199,
+      "tstat": 3.6,
+      "marginal_ic": -0.0038,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "rsi_6",
+      "standalone_ic": 0.0198,
+      "tstat": 3.59,
+      "marginal_ic": -0.0037,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "PDL",
+      "standalone_ic": -0.0191,
+      "tstat": -3.46,
+      "marginal_ic": 0.0057,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "standalone_ic": 0.0189,
+      "tstat": 3.41,
+      "marginal_ic": 0.0077,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ema_200_h1",
+      "standalone_ic": -0.0188,
+      "tstat": -3.4,
+      "marginal_ic": 0.0072,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "ema_200_h4",
+      "standalone_ic": -0.0188,
+      "tstat": -3.4,
+      "marginal_ic": 0.0,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "trend_accel_4h",
+      "standalone_ic": 0.0179,
+      "tstat": 3.25,
+      "marginal_ic": -0.0019,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "MSB_BOS",
+      "standalone_ic": 0.0177,
+      "tstat": 3.19,
+      "marginal_ic": -0.0066,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "POC",
+      "standalone_ic": -0.0176,
+      "tstat": -3.19,
+      "marginal_ic": -0.008,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "relative_strength_z",
+      "standalone_ic": 0.0151,
+      "tstat": 2.73,
+      "marginal_ic": -0.0041,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "standalone_ic": 0.014,
+      "tstat": 2.53,
+      "marginal_ic": 0.004,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "upper_wick_ratio",
+      "standalone_ic": 0.012,
+      "tstat": 2.16,
+      "marginal_ic": 0.0087,
+      "verdict": "DROP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "btc_dominance",
+      "standalone_ic": 0.0108,
+      "tstat": 1.96,
+      "marginal_ic": 0.0019,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "relative_strength_momentum",
+      "standalone_ic": 0.0095,
+      "tstat": 1.72,
+      "marginal_ic": 0.0083,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "hour_sin",
+      "standalone_ic": -0.0087,
+      "tstat": -1.57,
+      "marginal_ic": -0.0082,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "hour_cos",
+      "standalone_ic": 0.0083,
+      "tstat": 1.51,
+      "marginal_ic": 0.0087,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "etf_total_change_usd",
+      "standalone_ic": 0.0083,
+      "tstat": 1.5,
+      "marginal_ic": 0.0048,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": true
+    },
+    {
+      "feature": "funding_rate_zscore_20d",
+      "standalone_ic": -0.0081,
+      "tstat": -1.46,
+      "marginal_ic": 0.0033,
+      "verdict": "DROP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_regime",
+      "standalone_ic": 0.0079,
+      "tstat": 1.43,
+      "marginal_ic": 0.0063,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dow_sin",
+      "standalone_ic": -0.0075,
+      "tstat": -1.36,
+      "marginal_ic": -0.0009,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_spike_zscore",
+      "standalone_ic": 0.0075,
+      "tstat": 1.36,
+      "marginal_ic": 0.0012,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ofi_raw",
+      "standalone_ic": 0.0071,
+      "tstat": 1.29,
+      "marginal_ic": 0.0036,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vwdp",
+      "standalone_ic": 0.0069,
+      "tstat": 1.25,
+      "marginal_ic": -0.008,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "open_interest",
+      "standalone_ic": 0.0066,
+      "tstat": 1.19,
+      "marginal_ic": 0.0051,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_ratio_20",
+      "standalone_ic": 0.0065,
+      "tstat": 1.18,
+      "marginal_ic": 0.0027,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "candle_range_atr_ratio",
+      "standalone_ic": 0.0063,
+      "tstat": 1.13,
+      "marginal_ic": 0.0004,
+      "verdict": "DROP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "effort_vs_result",
+      "standalone_ic": 0.0059,
+      "tstat": 1.06,
+      "marginal_ic": -0.003,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "price_accel_1h",
+      "standalone_ic": -0.0055,
+      "tstat": -1.0,
+      "marginal_ic": -0.0058,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "candle_body_ratio",
+      "standalone_ic": 0.0055,
+      "tstat": 1.0,
+      "marginal_ic": 0.0043,
+      "verdict": "DROP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "no_demand",
+      "standalone_ic": 0.0052,
+      "tstat": 0.93,
+      "marginal_ic": 0.0004,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "atr_14_h4",
+      "standalone_ic": 0.0048,
+      "tstat": 0.88,
+      "marginal_ic": -0.0045,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "spring_upthrust",
+      "standalone_ic": 0.0048,
+      "tstat": 0.86,
+      "marginal_ic": 0.0076,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_efficiency",
+      "standalone_ic": -0.0046,
+      "tstat": -0.84,
+      "marginal_ic": 0.0066,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ultra_high_vol",
+      "standalone_ic": 0.0042,
+      "tstat": 0.76,
+      "marginal_ic": -0.0077,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "volume",
+      "standalone_ic": -0.0041,
+      "tstat": -0.74,
+      "marginal_ic": -0.0062,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "sell_volume",
+      "standalone_ic": -0.0041,
+      "tstat": -0.74,
+      "marginal_ic": 0.0,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "buy_volume",
+      "standalone_ic": -0.004,
+      "tstat": -0.72,
+      "marginal_ic": -0.0089,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "absorption_z",
+      "standalone_ic": 0.0039,
+      "tstat": 0.7,
+      "marginal_ic": -0.0058,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vwdp_smooth",
+      "standalone_ic": 0.0038,
+      "tstat": 0.7,
+      "marginal_ic": 0.0018,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ofi_z_score",
+      "standalone_ic": 0.0032,
+      "tstat": 0.57,
+      "marginal_ic": -0.0053,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "hidden_divergence",
+      "standalone_ic": 0.003,
+      "tstat": 0.55,
+      "marginal_ic": -0.0017,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "standalone_ic": 0.0027,
+      "tstat": 0.49,
+      "marginal_ic": 0.0031,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "range_expansion_h4",
+      "standalone_ic": 0.0024,
+      "tstat": 0.43,
+      "marginal_ic": 0.0074,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "dynamic_position_pressure",
+      "standalone_ic": 0.002,
+      "tstat": 0.35,
+      "marginal_ic": -0.0009,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "CHoCH",
+      "standalone_ic": 0.0018,
+      "tstat": 0.33,
+      "marginal_ic": 0.0025,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "open",
+      "standalone_ic": 0.0015,
+      "tstat": 0.26,
+      "marginal_ic": 0.008,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "high",
+      "standalone_ic": 0.0015,
+      "tstat": 0.27,
+      "marginal_ic": -0.0068,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "close",
+      "standalone_ic": 0.0015,
+      "tstat": 0.26,
+      "marginal_ic": 0.0071,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "vol_accel_3h",
+      "standalone_ic": -0.0015,
+      "tstat": -0.27,
+      "marginal_ic": -0.0021,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "low",
+      "standalone_ic": 0.0014,
+      "tstat": 0.26,
+      "marginal_ic": -0.0078,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "bars_since_BOS",
+      "standalone_ic": -0.0014,
+      "tstat": -0.26,
+      "marginal_ic": 0.005,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "SFP_sweep",
+      "standalone_ic": -0.0014,
+      "tstat": -0.26,
+      "marginal_ic": -0.005,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "funding_price_div",
+      "standalone_ic": -0.0013,
+      "tstat": -0.24,
+      "marginal_ic": -0.0021,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "funding_rate_change_8h",
+      "standalone_ic": -0.0013,
+      "tstat": -0.23,
+      "marginal_ic": -0.0041,
+      "verdict": "DROP",
+      "is_new": true,
+      "in_v3": false
+    },
+    {
+      "feature": "no_supply",
+      "standalone_ic": 0.0011,
+      "tstat": 0.19,
+      "marginal_ic": -0.0003,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "ofi_momentum_ratio",
+      "standalone_ic": -0.0011,
+      "tstat": -0.21,
+      "marginal_ic": -0.0033,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "market_session",
+      "standalone_ic": 0.0009,
+      "tstat": 0.17,
+      "marginal_ic": 0.003,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "volume_delta",
+      "standalone_ic": 0.0006,
+      "tstat": 0.11,
+      "marginal_ic": 0.0017,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "absorption_at_swing",
+      "standalone_ic": -0.0006,
+      "tstat": -0.11,
+      "marginal_ic": -0.0016,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "time_to_funding_norm",
+      "standalone_ic": -0.0005,
+      "tstat": -0.09,
+      "marginal_ic": -0.0036,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "log_ret_1",
+      "standalone_ic": 0.0003,
+      "tstat": 0.05,
+      "marginal_ic": 0.0083,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "rsi_divergence",
+      "standalone_ic": -0.0003,
+      "tstat": -0.05,
+      "marginal_ic": 0.0016,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "FVG_up",
+      "standalone_ic": 0.0,
+      "tstat": 0.0,
+      "marginal_ic": 0.0,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "FVG_down",
+      "standalone_ic": 0.0,
+      "tstat": 0.0,
+      "marginal_ic": 0.0,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    },
+    {
+      "feature": "fear_greed",
+      "standalone_ic": 0.0,
+      "tstat": 0.0,
+      "marginal_ic": 0.0,
+      "verdict": "DROP",
+      "is_new": false,
+      "in_v3": false
+    }
+  ]
+}

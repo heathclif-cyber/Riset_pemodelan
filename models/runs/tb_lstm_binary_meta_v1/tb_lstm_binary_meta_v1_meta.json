@@ -1,0 +1,50 @@
+{
+  "run_name": "tb_lstm_binary_meta_v1",
+  "target": "binary WIN=1/LOSS=0",
+  "n_samples": 22979,
+  "base_win_rate": 0.4125,
+  "n_features": 15,
+  "n_feat_total": 16,
+  "feat_cols": [
+    "atr_zscore_20d",
+    "atr_percent_h4",
+    "atr_percentile_h1",
+    "funding_rate",
+    "ofi_h4_delta",
+    "ofi_raw",
+    "cvd_slope_h4",
+    "cvd_momentum_adv",
+    "rsi_6",
+    "rsi_h4",
+    "log_ret_1",
+    "log_ret_5",
+    "swing_momentum",
+    "trend_strength",
+    "ema_50_slope_h4"
+  ],
+  "seq_len": 32,
+  "hidden": 32,
+  "n_layers": 1,
+  "dropout": 0.5,
+  "cv_mean_auc": 0.5566,
+  "cv_std_auc": 0.0218,
+  "avg_best_epoch": 16,
+  "marginal_ic": {
+    "ic": 0.0682,
+    "t_stat": 9.77,
+    "n": 20424,
+    "pval": 0.0
+  },
+  "gate_pass": true,
+  "fold_aucs": [
+    0.5154,
+    0.528,
+    0.572,
+    0.5558,
+    0.5558,
+    0.576,
+    0.5771,
+    0.5723
+  ],
+  "pos_weight": 1.424
+}

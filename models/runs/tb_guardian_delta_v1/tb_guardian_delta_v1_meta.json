@@ -1,0 +1,8 @@
+{
+  "run_name": "tb_guardian_delta_v1",
+  "n_samples": 595217,
+  "n_coins": 21,
+  "n_features": 19,
+  "cv_f1": 0.7821,
+  "hold_pct": 65.21167910190738
+}

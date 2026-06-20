@@ -1,0 +1,41 @@
+{
+  "created": "2026-06-15T22:23:37.626445",
+  "lgbm_run": "tb_lgbm_genuine_v2",
+  "guardian_run": "tb_guardian_genuine_v2_hmm_v2",
+  "period_start": "2026-04-01",
+  "period_end": "2026-07-01",
+  "n_coins": 21,
+  "scorecard_hmm": {
+    "n": 1694,
+    "wr": 70.4840613931523,
+    "pnl": 560.56,
+    "ppt": 0.3309,
+    "ppt_norm": 0.3309,
+    "pf": 2.563,
+    "sl_pct": 24.675324675324674,
+    "avg_modal": 10.0
+  },
+  "scorecard_full": {
+    "n": 1694,
+    "wr": 68.41794569067297,
+    "pnl": 648.59,
+    "ppt": 0.3829,
+    "ppt_norm": 0.3829,
+    "pf": 2.754,
+    "sl_pct": 28.92561983471074,
+    "avg_modal": 10.0
+  },
+  "scorecard_dyn": {
+    "n": 1694,
+    "wr": 68.41794569067297,
+    "pnl": 911.71,
+    "ppt": 0.5382,
+    "ppt_norm": 0.3981,
+    "pf": 2.868,
+    "sl_pct": 28.92561983471074,
+    "avg_modal": 13.52
+  },
+  "hmm_state_dist": {
+    "1": 36666
+  }
+}

@@ -1,0 +1,65 @@
+{
+  "run_name": "tb_guardian_swing_h4_v1",
+  "entry_model": "tb_lgbm_widyawardhana_v3",
+  "label_method": "swing_h4",
+  "label_params": {
+    "approaching_atr": 1.5,
+    "at_target_atr": 0.3,
+    "loss_exit_atr": -1.0
+  },
+  "n_features": 25,
+  "n_static": 18,
+  "n_dynamic": 7,
+  "n_samples": 218214,
+  "label_dist": {
+    "HOLD": 73778,
+    "PARTIAL": 75635,
+    "FULL_EXIT": 68801
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.4249,
+      "f1": 0.8246
+    },
+    {
+      "fold": 2,
+      "logloss": 0.3691,
+      "f1": 0.8412
+    },
+    {
+      "fold": 3,
+      "logloss": 0.3444,
+      "f1": 0.8505
+    },
+    {
+      "fold": 4,
+      "logloss": 0.4392,
+      "f1": 0.8051
+    },
+    {
+      "fold": 5,
+      "logloss": 0.4174,
+      "f1": 0.8229
+    },
+    {
+      "fold": 6,
+      "logloss": 0.3985,
+      "f1": 0.8293
+    },
+    {
+      "fold": 7,
+      "logloss": 0.3577,
+      "f1": 0.8468
+    },
+    {
+      "fold": 8,
+      "logloss": 0.3625,
+      "f1": 0.8431
+    }
+  ],
+  "best_cv_logloss": 0.3444,
+  "purge_gap_bars": 36,
+  "train_period": "2020-01-01 \u2013 2026-04-01 00:00:00+00:00",
+  "trained_at": "2026-06-13 20:37:58"
+}

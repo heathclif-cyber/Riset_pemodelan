@@ -1,0 +1,77 @@
+---
+pid: 16296
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "$env:PYTHONUNBUFFERED=1; Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05f_hmm_adaptive_on_config_c_ic32.py"
+started_at: 2026-06-17T17:15:01.758Z
+running_for_ms: 1850004  
+---
+============================================================================================
+  HMM ADAPTIVE THRESHOLD on Config C — ic32 OOF signal-only
+============================================================================================
+  Coins: 21
+  Base Config C: {0: (0.69, 0.69), 1: (0.72, 0.72), 2: (0.69, 0.69), 3: (0.65, 0.65), -1: (0.69, 0.59)}
+
+  BASELINE Config C (static per-state):
+  Config C static                          n=16,758 WR= 60.2% PnL=$   7105.4 PPT=+0.4240 PF=1.776 S/L=0.92
+
+============================================================================================
+  PHASE A — H4-trend adaptive offsets on Config C base
+  RANGING: wt_tight / ct_ease | TRENDING: wt_ease / ct_tight
+============================================================================================
+  Phase A progress: 10/53
+  Phase A progress: 20/53
+  Phase A progress: 30/53
+  Phase A progress: 40/53
+  Phase A progress: 50/53
+  Phase A progress: 53/53
+
+  Top 15 adaptive offset combos (of 53):
+  rng_wt rng_ct trd_wt trd_ct       n    WR%      PPT     PF  S/L
+  ------------------------------------------------------------------------
+    0.05   0.00   0.00   0.07  10,853   61.9  +0.4677  1.884  0.88
+    0.07   0.00   0.00   0.07  10,078   61.7  +0.4668  1.869  0.88
+    0.05   0.00   0.00   0.05  11,538   61.6  +0.4586  1.852  0.89
+    0.07   0.00   0.00   0.05  10,763   61.5  +0.4571  1.835  0.90
+    0.00   0.00   0.00   0.07  13,773   61.2  +0.4470  1.859  0.88
+    0.00   0.00   0.00   0.05  14,458   61.0  +0.4407  1.834  0.89
+    0.05   0.00   0.00   0.00  13,838   60.5  +0.4354  1.780  0.92
+    0.07   0.00   0.00   0.00  13,063   60.3  +0.4328  1.763  0.93
+    0.05   0.00   0.05   0.07  13,907   60.0  +0.4156  1.763  0.94
+    0.07   0.00   0.05   0.07  13,132   59.8  +0.4118  1.746  0.95
+    0.05   0.00   0.05   0.05  14,592   59.9  +0.4108  1.745  0.95
+    0.00   0.00   0.05   0.07  16,827   59.8  +0.4077  1.763  0.93
+    0.07   0.00   0.05   0.05  13,817   59.7  +0.4070  1.728  0.96
+    0.00   0.00   0.05   0.05  17,512   59.7  +0.4040  1.747  0.94
+    0.05   0.00   0.05   0.00  16,892   59.2  +0.3983  1.704  0.97
+
+  Phase A best:
+  A-best adaptive                          n=10,853 WR= 61.9% PnL=$   5076.3 PPT=+0.4677 PF=1.884 S/L=0.88  dPPT=+0.0437 <<BEST_A
+    offsets: {'ranging_wt_tight': 0.05, 'ranging_ct_ease': 0.0, 'trending_wt_ease': 0.0, 'trending_ct_tight': 0.07}
+
+============================================================================================
+  PHASE B — Direction-aware per state (S0/S2/S3 sweep, S1 fixed at C)
+============================================================================================
+
+  S0 dir-aware (sym base=0.69, S1 fixed (0.72, 0.72)):
+    => best S0 dir-aware: L=0.72 S=0.72 PPT=+0.4468
+
+  S2 dir-aware (sym base=0.69, S1 fixed (0.72, 0.72)):
+    => best S2 dir-aware: L=0.72 S=0.72 PPT=+0.4342
+
+  S3 dir-aware (sym base=0.65, S1 fixed (0.72, 0.72)):
+    => best S3 dir-aware: L=0.65 S=0.72 PPT=+0.4314
+
+============================================================================================
+  PHASE C — Candidate validation
+============================================================================================
+  C-static (Config C)                      n=16,758 WR= 60.2% PnL=$   7105.4 PPT=+0.4240 PF=1.776 S/L=0.92  dPPT=+0.0000
+  A-best H4 adaptive                       n=10,853 WR= 61.9% PnL=$   5076.3 PPT=+0.4677 PF=1.884 S/L=0.88  dPPT=+0.0437 <<WINNER
+  B-best S0 dir-aware                      n=15,074 WR= 60.7% PnL=$   6735.6 PPT=+0.4468 PF=1.814 S/L=0.85  dPPT=+0.0228
+  B-combined dir-aware                     n=12,895 WR= 61.6% PnL=$   6086.3 PPT=+0.4720 PF=1.896 S/L=0.75  dPPT=+0.0480 <<WINNER
+  C-combined: dir + H4 adaptive            n= 8,154 WR= 63.1% PnL=$   4149.0 PPT=+0.5088 PF=1.989 S/L=0.70  dPPT=+0.0848 <<WINNER
+
+  WINNER: C-combined: dir + H4 adaptive
+  FINAL                                    n= 8,154 WR= 63.1% PnL=$   4149.0 PPT=+0.5088 PF=1.989 S/L=0.70  dPPT=+0.0848
+
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_regime_v1\hmm_adaptive_config_c_ic32.json
+============================================================================================

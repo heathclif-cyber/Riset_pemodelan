@@ -1,0 +1,184 @@
+{
+  "lsr_train": {
+    "label": "training",
+    "n": 861289,
+    "mean": 0.9998109055243372,
+    "std": 0.0342710807352075,
+    "p5": 0.9784063547415462,
+    "p95": 1.0202534720092256
+  },
+  "lsr_holdout": {
+    "label": "holdout",
+    "n": 36783,
+    "mean": 0.999849031787069,
+    "std": 0.01756569837768923,
+    "p5": 0.9838749129707599,
+    "p95": 1.0156460564335918
+  },
+  "lsr_live": {
+    "mean": 1.6578349652776285,
+    "min": 0.7743,
+    "max": 2.8139,
+    "values": {
+      "0": 2.2383,
+      "1": 1.5013,
+      "2": 2.0516,
+      "3": 1.4396,
+      "4": 1.7548,
+      "5": 2.6846,
+      "6": 1.8058,
+      "7": 2.1726,
+      "8": 1.8257,
+      "9": 2.0731,
+      "10": 0.7743,
+      "11": 1.7855,
+      "12": 1.2331,
+      "13": 1.4184,
+      "14": 1.0687,
+      "15": 0.9557342708302016,
+      "16": 1.8498,
+      "17": 1.1978,
+      "18": 1.1386,
+      "19": 1.0313,
+      "20": 2.8139
+    }
+  },
+  "hmm_live_dist": {
+    "2.0": 8,
+    "1.0": 7,
+    "0.0": 3,
+    "3.0": 3
+  },
+  "feature_compare": [
+    {
+      "feature": "long_short_ratio",
+      "status": "STILL_WRONG",
+      "train_mean": 1.0018,
+      "train_std": 0.0019,
+      "live_mean": 1.6578,
+      "live_std": 0.5584
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "status": "OK",
+      "train_mean": 1.0,
+      "train_std": 0.0,
+      "live_mean": 1.5238,
+      "live_std": 0.9284
+    },
+    {
+      "feature": "rsi_h4",
+      "status": "STILL_WRONG",
+      "train_mean": 56.7869,
+      "train_std": 7.9731,
+      "live_mean": 27.1716,
+      "live_std": 9.7935
+    },
+    {
+      "feature": "stochrsi_d",
+      "status": "STILL_WRONG",
+      "train_mean": 80.8429,
+      "train_std": 12.8538,
+      "live_mean": 47.5723,
+      "live_std": 22.402
+    },
+    {
+      "feature": "h4_trend",
+      "status": "CHECK",
+      "train_mean": 0.5238,
+      "train_std": 0.8729,
+      "live_mean": -0.8095,
+      "live_std": 0.6016
+    },
+    {
+      "feature": "cvd",
+      "status": "EXPECTED_DIFF",
+      "train_mean": 39767395931055.58,
+      "train_std": 125663412232208.22,
+      "live_mean": -1766499345.2137,
+      "live_std": 6075314880.7691
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "status": "EXPECTED_DIFF",
+      "train_mean": -5471943.1943,
+      "train_std": 23597703.8455,
+      "live_mean": 27961918.5854,
+      "live_std": 145475821.9854
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "status": "NO_LIVE",
+      "train_mean": -0.0184,
+      "train_std": 0.0729,
+      "live_mean": null,
+      "live_std": null
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "status": "NO_LIVE",
+      "train_mean": -0.1918,
+      "train_std": 0.8751,
+      "live_mean": null,
+      "live_std": null
+    },
+    {
+      "feature": "vol_price_confirm",
+      "status": "NO_LIVE",
+      "train_mean": 0.2253,
+      "train_std": 0.4764,
+      "live_mean": null,
+      "live_std": null
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "status": "NO_LIVE",
+      "train_mean": 4.1898,
+      "train_std": 0.9173,
+      "live_mean": null,
+      "live_std": null
+    },
+    {
+      "feature": "log_ret_20",
+      "status": "NO_LIVE",
+      "train_mean": 0.0021,
+      "train_std": 0.0126,
+      "live_mean": null,
+      "live_std": null
+    }
+  ],
+  "still_wrong": [
+    {
+      "feature": "long_short_ratio",
+      "status": "STILL_WRONG",
+      "train_mean": 1.0018,
+      "train_std": 0.0019,
+      "live_mean": 1.6578,
+      "live_std": 0.5584
+    },
+    {
+      "feature": "rsi_h4",
+      "status": "STILL_WRONG",
+      "train_mean": 56.7869,
+      "train_std": 7.9731,
+      "live_mean": 27.1716,
+      "live_std": 9.7935
+    },
+    {
+      "feature": "stochrsi_d",
+      "status": "STILL_WRONG",
+      "train_mean": 80.8429,
+      "train_std": 12.8538,
+      "live_mean": 47.5723,
+      "live_std": 22.402
+    },
+    {
+      "feature": "h4_trend",
+      "status": "CHECK",
+      "train_mean": 0.5238,
+      "train_std": 0.8729,
+      "live_mean": -0.8095,
+      "live_std": 0.6016
+    }
+  ]
+}

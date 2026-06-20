@@ -1,0 +1,151 @@
+---
+pid: 13644
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05u_train_lstm_ic32_swing_complement_v1.py --all"
+started_at: 2026-06-17T10:29:19.401Z
+running_for_ms: 86400005 
+---
+
+======================================================================
+  LSTM IC32 SWING COMPLEMENT -- ic32_lstm_swing_complement_v1
+  Partner: ic32_regime_v1 | Label: swing H4
+  Sample: pump/dump gate + LGBM FLAT (ic32 thr 0.69/0.59)
+  Loss: Focal gamma=2.0
+  Eval: complement BULL>=0.38 BEAR>=0.5
+  Folds: 8 | Purge: 36 | Coins: 21
+  Device: privateuseone:0
+======================================================================
+
+2026-06-17 18:29:22 | INFO     | 05u_ic32_swing_complement |   [BTCUSDT] gate=10,144 flat=8,498 | LONG=21% FLAT=60% SHORT=19%
+2026-06-17 18:29:23 | INFO     | 05u_ic32_swing_complement |   [SOLUSDT] gate=9,281 flat=8,413 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 18:29:23 | INFO     | 05u_ic32_swing_complement |   [ETHUSDT] gate=10,282 flat=8,394 | LONG=20% FLAT=61% SHORT=19%
+2026-06-17 18:29:23 | INFO     | 05u_ic32_swing_complement |   [BNBUSDT] gate=10,037 flat=8,299 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 18:29:23 | INFO     | 05u_ic32_swing_complement |   [XRPUSDT] gate=10,191 flat=8,277 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [DOGEUSDT] gate=10,014 flat=7,947 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [TONUSDT] gate=2,116 flat=1,966 | LONG=17% FLAT=65% SHORT=19%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [ADAUSDT] gate=9,914 flat=8,080 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [TRXUSDT] gate=10,130 flat=8,177 | LONG=20% FLAT=63% SHORT=17%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [1000SHIBUSDT] gate=7,593 flat=6,721 | LONG=17% FLAT=66% SHORT=17%
+2026-06-17 18:29:24 | INFO     | 05u_ic32_swing_complement |   [AVAXUSDT] gate=8,845 flat=8,139 | LONG=19% FLAT=64% SHORT=18%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [LINKUSDT] gate=9,946 flat=8,158 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [DOTUSDT] gate=8,978 flat=8,190 | LONG=18% FLAT=63% SHORT=18%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [SUIUSDT] gate=4,468 flat=4,158 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [POLUSDT] gate=1,971 flat=1,841 | LONG=18% FLAT=63% SHORT=19%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [NEARUSDT] gate=8,741 flat=8,066 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [1000PEPEUSDT] gate=4,216 flat=3,798 | LONG=18% FLAT=65% SHORT=17%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [TAOUSDT] gate=2,792 flat=2,657 | LONG=20% FLAT=62% SHORT=18%
+2026-06-17 18:29:25 | INFO     | 05u_ic32_swing_complement |   [ARBUSDT] gate=4,660 flat=4,391 | LONG=18% FLAT=61% SHORT=20%
+2026-06-17 18:29:26 | INFO     | 05u_ic32_swing_complement |   [HBARUSDT] gate=9,903 flat=8,133 | LONG=19% FLAT=63% SHORT=17%
+2026-06-17 18:29:26 | INFO     | 05u_ic32_swing_complement |   [ONDOUSDT] gate=947 flat=861 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 18:29:26 | INFO     | 05u_ic32_swing_complement | Complement pool: gate=155,169 -> flat=133,164 sequences
+2026-06-17 18:29:26 | INFO     | 05u_ic32_swing_complement | Sequences: 133,164 | seq=72 | feat=18
+2026-06-17 18:29:37 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch   1 | F1=0.2609 | Best=0.2609
+2026-06-17 18:29:44 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch   5 | F1=0.2921 | Best=0.2921
+2026-06-17 18:29:52 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  10 | F1=0.3094 | Best=0.3164
+2026-06-17 18:30:01 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  15 | F1=0.3365 | Best=0.3365
+2026-06-17 18:30:10 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  20 | F1=0.3373 | Best=0.3394
+2026-06-17 18:30:18 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  25 | F1=0.3384 | Best=0.3430
+2026-06-17 18:30:27 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  30 | F1=0.3386 | Best=0.3542
+2026-06-17 18:30:35 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  35 | F1=0.3566 | Best=0.3607
+2026-06-17 18:30:44 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  40 | F1=0.3615 | Best=0.3615
+2026-06-17 18:30:52 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  45 | F1=0.3775 | Best=0.3775
+2026-06-17 18:31:01 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  50 | F1=0.3589 | Best=0.3775
+2026-06-17 18:31:15 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch   1 | F1=0.2712 | Best=0.2712
+2026-06-17 18:31:27 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch   5 | F1=0.3257 | Best=0.3257
+2026-06-17 18:31:43 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  10 | F1=0.3543 | Best=0.3543
+2026-06-17 18:31:58 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  15 | F1=0.3542 | Best=0.3709
+2026-06-17 18:32:12 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  20 | F1=0.3770 | Best=0.3914
+2026-06-17 18:32:27 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  25 | F1=0.3826 | Best=0.3926
+2026-06-17 18:32:42 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  30 | F1=0.3823 | Best=0.3926
+2026-06-17 18:32:56 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  35 | F1=0.3971 | Best=0.3971
+2026-06-17 18:33:11 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  40 | F1=0.3955 | Best=0.4000
+2026-06-17 18:33:26 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  45 | F1=0.4292 | Best=0.4292
+2026-06-17 18:33:40 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  50 | F1=0.4166 | Best=0.4292
+2026-06-17 18:34:02 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch   1 | F1=0.2748 | Best=0.2748
+2026-06-17 18:34:20 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch   5 | F1=0.3412 | Best=0.3412
+2026-06-17 18:34:42 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  10 | F1=0.3575 | Best=0.3575
+2026-06-17 18:35:05 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  15 | F1=0.3687 | Best=0.3712
+2026-06-17 18:35:28 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  20 | F1=0.3854 | Best=0.3880
+2026-06-17 18:35:50 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  25 | F1=0.3879 | Best=0.3880
+2026-06-17 18:36:13 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  30 | F1=0.3907 | Best=0.4000
+2026-06-17 18:36:36 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  35 | F1=0.3862 | Best=0.4054
+2026-06-17 18:36:59 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  40 | F1=0.4145 | Best=0.4145
+2026-06-17 18:37:22 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  45 | F1=0.4028 | Best=0.4265
+2026-06-17 18:37:46 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  50 | F1=0.4240 | Best=0.4399
+2026-06-17 18:38:10 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  55 | F1=0.4086 | Best=0.4399
+2026-06-17 18:38:33 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch   1 | F1=0.2813 | Best=0.2813
+2026-06-17 18:39:03 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch   5 | F1=0.3169 | Best=0.3169
+2026-06-17 18:39:40 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  10 | F1=0.3502 | Best=0.3502
+2026-06-17 18:40:16 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  15 | F1=0.3514 | Best=0.3578
+2026-06-17 18:40:52 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  20 | F1=0.3925 | Best=0.3925
+2026-06-17 18:41:29 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  25 | F1=0.3766 | Best=0.3925
+2026-06-17 18:42:21 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch   1 | F1=0.2808 | Best=0.2808
+2026-06-17 18:43:04 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch   5 | F1=0.3149 | Best=0.3149
+2026-06-17 18:43:58 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  10 | F1=0.3480 | Best=0.3534
+2026-06-17 18:44:50 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  15 | F1=0.3598 | Best=0.3781
+2026-06-17 18:45:44 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  20 | F1=0.3848 | Best=0.3974
+2026-06-17 18:46:37 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  25 | F1=0.3957 | Best=0.3974
+2026-06-17 18:47:30 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  30 | F1=0.4093 | Best=0.4093
+2026-06-17 18:48:23 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  35 | F1=0.4045 | Best=0.4154
+2026-06-17 18:49:16 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  40 | F1=0.4088 | Best=0.4172
+2026-06-17 18:50:09 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  45 | F1=0.4236 | Best=0.4236
+2026-06-17 18:51:02 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  50 | F1=0.4214 | Best=0.4409
+2026-06-17 18:51:56 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  55 | F1=0.4324 | Best=0.4409
+2026-06-17 18:52:55 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch   1 | F1=0.2702 | Best=0.2702
+2026-06-17 18:53:42 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch   5 | F1=0.3418 | Best=0.3418
+2026-06-17 18:54:40 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  10 | F1=0.3733 | Best=0.3733
+2026-06-17 18:55:39 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  15 | F1=0.3770 | Best=0.3908
+2026-06-17 18:56:38 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  20 | F1=0.4029 | Best=0.4098
+2026-06-17 18:57:35 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  25 | F1=0.4044 | Best=0.4247
+2026-06-17 18:58:33 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  30 | F1=0.3966 | Best=0.4295
+2026-06-17 18:59:32 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  35 | F1=0.4206 | Best=0.4322
+2026-06-17 19:00:32 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  40 | F1=0.4286 | Best=0.4364
+2026-06-17 19:01:36 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  45 | F1=0.4434 | Best=0.4434
+2026-06-17 19:02:41 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  50 | F1=0.4346 | Best=0.4434
+2026-06-17 19:03:46 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  55 | F1=0.4324 | Best=0.4468
+2026-06-17 19:04:50 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  60 | F1=0.4331 | Best=0.4468
+2026-06-17 19:05:26 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch   1 | F1=0.2821 | Best=0.2821
+2026-06-17 19:06:34 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch   5 | F1=0.3427 | Best=0.3505
+2026-06-17 19:07:59 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  10 | F1=0.3877 | Best=0.4265
+2026-06-17 19:09:25 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  15 | F1=0.4184 | Best=0.4265
+2026-06-17 19:10:51 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  20 | F1=0.4344 | Best=0.4455
+2026-06-17 19:12:16 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  25 | F1=0.4541 | Best=0.4541
+2026-06-17 19:13:42 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  30 | F1=0.4541 | Best=0.4667
+2026-06-17 19:15:06 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  35 | F1=0.4589 | Best=0.4667
+2026-06-17 19:16:24 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch   1 | F1=0.2839 | Best=0.2839
+2026-06-17 19:17:46 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch   5 | F1=0.3792 | Best=0.3792
+2026-06-17 19:19:27 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  10 | F1=0.3938 | Best=0.4034
+2026-06-17 19:21:09 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  15 | F1=0.4192 | Best=0.4192
+2026-06-17 19:22:50 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  20 | F1=0.4417 | Best=0.4417
+2026-06-17 19:24:32 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  25 | F1=0.4419 | Best=0.4439
+2026-06-17 19:26:14 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  30 | F1=0.4105 | Best=0.4440
+2026-06-17 19:27:56 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  35 | F1=0.4442 | Best=0.4466
+2026-06-17 19:29:39 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  40 | F1=0.4495 | Best=0.4582
+2026-06-17 19:31:26 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  45 | F1=0.4381 | Best=0.4582
+2026-06-17 19:31:49 | INFO     | 05u_ic32_swing_complement | Retrain final model (50 epochs)...
+2026-06-17 19:32:15 | INFO     | 05u_ic32_swing_complement |   Final epoch 1/50
+2026-06-17 19:35:22 | INFO     | 05u_ic32_swing_complement |   Final epoch 10/50
+2026-06-17 19:39:27 | INFO     | 05u_ic32_swing_complement |   Final epoch 20/50
+2026-06-17 19:43:43 | INFO     | 05u_ic32_swing_complement |   Final epoch 30/50
+Traceback (most recent call last):
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05u_train_lstm_ic32_swing_complement_v1.py", line 481, in <module>
+    main()
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05u_train_lstm_ic32_swing_complement_v1.py", line 435, in main
+    final_model, final_scaler = retrain_final_focal(X, y, final_epochs)
+                                ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05u_train_lstm_ic32_swing_complement_v1.py", line 358, in retrain_final_focal
+    criterion(model(xb), yb).backward()
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\torch\_tensor.py", line 521, in backward
+    torch.autograd.backward(
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\torch\autograd\__init__.py", line 289, in backward
+    _engine_run_backward(
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\torch\autograd\graph.py", line 769, in _engine_run_backward
+    return Variable._execution_engine.run_backward(  # Calls into the C++ engine to run the backward pass
+           ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+RuntimeError: Could not allocate tensor with 56595840 bytes. There is not enough GPU video memory available!
+
+---
+exit_code: -1
+elapsed_ms: 86400005
+ended_at: 2026-06-18T10:29:19.534Z
+---

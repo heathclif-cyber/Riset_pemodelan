@@ -1,0 +1,35 @@
+{
+  "standalone": {
+    "name": "TB v3 standalone",
+    "trades": 7850,
+    "wr": 64.39490445859872,
+    "long_wr": 55.49231644849175,
+    "short_wr": 66.96208764155588,
+    "long_pct": 22.38216560509554,
+    "pnl": 2739.658300000001,
+    "pnl_per_trade": 0.3490010573248409,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.0,
+    "pnl_per_month": 547.9316600000002
+  },
+  "guardian_delta": {
+    "name": "TB v3 + Guardian Delta (0.45/0.7)",
+    "trades": 7850,
+    "wr": 64.3312101910828,
+    "long_wr": 55.49231644849175,
+    "short_wr": 66.88002625964221,
+    "long_pct": 22.38216560509554,
+    "pnl": 2747.7835000000005,
+    "pnl_per_trade": 0.3500361146496816,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.7770700636942675,
+    "pnl_per_month": 549.5567000000001
+  },
+  "delta_pnl": 8.125199999999495,
+  "guardian_params": {
+    "mom_thresh": 0.45,
+    "def_thresh": 0.7,
+    "def_min_loss": -0.01
+  },
+  "note": "swing-based TP/SL, full_trading_report(), 21 coins Nov2025-Apr2026"
+}

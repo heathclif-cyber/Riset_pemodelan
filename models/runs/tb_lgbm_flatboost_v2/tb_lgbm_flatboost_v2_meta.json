@@ -1,0 +1,14 @@
+{
+  "run_name": "tb_lgbm_flatboost_v2",
+  "created": "2026-06-14T17:06:24.118273",
+  "tp_atr_mult": 2.0,
+  "sl_atr_mult": 1.5,
+  "max_hold": 36,
+  "n_samples": 785185,
+  "n_coins": 21,
+  "n_features": 27,
+  "class_weight": "balanced",
+  "feature_source": "models\\feature_cols_tb_flatboost_v2.json",
+  "cv_mean_f1_macro": 0.3914,
+  "cv_mean_f1_FLAT": 0.2713
+}

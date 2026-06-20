@@ -1,0 +1,468 @@
+{
+  "results": [
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.46,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": 1.07,
+      "trade_drop_pct": 3.64,
+      "trades": 1033,
+      "wr": 69.02,
+      "pf": 2.365,
+      "pnl": 318.29,
+      "pnl_per_trade": 0.3081
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.47,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": 1.48,
+      "trade_drop_pct": 3.26,
+      "trades": 1037,
+      "wr": 69.05,
+      "pf": 2.361,
+      "pnl": 318.7,
+      "pnl_per_trade": 0.3073
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.48,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": 3.4,
+      "trade_drop_pct": 3.08,
+      "trades": 1039,
+      "wr": 69.1,
+      "pf": 2.369,
+      "pnl": 320.62,
+      "pnl_per_trade": 0.3086
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.49,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": 3.4,
+      "trade_drop_pct": 3.08,
+      "trades": 1039,
+      "wr": 69.1,
+      "pf": 2.369,
+      "pnl": 320.62,
+      "pnl_per_trade": 0.3086
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.5,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": 1.56,
+      "trade_drop_pct": 2.52,
+      "trades": 1045,
+      "wr": 68.9,
+      "pf": 2.341,
+      "pnl": 318.78,
+      "pnl_per_trade": 0.3051
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.51,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": -3.0,
+      "trade_drop_pct": 1.96,
+      "trades": 1051,
+      "wr": 68.51,
+      "pf": 2.297,
+      "pnl": 314.22,
+      "pnl_per_trade": 0.299
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.52,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": -4.66,
+      "trade_drop_pct": 1.59,
+      "trades": 1055,
+      "wr": 68.44,
+      "pf": 2.275,
+      "pnl": 312.56,
+      "pnl_per_trade": 0.2963
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.53,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": -3.93,
+      "trade_drop_pct": 1.21,
+      "trades": 1059,
+      "wr": 68.37,
+      "pf": 2.274,
+      "pnl": 313.29,
+      "pnl_per_trade": 0.2958
+    },
+    {
+      "hmm": "T48_filter",
+      "mode": "soft_pen_hmm",
+      "params": {
+        "thr_lstm": 0.54,
+        "lstm_scope": "trending"
+      },
+      "baseline_pnl": 317.22,
+      "pnl_delta": -8.52,
+      "trade_drop_pct": 0.65,
+      "trades": 1065,
+      "wr": 67.98,
+      "pf": 2.232,
+      "pnl": 308.7,
+      "pnl_per_trade": 0.2899
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.015,
+        "lstm_min": 0.28
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 34.58,
+      "trade_drop_pct": -13.29,
+      "trades": 1040,
+      "wr": 68.56,
+      "pf": 2.308,
+      "pnl": 310.93,
+      "pnl_per_trade": 0.299
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.015,
+        "lstm_min": 0.3
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 34.04,
+      "trade_drop_pct": -13.18,
+      "trades": 1039,
+      "wr": 68.53,
+      "pf": 2.306,
+      "pnl": 310.39,
+      "pnl_per_trade": 0.2987
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.015,
+        "lstm_min": 0.32
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 33.79,
+      "trade_drop_pct": -12.85,
+      "trades": 1036,
+      "wr": 68.53,
+      "pf": 2.311,
+      "pnl": 310.14,
+      "pnl_per_trade": 0.2994
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.015,
+        "lstm_min": 0.34
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 28.83,
+      "trade_drop_pct": -12.09,
+      "trades": 1029,
+      "wr": 68.42,
+      "pf": 2.294,
+      "pnl": 305.18,
+      "pnl_per_trade": 0.2966
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.015,
+        "lstm_min": 0.36
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 16.36,
+      "trade_drop_pct": -9.15,
+      "trades": 1002,
+      "wr": 68.16,
+      "pf": 2.266,
+      "pnl": 292.71,
+      "pnl_per_trade": 0.2921
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.02,
+        "lstm_min": 0.28
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 50.63,
+      "trade_drop_pct": -18.85,
+      "trades": 1091,
+      "wr": 68.29,
+      "pf": 2.307,
+      "pnl": 326.98,
+      "pnl_per_trade": 0.2997
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.02,
+        "lstm_min": 0.3
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 49.3,
+      "trade_drop_pct": -18.63,
+      "trades": 1089,
+      "wr": 68.23,
+      "pf": 2.302,
+      "pnl": 325.65,
+      "pnl_per_trade": 0.299
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.02,
+        "lstm_min": 0.32
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 46.47,
+      "trade_drop_pct": -17.97,
+      "trades": 1083,
+      "wr": 68.14,
+      "pf": 2.296,
+      "pnl": 322.82,
+      "pnl_per_trade": 0.2981
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.02,
+        "lstm_min": 0.34
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 38.9,
+      "trade_drop_pct": -16.88,
+      "trades": 1073,
+      "wr": 67.94,
+      "pf": 2.269,
+      "pnl": 315.25,
+      "pnl_per_trade": 0.2938
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.02,
+        "lstm_min": 0.36
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 23.47,
+      "trade_drop_pct": -13.29,
+      "trades": 1040,
+      "wr": 67.69,
+      "pf": 2.236,
+      "pnl": 299.82,
+      "pnl_per_trade": 0.2883
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.025,
+        "lstm_min": 0.28
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 55.79,
+      "trade_drop_pct": -24.95,
+      "trades": 1147,
+      "wr": 67.83,
+      "pf": 2.232,
+      "pnl": 332.14,
+      "pnl_per_trade": 0.2896
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.025,
+        "lstm_min": 0.3
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 52.9,
+      "trade_drop_pct": -24.62,
+      "trades": 1144,
+      "wr": 67.74,
+      "pf": 2.221,
+      "pnl": 329.25,
+      "pnl_per_trade": 0.2878
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.025,
+        "lstm_min": 0.32
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 47.44,
+      "trade_drop_pct": -23.2,
+      "trades": 1131,
+      "wr": 67.55,
+      "pf": 2.211,
+      "pnl": 323.79,
+      "pnl_per_trade": 0.2863
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.025,
+        "lstm_min": 0.34
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 39.96,
+      "trade_drop_pct": -21.46,
+      "trades": 1115,
+      "wr": 67.35,
+      "pf": 2.195,
+      "pnl": 316.31,
+      "pnl_per_trade": 0.2837
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.025,
+        "lstm_min": 0.36
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 24.38,
+      "trade_drop_pct": -17.1,
+      "trades": 1075,
+      "wr": 67.16,
+      "pf": 2.168,
+      "pnl": 300.73,
+      "pnl_per_trade": 0.2797
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.03,
+        "lstm_min": 0.28
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 58.31,
+      "trade_drop_pct": -30.72,
+      "trades": 1200,
+      "wr": 67.0,
+      "pf": 2.156,
+      "pnl": 334.66,
+      "pnl_per_trade": 0.2789
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.03,
+        "lstm_min": 0.3
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 55.42,
+      "trade_drop_pct": -30.39,
+      "trades": 1197,
+      "wr": 66.92,
+      "pf": 2.146,
+      "pnl": 331.77,
+      "pnl_per_trade": 0.2772
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.03,
+        "lstm_min": 0.32
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 50.31,
+      "trade_drop_pct": -28.54,
+      "trades": 1180,
+      "wr": 66.78,
+      "pf": 2.142,
+      "pnl": 326.66,
+      "pnl_per_trade": 0.2768
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.03,
+        "lstm_min": 0.34
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 40.04,
+      "trade_drop_pct": -26.36,
+      "trades": 1160,
+      "wr": 66.55,
+      "pf": 2.118,
+      "pnl": 316.39,
+      "pnl_per_trade": 0.2727
+    },
+    {
+      "hmm": "T50_unlock",
+      "mode": "unlock_addon",
+      "params": {
+        "thr_delta": 0.03,
+        "lstm_min": 0.36
+      },
+      "baseline_pnl": 276.35,
+      "pnl_delta": 26.69,
+      "trade_drop_pct": -20.59,
+      "trades": 1107,
+      "wr": 66.58,
+      "pf": 2.12,
+      "pnl": 303.04,
+      "pnl_per_trade": 0.2737
+    }
+  ]
+}

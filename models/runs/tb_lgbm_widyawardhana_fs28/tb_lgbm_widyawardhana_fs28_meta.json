@@ -1,0 +1,14 @@
+{
+  "run_name": "tb_lgbm_widyawardhana_fs28",
+  "created": "2026-06-14T15:51:50.463685",
+  "tp_atr_mult": 2.0,
+  "sl_atr_mult": 1.5,
+  "max_hold": 36,
+  "n_samples": 785185,
+  "n_coins": 21,
+  "n_features": 28,
+  "class_weight": "balanced",
+  "feature_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\feature_cols_tb_widyawardhana_v3_28.json",
+  "cv_mean_f1_macro": 0.387,
+  "cv_mean_f1_FLAT": 0.2186
+}

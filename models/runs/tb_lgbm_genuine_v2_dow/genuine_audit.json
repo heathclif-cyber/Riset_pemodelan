@@ -1,0 +1,46 @@
+{
+  "methodology": "genuine_oof_v1",
+  "holdout_evaluated": false,
+  "holdout_period": "2026-04-01 to 2026-06-13 (SEALED -- not touched)",
+  "train_cutoff_enforced": true,
+  "data_bounds": {
+    "train_cutoff": "2026-04-01 00:00:00+00:00",
+    "data_max_timestamp": "2025-10-31 23:00:00+00:00",
+    "data_min_timestamp": "2020-01-01 13:00:00+00:00",
+    "n_bars": 785185,
+    "cutoff_ok": true
+  },
+  "cv": {
+    "n_folds": 8,
+    "purge_bars": 36,
+    "purge_equals_max_hold": true,
+    "oof_coverage_pct": 92.87
+  },
+  "threshold_selection": {
+    "method": "OOF_simulation_only",
+    "holdout_used": false,
+    "best_thr_long": 0.45,
+    "best_thr_short": 0.45
+  },
+  "dow_features": {
+    "added": [
+      "dow_cos",
+      "dow_sin"
+    ],
+    "causal": true,
+    "source": "bar timestamp UTC (dayofweek sin/cos)",
+    "no_future_data": true
+  },
+  "oof_promotion_gate": {
+    "f1_ok": true,
+    "pnl_ok": true,
+    "passed": true,
+    "candidate_f1": 0.4004,
+    "baseline_f1": 0.3968,
+    "candidate_oof_pnl": 32553.6,
+    "baseline_oof_pnl": 31427.41,
+    "delta_f1": 0.0036,
+    "delta_oof_pnl": 1126.19
+  },
+  "promoted": true
+}

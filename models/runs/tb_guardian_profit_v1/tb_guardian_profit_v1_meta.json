@@ -1,0 +1,105 @@
+{
+  "run_name": "tb_guardian_profit_v1",
+  "trained_at": "2026-06-14T21:38:41.762332",
+  "entry_model": "tb_lgbm_flatboost_v2",
+  "thr_long": 0.5,
+  "thr_short": 0.55,
+  "n_static": 18,
+  "n_dynamic": 7,
+  "n_total_feats": 25,
+  "n_samples": 129893,
+  "label_dist": {
+    "0": 93808,
+    "1": 3522,
+    "2": 32563
+  },
+  "exit2_pnl_mean": 0.939,
+  "exit2_pct_pos": 78.0,
+  "fix": "removed loss-based EXIT, added profit-lock rule (mfe>2%, still_pos, gave_back_60pct)",
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.2512,
+      "f1_macro": 0.8565
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2721,
+      "f1_macro": 0.8544
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2469,
+      "f1_macro": 0.8534
+    },
+    {
+      "fold": 4,
+      "logloss": 0.191,
+      "f1_macro": 0.8464
+    },
+    {
+      "fold": 5,
+      "logloss": 0.1859,
+      "f1_macro": 0.8383
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2243,
+      "f1_macro": 0.8487
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2372,
+      "f1_macro": 0.8639
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2309,
+      "f1_macro": 0.8469
+    }
+  ],
+  "dynamic_importance_pct": 50.0,
+  "static_importance_pct": 50.0,
+  "top10_features": [
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 2596.0
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 2541.0
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 2044.0
+    },
+    {
+      "feature": "current_pnl_atr",
+      "importance": 1970.0
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 1726.0
+    },
+    {
+      "feature": "ema_200_h1",
+      "importance": 1114.0
+    },
+    {
+      "feature": "dist_swing_low",
+      "importance": 972.0
+    },
+    {
+      "feature": "ema_7_h1",
+      "importance": 897.0
+    },
+    {
+      "feature": "Sell_Liq",
+      "importance": 833.0
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "importance": 805.0
+    }
+  ]
+}

@@ -1,0 +1,38 @@
+---
+pid: 33328
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05s_pump_short_slice_eval.py"
+started_at: 2026-06-16T11:46:29.568Z
+running_for_ms: 2309996  
+---
+
+==============================================================================
+  05s: Pump/SHORT slice eval (genuine OOF)
+  Stacks: 3 | vol_thr=2.0 | rally_frac>=0.8
+==============================================================================
+
+  [ref_genuine_v2] LSTM=tb_lstm_genuine_v2 opp_pen=0.14
+    signal: conflict=352 pen=106 (30.1%) | pump_S block=106 | rally_S block=7
+    trades: pump_SHORT n=724 WR=77.6% PPT=+0.7009
+            rally_SHORT n=2216 WR=69.8% PPT=+0.5473 (22s)
+
+  [seq_frozen_o14] LSTM=tb_lstm_lgbm_seq_v1 opp_pen=0.14
+    signal: conflict=252 pen=61 (24.2%) | pump_S block=61 | rally_S block=3
+    trades: pump_SHORT n=759 WR=76.5% PPT=+0.6758
+            rally_SHORT n=2220 WR=69.8% PPT=+0.5464 (22s)
+
+  [seq_exp_a_o18] LSTM=tb_lstm_lgbm_seq_v1 opp_pen=0.18
+    signal: conflict=252 pen=74 (29.4%) | pump_S block=74 | rally_S block=6
+    trades: pump_SHORT n=749 WR=76.8% PPT=+0.6832
+            rally_SHORT n=2218 WR=69.8% PPT=+0.5468 (22s)
+
+==============================================================================
+  COMPARISON TABLE
+  Stack                   conf% pump_blk rally_blk pump_WR  pump_PPT rally_n
+  ref_genuine_v2          30.1%      106         7   77.6%   +0.7009    2216
+  seq_frozen_o14          24.2%       61         3   76.5%   +0.6758    2220
+  seq_exp_a_o18           29.4%       74         6   76.8%   +0.6832    2218
+
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\pump_short_slice_eval.json
+==============================================================================
+

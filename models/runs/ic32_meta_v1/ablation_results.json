@@ -1,0 +1,183 @@
+{
+  "spec_version": "ic32_meta_v1",
+  "baseline_arm": "cascade_lstm",
+  "results": {
+    "primary_only": {
+      "trades": 1513,
+      "wins": 856,
+      "wr": 56.58,
+      "pnl": 322.59,
+      "pnl_per_trade": 0.213,
+      "pnl_per_month": 64.52,
+      "pf": 1.597
+    },
+    "cascade_lstm": {
+      "trades": 841,
+      "wins": 464,
+      "wr": 55.17,
+      "pnl": 161.19,
+      "pnl_per_trade": 0.192,
+      "pnl_per_month": 32.24,
+      "pf": 1.5
+    },
+    "primary_meta_0.45": {
+      "trades": 489,
+      "wins": 319,
+      "wr": 65.24,
+      "pnl": 190.05,
+      "pnl_per_trade": 0.389,
+      "pnl_per_month": 38.01,
+      "pf": 2.181
+    },
+    "cascade_meta_0.45": {
+      "trades": 285,
+      "wins": 193,
+      "wr": 67.72,
+      "pnl": 121.0,
+      "pnl_per_trade": 0.425,
+      "pnl_per_month": 24.2,
+      "pf": 2.294
+    },
+    "primary_meta_0.50": {
+      "trades": 282,
+      "wins": 196,
+      "wr": 69.5,
+      "pnl": 139.78,
+      "pnl_per_trade": 0.496,
+      "pnl_per_month": 27.96,
+      "pf": 2.773
+    },
+    "cascade_meta_0.50": {
+      "trades": 173,
+      "wins": 125,
+      "wr": 72.25,
+      "pnl": 92.82,
+      "pnl_per_trade": 0.537,
+      "pnl_per_month": 18.56,
+      "pf": 2.992
+    },
+    "primary_meta_0.55": {
+      "trades": 159,
+      "wins": 116,
+      "wr": 72.96,
+      "pnl": 86.69,
+      "pnl_per_trade": 0.545,
+      "pnl_per_month": 17.34,
+      "pf": 3.24
+    },
+    "cascade_meta_0.55": {
+      "trades": 93,
+      "wins": 71,
+      "wr": 76.34,
+      "pnl": 60.31,
+      "pnl_per_trade": 0.648,
+      "pnl_per_month": 12.06,
+      "pf": 4.15
+    },
+    "primary_meta_0.60": {
+      "trades": 65,
+      "wins": 50,
+      "wr": 76.92,
+      "pnl": 40.83,
+      "pnl_per_trade": 0.628,
+      "pnl_per_month": 8.17,
+      "pf": 3.425
+    },
+    "cascade_meta_0.60": {
+      "trades": 39,
+      "wins": 30,
+      "wr": 76.92,
+      "pnl": 23.12,
+      "pnl_per_trade": 0.593,
+      "pnl_per_month": 4.62,
+      "pf": 2.799
+    }
+  },
+  "pass_fail": {
+    "primary_meta_0.45": {
+      "passed": true,
+      "trade_drop_pct": 41.85,
+      "pnl_delta": 28.86,
+      "pf_delta": 0.681,
+      "reason": [
+        "PnL $+190 >= baseline $+161",
+        "trade drop 41.9% > 30%",
+        "PF 2.18 > baseline 1.50"
+      ]
+    },
+    "cascade_meta_0.45": {
+      "passed": true,
+      "trade_drop_pct": 66.11,
+      "pnl_delta": -40.19,
+      "pf_delta": 0.794,
+      "reason": [
+        "trade drop 66.1% > 30%",
+        "PF 2.29 > baseline 1.50"
+      ]
+    },
+    "primary_meta_0.50": {
+      "passed": true,
+      "trade_drop_pct": 66.47,
+      "pnl_delta": -21.41,
+      "pf_delta": 1.273,
+      "reason": [
+        "trade drop 66.5% > 30%",
+        "PF 2.77 > baseline 1.50"
+      ]
+    },
+    "cascade_meta_0.50": {
+      "passed": true,
+      "trade_drop_pct": 79.43,
+      "pnl_delta": -68.37,
+      "pf_delta": 1.492,
+      "reason": [
+        "trade drop 79.4% > 30%",
+        "PF 2.99 > baseline 1.50"
+      ]
+    },
+    "primary_meta_0.55": {
+      "passed": true,
+      "trade_drop_pct": 81.09,
+      "pnl_delta": -74.5,
+      "pf_delta": 1.74,
+      "reason": [
+        "trade drop 81.1% > 30%",
+        "PF 3.24 > baseline 1.50"
+      ]
+    },
+    "cascade_meta_0.55": {
+      "passed": true,
+      "trade_drop_pct": 88.94,
+      "pnl_delta": -100.88,
+      "pf_delta": 2.65,
+      "reason": [
+        "trade drop 88.9% > 30%",
+        "PF 4.15 > baseline 1.50"
+      ]
+    },
+    "primary_meta_0.60": {
+      "passed": true,
+      "trade_drop_pct": 92.27,
+      "pnl_delta": -120.36,
+      "pf_delta": 1.925,
+      "reason": [
+        "trade drop 92.3% > 30%",
+        "PF 3.42 > baseline 1.50"
+      ]
+    },
+    "cascade_meta_0.60": {
+      "passed": true,
+      "trade_drop_pct": 95.36,
+      "pnl_delta": -138.07,
+      "pf_delta": 1.299,
+      "reason": [
+        "trade drop 95.4% > 30%",
+        "PF 2.80 > baseline 1.50"
+      ]
+    }
+  },
+  "verdict": "CONDITIONAL-GO",
+  "any_pass": true,
+  "best_meta_arm": "primary_meta_0.45",
+  "note": "Entry-only ablation: Guardian disabled because holdout Guardian sim currently yields 0% WR (see holdout_full_stack.json). Compare relative entry quality before stacking exit layers."
+}

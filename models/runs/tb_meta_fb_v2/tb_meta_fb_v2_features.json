@@ -1,0 +1,13 @@
+[
+  "p_short",
+  "p_flat",
+  "p_long",
+  "confidence",
+  "direction",
+  "hmm_regime_enc",
+  "atr_percentile_h1",
+  "funding_rate",
+  "vol_spike_zscore",
+  "ofi_h4_delta",
+  "cvd_slope_h4"
+]

@@ -1,0 +1,16 @@
+[
+  "ofi_raw",
+  "ofi_z_score",
+  "buy_volume",
+  "sell_volume",
+  "cvd",
+  "vol_spike_zscore",
+  "vol_accel_3h",
+  "absorption_z",
+  "ultra_high_vol",
+  "range_expansion_h4",
+  "vol_ratio_20",
+  "no_supply",
+  "no_demand",
+  "effort_vs_result"
+]

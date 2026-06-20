@@ -1,0 +1,217 @@
+{
+  "verdicts": {
+    "etf_gbtc_change_usd": "DROP",
+    "etf_total_change_usd": "KEEP",
+    "cvd_slope_h4": "DROP",
+    "ofi_h4_delta": "DROP",
+    "wyckoff_phase": "DROP",
+    "Sell_Liq": "REDUNDANT",
+    "atr_percentile_h1": "REDUNDANT",
+    "stochrsi_k": "WEAK",
+    "dist_liq_50x_short": "KEEP",
+    "funding_rate": "KEEP",
+    "ema_7_h1": "WEAK",
+    "dow_cos": "KEEP",
+    "cvd_div_h4": "DROP",
+    "dist_swing_low": "WEAK",
+    "VAH": "DROP",
+    "cvd_momentum_adv": "DROP",
+    "dist_from_8h_high": "KEEP",
+    "ema_200_h1": "DROP",
+    "bars_held_norm": "KEEP",
+    "current_pnl_pct": "KEEP",
+    "current_pnl_atr": "KEEP",
+    "max_favorable_pnl_pct": "KEEP",
+    "drawdown_from_peak_pct": "REDUNDANT",
+    "direction": "KEEP",
+    "entry_price_ratio": "WEAK"
+  },
+  "keep": [
+    "etf_total_change_usd",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "dow_cos",
+    "dist_from_8h_high",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "direction"
+  ],
+  "weak": [
+    "stochrsi_k",
+    "ema_7_h1",
+    "dist_swing_low",
+    "entry_price_ratio"
+  ],
+  "best_config": "ALL features",
+  "configs": {
+    "KEEP only": {
+      "features": 10,
+      "f1_mean": 0.8489,
+      "f1_std": 0.0043
+    },
+    "KEEP + WEAK": {
+      "features": 14,
+      "f1_mean": 0.8493,
+      "f1_std": 0.0045
+    },
+    "ALL features": {
+      "features": 25,
+      "f1_mean": 0.8529,
+      "f1_std": 0.004
+    }
+  },
+  "ic_results": [
+    {
+      "feature": "etf_gbtc_change_usd",
+      "standalone_ic": 0.0167,
+      "marginal_ic": -0.0059,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "etf_total_change_usd",
+      "standalone_ic": 0.0256,
+      "marginal_ic": 0.0105,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "standalone_ic": 0.002,
+      "marginal_ic": 0.0057,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "standalone_ic": -0.0003,
+      "marginal_ic": 0.002,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "wyckoff_phase",
+      "standalone_ic": 0.009,
+      "marginal_ic": 0.0075,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "Sell_Liq",
+      "standalone_ic": 0.0203,
+      "marginal_ic": 0.0037,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "standalone_ic": 0.1264,
+      "marginal_ic": -0.0079,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "stochrsi_k",
+      "standalone_ic": -0.006,
+      "marginal_ic": -0.0257,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "standalone_ic": -0.2059,
+      "marginal_ic": -0.073,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "funding_rate",
+      "standalone_ic": 0.101,
+      "marginal_ic": 0.0192,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_7_h1",
+      "standalone_ic": 0.0189,
+      "marginal_ic": 0.0668,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "dow_cos",
+      "standalone_ic": -0.0394,
+      "marginal_ic": -0.01,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_div_h4",
+      "standalone_ic": 0.0044,
+      "marginal_ic": -0.0069,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "dist_swing_low",
+      "standalone_ic": -0.0121,
+      "marginal_ic": -0.0236,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "VAH",
+      "standalone_ic": 0.0116,
+      "marginal_ic": -0.0047,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "standalone_ic": -0.0053,
+      "marginal_ic": -0.0099,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "standalone_ic": -0.021,
+      "marginal_ic": -0.0123,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_200_h1",
+      "standalone_ic": 0.0192,
+      "marginal_ic": -0.0034,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "bars_held_norm",
+      "standalone_ic": 0.0966,
+      "marginal_ic": 0.0982,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "current_pnl_pct",
+      "standalone_ic": 0.2613,
+      "marginal_ic": -0.053,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "current_pnl_atr",
+      "standalone_ic": 0.254,
+      "marginal_ic": 0.1617,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "standalone_ic": 0.527,
+      "marginal_ic": 0.5201,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "drawdown_from_peak_pct",
+      "standalone_ic": -0.0288,
+      "marginal_ic": 0.0063,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "direction",
+      "standalone_ic": 0.0389,
+      "marginal_ic": -0.0155,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "entry_price_ratio",
+      "standalone_ic": -0.02,
+      "marginal_ic": -0.0177,
+      "verdict": "WEAK"
+    }
+  ]
+}

@@ -1,0 +1,13 @@
+[
+  "long_short_ratio",
+  "rsi_slope_h4",
+  "cvd_slope_h4",
+  "cvd_momentum_adv",
+  "volume_delta",
+  "vol_price_confirm",
+  "Buy_Liq",
+  "absorption_at_swing",
+  "trend_accel_4h",
+  "etf_total_change_usd",
+  "dist_liq_50x_long"
+]

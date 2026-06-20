@@ -1,0 +1,642 @@
+2026-06-18 10:14:54 | INFO     | 08e_m15_entry | === OOF slice 2025-07-01 00:00:00+00:00 -> 2026-04-01 00:00:00+00:00 ===
+2026-06-18 10:14:55 | INFO     | evaluator | [BTCUSDT] Winrate: 55.10% (27W / 22L / 49 trades | time_exit=0) | Sharpe=2.63 Sortino=3.80 Calmar=8.63 PF=1.62
+2026-06-18 10:14:55 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+5.39 | DD: 30.51%
+2026-06-18 10:14:55 | INFO     | evaluator | [BTCUSDT] Winrate: 58.00% (29W / 21L / 50 trades | time_exit=1) | Sharpe=3.33 Sortino=5.56 Calmar=17.43 PF=1.93
+2026-06-18 10:14:55 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+8.44 | DD: 30.03%
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Winrate: 56.25% (27W / 21L / 48 trades | time_exit=0) | Sharpe=3.00 Sortino=4.28 Calmar=9.65 PF=1.73
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+6.42 | DD: 35.31%
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Winrate: 56.10% (23W / 18L / 41 trades | time_exit=1) | Sharpe=2.65 Sortino=4.34 Calmar=9.65 PF=1.64
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+4.82 | DD: 23.26%
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Winrate: 70.59% (12W / 5L / 17 trades | time_exit=1) | Sharpe=3.51 Sortino=6.35 Calmar=34.38 PF=4.02
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+5.64 | DD: 8.19%
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Winrate: 50.00% (24W / 24L / 48 trades | time_exit=0) | Sharpe=1.41 Sortino=2.03 Calmar=3.56 PF=1.25
+2026-06-18 10:14:56 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+2.76 | DD: 30.23%
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Winrate: 57.66% (79W / 58L / 137 trades | time_exit=6) | Sharpe=3.65 Sortino=6.13 Calmar=176.75 PF=2.03
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+41.03 | DD: 73.63%
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Winrate: 55.80% (77W / 61L / 138 trades | time_exit=6) | Sharpe=3.25 Sortino=5.13 Calmar=65.25 PF=1.58
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+27.17 | DD: 76.35%
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Winrate: 54.81% (74W / 61L / 135 trades | time_exit=5) | Sharpe=3.10 Sortino=4.92 Calmar=81.01 PF=1.67
+2026-06-18 10:14:57 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+30.66 | DD: 80.77%
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Winrate: 52.21% (59W / 54L / 113 trades | time_exit=4) | Sharpe=3.15 Sortino=5.42 Calmar=52.46 PF=1.53
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+21.40 | DD: 56.57%
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Winrate: 60.56% (43W / 28L / 71 trades | time_exit=4) | Sharpe=4.26 Sortino=6.05 Calmar=58.42 PF=2.04
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+22.46 | DD: 56.25%
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Winrate: 50.78% (65W / 63L / 128 trades | time_exit=4) | Sharpe=2.36 Sortino=4.05 Calmar=21.75 PF=1.33
+2026-06-18 10:14:58 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+15.92 | DD: 74.86%
+2026-06-18 10:14:59 | INFO     | evaluator | [ETHUSDT] Winrate: 61.25% (49W / 31L / 80 trades | time_exit=3) | Sharpe=3.35 Sortino=4.38 Calmar=89.82 PF=2.60
+2026-06-18 10:14:59 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+26.75 | DD: 53.56%
+2026-06-18 10:14:59 | INFO     | evaluator | [ETHUSDT] Winrate: 60.98% (50W / 32L / 82 trades | time_exit=1) | Sharpe=3.91 Sortino=6.30 Calmar=132.97 PF=2.66
+2026-06-18 10:14:59 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+29.50 | DD: 45.06%
+2026-06-18 10:14:59 | INFO     | evaluator | [ETHUSDT] Winrate: 60.76% (48W / 31L / 79 trades | time_exit=4) | Sharpe=3.43 Sortino=4.72 Calmar=89.58 PF=2.42
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+25.82 | DD: 49.66%
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Winrate: 60.27% (44W / 29L / 73 trades | time_exit=1) | Sharpe=3.33 Sortino=5.02 Calmar=115.79 PF=2.61
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+26.05 | DD: 39.18%
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Winrate: 64.44% (29W / 16L / 45 trades | time_exit=1) | Sharpe=3.98 Sortino=5.13 Calmar=87.96 PF=3.55
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+20.58 | DD: 31.08%
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Winrate: 57.69% (45W / 33L / 78 trades | time_exit=4) | Sharpe=2.40 Sortino=2.36 Calmar=21.78 PF=1.83
+2026-06-18 10:15:00 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+16.99 | DD: 84.92%
+2026-06-18 10:15:01 | INFO     | evaluator | [BNBUSDT] Winrate: 51.61% (48W / 45L / 93 trades | time_exit=12) | Sharpe=1.18 Sortino=1.37 Calmar=0.03 PF=1.00
+2026-06-18 10:15:01 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+0.08 | DD: 80.65%
+2026-06-18 10:15:01 | INFO     | evaluator | [BNBUSDT] Winrate: 52.58% (51W / 46L / 97 trades | time_exit=9) | Sharpe=1.88 Sortino=2.41 Calmar=5.90 PF=1.30
+2026-06-18 10:15:01 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+8.88 | DD: 96.48%
+2026-06-18 10:15:01 | INFO     | evaluator | [BNBUSDT] Winrate: 52.58% (51W / 46L / 97 trades | time_exit=10) | Sharpe=1.63 Sortino=2.13 Calmar=5.76 PF=1.27
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+7.14 | DD: 69.64%
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Winrate: 54.88% (45W / 37L / 82 trades | time_exit=8) | Sharpe=1.98 Sortino=2.15 Calmar=8.57 PF=1.44
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+10.45 | DD: 87.52%
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Winrate: 55.10% (27W / 22L / 49 trades | time_exit=5) | Sharpe=1.53 Sortino=1.63 Calmar=5.76 PF=1.37
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+5.59 | DD: 48.16%
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Winrate: 45.26% (43W / 52L / 95 trades | time_exit=10) | Sharpe=-0.55 Sortino=-0.33 Calmar=-0.61 PF=0.82
+2026-06-18 10:15:02 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $-6.39 | DD: 154.87%
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Winrate: 52.00% (39W / 36L / 75 trades | time_exit=3) | Sharpe=2.14 Sortino=3.42 Calmar=16.23 PF=1.58
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+12.34 | DD: 62.11%
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Winrate: 48.65% (36W / 38L / 74 trades | time_exit=3) | Sharpe=1.79 Sortino=2.81 Calmar=4.02 PF=1.27
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+5.95 | DD: 75.68%
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Winrate: 52.00% (39W / 36L / 75 trades | time_exit=1) | Sharpe=2.45 Sortino=3.91 Calmar=23.67 PF=1.72
+2026-06-18 10:15:03 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+14.81 | DD: 59.82%
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Winrate: 49.28% (34W / 35L / 69 trades | time_exit=2) | Sharpe=1.82 Sortino=2.93 Calmar=4.18 PF=1.31
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+6.58 | DD: 84.84%
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Winrate: 51.43% (18W / 17L / 35 trades | time_exit=2) | Sharpe=1.35 Sortino=2.07 Calmar=3.30 PF=1.37
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+4.11 | DD: 54.57%
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Winrate: 45.95% (34W / 40L / 74 trades | time_exit=2) | Sharpe=1.53 Sortino=2.24 Calmar=0.86 PF=1.07
+2026-06-18 10:15:04 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+1.75 | DD: 71.98%
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Winrate: 61.45% (51W / 32L / 83 trades | time_exit=7) | Sharpe=2.60 Sortino=2.86 Calmar=55.14 PF=2.05
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+26.78 | DD: 87.43%
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Winrate: 60.00% (51W / 34L / 85 trades | time_exit=9) | Sharpe=1.84 Sortino=7.23 Calmar=15.76 PF=1.54
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+15.27 | DD: 95.22%
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Winrate: 58.33% (49W / 35L / 84 trades | time_exit=8) | Sharpe=2.39 Sortino=9.98 Calmar=22.53 PF=1.66
+2026-06-18 10:15:05 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+18.59 | DD: 98.43%
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Winrate: 60.53% (46W / 30L / 76 trades | time_exit=11) | Sharpe=2.22 Sortino=2.74 Calmar=23.72 PF=1.63
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+15.39 | DD: 64.25%
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Winrate: 75.00% (36W / 12L / 48 trades | time_exit=8) | Sharpe=3.45 Sortino=2.70 Calmar=78.97 PF=3.05
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+21.71 | DD: 38.73%
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Winrate: 53.66% (44W / 38L / 82 trades | time_exit=9) | Sharpe=0.58 Sortino=0.61 Calmar=1.25 PF=1.12
+2026-06-18 10:15:06 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+3.96 | DD: 136.69%
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Winrate: 65.48% (55W / 29L / 84 trades | time_exit=2) | Sharpe=4.56 Sortino=12.77 Calmar=212.60 PF=2.83
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+28.76 | DD: 26.61%
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Winrate: 64.29% (54W / 30L / 84 trades | time_exit=1) | Sharpe=4.74 Sortino=13.46 Calmar=323.16 PF=2.79
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+30.08 | DD: 19.39%
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Winrate: 63.10% (53W / 31L / 84 trades | time_exit=2) | Sharpe=4.31 Sortino=11.52 Calmar=170.38 PF=2.44
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+25.56 | DD: 25.53%
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Winrate: 64.10% (50W / 28L / 78 trades | time_exit=2) | Sharpe=3.90 Sortino=12.80 Calmar=237.38 PF=2.91
+2026-06-18 10:15:07 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+27.70 | DD: 21.90%
+2026-06-18 10:15:08 | INFO     | evaluator | [TONUSDT] Winrate: 61.70% (29W / 18L / 47 trades | time_exit=1) | Sharpe=3.00 Sortino=8.39 Calmar=106.34 PF=2.70
+2026-06-18 10:15:08 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+16.47 | DD: 16.37%
+2026-06-18 10:15:08 | INFO     | evaluator | [TONUSDT] Winrate: 65.00% (52W / 28L / 80 trades | time_exit=1) | Sharpe=3.90 Sortino=14.36 Calmar=260.99 PF=2.87
+2026-06-18 10:15:08 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+27.25 | DD: 19.21%
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Winrate: 66.25% (53W / 27L / 80 trades | time_exit=10) | Sharpe=3.22 Sortino=3.93 Calmar=79.69 PF=2.67
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+31.01 | DD: 84.32%
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Winrate: 67.07% (55W / 27L / 82 trades | time_exit=10) | Sharpe=3.22 Sortino=4.08 Calmar=115.60 PF=2.79
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+36.49 | DD: 84.99%
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Winrate: 70.37% (57W / 24L / 81 trades | time_exit=9) | Sharpe=3.74 Sortino=4.62 Calmar=159.86 PF=3.12
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+38.95 | DD: 71.78%
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Winrate: 70.67% (53W / 22L / 75 trades | time_exit=9) | Sharpe=3.80 Sortino=5.01 Calmar=161.25 PF=3.26
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+35.49 | DD: 57.05%
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Winrate: 75.00% (39W / 13L / 52 trades | time_exit=6) | Sharpe=3.96 Sortino=4.69 Calmar=154.38 PF=4.26
+2026-06-18 10:15:09 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+32.33 | DD: 47.91%
+2026-06-18 10:15:10 | INFO     | evaluator | [ADAUSDT] Winrate: 63.64% (49W / 28L / 77 trades | time_exit=9) | Sharpe=3.31 Sortino=3.97 Calmar=67.27 PF=2.31
+2026-06-18 10:15:10 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+27.74 | DD: 77.54%
+2026-06-18 10:15:10 | INFO     | evaluator | [TRXUSDT] Winrate: 53.09% (43W / 38L / 81 trades | time_exit=1) | Sharpe=1.61 Sortino=1.49 Calmar=3.70 PF=1.22
+2026-06-18 10:15:10 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.26 | DD: 35.80%
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Winrate: 54.65% (47W / 39L / 86 trades | time_exit=0) | Sharpe=1.57 Sortino=1.55 Calmar=3.04 PF=1.23
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.68 | DD: 51.12%
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Winrate: 54.12% (46W / 39L / 85 trades | time_exit=0) | Sharpe=1.67 Sortino=1.58 Calmar=4.10 PF=1.26
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.93 | DD: 41.38%
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Winrate: 55.41% (41W / 33L / 74 trades | time_exit=0) | Sharpe=1.73 Sortino=1.62 Calmar=3.72 PF=1.30
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.94 | DD: 45.81%
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Winrate: 66.67% (24W / 12L / 36 trades | time_exit=0) | Sharpe=2.46 Sortino=3.19 Calmar=10.24 PF=1.89
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+4.97 | DD: 22.90%
+2026-06-18 10:15:11 | INFO     | evaluator | [TRXUSDT] Winrate: 51.19% (43W / 41L / 84 trades | time_exit=0) | Sharpe=0.76 Sortino=0.74 Calmar=0.26 PF=1.03
+2026-06-18 10:15:12 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+0.48 | DD: 57.55%
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 46.94% (46W / 52L / 98 trades | time_exit=5) | Sharpe=2.17 Sortino=2.36 Calmar=9.25 PF=1.34
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+11.37 | DD: 94.07%
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:12 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:13 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:13 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:13 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:13 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:13 | INFO     | evaluator | [AVAXUSDT] Winrate: 53.51% (61W / 53L / 114 trades | time_exit=7) | Sharpe=2.98 Sortino=6.33 Calmar=35.15 PF=1.55
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+22.23 | DD: 91.46%
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Winrate: 55.26% (63W / 51L / 114 trades | time_exit=10) | Sharpe=2.33 Sortino=4.74 Calmar=9.80 PF=1.30
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+13.03 | DD: 113.57%
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Winrate: 54.05% (60W / 51L / 111 trades | time_exit=10) | Sharpe=3.15 Sortino=5.75 Calmar=33.48 PF=1.57
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+20.13 | DD: 77.95%
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Winrate: 55.32% (52W / 42L / 94 trades | time_exit=9) | Sharpe=2.37 Sortino=4.23 Calmar=16.86 PF=1.47
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+16.30 | DD: 101.04%
+2026-06-18 10:15:14 | INFO     | evaluator | [AVAXUSDT] Winrate: 60.00% (33W / 22L / 55 trades | time_exit=6) | Sharpe=2.50 Sortino=3.41 Calmar=36.00 PF=2.02
+2026-06-18 10:15:15 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+18.19 | DD: 58.92%
+2026-06-18 10:15:15 | INFO     | evaluator | [AVAXUSDT] Winrate: 50.94% (54W / 52L / 106 trades | time_exit=10) | Sharpe=1.91 Sortino=4.17 Calmar=7.18 PF=1.25
+2026-06-18 10:15:15 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+10.34 | DD: 102.62%
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Winrate: 63.27% (62W / 36L / 98 trades | time_exit=9) | Sharpe=3.33 Sortino=5.76 Calmar=295.86 PF=3.04
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+50.51 | DD: 73.44%
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Winrate: 65.31% (64W / 34L / 98 trades | time_exit=9) | Sharpe=3.25 Sortino=5.58 Calmar=226.27 PF=2.81
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+47.29 | DD: 81.49%
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Winrate: 63.54% (61W / 35L / 96 trades | time_exit=7) | Sharpe=3.05 Sortino=5.99 Calmar=289.72 PF=2.73
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+47.08 | DD: 62.94%
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Winrate: 63.95% (55W / 31L / 86 trades | time_exit=8) | Sharpe=3.14 Sortino=5.84 Calmar=222.95 PF=2.77
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+41.83 | DD: 61.15%
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Winrate: 70.49% (43W / 18L / 61 trades | time_exit=7) | Sharpe=4.27 Sortino=12.01 Calmar=499.96 PF=4.94
+2026-06-18 10:15:16 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+42.77 | DD: 28.79%
+2026-06-18 10:15:17 | INFO     | evaluator | [LINKUSDT] Winrate: 57.45% (54W / 40L / 94 trades | time_exit=5) | Sharpe=2.30 Sortino=4.84 Calmar=104.63 PF=1.85
+2026-06-18 10:15:17 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+30.30 | DD: 60.87%
+2026-06-18 10:15:17 | INFO     | evaluator | [DOTUSDT] Winrate: 53.64% (59W / 51L / 110 trades | time_exit=8) | Sharpe=2.84 Sortino=5.19 Calmar=36.46 PF=1.55
+2026-06-18 10:15:17 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+19.04 | DD: 63.82%
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Winrate: 52.78% (57W / 51L / 108 trades | time_exit=10) | Sharpe=1.75 Sortino=3.55 Calmar=4.10 PF=1.19
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+7.41 | DD: 103.65%
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Winrate: 48.62% (53W / 56L / 109 trades | time_exit=8) | Sharpe=1.93 Sortino=3.75 Calmar=9.91 PF=1.25
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+9.79 | DD: 67.65%
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Winrate: 52.58% (51W / 46L / 97 trades | time_exit=10) | Sharpe=1.95 Sortino=3.64 Calmar=7.63 PF=1.27
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+9.02 | DD: 76.53%
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Winrate: 59.09% (39W / 27L / 66 trades | time_exit=5) | Sharpe=2.70 Sortino=5.73 Calmar=45.78 PF=1.84
+2026-06-18 10:15:18 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+15.88 | DD: 35.37%
+2026-06-18 10:15:19 | INFO     | evaluator | [DOTUSDT] Winrate: 48.51% (49W / 52L / 101 trades | time_exit=9) | Sharpe=1.65 Sortino=3.35 Calmar=2.76 PF=1.16
+2026-06-18 10:15:19 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+6.31 | DD: 120.39%
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Winrate: 65.75% (96W / 50L / 146 trades | time_exit=14) | Sharpe=5.39 Sortino=14.44 Calmar=632.95 PF=2.73
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+61.34 | DD: 56.29%
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Winrate: 61.11% (88W / 56L / 144 trades | time_exit=13) | Sharpe=4.82 Sortino=10.02 Calmar=481.21 PF=2.38
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+55.43 | DD: 57.11%
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Winrate: 62.59% (92W / 55L / 147 trades | time_exit=18) | Sharpe=4.69 Sortino=12.10 Calmar=372.74 PF=2.38
+2026-06-18 10:15:20 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+56.58 | DD: 77.68%
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Winrate: 64.52% (80W / 44L / 124 trades | time_exit=12) | Sharpe=5.08 Sortino=7.47 Calmar=361.36 PF=2.41
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+46.35 | DD: 48.54%
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Winrate: 70.13% (54W / 23L / 77 trades | time_exit=5) | Sharpe=5.78 Sortino=13.62 Calmar=263.79 PF=2.99
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+37.25 | DD: 39.10%
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Winrate: 59.71% (83W / 56L / 139 trades | time_exit=13) | Sharpe=3.61 Sortino=10.33 Calmar=201.05 PF=1.83
+2026-06-18 10:15:21 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+37.46 | DD: 51.99%
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Winrate: 73.33% (55W / 20L / 75 trades | time_exit=11) | Sharpe=5.86 Sortino=7.79 Calmar=401.16 PF=4.96
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+37.13 | DD: 25.51%
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Winrate: 75.00% (57W / 19L / 76 trades | time_exit=11) | Sharpe=4.05 Sortino=7.29 Calmar=144.93 PF=3.32
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+31.05 | DD: 46.50%
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Winrate: 72.00% (54W / 21L / 75 trades | time_exit=10) | Sharpe=4.61 Sortino=6.57 Calmar=309.77 PF=3.53
+2026-06-18 10:15:22 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+33.81 | DD: 26.49%
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Winrate: 73.44% (47W / 17L / 64 trades | time_exit=11) | Sharpe=3.47 Sortino=4.37 Calmar=79.69 PF=3.20
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+23.59 | DD: 45.83%
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Winrate: 70.21% (33W / 14L / 47 trades | time_exit=8) | Sharpe=3.00 Sortino=4.61 Calmar=85.78 PF=3.14
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+17.55 | DD: 23.02%
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Winrate: 68.57% (48W / 22L / 70 trades | time_exit=7) | Sharpe=3.51 Sortino=5.40 Calmar=68.84 PF=2.80
+2026-06-18 10:15:23 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+26.36 | DD: 67.62%
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Winrate: 58.59% (58W / 41L / 99 trades | time_exit=5) | Sharpe=3.14 Sortino=4.49 Calmar=41.82 PF=1.73
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+24.79 | DD: 97.29%
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Winrate: 61.00% (61W / 39L / 100 trades | time_exit=11) | Sharpe=2.93 Sortino=4.07 Calmar=23.84 PF=1.58
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+20.75 | DD: 116.62%
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Winrate: 56.57% (56W / 43L / 99 trades | time_exit=10) | Sharpe=3.52 Sortino=4.76 Calmar=44.86 PF=1.71
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+23.78 | DD: 82.82%
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Winrate: 58.62% (51W / 36L / 87 trades | time_exit=9) | Sharpe=2.98 Sortino=3.50 Calmar=25.44 PF=1.63
+2026-06-18 10:15:24 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+19.20 | DD: 93.06%
+2026-06-18 10:15:25 | INFO     | evaluator | [NEARUSDT] Winrate: 57.38% (35W / 26L / 61 trades | time_exit=5) | Sharpe=2.84 Sortino=3.72 Calmar=17.77 PF=1.71
+2026-06-18 10:15:25 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+15.35 | DD: 85.33%
+2026-06-18 10:15:25 | INFO     | evaluator | [NEARUSDT] Winrate: 54.08% (53W / 45L / 98 trades | time_exit=8) | Sharpe=1.78 Sortino=2.49 Calmar=4.44 PF=1.19
+2026-06-18 10:15:25 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+7.65 | DD: 100.69%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 51.59% (81W / 76L / 157 trades | time_exit=21) | Sharpe=-1.61 Sortino=-0.93 Calmar=9.44 PF=1.25
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+15.63 | DD: 166.32%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 0.00% (0W / 0L / 0 trades | time_exit=0) | Sharpe=0.00 Sortino=0.00 Calmar=0.00 PF=0.00
+2026-06-18 10:15:26 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+0.00 | DD: 0.00%
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Winrate: 70.42% (50W / 21L / 71 trades | time_exit=8) | Sharpe=4.68 Sortino=14.36 Calmar=393.99 PF=3.44
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+32.89 | DD: 19.54%
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Winrate: 69.44% (50W / 22L / 72 trades | time_exit=10) | Sharpe=4.63 Sortino=12.07 Calmar=178.68 PF=2.54
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+26.50 | DD: 26.37%
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Winrate: 69.01% (49W / 22L / 71 trades | time_exit=9) | Sharpe=4.63 Sortino=13.78 Calmar=176.84 PF=2.46
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+25.69 | DD: 24.87%
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Winrate: 72.13% (44W / 17L / 61 trades | time_exit=6) | Sharpe=3.70 Sortino=11.15 Calmar=73.83 PF=2.48
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+23.38 | DD: 48.54%
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Winrate: 69.23% (27W / 12L / 39 trades | time_exit=6) | Sharpe=2.75 Sortino=8.70 Calmar=121.48 PF=3.19
+2026-06-18 10:15:27 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+17.50 | DD: 16.16%
+2026-06-18 10:15:28 | INFO     | evaluator | [TAOUSDT] Winrate: 70.00% (49W / 21L / 70 trades | time_exit=7) | Sharpe=4.15 Sortino=11.74 Calmar=79.03 PF=2.24
+2026-06-18 10:15:28 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+23.17 | DD: 44.47%
+2026-06-18 10:15:28 | INFO     | evaluator | [ARBUSDT] Winrate: 60.19% (62W / 41L / 103 trades | time_exit=11) | Sharpe=2.94 Sortino=4.42 Calmar=114.09 PF=2.02
+2026-06-18 10:15:28 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+32.03 | DD: 63.46%
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Winrate: 57.84% (59W / 43L / 102 trades | time_exit=14) | Sharpe=2.43 Sortino=3.25 Calmar=31.12 PF=1.63
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+20.63 | DD: 88.32%
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Winrate: 50.98% (52W / 50L / 102 trades | time_exit=5) | Sharpe=1.39 Sortino=3.57 Calmar=19.45 PF=1.45
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+18.51 | DD: 113.00%
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Winrate: 53.85% (49W / 42L / 91 trades | time_exit=9) | Sharpe=2.29 Sortino=3.88 Calmar=44.40 PF=1.67
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+21.76 | DD: 69.20%
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Winrate: 48.21% (27W / 29L / 56 trades | time_exit=6) | Sharpe=1.65 Sortino=4.45 Calmar=7.62 PF=1.43
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+9.24 | DD: 79.81%
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Winrate: 50.52% (49W / 48L / 97 trades | time_exit=8) | Sharpe=-1.27 Sortino=-0.76 Calmar=7.12 PF=1.33
+2026-06-18 10:15:29 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+13.53 | DD: 167.75%
+2026-06-18 10:15:30 | INFO     | evaluator | [HBARUSDT] Winrate: 63.95% (55W / 31L / 86 trades | time_exit=8) | Sharpe=-0.21 Sortino=-0.10 Calmar=25.16 PF=1.70
+2026-06-18 10:15:30 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+20.52 | DD: 108.03%
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Winrate: 64.04% (57W / 32L / 89 trades | time_exit=6) | Sharpe=2.70 Sortino=2.58 Calmar=30.69 PF=1.63
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+19.75 | DD: 81.76%
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Winrate: 60.92% (53W / 34L / 87 trades | time_exit=7) | Sharpe=2.69 Sortino=2.46 Calmar=26.31 PF=1.58
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+18.26 | DD: 81.30%
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Winrate: 65.82% (52W / 27L / 79 trades | time_exit=5) | Sharpe=2.81 Sortino=2.06 Calmar=60.36 PF=2.06
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+25.25 | DD: 70.16%
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Winrate: 67.86% (38W / 18L / 56 trades | time_exit=3) | Sharpe=3.06 Sortino=2.25 Calmar=73.42 PF=2.35
+2026-06-18 10:15:31 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+20.37 | DD: 36.44%
+2026-06-18 10:15:32 | INFO     | evaluator | [HBARUSDT] Winrate: 60.71% (51W / 33L / 84 trades | time_exit=6) | Sharpe=2.74 Sortino=4.31 Calmar=9.88 PF=1.35
+2026-06-18 10:15:32 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+11.96 | DD: 96.36%
+2026-06-18 10:15:32 | INFO     | evaluator | [ONDOUSDT] Winrate: 50.41% (61W / 60L / 121 trades | time_exit=6) | Sharpe=3.15 Sortino=5.45 Calmar=26.88 PF=1.49
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+22.54 | DD: 123.20%
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Winrate: 47.93% (58W / 63L / 121 trades | time_exit=7) | Sharpe=2.12 Sortino=4.48 Calmar=14.85 PF=1.35
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+16.89 | DD: 123.17%
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Winrate: 50.82% (62W / 60L / 122 trades | time_exit=7) | Sharpe=2.92 Sortino=4.62 Calmar=30.13 PF=1.55
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+23.65 | DD: 121.95%
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Winrate: 47.71% (52W / 57L / 109 trades | time_exit=6) | Sharpe=2.33 Sortino=5.26 Calmar=30.82 PF=1.50
+2026-06-18 10:15:33 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+20.39 | DD: 87.05%
+2026-06-18 10:15:34 | INFO     | evaluator | [ONDOUSDT] Winrate: 43.84% (32W / 41L / 73 trades | time_exit=5) | Sharpe=1.89 Sortino=3.40 Calmar=11.21 PF=1.33
+2026-06-18 10:15:34 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+10.12 | DD: 63.34%
+2026-06-18 10:15:34 | INFO     | evaluator | [ONDOUSDT] Winrate: 49.58% (59W / 60L / 119 trades | time_exit=9) | Sharpe=1.93 Sortino=3.41 Calmar=6.10 PF=1.25
+2026-06-18 10:15:34 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+12.01 | DD: 157.37%
+2026-06-18 10:15:34 | INFO     | 08e_m15_entry | === Holdout 2026-04-01 00:00:00+00:00 -> 2026-07-01 00:00:00+00:00 ===
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 44.64% (25W / 31L / 56 trades | time_exit=3) | Sharpe=0.33 Sortino=0.33 Calmar=-0.42 PF=0.96
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $-0.51 | DD: 55.42%
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 44.83% (26W / 32L / 58 trades | time_exit=4) | Sharpe=0.74 Sortino=0.67 Calmar=0.58 PF=1.04
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+0.49 | DD: 47.32%
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 47.27% (26W / 29L / 55 trades | time_exit=3) | Sharpe=0.67 Sortino=0.65 Calmar=0.27 PF=1.02
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+0.29 | DD: 58.36%
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 44.00% (22W / 28L / 50 trades | time_exit=3) | Sharpe=-0.39 Sortino=-0.38 Calmar=-1.20 PF=0.85
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $-1.87 | DD: 54.41%
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 48.39% (15W / 16L / 31 trades | time_exit=3) | Sharpe=0.64 Sortino=0.68 Calmar=0.69 PF=1.06
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+0.42 | DD: 33.25%
+2026-06-18 10:15:35 | INFO     | evaluator | [BTCUSDT] Winrate: 39.22% (20W / 31L / 51 trades | time_exit=2) | Sharpe=-0.87 Sortino=-0.86 Calmar=-1.10 PF=0.79
+2026-06-18 10:15:36 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $-3.06 | DD: 76.38%
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Winrate: 53.57% (30W / 26L / 56 trades | time_exit=3) | Sharpe=2.38 Sortino=2.82 Calmar=29.79 PF=1.43
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+5.95 | DD: 32.44%
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Winrate: 46.55% (27W / 31L / 58 trades | time_exit=2) | Sharpe=1.47 Sortino=1.77 Calmar=2.01 PF=1.07
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+1.15 | DD: 36.68%
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Winrate: 50.00% (28W / 28L / 56 trades | time_exit=1) | Sharpe=2.83 Sortino=2.96 Calmar=40.32 PF=1.53
+2026-06-18 10:15:36 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+7.16 | DD: 35.88%
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Winrate: 54.17% (26W / 22L / 48 trades | time_exit=3) | Sharpe=3.05 Sortino=3.26 Calmar=28.13 PF=1.47
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+5.00 | DD: 24.23%
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Winrate: 51.61% (16W / 15L / 31 trades | time_exit=1) | Sharpe=2.96 Sortino=4.44 Calmar=24.22 PF=1.64
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+4.66 | DD: 24.57%
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Winrate: 44.44% (24W / 30L / 54 trades | time_exit=2) | Sharpe=-0.67 Sortino=-0.74 Calmar=-1.39 PF=0.75
+2026-06-18 10:15:37 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $-4.49 | DD: 68.43%
+2026-06-18 10:15:37 | INFO     | evaluator | [ETHUSDT] Winrate: 61.40% (35W / 22L / 57 trades | time_exit=3) | Sharpe=5.70 Sortino=16.09 Calmar=499.48 PF=2.56
+2026-06-18 10:15:37 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+16.94 | DD: 30.21%
+2026-06-18 10:15:37 | INFO     | evaluator | [ETHUSDT] Winrate: 57.89% (33W / 24L / 57 trades | time_exit=4) | Sharpe=4.71 Sortino=10.36 Calmar=151.17 PF=2.07
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+13.74 | DD: 52.25%
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Winrate: 62.07% (36W / 22L / 58 trades | time_exit=4) | Sharpe=5.94 Sortino=9.71 Calmar=523.88 PF=2.64
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+17.60 | DD: 32.60%
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Winrate: 58.82% (30W / 21L / 51 trades | time_exit=3) | Sharpe=5.25 Sortino=11.51 Calmar=253.44 PF=2.41
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+14.78 | DD: 38.89%
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Winrate: 75.00% (21W / 7L / 28 trades | time_exit=2) | Sharpe=6.06 Sortino=9.52 Calmar=580.20 PF=4.44
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+13.85 | DD: 13.95%
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Winrate: 51.79% (29W / 27L / 56 trades | time_exit=3) | Sharpe=3.80 Sortino=6.62 Calmar=63.66 PF=1.77
+2026-06-18 10:15:38 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+10.92 | DD: 64.62%
+2026-06-18 10:15:38 | INFO     | evaluator | [BNBUSDT] Winrate: 63.49% (40W / 23L / 63 trades | time_exit=1) | Sharpe=3.46 Sortino=6.86 Calmar=96.58 PF=1.79
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+8.74 | DD: 23.99%
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Winrate: 59.15% (42W / 29L / 71 trades | time_exit=2) | Sharpe=2.84 Sortino=4.39 Calmar=21.45 PF=1.41
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+5.69 | DD: 41.02%
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Winrate: 56.92% (37W / 28L / 65 trades | time_exit=2) | Sharpe=1.77 Sortino=2.55 Calmar=11.13 PF=1.28
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+3.91 | DD: 38.94%
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Winrate: 66.67% (42W / 21L / 63 trades | time_exit=2) | Sharpe=4.47 Sortino=5.65 Calmar=79.57 PF=1.86
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+8.85 | DD: 30.00%
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Winrate: 68.18% (30W / 14L / 44 trades | time_exit=1) | Sharpe=4.60 Sortino=9.47 Calmar=51.66 PF=1.93
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+6.78 | DD: 24.78%
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Winrate: 58.46% (38W / 27L / 65 trades | time_exit=2) | Sharpe=1.36 Sortino=2.30 Calmar=7.25 PF=1.21
+2026-06-18 10:15:39 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+2.96 | DD: 37.47%
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Winrate: 72.22% (39W / 15L / 54 trades | time_exit=5) | Sharpe=6.02 Sortino=8.15 Calmar=274.03 PF=2.78
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+13.22 | DD: 25.76%
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Winrate: 71.43% (40W / 16L / 56 trades | time_exit=4) | Sharpe=5.59 Sortino=11.01 Calmar=303.68 PF=2.39
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+13.51 | DD: 24.76%
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Winrate: 66.67% (36W / 18L / 54 trades | time_exit=6) | Sharpe=5.33 Sortino=10.41 Calmar=205.99 PF=2.29
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+10.97 | DD: 20.22%
+2026-06-18 10:15:40 | INFO     | evaluator | [XRPUSDT] Winrate: 71.43% (35W / 14L / 49 trades | time_exit=4) | Sharpe=5.24 Sortino=10.06 Calmar=154.39 PF=2.31
+2026-06-18 10:15:41 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+10.56 | DD: 24.37%
+2026-06-18 10:15:41 | INFO     | evaluator | [XRPUSDT] Winrate: 77.42% (24W / 7L / 31 trades | time_exit=4) | Sharpe=5.25 Sortino=9.26 Calmar=98.89 PF=2.86
+2026-06-18 10:15:41 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+8.57 | DD: 22.28%
+2026-06-18 10:15:41 | INFO     | evaluator | [XRPUSDT] Winrate: 72.00% (36W / 14L / 50 trades | time_exit=4) | Sharpe=5.45 Sortino=12.83 Calmar=456.18 PF=2.71
+2026-06-18 10:15:41 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+12.11 | DD: 12.01%
+2026-06-18 10:15:41 | INFO     | evaluator | [DOGEUSDT] Winrate: 64.20% (52W / 29L / 81 trades | time_exit=2) | Sharpe=4.58 Sortino=6.03 Calmar=610.24 PF=2.12
+2026-06-18 10:15:41 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+19.81 | DD: 41.44%
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Winrate: 61.73% (50W / 31L / 81 trades | time_exit=5) | Sharpe=2.25 Sortino=2.52 Calmar=22.60 PF=1.37
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+7.88 | DD: 79.86%
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Winrate: 64.63% (53W / 29L / 82 trades | time_exit=4) | Sharpe=3.80 Sortino=3.80 Calmar=191.78 PF=1.72
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+14.51 | DD: 48.58%
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Winrate: 60.61% (40W / 26L / 66 trades | time_exit=4) | Sharpe=2.46 Sortino=2.74 Calmar=18.74 PF=1.34
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+6.01 | DD: 52.58%
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Winrate: 53.85% (21W / 18L / 39 trades | time_exit=0) | Sharpe=1.77 Sortino=2.28 Calmar=5.54 PF=1.26
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+2.84 | DD: 46.05%
+2026-06-18 10:15:42 | INFO     | evaluator | [DOGEUSDT] Winrate: 55.13% (43W / 35L / 78 trades | time_exit=3) | Sharpe=1.51 Sortino=1.65 Calmar=5.74 PF=1.18
+2026-06-18 10:15:43 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+4.03 | DD: 79.67%
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Winrate: 55.71% (39W / 31L / 70 trades | time_exit=9) | Sharpe=2.77 Sortino=5.18 Calmar=62.78 PF=1.43
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+11.63 | DD: 77.93%
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Winrate: 55.56% (40W / 32L / 72 trades | time_exit=8) | Sharpe=1.26 Sortino=1.79 Calmar=0.05 PF=1.00
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+0.14 | DD: 143.45%
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Winrate: 58.33% (42W / 30L / 72 trades | time_exit=9) | Sharpe=2.51 Sortino=4.00 Calmar=31.53 PF=1.33
+2026-06-18 10:15:43 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+10.19 | DD: 108.65%
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Winrate: 56.25% (36W / 28L / 64 trades | time_exit=7) | Sharpe=1.58 Sortino=2.71 Calmar=-0.64 PF=0.90
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $-3.41 | DD: 138.18%
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Winrate: 51.22% (21W / 20L / 41 trades | time_exit=7) | Sharpe=-0.99 Sortino=-0.93 Calmar=-0.86 PF=0.60
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $-9.42 | DD: 116.93%
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Winrate: 50.00% (32W / 32L / 64 trades | time_exit=7) | Sharpe=0.67 Sortino=1.32 Calmar=-0.56 PF=0.94
+2026-06-18 10:15:44 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $-1.77 | DD: 112.72%
+2026-06-18 10:15:44 | INFO     | evaluator | [ADAUSDT] Winrate: 42.62% (26W / 35L / 61 trades | time_exit=3) | Sharpe=0.12 Sortino=0.27 Calmar=-0.55 PF=0.93
+2026-06-18 10:15:44 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-1.38 | DD: 96.70%
+2026-06-18 10:15:44 | INFO     | evaluator | [ADAUSDT] Winrate: 49.18% (30W / 31L / 61 trades | time_exit=4) | Sharpe=-0.44 Sortino=-0.62 Calmar=-0.85 PF=0.93
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-1.53 | DD: 67.48%
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Winrate: 45.00% (27W / 33L / 60 trades | time_exit=3) | Sharpe=-1.18 Sortino=-1.33 Calmar=-1.05 PF=0.87
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-2.65 | DD: 75.53%
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Winrate: 47.83% (22W / 24L / 46 trades | time_exit=3) | Sharpe=-0.11 Sortino=-0.17 Calmar=-0.31 PF=0.97
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-0.47 | DD: 69.97%
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Winrate: 44.00% (11W / 14L / 25 trades | time_exit=1) | Sharpe=-1.27 Sortino=-1.59 Calmar=-0.87 PF=0.87
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-1.16 | DD: 53.58%
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Winrate: 44.83% (26W / 32L / 58 trades | time_exit=3) | Sharpe=-1.04 Sortino=-1.29 Calmar=-1.18 PF=0.76
+2026-06-18 10:15:45 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $-4.80 | DD: 81.39%
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Winrate: 61.02% (36W / 23L / 59 trades | time_exit=0) | Sharpe=2.36 Sortino=3.06 Calmar=16.07 PF=1.40
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+2.61 | DD: 13.90%
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Winrate: 66.10% (39W / 20L / 59 trades | time_exit=0) | Sharpe=5.11 Sortino=5.78 Calmar=79.64 PF=1.92
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+5.03 | DD: 8.65%
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Winrate: 60.00% (36W / 24L / 60 trades | time_exit=0) | Sharpe=3.63 Sortino=4.61 Calmar=31.82 PF=1.57
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.67 | DD: 12.17%
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Winrate: 70.37% (38W / 16L / 54 trades | time_exit=0) | Sharpe=6.01 Sortino=11.89 Calmar=144.13 PF=2.32
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+5.64 | DD: 6.00%
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Winrate: 72.00% (18W / 7L / 25 trades | time_exit=0) | Sharpe=4.08 Sortino=4.43 Calmar=56.57 PF=2.71
+2026-06-18 10:15:46 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+3.42 | DD: 6.09%
+2026-06-18 10:15:47 | INFO     | evaluator | [TRXUSDT] Winrate: 62.71% (37W / 22L / 59 trades | time_exit=0) | Sharpe=2.26 Sortino=3.12 Calmar=10.31 PF=1.34
+2026-06-18 10:15:47 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+2.31 | DD: 18.17%
+2026-06-18 10:15:47 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 66.67% (36W / 18L / 54 trades | time_exit=3) | Sharpe=5.48 Sortino=14.30 Calmar=417.96 PF=2.15
+2026-06-18 10:15:47 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+14.78 | DD: 23.59%
+2026-06-18 10:15:47 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 67.92% (36W / 17L / 53 trades | time_exit=5) | Sharpe=5.18 Sortino=10.78 Calmar=327.86 PF=2.24
+2026-06-18 10:15:47 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+14.05 | DD: 25.80%
+2026-06-18 10:15:47 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 66.04% (35W / 18L / 53 trades | time_exit=5) | Sharpe=4.81 Sortino=9.58 Calmar=243.11 PF=2.04
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+12.57 | DD: 25.06%
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 68.00% (34W / 16L / 50 trades | time_exit=6) | Sharpe=4.09 Sortino=7.25 Calmar=110.32 PF=1.83
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+10.02 | DD: 29.70%
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 71.88% (23W / 9L / 32 trades | time_exit=5) | Sharpe=4.01 Sortino=8.48 Calmar=62.79 PF=2.08
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+7.32 | DD: 24.22%
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 56.00% (28W / 22L / 50 trades | time_exit=2) | Sharpe=2.35 Sortino=4.85 Calmar=22.81 PF=1.33
+2026-06-18 10:15:48 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+5.21 | DD: 32.34%
+2026-06-18 10:15:48 | INFO     | evaluator | [AVAXUSDT] Winrate: 69.01% (49W / 22L / 71 trades | time_exit=8) | Sharpe=6.25 Sortino=20.02 Calmar=1956.85 PF=2.91
+2026-06-18 10:15:48 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+22.59 | DD: 20.34%
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Winrate: 59.72% (43W / 29L / 72 trades | time_exit=10) | Sharpe=5.27 Sortino=12.40 Calmar=313.65 PF=1.98
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+15.90 | DD: 39.35%
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Winrate: 62.50% (45W / 27L / 72 trades | time_exit=8) | Sharpe=6.11 Sortino=14.89 Calmar=1270.90 PF=2.74
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+21.99 | DD: 28.50%
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Winrate: 56.92% (37W / 28L / 65 trades | time_exit=8) | Sharpe=4.21 Sortino=9.34 Calmar=180.73 PF=1.96
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+13.43 | DD: 40.92%
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Winrate: 56.10% (23W / 18L / 41 trades | time_exit=7) | Sharpe=3.41 Sortino=5.45 Calmar=59.69 PF=1.77
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+6.49 | DD: 19.47%
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Winrate: 63.24% (43W / 25L / 68 trades | time_exit=5) | Sharpe=6.28 Sortino=24.91 Calmar=1028.32 PF=2.44
+2026-06-18 10:15:49 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+19.54 | DD: 23.49%
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Winrate: 58.33% (42W / 30L / 72 trades | time_exit=8) | Sharpe=2.21 Sortino=3.77 Calmar=19.56 PF=1.32
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+5.99 | DD: 50.00%
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Winrate: 52.78% (38W / 34L / 72 trades | time_exit=9) | Sharpe=1.52 Sortino=2.66 Calmar=3.65 PF=1.12
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+2.73 | DD: 65.59%
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Winrate: 53.52% (38W / 33L / 71 trades | time_exit=10) | Sharpe=1.74 Sortino=3.19 Calmar=6.77 PF=1.18
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+3.78 | DD: 60.36%
+2026-06-18 10:15:50 | INFO     | evaluator | [LINKUSDT] Winrate: 58.06% (36W / 26L / 62 trades | time_exit=10) | Sharpe=1.91 Sortino=2.60 Calmar=13.10 PF=1.22
+2026-06-18 10:15:51 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+3.98 | DD: 34.13%
+2026-06-18 10:15:51 | INFO     | evaluator | [LINKUSDT] Winrate: 70.27% (26W / 11L / 37 trades | time_exit=6) | Sharpe=4.24 Sortino=9.50 Calmar=80.46 PF=1.86
+2026-06-18 10:15:51 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+7.21 | DD: 18.23%
+2026-06-18 10:15:51 | INFO     | evaluator | [LINKUSDT] Winrate: 51.47% (35W / 33L / 68 trades | time_exit=8) | Sharpe=1.13 Sortino=2.31 Calmar=0.08 PF=1.01
+2026-06-18 10:15:51 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+0.12 | DD: 83.76%
+2026-06-18 10:15:51 | INFO     | evaluator | [DOTUSDT] Winrate: 59.65% (34W / 23L / 57 trades | time_exit=7) | Sharpe=3.71 Sortino=3.29 Calmar=125.69 PF=2.00
+2026-06-18 10:15:51 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+13.04 | DD: 53.88%
+2026-06-18 10:15:51 | INFO     | evaluator | [DOTUSDT] Winrate: 56.14% (32W / 25L / 57 trades | time_exit=3) | Sharpe=2.87 Sortino=3.72 Calmar=33.05 PF=1.51
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+8.97 | DD: 74.74%
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Winrate: 58.62% (34W / 24L / 58 trades | time_exit=3) | Sharpe=2.78 Sortino=2.69 Calmar=40.90 PF=1.58
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+10.63 | DD: 93.56%
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Winrate: 59.09% (26W / 18L / 44 trades | time_exit=4) | Sharpe=2.65 Sortino=1.99 Calmar=31.85 PF=1.69
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+8.06 | DD: 59.71%
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Winrate: 73.08% (19W / 7L / 26 trades | time_exit=3) | Sharpe=4.51 Sortino=3.23 Calmar=191.02 PF=3.68
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+10.92 | DD: 21.55%
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Winrate: 48.98% (24W / 25L / 49 trades | time_exit=3) | Sharpe=1.39 Sortino=1.27 Calmar=0.63 PF=1.06
+2026-06-18 10:15:52 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+1.09 | DD: 109.74%
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Winrate: 48.19% (40W / 43L / 83 trades | time_exit=13) | Sharpe=0.58 Sortino=1.36 Calmar=-1.19 PF=0.86
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-3.66 | DD: 75.72%
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Winrate: 50.00% (41W / 41L / 82 trades | time_exit=9) | Sharpe=0.50 Sortino=0.79 Calmar=-1.11 PF=0.87
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-3.53 | DD: 79.94%
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Winrate: 51.81% (43W / 40L / 83 trades | time_exit=13) | Sharpe=0.65 Sortino=1.15 Calmar=-0.96 PF=0.92
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-2.18 | DD: 74.04%
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Winrate: 52.05% (38W / 35L / 73 trades | time_exit=9) | Sharpe=-1.33 Sortino=-1.84 Calmar=-1.40 PF=0.76
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-6.01 | DD: 70.80%
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Winrate: 56.36% (31W / 24L / 55 trades | time_exit=9) | Sharpe=-0.63 Sortino=-0.75 Calmar=-1.27 PF=0.70
+2026-06-18 10:15:53 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-5.47 | DD: 77.19%
+2026-06-18 10:15:54 | INFO     | evaluator | [SUIUSDT] Winrate: 50.67% (38W / 37L / 75 trades | time_exit=10) | Sharpe=0.11 Sortino=0.24 Calmar=-1.12 PF=0.74
+2026-06-18 10:15:54 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $-7.12 | DD: 89.22%
+2026-06-18 10:15:54 | INFO     | evaluator | [POLUSDT] Winrate: 60.00% (33W / 22L / 55 trades | time_exit=3) | Sharpe=1.53 Sortino=1.47 Calmar=15.42 PF=1.44
+2026-06-18 10:15:54 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+6.45 | DD: 74.44%
+2026-06-18 10:15:54 | INFO     | evaluator | [POLUSDT] Winrate: 61.11% (33W / 21L / 54 trades | time_exit=1) | Sharpe=1.94 Sortino=1.73 Calmar=13.88 PF=1.39
+2026-06-18 10:15:54 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+6.50 | DD: 84.07%
+2026-06-18 10:15:54 | INFO     | evaluator | [POLUSDT] Winrate: 55.56% (30W / 24L / 54 trades | time_exit=2) | Sharpe=1.23 Sortino=1.13 Calmar=7.04 PF=1.29
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+5.29 | DD: 108.23%
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Winrate: 66.67% (32W / 16L / 48 trades | time_exit=0) | Sharpe=3.49 Sortino=3.49 Calmar=106.28 PF=1.91
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+10.88 | DD: 38.39%
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Winrate: 68.97% (20W / 9L / 29 trades | time_exit=0) | Sharpe=3.34 Sortino=6.26 Calmar=70.72 PF=2.30
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+7.95 | DD: 26.01%
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Winrate: 57.14% (28W / 21L / 49 trades | time_exit=3) | Sharpe=1.31 Sortino=1.20 Calmar=8.74 PF=1.35
+2026-06-18 10:15:55 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+5.60 | DD: 97.49%
+2026-06-18 10:15:55 | INFO     | evaluator | [NEARUSDT] Winrate: 53.52% (38W / 33L / 71 trades | time_exit=4) | Sharpe=2.34 Sortino=5.80 Calmar=83.87 PF=1.50
+2026-06-18 10:15:55 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+13.58 | DD: 91.13%
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Winrate: 51.43% (36W / 34L / 70 trades | time_exit=3) | Sharpe=2.05 Sortino=6.15 Calmar=8.12 PF=1.18
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+5.69 | DD: 108.57%
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Winrate: 52.11% (37W / 34L / 71 trades | time_exit=4) | Sharpe=2.08 Sortino=7.39 Calmar=33.95 PF=1.36
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+10.88 | DD: 120.06%
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Winrate: 50.85% (30W / 29L / 59 trades | time_exit=3) | Sharpe=2.01 Sortino=4.47 Calmar=27.40 PF=1.33
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+7.90 | DD: 66.20%
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Winrate: 50.00% (23W / 23L / 46 trades | time_exit=2) | Sharpe=2.02 Sortino=4.54 Calmar=36.10 PF=1.48
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+8.95 | DD: 68.01%
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Winrate: 46.15% (30W / 35L / 65 trades | time_exit=5) | Sharpe=-2.43 Sortino=-1.34 Calmar=-0.63 PF=0.91
+2026-06-18 10:15:56 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $-2.98 | DD: 133.24%
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 54.43% (43W / 36L / 79 trades | time_exit=12) | Sharpe=1.75 Sortino=2.07 Calmar=9.61 PF=1.21
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+5.23 | DD: 77.46%
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 57.69% (45W / 33L / 78 trades | time_exit=10) | Sharpe=2.39 Sortino=2.39 Calmar=19.58 PF=1.33
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+7.93 | DD: 93.50%
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 51.90% (41W / 38L / 79 trades | time_exit=9) | Sharpe=2.15 Sortino=2.43 Calmar=18.52 PF=1.28
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+7.17 | DD: 78.32%
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 54.93% (39W / 32L / 71 trades | time_exit=8) | Sharpe=1.37 Sortino=1.56 Calmar=5.87 PF=1.16
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+3.59 | DD: 63.70%
+2026-06-18 10:15:57 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 48.84% (21W / 22L / 43 trades | time_exit=5) | Sharpe=0.09 Sortino=0.08 Calmar=-1.15 PF=0.91
+2026-06-18 10:15:58 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $-1.44 | DD: 47.43%
+2026-06-18 10:15:58 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 55.26% (42W / 34L / 76 trades | time_exit=11) | Sharpe=1.45 Sortino=1.99 Calmar=4.41 PF=1.14
+2026-06-18 10:15:58 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+3.57 | DD: 83.77%
+2026-06-18 10:15:58 | INFO     | evaluator | [TAOUSDT] Winrate: 58.57% (41W / 29L / 70 trades | time_exit=5) | Sharpe=3.61 Sortino=4.80 Calmar=338.16 PF=1.85
+2026-06-18 10:15:58 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+18.09 | DD: 55.24%
+2026-06-18 10:15:58 | INFO     | evaluator | [TAOUSDT] Winrate: 60.87% (42W / 27L / 69 trades | time_exit=10) | Sharpe=2.97 Sortino=4.69 Calmar=233.74 PF=1.67
+2026-06-18 10:15:58 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+15.57 | DD: 49.47%
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Winrate: 58.57% (41W / 29L / 70 trades | time_exit=9) | Sharpe=3.16 Sortino=5.04 Calmar=158.49 PF=1.73
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+15.29 | DD: 69.01%
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Winrate: 52.63% (30W / 27L / 57 trades | time_exit=6) | Sharpe=1.80 Sortino=2.25 Calmar=20.66 PF=1.34
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+7.52 | DD: 78.25%
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Winrate: 68.57% (24W / 11L / 35 trades | time_exit=6) | Sharpe=3.73 Sortino=4.20 Calmar=285.95 PF=2.62
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+13.99 | DD: 29.19%
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Winrate: 53.73% (36W / 31L / 67 trades | time_exit=6) | Sharpe=2.51 Sortino=4.22 Calmar=46.33 PF=1.39
+2026-06-18 10:15:59 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+9.67 | DD: 64.45%
+2026-06-18 10:15:59 | INFO     | evaluator | [ARBUSDT] Winrate: 58.90% (43W / 30L / 73 trades | time_exit=11) | Sharpe=-0.17 Sortino=-0.22 Calmar=-0.15 PF=0.99
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $-0.28 | DD: 86.65%
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Winrate: 58.67% (44W / 31L / 75 trades | time_exit=9) | Sharpe=1.31 Sortino=1.50 Calmar=8.68 PF=1.17
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+5.15 | DD: 83.08%
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Winrate: 56.94% (41W / 31L / 72 trades | time_exit=10) | Sharpe=0.64 Sortino=0.83 Calmar=2.85 PF=1.10
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+2.81 | DD: 88.02%
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Winrate: 60.29% (41W / 27L / 68 trades | time_exit=9) | Sharpe=1.69 Sortino=2.32 Calmar=22.40 PF=1.26
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+6.99 | DD: 61.20%
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Winrate: 58.14% (25W / 18L / 43 trades | time_exit=6) | Sharpe=1.59 Sortino=1.99 Calmar=6.62 PF=1.16
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+2.91 | DD: 40.04%
+2026-06-18 10:16:00 | INFO     | evaluator | [ARBUSDT] Winrate: 53.73% (36W / 31L / 67 trades | time_exit=8) | Sharpe=-1.17 Sortino=-1.10 Calmar=-0.77 PF=0.86
+2026-06-18 10:16:01 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $-4.47 | DD: 122.95%
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Winrate: 58.33% (35W / 25L / 60 trades | time_exit=0) | Sharpe=2.14 Sortino=2.48 Calmar=18.75 PF=1.41
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+5.77 | DD: 48.38%
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Winrate: 59.02% (36W / 25L / 61 trades | time_exit=2) | Sharpe=2.21 Sortino=2.06 Calmar=19.47 PF=1.39
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+5.64 | DD: 44.40%
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Winrate: 57.38% (35W / 26L / 61 trades | time_exit=1) | Sharpe=1.05 Sortino=1.12 Calmar=0.68 PF=1.04
+2026-06-18 10:16:01 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+0.59 | DD: 49.64%
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Winrate: 54.72% (29W / 24L / 53 trades | time_exit=0) | Sharpe=1.28 Sortino=1.30 Calmar=2.65 PF=1.12
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+1.78 | DD: 48.88%
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Winrate: 42.86% (12W / 16L / 28 trades | time_exit=0) | Sharpe=-1.19 Sortino=-1.19 Calmar=-1.66 PF=0.68
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $-2.91 | DD: 49.66%
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Winrate: 53.45% (31W / 27L / 58 trades | time_exit=2) | Sharpe=1.48 Sortino=1.46 Calmar=4.36 PF=1.16
+2026-06-18 10:16:02 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+2.47 | DD: 47.27%
+2026-06-18 10:16:02 | INFO     | evaluator | [ONDOUSDT] Winrate: 50.00% (24W / 24L / 48 trades | time_exit=7) | Sharpe=2.95 Sortino=4.93 Calmar=465.91 PF=2.78
+2026-06-18 10:16:02 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+18.32 | DD: 41.82%
+2026-06-18 10:16:02 | INFO     | evaluator | [ONDOUSDT] Winrate: 44.90% (22W / 27L / 49 trades | time_exit=5) | Sharpe=2.00 Sortino=3.77 Calmar=7.44 PF=1.25
+2026-06-18 10:16:02 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+5.62 | DD: 115.35%
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Winrate: 48.98% (24W / 25L / 49 trades | time_exit=8) | Sharpe=2.22 Sortino=4.53 Calmar=63.79 PF=1.57
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+10.80 | DD: 62.63%
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Winrate: 48.84% (21W / 22L / 43 trades | time_exit=6) | Sharpe=1.77 Sortino=3.51 Calmar=19.57 PF=1.48
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+7.02 | DD: 70.53%
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Winrate: 48.28% (14W / 15L / 29 trades | time_exit=4) | Sharpe=1.74 Sortino=3.04 Calmar=24.31 PF=1.68
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+6.90 | DD: 54.62%
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Winrate: 42.55% (20W / 27L / 47 trades | time_exit=8) | Sharpe=1.98 Sortino=6.61 Calmar=-0.91 PF=0.76
+2026-06-18 10:16:03 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $-6.29 | DD: 108.75%
+{
+  "oof": {
+    "h1_immediate": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_delay1": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_delay2": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_align": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_pullback_02": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_no_adverse_03": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    }
+  },
+  "holdout": {
+    "h1_immediate": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_delay1": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_delay2": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_align": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_pullback_02": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    },
+    "m15_no_adverse_03": {
+      "trades": 0,
+      "wr": 0,
+      "pf": 0,
+      "pnl": 0,
+      "ppt": 0,
+      "confirm_rate_pct": 0,
+      "delta_ppt_vs_h1": 0
+    }
+  },
+  "config": {
+    "max_wait_m15": 4,
+    "rules": [
+      "h1_immediate",
+      "m15_delay1",
+      "m15_delay2",
+      "m15_align",
+      "m15_pullback_02",
+      "m15_no_adverse_03"
+    ],
+    "sl_trigger_mode": "highlow",
+    "live_thr": {
+      "thr_long": 0.69,
+      "thr_short": 0.59,
+      "conf_entry": 0.59,
+      "gdn_exit": 0.65,
+      "gdn_min_hold": 2
+    }
+  }
+}
+
+Saved D:\Apps-Dev\Riset_pemodelan\reports\experiments\ic32_m15_entry_confirm_eval.json
+Saved D:\Apps-Dev\Riset_pemodelan\reports\experiments\ic32_m15_entry_confirm_eval.md

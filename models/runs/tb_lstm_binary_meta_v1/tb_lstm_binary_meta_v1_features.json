@@ -1,0 +1,17 @@
+[
+  "atr_zscore_20d",
+  "atr_percent_h4",
+  "atr_percentile_h1",
+  "funding_rate",
+  "ofi_h4_delta",
+  "ofi_raw",
+  "cvd_slope_h4",
+  "cvd_momentum_adv",
+  "rsi_6",
+  "rsi_h4",
+  "log_ret_1",
+  "log_ret_5",
+  "swing_momentum",
+  "trend_strength",
+  "ema_50_slope_h4"
+]

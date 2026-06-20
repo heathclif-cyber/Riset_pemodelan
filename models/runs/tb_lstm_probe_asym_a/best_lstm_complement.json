@@ -1,0 +1,18 @@
+{
+  "mode": "asymmetric",
+  "lstm_bull_thr": 0.4,
+  "lstm_bear_thr": 0.55,
+  "vol_spike_thr": 2.0,
+  "oof_metrics": {
+    "bull_thr": 0.4,
+    "bear_thr": 0.55,
+    "n_complement": 11829,
+    "n_bull": 11829,
+    "n_bear": 0,
+    "n_pool": 36406,
+    "bull_precision": 0.249,
+    "bear_precision": 0.0,
+    "mixed_precision_dir": 0.3806
+  },
+  "sweep_method": "frozen_probe_a"
+}

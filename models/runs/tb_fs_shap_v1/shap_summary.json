@@ -1,0 +1,442 @@
+[
+  {
+    "feature": "cvd_slope_h4",
+    "mean_abs_shap": 0.108916
+  },
+  {
+    "feature": "ofi_h4_delta",
+    "mean_abs_shap": 0.064172
+  },
+  {
+    "feature": "log_ret_20",
+    "mean_abs_shap": 0.054802
+  },
+  {
+    "feature": "atr_zscore_20d",
+    "mean_abs_shap": 0.049713
+  },
+  {
+    "feature": "cvd_div_h4",
+    "mean_abs_shap": 0.036634
+  },
+  {
+    "feature": "dow_sin",
+    "mean_abs_shap": 0.036458
+  },
+  {
+    "feature": "whale_retail_divergence",
+    "mean_abs_shap": 0.032769
+  },
+  {
+    "feature": "dow_cos",
+    "mean_abs_shap": 0.024137
+  },
+  {
+    "feature": "ema_200_h1",
+    "mean_abs_shap": 0.022866
+  },
+  {
+    "feature": "cvd",
+    "mean_abs_shap": 0.021172
+  },
+  {
+    "feature": "PWL",
+    "mean_abs_shap": 0.020171
+  },
+  {
+    "feature": "stochrsi_d",
+    "mean_abs_shap": 0.019682
+  },
+  {
+    "feature": "atr_percentile_h1",
+    "mean_abs_shap": 0.019324
+  },
+  {
+    "feature": "hmm_regime_enc",
+    "mean_abs_shap": 0.01501
+  },
+  {
+    "feature": "funding_rate",
+    "mean_abs_shap": 0.013221
+  },
+  {
+    "feature": "PWH",
+    "mean_abs_shap": 0.012436
+  },
+  {
+    "feature": "dist_swing_low",
+    "mean_abs_shap": 0.01155
+  },
+  {
+    "feature": "dist_swing_high",
+    "mean_abs_shap": 0.011492
+  },
+  {
+    "feature": "PDH",
+    "mean_abs_shap": 0.01111
+  },
+  {
+    "feature": "VAH",
+    "mean_abs_shap": 0.011086
+  },
+  {
+    "feature": "range_expansion_h4",
+    "mean_abs_shap": 0.010951
+  },
+  {
+    "feature": "atr_percent_h4",
+    "mean_abs_shap": 0.010717
+  },
+  {
+    "feature": "ofi_acceleration",
+    "mean_abs_shap": 0.010262
+  },
+  {
+    "feature": "hour_sin",
+    "mean_abs_shap": 0.009623
+  },
+  {
+    "feature": "funding_rate_zscore_20d",
+    "mean_abs_shap": 0.009532
+  },
+  {
+    "feature": "relative_strength_z",
+    "mean_abs_shap": 0.009455
+  },
+  {
+    "feature": "atr_14_h4",
+    "mean_abs_shap": 0.008919
+  },
+  {
+    "feature": "open_interest",
+    "mean_abs_shap": 0.008584
+  },
+  {
+    "feature": "PDL",
+    "mean_abs_shap": 0.008385
+  },
+  {
+    "feature": "atr_14_h1",
+    "mean_abs_shap": 0.007733
+  },
+  {
+    "feature": "trend_strength",
+    "mean_abs_shap": 0.007231
+  },
+  {
+    "feature": "Sell_Liq",
+    "mean_abs_shap": 0.007002
+  },
+  {
+    "feature": "ema_200_h4",
+    "mean_abs_shap": 0.006928
+  },
+  {
+    "feature": "long_short_ratio",
+    "mean_abs_shap": 0.006809
+  },
+  {
+    "feature": "oi_pct_1d",
+    "mean_abs_shap": 0.006644
+  },
+  {
+    "feature": "dist_liq_20x_short",
+    "mean_abs_shap": 0.005683
+  },
+  {
+    "feature": "spread_to_volume",
+    "mean_abs_shap": 0.00565
+  },
+  {
+    "feature": "rsi_slope_h4",
+    "mean_abs_shap": 0.005599
+  },
+  {
+    "feature": "relative_strength_momentum",
+    "mean_abs_shap": 0.005138
+  },
+  {
+    "feature": "ofi_z_score",
+    "mean_abs_shap": 0.005103
+  },
+  {
+    "feature": "stochrsi_k",
+    "mean_abs_shap": 0.005001
+  },
+  {
+    "feature": "vwdp_smooth",
+    "mean_abs_shap": 0.004849
+  },
+  {
+    "feature": "cvd_momentum_adv",
+    "mean_abs_shap": 0.004745
+  },
+  {
+    "feature": "Buy_Liq",
+    "mean_abs_shap": 0.004709
+  },
+  {
+    "feature": "bars_since_BOS",
+    "mean_abs_shap": 0.004701
+  },
+  {
+    "feature": "wyckoff_phase",
+    "mean_abs_shap": 0.004339
+  },
+  {
+    "feature": "hour_cos",
+    "mean_abs_shap": 0.004248
+  },
+  {
+    "feature": "price_in_range",
+    "mean_abs_shap": 0.00417
+  },
+  {
+    "feature": "dist_liq_20x_long",
+    "mean_abs_shap": 0.004122
+  },
+  {
+    "feature": "Fib_786",
+    "mean_abs_shap": 0.003888
+  },
+  {
+    "feature": "time_to_funding_norm",
+    "mean_abs_shap": 0.003527
+  },
+  {
+    "feature": "dist_from_8h_high",
+    "mean_abs_shap": 0.003453
+  },
+  {
+    "feature": "Fib_618",
+    "mean_abs_shap": 0.003367
+  },
+  {
+    "feature": "lower_wick_ratio",
+    "mean_abs_shap": 0.003343
+  },
+  {
+    "feature": "vol_price_confirm",
+    "mean_abs_shap": 0.003256
+  },
+  {
+    "feature": "vol_efficiency",
+    "mean_abs_shap": 0.003159
+  },
+  {
+    "feature": "ema_50_h1",
+    "mean_abs_shap": 0.003123
+  },
+  {
+    "feature": "vol_regime",
+    "mean_abs_shap": 0.002913
+  },
+  {
+    "feature": "VAL",
+    "mean_abs_shap": 0.002731
+  },
+  {
+    "feature": "price_vs_ema_50_h4",
+    "mean_abs_shap": 0.002675
+  },
+  {
+    "feature": "swing_momentum",
+    "mean_abs_shap": 0.002667
+  },
+  {
+    "feature": "log_ret_1",
+    "mean_abs_shap": 0.002567
+  },
+  {
+    "feature": "POC",
+    "mean_abs_shap": 0.002544
+  },
+  {
+    "feature": "vol_spike_zscore",
+    "mean_abs_shap": 0.002517
+  },
+  {
+    "feature": "dist_liq_50x_long",
+    "mean_abs_shap": 0.002345
+  },
+  {
+    "feature": "vol_accel_3h",
+    "mean_abs_shap": 0.002322
+  },
+  {
+    "feature": "dist_liq_50x_short",
+    "mean_abs_shap": 0.002313
+  },
+  {
+    "feature": "price_accel_1h",
+    "mean_abs_shap": 0.002264
+  },
+  {
+    "feature": "ema_50_slope_h4",
+    "mean_abs_shap": 0.002184
+  },
+  {
+    "feature": "funding_rate_change_8h",
+    "mean_abs_shap": 0.002168
+  },
+  {
+    "feature": "log_ret_5",
+    "mean_abs_shap": 0.002113
+  },
+  {
+    "feature": "ema_21_slope_h4",
+    "mean_abs_shap": 0.002087
+  },
+  {
+    "feature": "funding_price_div",
+    "mean_abs_shap": 0.001986
+  },
+  {
+    "feature": "market_session",
+    "mean_abs_shap": 0.001868
+  },
+  {
+    "feature": "buy_volume",
+    "mean_abs_shap": 0.001665
+  },
+  {
+    "feature": "vol_ratio_20",
+    "mean_abs_shap": 0.001575
+  },
+  {
+    "feature": "ema_21_h1",
+    "mean_abs_shap": 0.001427
+  },
+  {
+    "feature": "candle_range_atr_ratio",
+    "mean_abs_shap": 0.001357
+  },
+  {
+    "feature": "sell_volume",
+    "mean_abs_shap": 0.001354
+  },
+  {
+    "feature": "trend_accel_4h",
+    "mean_abs_shap": 0.001184
+  },
+  {
+    "feature": "rsi_h4",
+    "mean_abs_shap": 0.001084
+  },
+  {
+    "feature": "volume_delta",
+    "mean_abs_shap": 0.001041
+  },
+  {
+    "feature": "upper_wick_ratio",
+    "mean_abs_shap": 0.001021
+  },
+  {
+    "feature": "ema_50_h4",
+    "mean_abs_shap": 0.000854
+  },
+  {
+    "feature": "rsi_6",
+    "mean_abs_shap": 0.00076
+  },
+  {
+    "feature": "ema_7_h1",
+    "mean_abs_shap": 0.000732
+  },
+  {
+    "feature": "effort_vs_result",
+    "mean_abs_shap": 0.000646
+  },
+  {
+    "feature": "MSB_BOS",
+    "mean_abs_shap": 0.000555
+  },
+  {
+    "feature": "absorption_z",
+    "mean_abs_shap": 0.000461
+  },
+  {
+    "feature": "ema_21_h4",
+    "mean_abs_shap": 0.000323
+  },
+  {
+    "feature": "h4_trend",
+    "mean_abs_shap": 0.000309
+  },
+  {
+    "feature": "ofi_raw",
+    "mean_abs_shap": 0.000254
+  },
+  {
+    "feature": "candle_body_ratio",
+    "mean_abs_shap": 0.000223
+  },
+  {
+    "feature": "rsi_divergence",
+    "mean_abs_shap": 0.000186
+  },
+  {
+    "feature": "vwdp",
+    "mean_abs_shap": 0.000175
+  },
+  {
+    "feature": "ofi_momentum_ratio",
+    "mean_abs_shap": 0.000174
+  },
+  {
+    "feature": "absorption_at_swing",
+    "mean_abs_shap": 0.000133
+  },
+  {
+    "feature": "ema_7_h4",
+    "mean_abs_shap": 0.000126
+  },
+  {
+    "feature": "dynamic_position_pressure",
+    "mean_abs_shap": 2.2e-05
+  },
+  {
+    "feature": "SFP_sweep",
+    "mean_abs_shap": 6e-06
+  },
+  {
+    "feature": "spring_upthrust",
+    "mean_abs_shap": 4e-06
+  },
+  {
+    "feature": "CHoCH",
+    "mean_abs_shap": 2e-06
+  },
+  {
+    "feature": "FVG_up",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "FVG_down",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "hidden_divergence",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "ultra_high_vol",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "no_demand",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "no_supply",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "btc_dominance",
+    "mean_abs_shap": 0.0
+  },
+  {
+    "feature": "fear_greed",
+    "mean_abs_shap": 0.0
+  }
+]

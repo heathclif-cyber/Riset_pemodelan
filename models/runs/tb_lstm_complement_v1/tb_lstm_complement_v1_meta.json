@@ -1,0 +1,115 @@
+{
+  "run_name": "tb_lstm_complement_v1",
+  "model_type": "lstm_momentum_complement_flat_only",
+  "lgbm_partner": "tb_lgbm_genuine_v2",
+  "sample_filter": "is_pump_dump_bar==1 AND lgbm_flat==1",
+  "loss": "focal_loss",
+  "complement_cfg": {
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "vol_spike_thr": 2.0,
+    "focal_gamma": 2.0,
+    "alpha_bear_boost": 1.6,
+    "alpha_bull_boost": 1.3,
+    "alpha_neu_scale": 0.9
+  },
+  "n_features": 8,
+  "features": [
+    "cvd_slope_h4",
+    "ofi_acceleration",
+    "ofi_raw",
+    "ofi_z_score",
+    "buy_volume",
+    "sell_volume",
+    "trend_accel_4h",
+    "cvd"
+  ],
+  "seq_len": 72,
+  "purge_gap": 36,
+  "n_folds": 8,
+  "n_samples": 137189,
+  "n_coins": 21,
+  "mean_f1_macro": 0.3629,
+  "std_f1_macro": 0.0134,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.3805,
+      "f1_BEARISH": 0.3535,
+      "f1_NEUTRAL": 0.5731,
+      "f1_BULLISH": 0.2148,
+      "best_epoch": 9
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.3852,
+      "f1_BEARISH": 0.4343,
+      "f1_NEUTRAL": 0.593,
+      "f1_BULLISH": 0.1281,
+      "best_epoch": 30
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.3716,
+      "f1_BEARISH": 0.389,
+      "f1_NEUTRAL": 0.6738,
+      "f1_BULLISH": 0.0521,
+      "best_epoch": 14
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.3493,
+      "f1_BEARISH": 0.2821,
+      "f1_NEUTRAL": 0.7394,
+      "f1_BULLISH": 0.0265,
+      "best_epoch": 1
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.3508,
+      "f1_BEARISH": 0.2603,
+      "f1_NEUTRAL": 0.7482,
+      "f1_BULLISH": 0.0439,
+      "best_epoch": 11
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.3518,
+      "f1_BEARISH": 0.3259,
+      "f1_NEUTRAL": 0.6784,
+      "f1_BULLISH": 0.051,
+      "best_epoch": 16
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.3526,
+      "f1_BEARISH": 0.3772,
+      "f1_NEUTRAL": 0.6333,
+      "f1_BULLISH": 0.0473,
+      "best_epoch": 26
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.361,
+      "f1_BEARISH": 0.3217,
+      "f1_NEUTRAL": 0.6909,
+      "f1_BULLISH": 0.0703,
+      "best_epoch": 2
+    }
+  ],
+  "complement_asymmetric_oof": {
+    "n_pool": 36481,
+    "n_complement": 1776,
+    "n_bull": 928,
+    "n_bear": 848,
+    "bull_precision": 0.2834,
+    "bear_precision": 0.4917,
+    "mixed_precision_dir": 0.5393,
+    "bull_thr": 0.38,
+    "bear_thr": 0.5
+  },
+  "baseline_compare": "tb_lstm_genuine_v2 (all gate bars)",
+  "created": "2026-06-16T14:37:58.581740",
+  "train_cutoff": "2026-04-01",
+  "methodology": "purged CV OOF, scaler per fold, complement flat-only, holdout not used"
+}

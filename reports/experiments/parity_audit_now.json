@@ -1,0 +1,15 @@
+{
+  "vps_vs_holdout_mismatch_feats": {
+    "rsi_h4": 19.310730860636834,
+    "stochrsi_d": 25.021843652630217,
+    "ofi_h4_delta": 2556756.6333333333,
+    "long_short_ratio": 1.1655492140688672,
+    "cvd_slope_h4": 0.05755696715888688,
+    "cvd": 808542206.2312499,
+    "h4_trend": 2.0,
+    "hmm_regime_enc": 1.0
+  },
+  "jun17_lsr_zero": 734,
+  "jun17_hmm_match_pct": 49.0,
+  "note": "VPS pipeline manual OK; DB snapshots pre-16:05 UTC still stale"
+}

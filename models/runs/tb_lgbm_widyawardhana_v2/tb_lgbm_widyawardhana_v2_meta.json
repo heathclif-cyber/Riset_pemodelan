@@ -1,0 +1,16 @@
+{
+  "run_name": "tb_lgbm_widyawardhana_v2",
+  "created": "2026-06-09T23:41:33.543009",
+  "binary": true,
+  "tp_atr_mult": 2.0,
+  "sl_atr_mult": 1.5,
+  "max_hold": 36,
+  "n_samples": 646780,
+  "n_coins": 21,
+  "n_features": 18,
+  "label_dist": {
+    "SHORT": 329407,
+    "LONG": 317373
+  },
+  "cv_mean_f1": 0.5962
+}

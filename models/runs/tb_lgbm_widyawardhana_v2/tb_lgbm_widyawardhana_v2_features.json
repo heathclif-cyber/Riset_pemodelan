@@ -1,0 +1,20 @@
+[
+  "Sell_Liq",
+  "funding_rate",
+  "ema_7_h1",
+  "ema_200_h1",
+  "stochrsi_k",
+  "VAH",
+  "dow_cos",
+  "dist_swing_low",
+  "cvd_div_h4",
+  "cvd_slope_h4",
+  "wyckoff_phase",
+  "ofi_h4_delta",
+  "cvd_momentum_adv",
+  "dist_from_8h_high",
+  "dist_liq_50x_short",
+  "atr_percentile_h1",
+  "etf_total_change_usd",
+  "etf_gbtc_change_usd"
+]

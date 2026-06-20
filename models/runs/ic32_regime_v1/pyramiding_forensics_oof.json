@@ -1,0 +1,89 @@
+{
+  "no_pyr": {
+    "label": "no_pyr",
+    "trades": 6381,
+    "stacks": 6381,
+    "multi_leg_stacks": 0,
+    "sl_rate_pct": 19.7,
+    "wr_pct": 69.4,
+    "pf": 3.12,
+    "total_pnl": 3636.15,
+    "ppt": 0.5698,
+    "stack_pnl_single_avg": 0.5698,
+    "stack_pnl_multi_avg": 0,
+    "leg1_stats": {
+      "n": 6381,
+      "sl_rate_pct": 19.7,
+      "avg_pnl": 0.5698,
+      "avg_hold": 12.0
+    },
+    "addon_leg_stats": {
+      "n": 0
+    },
+    "leg1_sl_leg2_profit": 0,
+    "leg1_sl_leg2_loss": 0,
+    "early_sl_rescued_by_addon": 0
+  },
+  "pyr2_independent": {
+    "label": "pyr2_independent",
+    "trades": 7979,
+    "stacks": 6335,
+    "multi_leg_stacks": 1591,
+    "sl_rate_pct": 19.8,
+    "wr_pct": 69.1,
+    "pf": 3.01,
+    "total_pnl": 4446.54,
+    "ppt": 0.5573,
+    "stack_pnl_single_avg": 0.5932,
+    "stack_pnl_multi_avg": 1.0259,
+    "leg1_stats": {
+      "n": 6335,
+      "sl_rate_pct": 19.7,
+      "avg_pnl": 0.5701,
+      "avg_hold": 12.0
+    },
+    "addon_leg_stats": {
+      "n": 1644,
+      "sl_rate_pct": 20.3,
+      "avg_pnl": 0.5077,
+      "avg_hold": 12.1
+    },
+    "leg1_sl_leg2_profit": 36,
+    "leg1_sl_leg2_loss": 249,
+    "early_sl_rescued_by_addon": 36,
+    "delta_ppt": -0.0125,
+    "delta_pnl_pct": 22.3,
+    "delta_sl_rate": 0.1
+  },
+  "pyr2_shared_sl": {
+    "label": "pyr2_shared_sl",
+    "trades": 7931,
+    "stacks": 6337,
+    "multi_leg_stacks": 1553,
+    "sl_rate_pct": 19.7,
+    "wr_pct": 69.4,
+    "pf": 3.065,
+    "total_pnl": 4480.41,
+    "ppt": 0.5649,
+    "stack_pnl_single_avg": 0.5933,
+    "stack_pnl_multi_avg": 1.0573,
+    "leg1_stats": {
+      "n": 6337,
+      "sl_rate_pct": 19.7,
+      "avg_pnl": 0.571,
+      "avg_hold": 12.0
+    },
+    "addon_leg_stats": {
+      "n": 1594,
+      "sl_rate_pct": 19.5,
+      "avg_pnl": 0.5409,
+      "avg_hold": 12.2
+    },
+    "leg1_sl_leg2_profit": 35,
+    "leg1_sl_leg2_loss": 250,
+    "early_sl_rescued_by_addon": 35,
+    "delta_ppt": -0.0049,
+    "delta_pnl_pct": 23.2,
+    "delta_sl_rate": 0.0
+  }
+}

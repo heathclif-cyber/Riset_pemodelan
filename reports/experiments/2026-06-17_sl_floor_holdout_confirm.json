@@ -1,0 +1,73 @@
+{
+  "created": "2026-06-17T09:07:31.847442",
+  "script": "07_holdout_sl_floor_confirm.py",
+  "model_version": "tb_genuine_v2_dynsize_lstm_cond",
+  "methodology": "confirmation_only_floor_frozen_from_oof",
+  "train_cutoff": "2026-04-01",
+  "holdout_start": "2026-04-01",
+  "holdout_end": "2026-07-01",
+  "n_coins": 21,
+  "fusion_cfg": {
+    "fusion": "lstm",
+    "mode": "conditional_momentum",
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "boost": 0.1,
+    "opposite_pen": 0.14,
+    "near_miss_gap": 0.03,
+    "vol_thr": 2.0,
+    "proportional": true,
+    "enable_boost": true,
+    "enable_penalty": true,
+    "label": "ref_lstm_cond_from_inference_config"
+  },
+  "lowvol_atr_pct_threshold": 0.004,
+  "results": [
+    {
+      "portfolio": {
+        "n": 1648,
+        "wr": 73.42233009708737,
+        "pnl": 875.422500000001,
+        "ppt": 0.5312029733009715,
+        "pf": 3.0024417999553936,
+        "sl_pct": 25.30339805825243,
+        "avg_modal": 13.837724514563106,
+        "ppt_norm": 0.38388029241507343
+      },
+      "lowvol": {
+        "n": 159,
+        "wr": 69.18238993710692,
+        "pnl": 27.701599999999996,
+        "ppt": 0.17422389937106916,
+        "pf": 2.180454171620453,
+        "sl_pct": 29.559748427672954,
+        "avg_modal": 13.868490566037734,
+        "ppt_norm": 0.12562571142220952
+      },
+      "min_sl_pct": 0.0
+    },
+    {
+      "portfolio": {
+        "n": 1622,
+        "wr": 73.73612823674476,
+        "pnl": 872.8402000000009,
+        "ppt": 0.538125893958077,
+        "pf": 3.0000343711432693,
+        "sl_pct": 24.72256473489519,
+        "avg_modal": 13.847213316892725,
+        "ppt_norm": 0.38861674305370697
+      },
+      "lowvol": {
+        "n": 133,
+        "wr": 72.18045112781954,
+        "pnl": 26.9285,
+        "ppt": 0.20246992481203008,
+        "pf": 2.288888995251953,
+        "sl_pct": 23.308270676691727,
+        "avg_modal": 13.990225563909775,
+        "ppt_norm": 0.14472241629494276
+      },
+      "min_sl_pct": 0.008
+    }
+  ]
+}

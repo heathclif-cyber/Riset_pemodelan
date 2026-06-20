@@ -1,0 +1,235 @@
+{
+  "methodology": "holdout_diagnostic_once",
+  "holdout_start": "2026-04-01",
+  "stack": "B-dir + continuation_v1 + min_hold=4 + SL close",
+  "modal": 10.0,
+  "leverage": [
+    5.0
+  ],
+  "created": "2026-06-18T17:07:15.209474",
+  "baseline": "no_pyr",
+  "results": {
+    "no_pyr": {
+      "label": "no_pyr",
+      "config": {
+        "label": "no_pyr",
+        "enabled": false,
+        "max_per_coin": 1,
+        "exit_mode": "independent"
+      },
+      "period": {
+        "start": "2026-04-01",
+        "end": "2026-06-12",
+        "calendar_days": 73,
+        "trading_days": 72,
+        "holdout_months": 2.4
+      },
+      "trades": 355,
+      "trades_per_day_active": 4.93,
+      "trades_per_day_calendar": 4.86,
+      "trades_per_month": 148.0,
+      "win_rate": 71.83,
+      "total_pnl": 183.26,
+      "pnl_per_trade": 0.5162,
+      "ppt_norm": 0.5162,
+      "avg_modal": 10.0,
+      "avg_legs": 1.0,
+      "pct_2leg": 0.0,
+      "pnl_per_trading_day": 2.55,
+      "profit_factor": 3.79,
+      "sl_rate_pct": 18.59,
+      "guardian_exit_pct": 73.24,
+      "avg_hold_bars": 12.59,
+      "median_hold_bars": 7.0,
+      "long": {
+        "trades": 193,
+        "pct_of_total": 54.4,
+        "win_rate": 74.09,
+        "profit_factor": 3.711,
+        "total_pnl": 105.53,
+        "pnl_per_trade": 0.5468
+      },
+      "short": {
+        "trades": 162,
+        "pct_of_total": 45.6,
+        "win_rate": 69.14,
+        "profit_factor": 3.903,
+        "total_pnl": 77.73,
+        "pnl_per_trade": 0.4798
+      },
+      "short_long_ratio": 0.839,
+      "daily_stats": {
+        "avg_trades_per_day": 4.93,
+        "median_trades_per_day": 4.0,
+        "max_trades_per_day": 18,
+        "positive_pnl_days": 53,
+        "negative_pnl_days": 19,
+        "best_day_pnl": 15.66,
+        "worst_day_pnl": -3.27
+      },
+      "outcome_counts": {
+        "GUARDIAN_MOMENTUM_EXIT": 159,
+        "GUARDIAN_MOMENTUM_PARTIAL": 16,
+        "TIMEOUT_MOMENTUM": 17,
+        "TIMEOUT": 12,
+        "LOSS": 66,
+        "GUARDIAN_EXIT": 85
+      },
+      "avg_legs_per_stack": 1.0,
+      "pct_stacks_multi_leg": 0.0,
+      "add_on_legs": 0,
+      "total_stacks": 355
+    },
+    "pyr2_shared_sl_first": {
+      "label": "pyr2_shared_sl_first",
+      "config": {
+        "label": "pyr2_shared_sl_first",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "shared_sl_first"
+      },
+      "period": {
+        "start": "2026-04-01",
+        "end": "2026-06-12",
+        "calendar_days": 73,
+        "trading_days": 72,
+        "holdout_months": 2.4
+      },
+      "trades": 446,
+      "trades_per_day_active": 6.19,
+      "trades_per_day_calendar": 6.11,
+      "trades_per_month": 186.0,
+      "win_rate": 71.97,
+      "total_pnl": 230.52,
+      "pnl_per_trade": 0.5169,
+      "ppt_norm": 0.5169,
+      "avg_modal": 10.0,
+      "avg_legs": 1.0,
+      "pct_2leg": 0.0,
+      "pnl_per_trading_day": 3.2,
+      "profit_factor": 3.924,
+      "sl_rate_pct": 18.61,
+      "guardian_exit_pct": 73.09,
+      "avg_hold_bars": 12.8,
+      "median_hold_bars": 8.0,
+      "long": {
+        "trades": 249,
+        "pct_of_total": 55.8,
+        "win_rate": 73.9,
+        "profit_factor": 3.629,
+        "total_pnl": 130.75,
+        "pnl_per_trade": 0.5251
+      },
+      "short": {
+        "trades": 197,
+        "pct_of_total": 44.2,
+        "win_rate": 69.54,
+        "profit_factor": 4.429,
+        "total_pnl": 99.77,
+        "pnl_per_trade": 0.5065
+      },
+      "short_long_ratio": 0.791,
+      "daily_stats": {
+        "avg_trades_per_day": 6.19,
+        "median_trades_per_day": 4.0,
+        "max_trades_per_day": 22,
+        "positive_pnl_days": 51,
+        "negative_pnl_days": 21,
+        "best_day_pnl": 25.65,
+        "worst_day_pnl": -4.28
+      },
+      "outcome_counts": {
+        "GUARDIAN_MOMENTUM_EXIT": 196,
+        "GUARDIAN_MOMENTUM_PARTIAL": 23,
+        "TIMEOUT_MOMENTUM": 21,
+        "TIMEOUT": 16,
+        "GUARDIAN_EXIT": 107,
+        "LOSS": 83
+      },
+      "avg_legs_per_stack": 1.27,
+      "pct_stacks_multi_leg": 26.4,
+      "add_on_legs": 94,
+      "total_stacks": 352,
+      "delta_trades_pct": 25.6,
+      "delta_ppt": 0.0007,
+      "delta_pnl": 47.26,
+      "delta_wr": 0.14,
+      "delta_pf": 0.134
+    },
+    "pyr2_scale_in": {
+      "label": "pyr2_scale_in",
+      "config": {
+        "label": "pyr2_scale_in",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "scale_in"
+      },
+      "period": {
+        "start": "2026-04-01",
+        "end": "2026-06-12",
+        "calendar_days": 73,
+        "trading_days": 72,
+        "holdout_months": 2.4
+      },
+      "trades": 356,
+      "trades_per_day_active": 4.94,
+      "trades_per_day_calendar": 4.88,
+      "trades_per_month": 148.4,
+      "win_rate": 71.63,
+      "total_pnl": 249.05,
+      "pnl_per_trade": 0.6996,
+      "ppt_norm": 0.5474,
+      "avg_modal": 12.78,
+      "avg_legs": 1.28,
+      "pct_2leg": 27.8,
+      "pnl_per_trading_day": 3.46,
+      "profit_factor": 3.903,
+      "sl_rate_pct": 18.82,
+      "guardian_exit_pct": 68.26,
+      "avg_hold_bars": 12.74,
+      "median_hold_bars": 7.0,
+      "long": {
+        "trades": 193,
+        "pct_of_total": 54.2,
+        "win_rate": 71.5,
+        "profit_factor": 3.474,
+        "total_pnl": 134.93,
+        "pnl_per_trade": 0.6991
+      },
+      "short": {
+        "trades": 163,
+        "pct_of_total": 45.8,
+        "win_rate": 71.78,
+        "profit_factor": 4.652,
+        "total_pnl": 114.12,
+        "pnl_per_trade": 0.7001
+      },
+      "short_long_ratio": 0.845,
+      "daily_stats": {
+        "avg_trades_per_day": 4.94,
+        "median_trades_per_day": 4.0,
+        "max_trades_per_day": 18,
+        "positive_pnl_days": 52,
+        "negative_pnl_days": 20,
+        "best_day_pnl": 22.12,
+        "worst_day_pnl": -4.21
+      },
+      "outcome_counts": {
+        "GUARDIAN_MOMENTUM_EXIT": 158,
+        "TIMEOUT_MOMENTUM": 36,
+        "TIMEOUT": 10,
+        "LOSS": 67,
+        "GUARDIAN_EXIT": 85
+      },
+      "avg_legs_per_stack": 1.0,
+      "pct_stacks_multi_leg": 0.0,
+      "add_on_legs": 0,
+      "total_stacks": 356,
+      "delta_trades_pct": 0.3,
+      "delta_ppt": 0.1834,
+      "delta_pnl": 65.79,
+      "delta_wr": -0.2,
+      "delta_pf": 0.113
+    }
+  }
+}

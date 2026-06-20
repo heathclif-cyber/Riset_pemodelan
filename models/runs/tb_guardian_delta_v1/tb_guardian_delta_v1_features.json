@@ -1,0 +1,21 @@
+[
+  "pnl_pct",
+  "bars_held",
+  "price_momentum_3bar",
+  "atr_percentile_h1_curr",
+  "vol_spike_zscore_curr",
+  "vol_ratio_20_delta",
+  "vol_spike_zscore_delta",
+  "ofi_h4_delta_delta",
+  "direction",
+  "ofi_h4_delta_curr",
+  "cvd_slope_h4_delta",
+  "absorption_z_curr",
+  "rsi_6_delta",
+  "absorption_z_delta",
+  "trend_strength_curr",
+  "ofi_z_score_mean3",
+  "h4_trend_delta",
+  "funding_rate_delta",
+  "cvd_slope_h4_curr"
+]

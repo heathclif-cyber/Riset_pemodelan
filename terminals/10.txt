@@ -1,0 +1,119 @@
+---
+pid: 26036
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python -c \"
+import json, numpy as np, pandas as pd
+from config import TRAIN_CUTOFF_DATE, LABEL_DIR, ALL_COINS, MODEL_DIR
+from core.utils import ensure_utc_index
+
+feat_cols = json.load(open(MODEL_DIR/'feature_cols_v2.json'))
+oof = pd.read_parquet(MODEL_DIR/'runs/tb_lgbm_genuine_v2/oof_predictions.parquet')
+HMM = {0:(0.55,0.55),1:(0.55,0.55),2:(0.50,0.50),3:(0.45,0.50),-1:(0.45,0.45)}
+
+rows = []
+for sym in ALL_COINS:
+    p = LABEL_DIR / f'{sym}_features_v3.parquet'
+    if not p.exists(): continue
+    df = ensure_utc_index(pd.read_parquet(p)).sort_index()
+    df = df[df.index < TRAIN_CUTOFF_DATE]
+    pr = oof[(oof.coin==sym)&(oof.has_oof==True)][['p0','p2']].reindex(df.index)
+    m = pr.p0.notna()
+    if m.sum() < 100: continue
+    sub = df[m].copy(); pr = pr[m]
+    hmm = sub.hmm_regime_enc.fillna(-1).astype(int).values
+    tl = np.array([HMM.get(int(s), HMM[-1])[0] for s in hmm])
+    ret4 = np.log(sub.close/sub.close.shift(4)).fillna(0).values
+    ret1 = np.log(sub.close/sub.close.shift(1)).fillna(0).values
+    avail = [c for c in feat_cols if c in sub.columns]
+    X = sub[avail].ffill().fillna(0).values.astype(float)
+    for i, ts in enumerate(sub.index):
+        rows.append({
+            'ts': ts, 'coin': sym,
+            'p2': float(pr.p2.iloc[i]), 'tl': float(tl[i]),
+            'abs_long': float(pr.p2.iloc[i]) >= tl[i],
+            'ret4': float(ret4[i]), 'ret1': float(ret1[i]),
+            'feat_vec': X[i],
+            'feat_names': avail,
+        })
+
+# pick pump bars: top 5% ret4 per coin then aggregate bars where many coins pumped
+# simpler: bars where >=10 coins have ret4 > 1% (4h)
+by_ts = {}
+for r in rows:
+    by_ts.setdefault(r['ts'], []).append(r)
+
+pump_bars = []
+for ts, items in by_ts.items():
+    n = len(items)
+    if n < 10: continue
+    rets = [x['ret4'] for x in items]
+    frac_pump = sum(1 for x in rets if x > 0.01) / n
+    if frac_pump < 0.5: continue
+    p2s = [x['p2'] for x in items]
+    n_sig = sum(1 for x in items if x['abs_long'])
+    # feature similarity: std of each feature across coins, averaged
+    F = np.vstack([x['feat_vec'] for x in items])
+    feat_std = F.std(axis=0).mean()
+    feat_range = (F.max(axis=0) - F.min(axis=0)).mean()
+    # top return vs signal
+    top_ret = max(items, key=lambda x: x['ret4'])
+    top_p2 = max(items, key=lambda x: x['p2'])
+    sig_prof = [x for x in items if x['abs_long']]
+    pump_bars.append({
+        'ts': ts, 'n': n, 'frac_pump': frac_pump,
+        'p2_mean': np.mean(p2s), 'p2_std': np.std(p2s), 'p2_max': max(p2s), 'p2_min': min(p2s),
+        'n_sig': n_sig, 'feat_std_mean': feat_std, 'feat_range_mean': feat_range,
+        'top_ret_coin': top_ret['coin'], 'top_ret': top_ret['ret4'],
+        'top_p2_coin': top_p2['coin'], 'top_p2': top_p2['p2'],
+        'same_top': top_ret['coin'] == top_p2['coin'],
+    })
+
+pb = pd.DataFrame(pump_bars)
+print('Pump bars (>=50% coins ret4>1%):', len(pb))
+print('  avg coins per bar:', pb.n.mean())
+print('  avg p2 std across coins:', pb.p2_std.mean())
+print('  avg p2 max:', pb.p2_max.mean(), ' avg p2 mean:', pb.p2_mean.mean())
+print('  avg feature std (cross-coin):', pb.feat_std_mean.mean())
+print('  avg feature range (max-min per feat):', pb.feat_range_mean.mean())
+print('  bars with exactly 1 signal:', (pb.n_sig==1).mean()*100, '%')
+print('  bars with 0 signal:', (pb.n_sig==0).mean()*100, '%')
+print('  top return coin == top p2 coin:', pb.same_top.mean()*100, '%')
+
+# coins that pumped >1% but no signal
+miss_prof = []
+hit_prof = []
+for ts, items in by_ts.items():
+    if ts not in set(pb.ts): continue
+    for x in items:
+        if x['ret4'] > 0.01:
+            if x['abs_long']:
+                hit_prof.append(x)
+            else:
+                miss_prof.append(x)
+print('\\nCoins with ret4>1% on pump bars:')
+print('  got signal:', len(hit_prof), 'WR proxy not computed')
+print('  missed:', len(miss_prof))
+print('  missed avg p2:', np.mean([x['p2'] for x in miss_prof]))
+print('  hit avg p2:', np.mean([x['p2'] for x in hit_prof]))
+print('  missed avg ret4:', np.mean([x['ret4'] for x in miss_prof])*100, '%')
+print('  hit avg ret4:', np.mean([x['p2'] for x in hit_prof]), 'p2 /', np.mean([x['ret4'] for x in hit_prof])*100, '% ret4')
+
+# key features driving difference: relative_strength_z, ret_7d, cvd on miss vs hit
+key = ['relative_strength_z','ret_7d','ret_4h','cvd_slope_h4','trend_accel_4h','atr_percentile_h1']
+for ts, items in list(by_ts.items())[:0]:
+    pass
+# aggregate miss vs hit feature means
+def feat_mean(prof, name):
+    vals=[]
+    for x in prof:
+        idx = x['feat_names'].index(name) if name in x['feat_names'] else None
+        if idx is not None: vals.append(x['feat_vec'][idx])
+    return np.mean(vals) if vals else float('nan')
+print('\\nFeature means on pump bars (ret4>1%):')
+for f in key:
+    if f not in feat_cols: continue
+    print(f'  {f:<22} hit={feat_mean(hit_prof,f):>8.4f}  miss={feat_mean(miss_prof,f):>8.4f}  delta={feat_mean(hit_prof,f)-feat_mean(miss_prof,f):>+8.4f}')
+\""
+started_at: 2026-06-16T04:07:13.481Z
+running_for_ms: 29744997 
+---

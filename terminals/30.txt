@@ -1,0 +1,65 @@
+---
+pid: 2656
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05u_train_lstm_ic32_swing_complement_v1.py --all --final-only"
+started_at: 2026-06-17T11:44:26.083Z
+running_for_ms: 86400010 
+---
+
+======================================================================
+  LSTM IC32 SWING COMPLEMENT -- ic32_lstm_swing_complement_v1
+  Partner: ic32_regime_v1 | Label: swing H4
+  Sample: pump/dump gate + LGBM FLAT (ic32 thr 0.69/0.59)
+  Loss: Focal gamma=2.0
+  Eval: complement BULL>=0.38 BEAR>=0.5
+  Folds: 8 | Purge: 36 | Coins: 21
+  Device: privateuseone:0
+======================================================================
+
+2026-06-17 19:44:31 | INFO     | 05u_ic32_swing_complement |   [BTCUSDT] gate=10,144 flat=8,498 | LONG=21% FLAT=60% SHORT=19%
+2026-06-17 19:44:31 | INFO     | 05u_ic32_swing_complement |   [SOLUSDT] gate=9,281 flat=8,413 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 19:44:33 | INFO     | 05u_ic32_swing_complement |   [ETHUSDT] gate=10,282 flat=8,394 | LONG=20% FLAT=61% SHORT=19%
+2026-06-17 19:44:34 | INFO     | 05u_ic32_swing_complement |   [BNBUSDT] gate=10,037 flat=8,299 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 19:44:35 | INFO     | 05u_ic32_swing_complement |   [XRPUSDT] gate=10,191 flat=8,277 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 19:44:36 | INFO     | 05u_ic32_swing_complement |   [DOGEUSDT] gate=10,014 flat=7,947 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 19:44:36 | INFO     | 05u_ic32_swing_complement |   [TONUSDT] gate=2,116 flat=1,966 | LONG=17% FLAT=65% SHORT=19%
+2026-06-17 19:44:37 | INFO     | 05u_ic32_swing_complement |   [ADAUSDT] gate=9,914 flat=8,080 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 19:44:38 | INFO     | 05u_ic32_swing_complement |   [TRXUSDT] gate=10,130 flat=8,177 | LONG=20% FLAT=63% SHORT=17%
+2026-06-17 19:44:39 | INFO     | 05u_ic32_swing_complement |   [1000SHIBUSDT] gate=7,593 flat=6,721 | LONG=17% FLAT=66% SHORT=17%
+2026-06-17 19:44:40 | INFO     | 05u_ic32_swing_complement |   [AVAXUSDT] gate=8,845 flat=8,139 | LONG=19% FLAT=64% SHORT=18%
+2026-06-17 19:44:41 | INFO     | 05u_ic32_swing_complement |   [LINKUSDT] gate=9,946 flat=8,158 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 19:44:42 | INFO     | 05u_ic32_swing_complement |   [DOTUSDT] gate=8,978 flat=8,190 | LONG=18% FLAT=63% SHORT=18%
+2026-06-17 19:44:43 | INFO     | 05u_ic32_swing_complement |   [SUIUSDT] gate=4,468 flat=4,158 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 19:44:43 | INFO     | 05u_ic32_swing_complement |   [POLUSDT] gate=1,971 flat=1,841 | LONG=18% FLAT=63% SHORT=19%
+2026-06-17 19:44:44 | INFO     | 05u_ic32_swing_complement |   [NEARUSDT] gate=8,741 flat=8,066 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 19:44:44 | INFO     | 05u_ic32_swing_complement |   [1000PEPEUSDT] gate=4,216 flat=3,798 | LONG=18% FLAT=65% SHORT=17%
+2026-06-17 19:44:44 | INFO     | 05u_ic32_swing_complement |   [TAOUSDT] gate=2,792 flat=2,657 | LONG=20% FLAT=62% SHORT=18%
+2026-06-17 19:44:45 | INFO     | 05u_ic32_swing_complement |   [ARBUSDT] gate=4,660 flat=4,391 | LONG=18% FLAT=61% SHORT=20%
+2026-06-17 19:44:46 | INFO     | 05u_ic32_swing_complement |   [HBARUSDT] gate=9,903 flat=8,133 | LONG=19% FLAT=63% SHORT=17%
+2026-06-17 19:44:46 | INFO     | 05u_ic32_swing_complement |   [ONDOUSDT] gate=947 flat=861 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 19:44:46 | INFO     | 05u_ic32_swing_complement | Complement pool: gate=155,169 -> flat=133,164 sequences
+2026-06-17 19:44:47 | INFO     | 05u_ic32_swing_complement | Sequences: 133,164 | seq=72 | feat=18
+2026-06-17 19:44:47 | INFO     | 05u_ic32_swing_complement | Retrain final model (50 epochs)...
+2026-06-17 19:45:49 | INFO     | 05u_ic32_swing_complement |   Final epoch 1/50 (device=privateuseone:0)
+2026-06-17 19:53:52 | INFO     | 05u_ic32_swing_complement |   Final epoch 10/50 (device=privateuseone:0)
+2026-06-17 20:02:52 | INFO     | 05u_ic32_swing_complement |   Final epoch 20/50 (device=privateuseone:0)
+2026-06-17 20:11:58 | INFO     | 05u_ic32_swing_complement |   Final epoch 30/50 (device=privateuseone:0)
+2026-06-17 20:21:03 | INFO     | 05u_ic32_swing_complement |   Final epoch 40/50 (device=privateuseone:0)
+2026-06-17 20:30:09 | INFO     | 05u_ic32_swing_complement |   Final epoch 50/50 (device=privateuseone:0)
+
+======================================================================
+  COMPLETE: ic32_lstm_swing_complement_v1
+  CV F1 macro: 0.4315 +/- 0.0291
+  Complement pool (OOF): n=32,068
+  Fires: n=10,049 (bull=9,511 bear=538)
+  Precision: bull=0.454 bear=0.524 mixed_dir=0.563
+  Model: D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_lstm_swing_complement_v1/lstm_momentum.pt
+  OOF:   D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_lstm_swing_complement_v1/oof_lstm_predictions.parquet
+======================================================================
+
+
+---
+exit_code: -1
+elapsed_ms: 86400010
+ended_at: 2026-06-18T11:44:26.301Z
+---

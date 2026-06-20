@@ -1,0 +1,24 @@
+{
+  "methodology": "holdout_diagnostic_once",
+  "period": "Apr-Jun 2026",
+  "stage2_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\ic32_regime_v1\\ic32_lstm_fusion_stage2_pipeline.json",
+  "candidate": "hc_a3_o50_noflip",
+  "baseline": {
+    "trades": 492,
+    "trades_per_month": 196.8,
+    "win_rate": 68.9,
+    "total_pnl": 210.22,
+    "pnl_per_trade": 0.4273,
+    "profit_factor": 3.028
+  },
+  "candidate_scorecard": {
+    "trades": 484,
+    "trades_per_month": 193.6,
+    "win_rate": 69.63,
+    "total_pnl": 214.68,
+    "pnl_per_trade": 0.4436,
+    "profit_factor": 3.173
+  },
+  "delta_ppt": 0.0163,
+  "created": "2026-06-18T12:08:16.391990"
+}

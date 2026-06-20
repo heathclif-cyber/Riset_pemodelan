@@ -1,0 +1,73 @@
+{
+  "created": "2026-06-16T12:44:20.921750",
+  "methodology": "genuine_oof_filter_ablation",
+  "holdout_used": false,
+  "stack": "LGBM 36f + HMM Config B + Guardian v2 + DynSize cm_0.60",
+  "variants": {
+    "frozen_baseline": {
+      "n": 33846,
+      "wr": 69.00076818530994,
+      "pnl": 23046.210200000023,
+      "ppt": 0.6809138509720506,
+      "pf": 2.5604582299388223,
+      "sl_pct": 29.604680021272824,
+      "avg_modal": 13.594535247887489,
+      "ppt_norm": 0.5008732101215896,
+      "vcb_blocked_bars": 0,
+      "label": "Frozen OOF scorecard (struct ON, RR ON, VCB OFF)"
+    },
+    "prod_all_on": {
+      "n": 33846,
+      "wr": 69.00076818530994,
+      "pnl": 23046.210200000023,
+      "ppt": 0.6809138509720506,
+      "pf": 2.5604582299388223,
+      "sl_pct": 29.604680021272824,
+      "avg_modal": 13.594535247887489,
+      "ppt_norm": 0.5008732101215896,
+      "vcb_blocked_bars": 8,
+      "label": "Production intent (struct ON, RR ON, VCB ON)"
+    },
+    "no_structural": {
+      "n": 34618,
+      "wr": 68.91501530995437,
+      "pnl": 23859.085400000033,
+      "ppt": 0.6892103934369412,
+      "pf": 2.5519991455221365,
+      "sl_pct": 29.614651337454507,
+      "avg_modal": 13.61841440868912,
+      "ppt_norm": 0.5060871058507341,
+      "vcb_blocked_bars": 0,
+      "label": "Structural filter OFF"
+    },
+    "no_rr_gate": {
+      "n": 36515,
+      "wr": 69.61522661919759,
+      "pnl": 24781.792500000105,
+      "ppt": 0.6786743119266084,
+      "pf": 2.5615409237418163,
+      "sl_pct": 28.599205805833215,
+      "avg_modal": 13.606876078323976,
+      "ppt_norm": 0.4987730526977827,
+      "vcb_blocked_bars": 0,
+      "label": "RR gate OFF"
+    },
+    "no_struct_no_rr": {
+      "n": 38051,
+      "wr": 69.4830622059867,
+      "pnl": 26451.90780000018,
+      "ppt": 0.6951698457333626,
+      "pf": 2.555382816960755,
+      "sl_pct": 28.256813224356787,
+      "avg_modal": 13.690357152243042,
+      "ppt_norm": 0.5077806502801611,
+      "vcb_blocked_bars": 0,
+      "label": "Structural OFF + RR OFF"
+    }
+  },
+  "recommendations": [
+    "VCB: negligible impact \u2014 safe to align OFF with OOF or keep ON as insurance",
+    "Structural filter: marginal \u2014 KEEP as safety net",
+    "RR gate: KEEP"
+  ]
+}

@@ -1,0 +1,50 @@
+---
+pid: 34792
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05d_lstm_probe_asym_b.py --all"
+started_at: 2026-06-16T01:47:26.853Z
+running_for_ms: 1965008  
+---
+
+==================================================================
+  PROBE B -- focal loss + asymmetric 0.40/0.50
+  arch: hidden=96 layers=2 dropout=0.45
+  focal gamma=2.0 alpha_boost BEAR=1.6
+  folds=4 complement BULL>=0.4 BEAR>=0.5
+==================================================================
+
+2026-06-16 09:47:29 | INFO     | 05_lstm_genuine_v2 |   [BTCUSDT] gate=10,144 | BULL=10% NEU=66% BEAR=24%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [SOLUSDT] gate=9,281 | BULL=16% NEU=47% BEAR=37%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [ETHUSDT] gate=10,282 | BULL=13% NEU=58% BEAR=29%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [BNBUSDT] gate=10,037 | BULL=13% NEU=59% BEAR=28%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [XRPUSDT] gate=10,191 | BULL=14% NEU=56% BEAR=31%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [DOGEUSDT] gate=10,014 | BULL=14% NEU=53% BEAR=34%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [TONUSDT] gate=2,116 | BULL=14% NEU=56% BEAR=30%
+2026-06-16 09:47:30 | INFO     | 05_lstm_genuine_v2 |   [ADAUSDT] gate=9,914 | BULL=15% NEU=51% BEAR=34%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [TRXUSDT] gate=10,130 | BULL=10% NEU=64% BEAR=26%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [1000SHIBUSDT] gate=7,593 | BULL=13% NEU=52% BEAR=35%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [AVAXUSDT] gate=8,845 | BULL=15% NEU=47% BEAR=38%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [LINKUSDT] gate=9,946 | BULL=16% NEU=49% BEAR=35%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [DOTUSDT] gate=8,978 | BULL=15% NEU=50% BEAR=34%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [SUIUSDT] gate=4,468 | BULL=16% NEU=46% BEAR=38%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [POLUSDT] gate=1,971 | BULL=15% NEU=48% BEAR=37%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [NEARUSDT] gate=8,741 | BULL=16% NEU=45% BEAR=38%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [1000PEPEUSDT] gate=4,216 | BULL=15% NEU=44% BEAR=41%
+2026-06-16 09:47:31 | INFO     | 05_lstm_genuine_v2 |   [TAOUSDT] gate=2,792 | BULL=16% NEU=45% BEAR=39%
+2026-06-16 09:47:32 | INFO     | 05_lstm_genuine_v2 |   [ARBUSDT] gate=4,660 | BULL=15% NEU=49% BEAR=37%
+2026-06-16 09:47:32 | INFO     | 05_lstm_genuine_v2 |   [HBARUSDT] gate=9,903 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 09:47:32 | INFO     | 05_lstm_genuine_v2 |   [ONDOUSDT] gate=947 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 09:48:59 | INFO     | 05_lstm_genuine_v2 |   [probe-B] Fold 1 F1=0.3593 BEAR=0.246 NEU=0.612 BULL=0.220
+2026-06-16 09:50:13 | INFO     | 05_lstm_genuine_v2 |   [probe-B] Fold 2 F1=0.3583 BEAR=0.320 NEU=0.715 BULL=0.039
+2026-06-16 09:52:43 | INFO     | 05_lstm_genuine_v2 |   [probe-B] Fold 3 F1=0.3534 BEAR=0.324 NEU=0.701 BULL=0.036
+2026-06-16 10:00:59 | INFO     | 05_lstm_genuine_v2 |   [probe-B] Fold 4 F1=0.3532 BEAR=0.332 NEU=0.676 BULL=0.052
+
+  CV F1: 0.3560 +/- 0.0028  |  mean F1 BEAR: 0.306
+  Asymmetric complement:
+    n=1,378 (bull=672 bear=706)
+    bull_prec=0.312  bear_prec=0.504
+    mixed_prec_dir=0.563
+  Compare baseline F1~0.402 | probe-A F1~0.382 bear_n=0
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_probe_asym_b/probe_b_meta.json
+==================================================================
+

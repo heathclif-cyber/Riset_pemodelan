@@ -1,0 +1,477 @@
+{
+  "v1": {
+    "meta": {
+      "run_name": "ic32_lstm_swing_complement_v1",
+      "model_type": "lstm_swing_complement_flat_only",
+      "lgbm_partner": "ic32_regime_v1",
+      "label_source": "swing_h4 (features_v3 label column)",
+      "sample_filter": "pump_dump_gate AND ic32_lgbm_flat",
+      "ic32_thr_long": 0.69,
+      "ic32_thr_short": 0.59,
+      "loss": "focal_loss",
+      "complement_cfg": {
+        "bull_thr": 0.38,
+        "bear_thr": 0.5,
+        "vol_spike_thr": 2.0,
+        "focal_gamma": 2.0,
+        "alpha_bear_boost": 1.6,
+        "alpha_bull_boost": 1.3,
+        "alpha_neu_scale": 0.9
+      },
+      "n_features": 18,
+      "features": [
+        "long_short_ratio",
+        "rsi_slope_h4",
+        "cvd_slope_h4",
+        "cvd_momentum_adv",
+        "volume_delta",
+        "vol_price_confirm",
+        "Buy_Liq",
+        "absorption_at_swing",
+        "trend_accel_4h",
+        "etf_total_change_usd",
+        "dist_liq_50x_long",
+        "etf_gbtc_change_usd",
+        "ofi_z_score",
+        "whale_retail_divergence",
+        "log_ret_20",
+        "swing_momentum",
+        "ofi_h4_delta",
+        "stochrsi_d"
+      ],
+      "seq_len": 72,
+      "purge_gap": 36,
+      "n_folds": 8,
+      "n_samples": 133164,
+      "mean_f1_macro": 0.4315,
+      "std_f1_macro": 0.0291,
+      "folds": [
+        {
+          "fold": 1,
+          "val_f1": 0.3775,
+          "f1_SHORT": 0.35,
+          "f1_FLAT": 0.55,
+          "f1_LONG": 0.21,
+          "best_epoch": 45
+        },
+        {
+          "fold": 2,
+          "val_f1": 0.4292,
+          "f1_SHORT": 0.43,
+          "f1_FLAT": 0.59,
+          "f1_LONG": 0.13,
+          "best_epoch": 45
+        },
+        {
+          "fold": 3,
+          "val_f1": 0.4399,
+          "f1_SHORT": 0.39,
+          "f1_FLAT": 0.67,
+          "f1_LONG": 0.05,
+          "best_epoch": 50
+        },
+        {
+          "fold": 4,
+          "val_f1": 0.3925,
+          "f1_SHORT": 0.28,
+          "f1_FLAT": 0.74,
+          "f1_LONG": 0.03,
+          "best_epoch": 20
+        },
+        {
+          "fold": 5,
+          "val_f1": 0.4409,
+          "f1_SHORT": 0.33,
+          "f1_FLAT": 0.68,
+          "f1_LONG": 0.05,
+          "best_epoch": 50
+        },
+        {
+          "fold": 6,
+          "val_f1": 0.4468,
+          "f1_SHORT": 0.38,
+          "f1_FLAT": 0.69,
+          "f1_LONG": 0.07,
+          "best_epoch": 55
+        },
+        {
+          "fold": 7,
+          "val_f1": 0.4667,
+          "f1_SHORT": 0.4,
+          "f1_FLAT": 0.7,
+          "f1_LONG": 0.08,
+          "best_epoch": 30
+        },
+        {
+          "fold": 8,
+          "val_f1": 0.4582,
+          "f1_SHORT": 0.42,
+          "f1_FLAT": 0.68,
+          "f1_LONG": 0.07,
+          "best_epoch": 40
+        }
+      ],
+      "complement_asymmetric_oof": {
+        "n_pool": 32068,
+        "n_complement": 10049,
+        "n_bull": 9511,
+        "n_bear": 538,
+        "bull_precision": 0.4542,
+        "bear_precision": 0.5242,
+        "mixed_precision_dir": 0.5633,
+        "bull_thr": 0.38,
+        "bear_thr": 0.5
+      },
+      "baseline_compare": "lstm_best.pt hard_consensus (08_oof_ic32_full_stack)",
+      "created": "2026-06-17T20:30:09.997148",
+      "train_cutoff": "2026-04-01",
+      "methodology": "purged CV OOF, scaler per fold, complement flat-only, holdout not used"
+    },
+    "eval": {
+      "meta": {
+        "eval": "ic32_swing_complement_oof",
+        "complement_run": "ic32_lstm_swing_complement_v1",
+        "period": "2020-01-01 to 2026-04-01",
+        "guardian": "guardian_clean_v2.pkl",
+        "ic32_thr": [
+          0.69,
+          0.59
+        ],
+        "conf_entry": 0.59,
+        "momentum_cfg": {
+          "bull_thr": 0.38,
+          "bear_thr": 0.5,
+          "boost": 0.1,
+          "opposite_pen": 0.14,
+          "near_miss_gap": 0.05,
+          "vol_thr": 2.0,
+          "enable_boost": true,
+          "enable_penalty": true,
+          "proportional": true
+        },
+        "boost_only_cfg": {
+          "agree_boost": 0.08,
+          "vol_thr": 2.0
+        },
+        "generated_at": "2026-06-17 20:43:18"
+      },
+      "complement_cv": {
+        "mean_f1_macro": 0.4315,
+        "complement_asymmetric_oof": {
+          "n_pool": 32068,
+          "n_complement": 10049,
+          "n_bull": 9511,
+          "n_bear": 538,
+          "bull_precision": 0.4542,
+          "bear_precision": 0.5242,
+          "mixed_precision_dir": 0.5633,
+          "bull_thr": 0.38,
+          "bear_thr": 0.5
+        }
+      },
+      "variants": {
+        "baseline_hard_consensus": {
+          "total_trades": 25596,
+          "win_rate": 55.68,
+          "total_pnl": 3563.87,
+          "pnl_per_trade": 0.1392,
+          "profit_factor": 1.393,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 65.46,
+          "long_trades": 6187,
+          "short_trades": 19409
+        },
+        "complement_hard_consensus": {
+          "total_trades": 18940,
+          "win_rate": 55.87,
+          "total_pnl": 2949.45,
+          "pnl_per_trade": 0.1557,
+          "profit_factor": 1.44,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 64.31,
+          "long_trades": 7327,
+          "short_trades": 11613
+        },
+        "complement_conditional_momentum": {
+          "total_trades": 38109,
+          "win_rate": 54.63,
+          "total_pnl": 4416.71,
+          "pnl_per_trade": 0.1159,
+          "profit_factor": 1.317,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 66.31,
+          "long_trades": 8967,
+          "short_trades": 29142
+        },
+        "complement_boost_only": {
+          "total_trades": 38109,
+          "win_rate": 54.63,
+          "total_pnl": 4416.71,
+          "pnl_per_trade": 0.1159,
+          "profit_factor": 1.317,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 66.31,
+          "long_trades": 8967,
+          "short_trades": 29142
+        }
+      },
+      "archived_baseline": {
+        "total_trades": 25596,
+        "trades_per_month": 341.3,
+        "win_rate": 55.68,
+        "long_wr": 59.06,
+        "short_wr": 54.6,
+        "long_pct": 24.17,
+        "total_pnl": 3563.87,
+        "pnl_per_trade": 0.1392,
+        "profit_factor": 1.393,
+        "sl_rate_pct": 0.0,
+        "guardian_exit_pct": 65.46,
+        "outcome_counts": {
+          "LOSS": 5959,
+          "GUARDIAN_EXIT": 9651,
+          "GUARDIAN_MOMENTUM_EXIT": 6245,
+          "TIMEOUT": 626,
+          "GUARDIAN_MOMENTUM_PARTIAL": 859,
+          "TIMEOUT_MOMENTUM": 2256
+        }
+      }
+    }
+  },
+  "v2": {
+    "meta": {
+      "run_name": "ic32_lstm_swing_complement_v2",
+      "model_type": "lstm_swing_complement_flat_only",
+      "lgbm_partner": "ic32_regime_v1",
+      "label_source": "swing_h4 (features_v3 label column)",
+      "sample_filter": "pump_dump_gate AND ic32_lgbm_flat",
+      "ic32_thr_long": 0.69,
+      "ic32_thr_short": 0.59,
+      "loss": "focal_loss",
+      "complement_cfg": {
+        "bull_thr": 0.38,
+        "bear_thr": 0.5,
+        "vol_spike_thr": 2.0,
+        "focal_gamma": 2.0,
+        "alpha_bear_boost": 1.6,
+        "alpha_bull_boost": 1.3,
+        "alpha_neu_scale": 0.9
+      },
+      "n_features": 11,
+      "features": [
+        "long_short_ratio",
+        "rsi_slope_h4",
+        "cvd_slope_h4",
+        "cvd_momentum_adv",
+        "volume_delta",
+        "vol_price_confirm",
+        "Buy_Liq",
+        "absorption_at_swing",
+        "trend_accel_4h",
+        "etf_total_change_usd",
+        "dist_liq_50x_long"
+      ],
+      "seq_len": 72,
+      "purge_gap": 36,
+      "n_folds": 8,
+      "n_samples": 133164,
+      "mean_f1_macro": 0.436,
+      "std_f1_macro": 0.0399,
+      "folds": [
+        {
+          "fold": 1,
+          "val_f1": 0.3785,
+          "f1_SHORT": 0.0441,
+          "f1_FLAT": 0.7809,
+          "f1_LONG": 0.3104,
+          "best_epoch": 36
+        },
+        {
+          "fold": 2,
+          "val_f1": 0.3941,
+          "f1_SHORT": 0.1285,
+          "f1_FLAT": 0.7946,
+          "f1_LONG": 0.2592,
+          "best_epoch": 32
+        },
+        {
+          "fold": 3,
+          "val_f1": 0.4518,
+          "f1_SHORT": 0.2735,
+          "f1_FLAT": 0.813,
+          "f1_LONG": 0.2688,
+          "best_epoch": 76
+        },
+        {
+          "fold": 4,
+          "val_f1": 0.4117,
+          "f1_SHORT": 0.2113,
+          "f1_FLAT": 0.8034,
+          "f1_LONG": 0.2204,
+          "best_epoch": 32
+        },
+        {
+          "fold": 5,
+          "val_f1": 0.4135,
+          "f1_SHORT": 0.1763,
+          "f1_FLAT": 0.7965,
+          "f1_LONG": 0.2676,
+          "best_epoch": 17
+        },
+        {
+          "fold": 6,
+          "val_f1": 0.4695,
+          "f1_SHORT": 0.264,
+          "f1_FLAT": 0.8147,
+          "f1_LONG": 0.3298,
+          "best_epoch": 58
+        },
+        {
+          "fold": 7,
+          "val_f1": 0.4684,
+          "f1_SHORT": 0.2699,
+          "f1_FLAT": 0.813,
+          "f1_LONG": 0.3221,
+          "best_epoch": 20
+        },
+        {
+          "fold": 8,
+          "val_f1": 0.5003,
+          "f1_SHORT": 0.3077,
+          "f1_FLAT": 0.8312,
+          "f1_LONG": 0.3621,
+          "best_epoch": 44
+        }
+      ],
+      "complement_asymmetric_oof": {
+        "n_pool": 32068,
+        "n_complement": 10372,
+        "n_bull": 9720,
+        "n_bear": 652,
+        "bull_precision": 0.4552,
+        "bear_precision": 0.4939,
+        "mixed_precision_dir": 0.5636,
+        "bull_thr": 0.38,
+        "bear_thr": 0.5
+      },
+      "lstm_prod_n_feat": 11,
+      "feature_source": "feature_cols_lstm_temporal.json[:11] (matches lstm_best.pt)",
+      "baseline_compare": "lstm_best.pt hard_consensus (08_oof_ic32_full_stack)",
+      "prior_run_compare": "ic32_lstm_swing_complement_v1 (18 feat, unfair)",
+      "created": "2026-06-18T00:20:03.161455",
+      "train_cutoff": "2026-04-01",
+      "methodology": "purged CV OOF, scaler per fold, complement flat-only, holdout not used"
+    },
+    "eval": {
+      "meta": {
+        "eval": "ic32_swing_complement_oof",
+        "complement_run": "ic32_lstm_swing_complement_v2",
+        "lstm_n_feat": 11,
+        "period": "2020-01-01 to 2026-04-01",
+        "guardian": "guardian_clean_v2.pkl",
+        "ic32_thr": [
+          0.69,
+          0.59
+        ],
+        "conf_entry": 0.59,
+        "momentum_cfg": {
+          "bull_thr": 0.38,
+          "bear_thr": 0.5,
+          "boost": 0.1,
+          "opposite_pen": 0.14,
+          "near_miss_gap": 0.05,
+          "vol_thr": 2.0,
+          "enable_boost": true,
+          "enable_penalty": true,
+          "proportional": true
+        },
+        "boost_only_cfg": {
+          "agree_boost": 0.08,
+          "vol_thr": 2.0
+        },
+        "generated_at": "2026-06-18 00:27:47"
+      },
+      "complement_cv": {
+        "mean_f1_macro": 0.436,
+        "complement_asymmetric_oof": {
+          "n_pool": 32068,
+          "n_complement": 10372,
+          "n_bull": 9720,
+          "n_bear": 652,
+          "bull_precision": 0.4552,
+          "bear_precision": 0.4939,
+          "mixed_precision_dir": 0.5636,
+          "bull_thr": 0.38,
+          "bear_thr": 0.5
+        }
+      },
+      "variants": {
+        "baseline_hard_consensus": {
+          "total_trades": 25596,
+          "win_rate": 55.68,
+          "total_pnl": 3563.87,
+          "pnl_per_trade": 0.1392,
+          "profit_factor": 1.393,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 65.46,
+          "long_trades": 6187,
+          "short_trades": 19409
+        },
+        "complement_hard_consensus": {
+          "total_trades": 18897,
+          "win_rate": 55.88,
+          "total_pnl": 2951.93,
+          "pnl_per_trade": 0.1562,
+          "profit_factor": 1.442,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 64.26,
+          "long_trades": 7309,
+          "short_trades": 11588
+        },
+        "complement_conditional_momentum": {
+          "total_trades": 38109,
+          "win_rate": 54.63,
+          "total_pnl": 4416.71,
+          "pnl_per_trade": 0.1159,
+          "profit_factor": 1.317,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 66.31,
+          "long_trades": 8967,
+          "short_trades": 29142
+        },
+        "complement_boost_only": {
+          "total_trades": 38109,
+          "win_rate": 54.63,
+          "total_pnl": 4416.71,
+          "pnl_per_trade": 0.1159,
+          "profit_factor": 1.317,
+          "sl_rate_pct": 0.0,
+          "guardian_exit_pct": 66.31,
+          "long_trades": 8967,
+          "short_trades": 29142
+        }
+      },
+      "archived_baseline": {
+        "total_trades": 25596,
+        "trades_per_month": 341.3,
+        "win_rate": 55.68,
+        "long_wr": 59.06,
+        "short_wr": 54.6,
+        "long_pct": 24.17,
+        "total_pnl": 3563.87,
+        "pnl_per_trade": 0.1392,
+        "profit_factor": 1.393,
+        "sl_rate_pct": 0.0,
+        "guardian_exit_pct": 65.46,
+        "outcome_counts": {
+          "LOSS": 5959,
+          "GUARDIAN_EXIT": 9651,
+          "GUARDIAN_MOMENTUM_EXIT": 6245,
+          "TIMEOUT": 626,
+          "GUARDIAN_MOMENTUM_PARTIAL": 859,
+          "TIMEOUT_MOMENTUM": 2256
+        }
+      }
+    }
+  }
+}

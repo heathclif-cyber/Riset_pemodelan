@@ -1,0 +1,680 @@
+{
+  "run_id": "ic_test_lgbm_v1",
+  "cutoff": "2025-11-01",
+  "n_rows": 785185,
+  "n_eff": 32716,
+  "autocorr_factor": 24,
+  "n_features_tested": 90,
+  "thresholds": {
+    "min_standalone_ic": 0.02,
+    "min_tstat": 2.0,
+    "min_marginal_ic": 0.01
+  },
+  "label_distribution": {
+    "FLAT": "574454",
+    "SHORT": "108058",
+    "LONG": "102673"
+  },
+  "summary": {
+    "KEEP": 22,
+    "REDUNDANT": 22,
+    "WEAK": 8,
+    "DROP": 38
+  },
+  "keep_features": [
+    "dist_from_8h_high",
+    "rsi_6",
+    "swing_momentum",
+    "rsi_h4",
+    "stochrsi_k",
+    "dist_liq_50x_long",
+    "trend_accel_4h",
+    "price_in_range",
+    "rsi_slope_h4",
+    "dist_swing_low",
+    "stochrsi_d",
+    "ofi_h4_delta",
+    "dist_liq_50x_short",
+    "log_ret_1",
+    "relative_strength_z",
+    "dist_liq_20x_long",
+    "cvd_momentum_adv",
+    "cvd_slope_h4",
+    "ema_21_slope_h4",
+    "ema_50_h1",
+    "log_ret_20",
+    "whale_retail_divergence"
+  ],
+  "results": [
+    {
+      "feature": "dist_from_8h_high",
+      "standalone_ic": -0.104,
+      "tstat": -18.91,
+      "marginal_ic": -0.104,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_6",
+      "standalone_ic": -0.0966,
+      "tstat": -17.56,
+      "marginal_ic": -0.0388,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "swing_momentum",
+      "standalone_ic": -0.0784,
+      "tstat": -14.22,
+      "marginal_ic": -0.031,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_h4",
+      "standalone_ic": -0.0779,
+      "tstat": -14.12,
+      "marginal_ic": -0.0114,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_k",
+      "standalone_ic": -0.0717,
+      "tstat": -13.0,
+      "marginal_ic": 0.041,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "standalone_ic": -0.0698,
+      "tstat": -12.66,
+      "marginal_ic": -0.016,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "trend_accel_4h",
+      "standalone_ic": -0.0687,
+      "tstat": -12.45,
+      "marginal_ic": -0.0143,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "price_in_range",
+      "standalone_ic": -0.0654,
+      "tstat": -11.86,
+      "marginal_ic": -0.0249,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "rsi_slope_h4",
+      "standalone_ic": -0.062,
+      "tstat": -11.23,
+      "marginal_ic": 0.0228,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_swing_low",
+      "standalone_ic": -0.0605,
+      "tstat": -10.97,
+      "marginal_ic": -0.0125,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "stochrsi_d",
+      "standalone_ic": -0.0542,
+      "tstat": -9.81,
+      "marginal_ic": 0.0184,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "standalone_ic": 0.053,
+      "tstat": 9.6,
+      "marginal_ic": 0.0599,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "standalone_ic": 0.05,
+      "tstat": 9.05,
+      "marginal_ic": 0.0354,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "log_ret_1",
+      "standalone_ic": -0.048,
+      "tstat": -8.69,
+      "marginal_ic": -0.015,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "relative_strength_z",
+      "standalone_ic": -0.0476,
+      "tstat": -8.62,
+      "marginal_ic": -0.0103,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "standalone_ic": -0.0455,
+      "tstat": -8.25,
+      "marginal_ic": 0.0196,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "standalone_ic": -0.0452,
+      "tstat": -8.19,
+      "marginal_ic": -0.0127,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "standalone_ic": 0.0378,
+      "tstat": 6.85,
+      "marginal_ic": 0.0686,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "standalone_ic": -0.0365,
+      "tstat": -6.61,
+      "marginal_ic": 0.0143,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_50_h1",
+      "standalone_ic": 0.0287,
+      "tstat": 5.2,
+      "marginal_ic": -0.0299,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "log_ret_20",
+      "standalone_ic": -0.026,
+      "tstat": -4.7,
+      "marginal_ic": -0.0205,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "standalone_ic": -0.0244,
+      "tstat": -4.41,
+      "marginal_ic": -0.0461,
+      "verdict": "KEEP"
+    },
+    {
+      "feature": "ema_7_h1",
+      "standalone_ic": 0.0923,
+      "tstat": 16.76,
+      "marginal_ic": -0.0058,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_7_h4",
+      "standalone_ic": 0.0923,
+      "tstat": 16.76,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "log_ret_5",
+      "standalone_ic": -0.0807,
+      "tstat": -14.65,
+      "marginal_ic": -0.007,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "VAH",
+      "standalone_ic": 0.0618,
+      "tstat": 11.2,
+      "marginal_ic": 0.0034,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "POC",
+      "standalone_ic": 0.0613,
+      "tstat": 11.11,
+      "marginal_ic": -0.0,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ema_21_h1",
+      "standalone_ic": 0.0608,
+      "tstat": 11.02,
+      "marginal_ic": 0.0073,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "Fib_786",
+      "standalone_ic": 0.0592,
+      "tstat": 10.72,
+      "marginal_ic": 0.0017,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "VAL",
+      "standalone_ic": 0.0574,
+      "tstat": 10.41,
+      "marginal_ic": -0.0024,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "Fib_618",
+      "standalone_ic": 0.0574,
+      "tstat": 10.4,
+      "marginal_ic": -0.0094,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "dist_swing_high",
+      "standalone_ic": -0.0557,
+      "tstat": -10.09,
+      "marginal_ic": -0.0078,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "Buy_Liq",
+      "standalone_ic": -0.0479,
+      "tstat": -8.67,
+      "marginal_ic": -0.0023,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "Sell_Liq",
+      "standalone_ic": 0.0443,
+      "tstat": 8.03,
+      "marginal_ic": 0.0057,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "long_short_ratio",
+      "standalone_ic": -0.0431,
+      "tstat": -7.81,
+      "marginal_ic": 0.0072,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "relative_strength_momentum",
+      "standalone_ic": -0.0418,
+      "tstat": -7.57,
+      "marginal_ic": 0.0006,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "volume_delta",
+      "standalone_ic": -0.0416,
+      "tstat": -7.53,
+      "marginal_ic": -0.0007,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "PDL",
+      "standalone_ic": 0.0298,
+      "tstat": 5.4,
+      "marginal_ic": -0.0008,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "absorption_at_swing",
+      "standalone_ic": -0.0294,
+      "tstat": -5.32,
+      "marginal_ic": -0.0099,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "price_vs_ema_50_h4",
+      "standalone_ic": -0.0287,
+      "tstat": -5.2,
+      "marginal_ic": 0.0,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "PDH",
+      "standalone_ic": 0.0252,
+      "tstat": 4.56,
+      "marginal_ic": 0.0026,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ofi_z_score",
+      "standalone_ic": -0.0234,
+      "tstat": -4.23,
+      "marginal_ic": 0.003,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "vwdp",
+      "standalone_ic": -0.0233,
+      "tstat": -4.22,
+      "marginal_ic": -0.0019,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "ofi_raw",
+      "standalone_ic": -0.0217,
+      "tstat": -3.92,
+      "marginal_ic": -0.0003,
+      "verdict": "REDUNDANT"
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "standalone_ic": 0.0193,
+      "tstat": 3.49,
+      "marginal_ic": -0.0276,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "ema_50_slope_h4",
+      "standalone_ic": -0.0133,
+      "tstat": -2.4,
+      "marginal_ic": -0.0348,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "cvd",
+      "standalone_ic": -0.0077,
+      "tstat": -1.4,
+      "marginal_ic": -0.0111,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "ofi_acceleration",
+      "standalone_ic": -0.007,
+      "tstat": -1.27,
+      "marginal_ic": -0.0106,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "dow_cos",
+      "standalone_ic": -0.0065,
+      "tstat": -1.17,
+      "marginal_ic": -0.0106,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "cvd_div_h4",
+      "standalone_ic": -0.0061,
+      "tstat": -1.1,
+      "marginal_ic": -0.0433,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "trend_strength",
+      "standalone_ic": -0.005,
+      "tstat": -0.91,
+      "marginal_ic": 0.0135,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "atr_14_h1",
+      "standalone_ic": 0.0011,
+      "tstat": 0.19,
+      "marginal_ic": 0.0137,
+      "verdict": "WEAK"
+    },
+    {
+      "feature": "vol_price_confirm",
+      "standalone_ic": -0.0169,
+      "tstat": -3.06,
+      "marginal_ic": 0.0049,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "standalone_ic": 0.0127,
+      "tstat": 2.3,
+      "marginal_ic": 0.0043,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "atr_zscore_20d",
+      "standalone_ic": 0.0121,
+      "tstat": 2.18,
+      "marginal_ic": -0.0009,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "atr_percent_h4",
+      "standalone_ic": 0.0119,
+      "tstat": 2.16,
+      "marginal_ic": 0.0007,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "price_accel_1h",
+      "standalone_ic": -0.0103,
+      "tstat": -1.86,
+      "marginal_ic": -0.0088,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "ofi_momentum_ratio",
+      "standalone_ic": 0.0095,
+      "tstat": 1.72,
+      "marginal_ic": 0.0036,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vwdp_smooth",
+      "standalone_ic": -0.0074,
+      "tstat": -1.34,
+      "marginal_ic": 0.0063,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "open_interest",
+      "standalone_ic": 0.0064,
+      "tstat": 1.15,
+      "marginal_ic": 0.0003,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vol_ratio_20",
+      "standalone_ic": 0.0064,
+      "tstat": 1.16,
+      "marginal_ic": 0.007,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vol_regime",
+      "standalone_ic": 0.0064,
+      "tstat": 1.16,
+      "marginal_ic": -0.0004,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "market_session",
+      "standalone_ic": 0.0064,
+      "tstat": 1.16,
+      "marginal_ic": 0.0021,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vol_spike_zscore",
+      "standalone_ic": 0.0055,
+      "tstat": 0.99,
+      "marginal_ic": 0.0009,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "effort_vs_result",
+      "standalone_ic": 0.0049,
+      "tstat": 0.88,
+      "marginal_ic": -0.0013,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "ema_200_h1",
+      "standalone_ic": 0.0048,
+      "tstat": 0.87,
+      "marginal_ic": -0.0021,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "hour_sin",
+      "standalone_ic": -0.0048,
+      "tstat": -0.86,
+      "marginal_ic": 0.0016,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "ema_200_h4",
+      "standalone_ic": 0.0048,
+      "tstat": 0.87,
+      "marginal_ic": 0.0,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "funding_price_div",
+      "standalone_ic": 0.0046,
+      "tstat": 0.83,
+      "marginal_ic": 0.0013,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "PWL",
+      "standalone_ic": 0.0032,
+      "tstat": 0.58,
+      "marginal_ic": -0.0025,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "range_expansion_h4",
+      "standalone_ic": 0.0027,
+      "tstat": 0.5,
+      "marginal_ic": 0.001,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "funding_rate",
+      "standalone_ic": -0.0022,
+      "tstat": -0.4,
+      "marginal_ic": -0.0074,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "time_to_funding_norm",
+      "standalone_ic": 0.0021,
+      "tstat": 0.38,
+      "marginal_ic": 0.0032,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "absorption_z",
+      "standalone_ic": -0.0019,
+      "tstat": -0.34,
+      "marginal_ic": -0.006,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "low",
+      "standalone_ic": -0.0019,
+      "tstat": -0.34,
+      "marginal_ic": -0.0067,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "close",
+      "standalone_ic": -0.0019,
+      "tstat": -0.34,
+      "marginal_ic": -0.003,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "open",
+      "standalone_ic": -0.0018,
+      "tstat": -0.33,
+      "marginal_ic": -0.0054,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "high",
+      "standalone_ic": -0.0018,
+      "tstat": -0.33,
+      "marginal_ic": 0.0026,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "PWH",
+      "standalone_ic": -0.0017,
+      "tstat": -0.3,
+      "marginal_ic": 0.0032,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "btc_dominance",
+      "standalone_ic": -0.0016,
+      "tstat": -0.28,
+      "marginal_ic": -0.0019,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "dow_sin",
+      "standalone_ic": 0.0014,
+      "tstat": 0.25,
+      "marginal_ic": 0.0004,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vol_accel_3h",
+      "standalone_ic": 0.0012,
+      "tstat": 0.22,
+      "marginal_ic": 0.0022,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "volume",
+      "standalone_ic": 0.0009,
+      "tstat": 0.16,
+      "marginal_ic": -0.0007,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "bars_since_BOS",
+      "standalone_ic": 0.0008,
+      "tstat": 0.14,
+      "marginal_ic": 0.004,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "fear_greed",
+      "standalone_ic": -0.0006,
+      "tstat": -0.1,
+      "marginal_ic": 0.0015,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "hour_cos",
+      "standalone_ic": -0.0005,
+      "tstat": -0.09,
+      "marginal_ic": 0.0028,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "atr_14_h4",
+      "standalone_ic": 0.0005,
+      "tstat": 0.09,
+      "marginal_ic": -0.0021,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "spread_to_volume",
+      "standalone_ic": 0.0002,
+      "tstat": 0.04,
+      "marginal_ic": -0.0059,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "buy_volume",
+      "standalone_ic": -0.0002,
+      "tstat": -0.04,
+      "marginal_ic": -0.0043,
+      "verdict": "DROP"
+    },
+    {
+      "feature": "vol_efficiency",
+      "standalone_ic": -0.0001,
+      "tstat": -0.02,
+      "marginal_ic": 0.0028,
+      "verdict": "DROP"
+    }
+  ]
+}

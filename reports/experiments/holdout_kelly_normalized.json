@@ -1,0 +1,79 @@
+{
+  "model": "tb_widyawardhana_v2_continuation",
+  "period": "Apr-Jun 2026",
+  "total_trades": 918,
+  "win_rate": 70.3,
+  "payoff_ratio": 1.1448,
+  "avg_conf": 0.5964,
+  "f_baseline": 0.2439,
+  "base_modal": 10.0,
+  "factor_min": 0.3,
+  "factor_max": 3.0,
+  "results": {
+    "Fixed $10": {
+      "total_pnl": 284.06,
+      "monthly": {
+        "2026-04": 163.69,
+        "2026-05": 101.53,
+        "2026-06": 18.84
+      },
+      "avg_factor": 1.0,
+      "avg_modal": 10.0,
+      "max_dd": -8.65,
+      "f_min": 1.0,
+      "f_max": 1.0
+    },
+    "Kelly-norm (conf only)": {
+      "total_pnl": 316.41,
+      "monthly": {
+        "2026-04": 177.65,
+        "2026-05": 119.18,
+        "2026-06": 19.57
+      },
+      "avg_factor": 1.001,
+      "avg_modal": 10.01,
+      "max_dd": -6.76,
+      "f_min": 0.3,
+      "f_max": 2.31
+    },
+    "Kelly-norm + regime": {
+      "total_pnl": 322.05,
+      "monthly": {
+        "2026-04": 179.19,
+        "2026-05": 119.36,
+        "2026-06": 23.49
+      },
+      "avg_factor": 1.018,
+      "avg_modal": 10.18,
+      "max_dd": -7.32,
+      "f_min": 0.46,
+      "f_max": 2.38
+    },
+    "Kelly-norm + all": {
+      "total_pnl": 365.53,
+      "monthly": {
+        "2026-04": 204.57,
+        "2026-05": 134.54,
+        "2026-06": 26.42
+      },
+      "avg_factor": 1.086,
+      "avg_modal": 10.86,
+      "max_dd": -6.78,
+      "f_min": 0.3,
+      "f_max": 2.58
+    },
+    "D_shift3 (threshold)": {
+      "total_pnl": 416.15,
+      "monthly": {
+        "2026-04": 228.36,
+        "2026-05": 153.71,
+        "2026-06": 34.08
+      },
+      "avg_factor": 1.333,
+      "avg_modal": 13.33,
+      "max_dd": -7.48,
+      "f_min": 0.5,
+      "f_max": 1.9
+    }
+  }
+}

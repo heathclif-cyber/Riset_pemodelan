@@ -1,0 +1,58 @@
+{
+  "guardian": "ic32_guardian_continuation_v1",
+  "grid": [
+    1,
+    2,
+    3,
+    4,
+    5
+  ],
+  "baseline_min_hold": 2,
+  "results": {
+    "1": {
+      "trades": 25596,
+      "wr": 59.61,
+      "pf": 1.584,
+      "pnl": 5383.11,
+      "ppt": 0.2103,
+      "early_gdn_los": 720,
+      "trade_pct_vs_baseline": 100.0
+    },
+    "2": {
+      "trades": 25596,
+      "wr": 59.64,
+      "pf": 1.593,
+      "pnl": 5464.23,
+      "ppt": 0.2135,
+      "early_gdn_los": 740,
+      "trade_pct_vs_baseline": 100.0
+    },
+    "3": {
+      "trades": 25596,
+      "wr": 59.35,
+      "pf": 1.618,
+      "pnl": 5788.94,
+      "ppt": 0.2262,
+      "early_gdn_los": 788,
+      "trade_pct_vs_baseline": 100.0
+    },
+    "4": {
+      "trades": 25596,
+      "wr": 58.68,
+      "pf": 1.617,
+      "pnl": 5933.36,
+      "ppt": 0.2318,
+      "early_gdn_los": 38,
+      "trade_pct_vs_baseline": 100.0
+    },
+    "5": {
+      "trades": 25596,
+      "wr": 58.45,
+      "pf": 1.621,
+      "pnl": 6126.58,
+      "ppt": 0.2394,
+      "early_gdn_los": 38,
+      "trade_pct_vs_baseline": 100.0
+    }
+  }
+}

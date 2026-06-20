@@ -1,0 +1,111 @@
+{
+  "run_name": "tb_guardian_momentum_v1",
+  "trained_at": "2026-06-14T23:20:34.992927",
+  "entry_model": "tb_lgbm_flatboost_v2",
+  "n_static_base": 18,
+  "n_static_new": 4,
+  "n_dynamic": 7,
+  "n_total": 29,
+  "n_samples": 129893,
+  "label_dist": {
+    "0": 93808,
+    "1": 3522,
+    "2": 32563
+  },
+  "exit2_pnl_mean": 0.939,
+  "exit2_pct_pos": 78.0,
+  "new_feats_importance_pct": 7.1,
+  "dynamic_importance_pct": 50.1,
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.2508,
+      "f1_macro": 0.8527
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2721,
+      "f1_macro": 0.8544
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2465,
+      "f1_macro": 0.8528
+    },
+    {
+      "fold": 4,
+      "logloss": 0.1907,
+      "f1_macro": 0.8464
+    },
+    {
+      "fold": 5,
+      "logloss": 0.1861,
+      "f1_macro": 0.8382
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2246,
+      "f1_macro": 0.8477
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2358,
+      "f1_macro": 0.8609
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2296,
+      "f1_macro": 0.8493
+    }
+  ],
+  "top12_features": [
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 2517.0
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 2379.0
+    },
+    {
+      "feature": "current_pnl_atr",
+      "importance": 1939.0
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 1731.0
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 1705.0
+    },
+    {
+      "feature": "ema_200_h1",
+      "importance": 876.0
+    },
+    {
+      "feature": "dist_swing_low",
+      "importance": 851.0
+    },
+    {
+      "feature": "ema_7_h1",
+      "importance": 793.0
+    },
+    {
+      "feature": "entry_price_ratio",
+      "importance": 749.0
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "importance": 682.0
+    },
+    {
+      "feature": "Sell_Liq",
+      "importance": 679.0
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "importance": 652.0
+    }
+  ]
+}

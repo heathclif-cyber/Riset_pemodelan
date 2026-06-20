@@ -1,0 +1,85 @@
+{
+  "protocol": "genuine_oof",
+  "stack": "B-dir + continuation_v1 + min_hold=4 + SL close",
+  "created": "2026-06-18T17:06:10.169609",
+  "baseline": {
+    "label": "no_pyr",
+    "config": {
+      "label": "no_pyr",
+      "enabled": false,
+      "max_per_coin": 1,
+      "exit_mode": "independent"
+    },
+    "trades": 6381,
+    "wr": 69.41,
+    "pf": 3.12,
+    "pnl": 3636.15,
+    "ppt": 0.5698,
+    "avg_hold_bars": 11.99,
+    "avg_legs": 1.0,
+    "pct_2leg": 0.0,
+    "avg_modal": 10.0
+  },
+  "results": {
+    "no_pyr": {
+      "label": "no_pyr",
+      "config": {
+        "label": "no_pyr",
+        "enabled": false,
+        "max_per_coin": 1,
+        "exit_mode": "independent"
+      },
+      "trades": 6381,
+      "wr": 69.41,
+      "pf": 3.12,
+      "pnl": 3636.15,
+      "ppt": 0.5698,
+      "avg_hold_bars": 11.99,
+      "avg_legs": 1.0,
+      "pct_2leg": 0.0,
+      "avg_modal": 10.0
+    },
+    "pyr2_shared_sl_first": {
+      "label": "pyr2_shared_sl_first",
+      "config": {
+        "label": "pyr2_shared_sl_first",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "shared_sl_first"
+      },
+      "trades": 7931,
+      "wr": 69.4,
+      "pf": 3.065,
+      "pnl": 4480.41,
+      "ppt": 0.5649,
+      "avg_hold_bars": 12.02,
+      "avg_legs": 1.0,
+      "pct_2leg": 0.0,
+      "avg_modal": 10.0,
+      "delta_trades_pct": 24.3,
+      "delta_ppt": -0.0049,
+      "delta_pnl_pct": 23.2
+    },
+    "pyr2_scale_in": {
+      "label": "pyr2_scale_in",
+      "config": {
+        "label": "pyr2_scale_in",
+        "enabled": true,
+        "max_per_coin": 2,
+        "exit_mode": "scale_in"
+      },
+      "trades": 6388,
+      "wr": 68.39,
+      "pf": 3.28,
+      "pnl": 5128.75,
+      "ppt": 0.8029,
+      "avg_hold_bars": 11.99,
+      "avg_legs": 1.25,
+      "pct_2leg": 25.5,
+      "avg_modal": 12.55,
+      "delta_trades_pct": 0.1,
+      "delta_ppt": 0.2331,
+      "delta_pnl_pct": 41.0
+    }
+  }
+}

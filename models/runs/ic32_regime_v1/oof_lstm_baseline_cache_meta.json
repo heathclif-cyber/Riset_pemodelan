@@ -1,0 +1,9 @@
+{
+  "created": "2026-06-18T11:33:59.116304",
+  "model": "lstm_best.pt",
+  "n_features": 11,
+  "n_rows": 731164,
+  "n_coins": 21,
+  "methodology": "fixed_model_inference_aligned_to_lgbm_oof_bars",
+  "note": "Same as production -- not purged CV LSTM OOF"
+}

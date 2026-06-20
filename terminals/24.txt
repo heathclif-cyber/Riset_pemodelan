@@ -1,0 +1,21 @@
+---
+pid: 10332
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05s_pump_short_slice_eval.py"
+started_at: 2026-06-16T11:45:47.215Z
+running_for_ms: 2350011  
+---
+
+==============================================================================
+  05s: Pump/SHORT slice eval (genuine OOF)
+  Stacks: 3 | vol_thr=2.0 | rally_frac>=0.8
+==============================================================================
+
+  [ref_genuine_v2] LSTM=tb_lstm_genuine_v2 opp_pen=0.14
+Traceback (most recent call last):
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05s_pump_short_slice_eval.py", line 289, in <module>
+    main()
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05s_pump_short_slice_eval.py", line 244, in main
+    print(f"    signal: conflict={sig['conflict_bars']} pen={sig['conflict_pen']} "
+                                                             ~~~^^^^^^^^^^^^^^^^
+KeyError: 'conflict_pen'

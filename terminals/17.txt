@@ -1,0 +1,74 @@
+---
+pid: 11828
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05l_multi_coin_pump_eval.py"
+started_at: 2026-06-16T08:31:40.574Z
+running_for_ms: 13805006 
+---
+
+==============================================================================
+  05l: Multi-Coin Pump Eval (breadth gate + top-K per bar)
+  Configs: 20 | Pipeline top-12
+==============================================================================
+  Coins: 21 | Rally bars (br>=0.8, max_p2<0.45): 1,888
+  Ref 05j: boost+=72 rally+=0
+
+  STAGE A — TOP 8 SIGNAL
+  Label                                                      rally+ boost+   n_dir
+  cond_BP_bu38_be50_g3_b10_o14_br80_kl3                           0      4  35,794
+  cond_BP_bu38_be50_g5_b10_o14_br80_kl3                           0      4  35,794
+  cond_BP_bu38_be50_g8_b10_o14_br80_kl3                           0      4  35,794
+  cond_BP_bu38_be50_g3_b10_o14_br80_mp45_kl3                      0      0  35,790
+  cond_BP_bu38_be50_g5_b10_o14_br80_mp45_kl3                      0      0  35,790
+  cond_BP_bu38_be50_g8_b10_o14_br80_mp45_kl3                      0      0  35,790
+  ref_05j_winner                                                  0     72  38,249
+  cond_BP_bu38_be50_g3_b10_o14_br80_kl5                           0      5  37,290
+
+  STAGE B — PIPELINE (13 configs)
+  [1] baseline_no_lstm
+       port PPT=+0.5041 | new_mom N=0 PPT=+0.0000 (23s)
+  [2] ref_05j_winner
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [3] cond_BP_bu38_be50_g3_b10_o14_br80_kl3
+       port PPT=+0.4627 | new_mom N=3 PPT=-0.1456 (23s)
+  [4] cond_BP_bu38_be50_g5_b10_o14_br80_kl3
+       port PPT=+0.4627 | new_mom N=3 PPT=-0.1456 (22s)
+  [5] cond_BP_bu38_be50_g8_b10_o14_br80_kl3
+       port PPT=+0.4627 | new_mom N=3 PPT=-0.1456 (22s)
+  [6] cond_BP_bu38_be50_g3_b10_o14_br80_mp45_kl3
+       port PPT=+0.4627 | new_mom N=0 PPT=+0.0000 (22s)
+  [7] cond_BP_bu38_be50_g5_b10_o14_br80_mp45_kl3
+       port PPT=+0.4627 | new_mom N=0 PPT=+0.0000 (23s)
+  [8] cond_BP_bu38_be50_g8_b10_o14_br80_mp45_kl3
+       port PPT=+0.4627 | new_mom N=0 PPT=+0.0000 (22s)
+  [9] cond_BP_bu38_be50_g3_b10_o14_br80_kl5
+       port PPT=+0.4848 | new_mom N=3 PPT=-0.1456 (23s)
+  [10] cond_BP_bu38_be50_g5_b10_o14_br80_kl5
+       port PPT=+0.4848 | new_mom N=3 PPT=-0.1456 (23s)
+  [11] cond_BP_bu38_be50_g8_b10_o14_br80_kl5
+       port PPT=+0.4848 | new_mom N=3 PPT=-0.1456 (23s)
+  [12] cond_BP_bu38_be50_g3_b10_o14_br80_mp45_kl5
+       port PPT=+0.4849 | new_mom N=0 PPT=+0.0000 (23s)
+  [13] cond_BP_bu38_be50_g5_b10_o14_br80_mp45_kl5
+       port PPT=+0.4849 | new_mom N=0 PPT=+0.0000 (23s)
+
+==============================================================================
+  STAGE B SUMMARY (vs ref_05j_winner)
+==============================================================================
+  REF 05j: port PPT=+0.5049 | new_mom N=46 PPT=+0.7398
+  Label                                            newMomN  newMomPPT   portPPT   dPort PASS
+  cond_BP_bu38_be50_g3_b10_o14_br80_mp45_kl5             0    +0.0000   +0.4849 -0.0200    N
+  cond_BP_bu38_be50_g5_b10_o14_br80_mp45_kl5             0    +0.0000   +0.4849 -0.0200    N
+  cond_BP_bu38_be50_g3_b10_o14_br80_kl5                  3    -0.1456   +0.4848 -0.0201    N
+  cond_BP_bu38_be50_g5_b10_o14_br80_kl5                  3    -0.1456   +0.4848 -0.0201    N
+  cond_BP_bu38_be50_g8_b10_o14_br80_kl5                  3    -0.1456   +0.4848 -0.0201    N
+  cond_BP_bu38_be50_g3_b10_o14_br80_mp45_kl3             0    +0.0000   +0.4627 -0.0421    N
+  cond_BP_bu38_be50_g5_b10_o14_br80_mp45_kl3             0    +0.0000   +0.4627 -0.0421    N
+  cond_BP_bu38_be50_g8_b10_o14_br80_mp45_kl3             0    +0.0000   +0.4627 -0.0421    N
+  cond_BP_bu38_be50_g3_b10_o14_br80_kl3                  3    -0.1456   +0.4627 -0.0422    N
+  cond_BP_bu38_be50_g5_b10_o14_br80_kl3                  3    -0.1456   +0.4627 -0.0422    N
+
+  Decision: PROMOTE_CANDIDATE | Elapsed: 5.5 min
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\multi_coin_pump_eval.json
+==============================================================================
+

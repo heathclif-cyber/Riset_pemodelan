@@ -1,0 +1,123 @@
+{
+  "run_name": "ic32_lstm_swing_complement_v2",
+  "model_type": "lstm_swing_complement_flat_only",
+  "lgbm_partner": "ic32_regime_v1",
+  "label_source": "swing_h4 (features_v3 label column)",
+  "sample_filter": "pump_dump_gate AND ic32_lgbm_flat",
+  "ic32_thr_long": 0.69,
+  "ic32_thr_short": 0.59,
+  "loss": "focal_loss",
+  "complement_cfg": {
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "vol_spike_thr": 2.0,
+    "focal_gamma": 2.0,
+    "alpha_bear_boost": 1.6,
+    "alpha_bull_boost": 1.3,
+    "alpha_neu_scale": 0.9
+  },
+  "n_features": 11,
+  "features": [
+    "long_short_ratio",
+    "rsi_slope_h4",
+    "cvd_slope_h4",
+    "cvd_momentum_adv",
+    "volume_delta",
+    "vol_price_confirm",
+    "Buy_Liq",
+    "absorption_at_swing",
+    "trend_accel_4h",
+    "etf_total_change_usd",
+    "dist_liq_50x_long"
+  ],
+  "seq_len": 72,
+  "purge_gap": 36,
+  "n_folds": 8,
+  "n_samples": 133164,
+  "mean_f1_macro": 0.436,
+  "std_f1_macro": 0.0399,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.3785,
+      "f1_SHORT": 0.0441,
+      "f1_FLAT": 0.7809,
+      "f1_LONG": 0.3104,
+      "best_epoch": 36
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.3941,
+      "f1_SHORT": 0.1285,
+      "f1_FLAT": 0.7946,
+      "f1_LONG": 0.2592,
+      "best_epoch": 32
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.4518,
+      "f1_SHORT": 0.2735,
+      "f1_FLAT": 0.813,
+      "f1_LONG": 0.2688,
+      "best_epoch": 76
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.4117,
+      "f1_SHORT": 0.2113,
+      "f1_FLAT": 0.8034,
+      "f1_LONG": 0.2204,
+      "best_epoch": 32
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.4135,
+      "f1_SHORT": 0.1763,
+      "f1_FLAT": 0.7965,
+      "f1_LONG": 0.2676,
+      "best_epoch": 17
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.4695,
+      "f1_SHORT": 0.264,
+      "f1_FLAT": 0.8147,
+      "f1_LONG": 0.3298,
+      "best_epoch": 58
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.4684,
+      "f1_SHORT": 0.2699,
+      "f1_FLAT": 0.813,
+      "f1_LONG": 0.3221,
+      "best_epoch": 20
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.5003,
+      "f1_SHORT": 0.3077,
+      "f1_FLAT": 0.8312,
+      "f1_LONG": 0.3621,
+      "best_epoch": 44
+    }
+  ],
+  "complement_asymmetric_oof": {
+    "n_pool": 32068,
+    "n_complement": 10372,
+    "n_bull": 9720,
+    "n_bear": 652,
+    "bull_precision": 0.4552,
+    "bear_precision": 0.4939,
+    "mixed_precision_dir": 0.5636,
+    "bull_thr": 0.38,
+    "bear_thr": 0.5
+  },
+  "lstm_prod_n_feat": 11,
+  "feature_source": "feature_cols_lstm_temporal.json[:11] (matches lstm_best.pt)",
+  "baseline_compare": "lstm_best.pt hard_consensus (08_oof_ic32_full_stack)",
+  "prior_run_compare": "ic32_lstm_swing_complement_v1 (18 feat, unfair)",
+  "created": "2026-06-18T00:20:03.161455",
+  "train_cutoff": "2026-04-01",
+  "methodology": "purged CV OOF, scaler per fold, complement flat-only, holdout not used"
+}

@@ -1,0 +1,23 @@
+[
+  "cvd_slope_h4",
+  "ofi_h4_delta",
+  "wyckoff_phase",
+  "atr_percentile_h1",
+  "stochrsi_d",
+  "Sell_Liq",
+  "ema_50_slope_h4",
+  "Buy_Liq",
+  "Fib_786",
+  "ema_7_h1",
+  "dow_cos",
+  "cvd_div_h4",
+  "dist_swing_high",
+  "VAH",
+  "cvd_momentum_adv",
+  "funding_rate",
+  "ema_200_h1",
+  "dist_liq_50x_short",
+  "dist_swing_low",
+  "dist_from_8h_high",
+  "stochrsi_k"
+]

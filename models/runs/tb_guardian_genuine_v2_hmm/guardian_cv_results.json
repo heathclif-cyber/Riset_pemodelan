@@ -1,0 +1,163 @@
+{
+  "run_name": "tb_guardian_genuine_v2_hmm",
+  "created": "2026-06-15T21:43:08.865508",
+  "lgbm_source": "tb_lgbm_genuine_v2",
+  "hmm_config": "B",
+  "hmm_thresholds": {
+    "0": [
+      0.55,
+      0.55
+    ],
+    "1": [
+      0.55,
+      0.55
+    ],
+    "2": [
+      0.5,
+      0.5
+    ],
+    "3": [
+      0.45,
+      0.5
+    ],
+    "-1": [
+      0.45,
+      0.45
+    ]
+  },
+  "n_samples": 246079,
+  "n_features": 25,
+  "features": [
+    "etf_gbtc_change_usd",
+    "etf_total_change_usd",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "Sell_Liq",
+    "atr_percentile_h1",
+    "stochrsi_k",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_low",
+    "VAH",
+    "cvd_momentum_adv",
+    "dist_from_8h_high",
+    "ema_200_h1",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio"
+  ],
+  "n_folds": 8,
+  "purge_bars": 36,
+  "mean_logloss": 0.2184,
+  "best_logloss": 0.1951,
+  "mean_f1_macro": 0.8546,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 27307,
+      "n_val": 27306,
+      "logloss": 0.1951,
+      "f1_macro": 0.8353,
+      "best_iter": 261
+    },
+    {
+      "fold": 2,
+      "n_train": 54649,
+      "n_val": 27306,
+      "logloss": 0.2147,
+      "f1_macro": 0.8642,
+      "best_iter": 292
+    },
+    {
+      "fold": 3,
+      "n_train": 81991,
+      "n_val": 27306,
+      "logloss": 0.198,
+      "f1_macro": 0.841,
+      "best_iter": 434
+    },
+    {
+      "fold": 4,
+      "n_train": 109333,
+      "n_val": 27306,
+      "logloss": 0.2197,
+      "f1_macro": 0.8587,
+      "best_iter": 447
+    },
+    {
+      "fold": 5,
+      "n_train": 136675,
+      "n_val": 27306,
+      "logloss": 0.2247,
+      "f1_macro": 0.8561,
+      "best_iter": 700
+    },
+    {
+      "fold": 6,
+      "n_train": 164017,
+      "n_val": 27306,
+      "logloss": 0.2275,
+      "f1_macro": 0.8623,
+      "best_iter": 611
+    },
+    {
+      "fold": 7,
+      "n_train": 191359,
+      "n_val": 27306,
+      "logloss": 0.2438,
+      "f1_macro": 0.8501,
+      "best_iter": 518
+    },
+    {
+      "fold": 8,
+      "n_train": 218701,
+      "n_val": 27306,
+      "logloss": 0.224,
+      "f1_macro": 0.8688,
+      "best_iter": 1206
+    }
+  ],
+  "label_dist": {
+    "HOLD": 174389,
+    "PARTIAL": 6963,
+    "EXIT": 64727
+  },
+  "methodology": "OOF trades genuine_v2 (34-feat LGBM + HMM Config B gate), scaler per fold",
+  "static_feats": [
+    "etf_gbtc_change_usd",
+    "etf_total_change_usd",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "Sell_Liq",
+    "atr_percentile_h1",
+    "stochrsi_k",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_low",
+    "VAH",
+    "cvd_momentum_adv",
+    "dist_from_8h_high",
+    "ema_200_h1"
+  ],
+  "dynamic_feats": [
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio"
+  ]
+}

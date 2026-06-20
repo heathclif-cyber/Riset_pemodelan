@@ -1,0 +1,15 @@
+[
+  "atr_14_h4",
+  "atr_percent_h4",
+  "atr_percentile_h1",
+  "buy_volume",
+  "sell_volume",
+  "vol_ratio_20",
+  "vol_spike_zscore",
+  "vol_efficiency",
+  "bars_since_BOS",
+  "dist_liq_20x_long",
+  "effort_vs_result",
+  "spread_to_volume",
+  "vwdp_smooth"
+]

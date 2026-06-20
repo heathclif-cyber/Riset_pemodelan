@@ -1,0 +1,100 @@
+{
+  "protocol": {
+    "name": "genuine_oof_full",
+    "oof_start": "2020-08-26 11:00:00+00:00",
+    "oof_end": "2025-10-31 23:00:00+00:00",
+    "labeled_end": "2025-10-31 23:00:00+00:00",
+    "train_cutoff": "2026-04-01 00:00:00+00:00",
+    "lgbm_signal": "oof_proba_has_oof_only",
+    "holdout_policy": "confirm_holdout_flag_only"
+  },
+  "oof": {
+    "h1_immediate": {
+      "trades": 25596,
+      "wr": 55.5,
+      "pnl": 3563.86,
+      "ppt": 0.139,
+      "confirm_rate_pct": 100.0,
+      "n_signal": 27960,
+      "n_skipped": 0,
+      "n_wins": 14217,
+      "delta_ppt_vs_h1": -0.0
+    },
+    "m15_delay1": {
+      "trades": 22918,
+      "wr": 54.0,
+      "pnl": 2485.75,
+      "ppt": 0.108,
+      "confirm_rate_pct": 99.3,
+      "n_signal": 27960,
+      "n_skipped": 204,
+      "n_wins": 12365,
+      "delta_ppt_vs_h1": -0.031
+    },
+    "m15_delay2": {
+      "trades": 22777,
+      "wr": 54.6,
+      "pnl": 2876.58,
+      "ppt": 0.126,
+      "confirm_rate_pct": 99.3,
+      "n_signal": 27960,
+      "n_skipped": 204,
+      "n_wins": 12442,
+      "delta_ppt_vs_h1": -0.013
+    },
+    "m15_align": {
+      "trades": 19696,
+      "wr": 54.3,
+      "pnl": 2359.95,
+      "ppt": 0.12,
+      "confirm_rate_pct": 85.3,
+      "n_signal": 27960,
+      "n_skipped": 4121,
+      "n_wins": 10696,
+      "delta_ppt_vs_h1": -0.019
+    },
+    "m15_pullback_02": {
+      "trades": 11862,
+      "wr": 57.7,
+      "pnl": 2458.93,
+      "ppt": 0.207,
+      "confirm_rate_pct": 51.8,
+      "n_signal": 27960,
+      "n_skipped": 13481,
+      "n_wins": 6848,
+      "delta_ppt_vs_h1": 0.068
+    },
+    "m15_no_adverse_03": {
+      "trades": 21928,
+      "wr": 50.2,
+      "pnl": -125.76,
+      "ppt": -0.006,
+      "confirm_rate_pct": 93.1,
+      "n_signal": 27960,
+      "n_skipped": 1916,
+      "n_wins": 11018,
+      "delta_ppt_vs_h1": -0.145
+    }
+  },
+  "oof_coins": 21,
+  "oof_bars_total": 731164,
+  "config": {
+    "max_wait_m15": 4,
+    "rules": [
+      "h1_immediate",
+      "m15_delay1",
+      "m15_delay2",
+      "m15_align",
+      "m15_pullback_02",
+      "m15_no_adverse_03"
+    ],
+    "sl_trigger_mode": "highlow",
+    "live_thr": {
+      "thr_long": 0.69,
+      "thr_short": 0.59,
+      "conf_entry": 0.59,
+      "gdn_exit": 0.65,
+      "gdn_min_hold": 2
+    }
+  }
+}

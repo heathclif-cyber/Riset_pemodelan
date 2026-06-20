@@ -1,0 +1,101 @@
+{
+  "run_name": "tb_guardian_fb_v1",
+  "trained_at": "2026-06-14T19:29:56.291176",
+  "variant": "Opsi A: 27 flatboost_v2 static + 7 dynamic",
+  "n_static": 27,
+  "n_dynamic": 7,
+  "n_total_feats": 34,
+  "n_samples": 129893,
+  "label_dist": {
+    "0": 93808,
+    "1": 3522,
+    "2": 32563
+  },
+  "exit2_pnl_mean": 0.939,
+  "exit2_pct_pos": 78.0,
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.2498,
+      "f1_macro": 0.8533
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2742,
+      "f1_macro": 0.855
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2494,
+      "f1_macro": 0.85
+    },
+    {
+      "fold": 4,
+      "logloss": 0.1916,
+      "f1_macro": 0.8384
+    },
+    {
+      "fold": 5,
+      "logloss": 0.1877,
+      "f1_macro": 0.834
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2228,
+      "f1_macro": 0.8509
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2357,
+      "f1_macro": 0.8609
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2289,
+      "f1_macro": 0.8469
+    }
+  ],
+  "dynamic_importance_pct": 49.9,
+  "top10_features": [
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 2451.0
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 2286.0
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 1845.0
+    },
+    {
+      "feature": "current_pnl_atr",
+      "importance": 1791.0
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 1777.0
+    },
+    {
+      "feature": "atr_percent_h4",
+      "importance": 907.0
+    },
+    {
+      "feature": "dist_swing_high",
+      "importance": 850.0
+    },
+    {
+      "feature": "Buy_Liq",
+      "importance": 681.0
+    },
+    {
+      "feature": "entry_price_ratio",
+      "importance": 659.0
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "importance": 635.0
+    }
+  ]
+}

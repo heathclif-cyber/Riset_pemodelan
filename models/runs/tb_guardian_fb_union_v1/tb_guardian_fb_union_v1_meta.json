@@ -1,0 +1,102 @@
+{
+  "run_name": "tb_guardian_fb_union_v1",
+  "trained_at": "2026-06-14T19:30:59.005196",
+  "variant": "Opsi B: union(27 fb_v2, 33 v2) static + 7 dynamic",
+  "n_static_union": 36,
+  "n_static_used": 36,
+  "n_dynamic": 7,
+  "n_total_feats": 43,
+  "n_samples": 129893,
+  "label_dist": {
+    "0": 93808,
+    "1": 3522,
+    "2": 32563
+  },
+  "exit2_pnl_mean": 0.939,
+  "exit2_pct_pos": 78.0,
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.2489,
+      "f1_macro": 0.8558
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2722,
+      "f1_macro": 0.8573
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2476,
+      "f1_macro": 0.8498
+    },
+    {
+      "fold": 4,
+      "logloss": 0.1909,
+      "f1_macro": 0.8412
+    },
+    {
+      "fold": 5,
+      "logloss": 0.1867,
+      "f1_macro": 0.8357
+    },
+    {
+      "fold": 6,
+      "logloss": 0.22,
+      "f1_macro": 0.854
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2357,
+      "f1_macro": 0.8628
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2284,
+      "f1_macro": 0.8487
+    }
+  ],
+  "dynamic_importance_pct": 44.1,
+  "top10_features": [
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 2400.0
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 2136.0
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 1752.0
+    },
+    {
+      "feature": "current_pnl_atr",
+      "importance": 1672.0
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 1647.0
+    },
+    {
+      "feature": "atr_percent_h4",
+      "importance": 816.0
+    },
+    {
+      "feature": "dist_swing_high",
+      "importance": 721.0
+    },
+    {
+      "feature": "ema_200_h1",
+      "importance": 699.0
+    },
+    {
+      "feature": "dist_swing_low",
+      "importance": 688.0
+    },
+    {
+      "feature": "atr_percentile_h1",
+      "importance": 585.0
+    }
+  ]
+}

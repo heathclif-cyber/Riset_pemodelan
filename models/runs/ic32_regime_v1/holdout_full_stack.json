@@ -1,0 +1,56 @@
+{
+  "ic32_lgbm_only": {
+    "name": "ic32 LGBM only",
+    "trades": 1513,
+    "wr": 56.58,
+    "long_wr": 64.23,
+    "short_wr": 52.4,
+    "long_pct": 35.29,
+    "pnl": 322.57,
+    "pnl_per_trade": 0.213,
+    "pnl_per_month": 64.51,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.0
+  },
+  "ic32_plus_guardian": {
+    "name": "ic32 + Guardian",
+    "trades": 1513,
+    "wr": 0.0,
+    "long_wr": 0.0,
+    "short_wr": 0.0,
+    "long_pct": 35.29,
+    "pnl": -748.98,
+    "pnl_per_trade": -0.495,
+    "pnl_per_month": -149.8,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.0
+  },
+  "ic32_plus_lstm": {
+    "name": "ic32 + LSTM",
+    "trades": 841,
+    "wr": 55.17,
+    "long_wr": 63.61,
+    "short_wr": 50.1,
+    "long_pct": 37.57,
+    "pnl": 161.18,
+    "pnl_per_trade": 0.192,
+    "pnl_per_month": 32.24,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.0
+  },
+  "ic32_plus_lstm_guardian": {
+    "name": "ic32 + LSTM + Guardian",
+    "trades": 841,
+    "wr": 0.0,
+    "long_wr": 0.0,
+    "short_wr": 0.0,
+    "long_pct": 37.57,
+    "pnl": -446.65,
+    "pnl_per_trade": -0.531,
+    "pnl_per_month": -89.33,
+    "sl_rate": 0.0,
+    "gd_exit_rate": 0.0
+  },
+  "best": "LGBM only",
+  "note": "swing-based TP/SL, full_trading_report(), 21 coins Nov2025-Apr2026, READ-ONLY models from swint_tradev2"
+}

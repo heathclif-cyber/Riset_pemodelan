@@ -1,0 +1,81 @@
+{
+  "model": "tb_widyawardhana_v2_continuation",
+  "period": "Apr-Jun 2026",
+  "total_trades": 918,
+  "win_rate": 70.3,
+  "payoff_ratio": 1.1448,
+  "full_kelly_avg_frac": 0.2439,
+  "initial_bankroll": 1000.0,
+  "results": {
+    "Fixed $10": {
+      "total_pnl": 284.06,
+      "monthly": {
+        "2026-04": 163.69,
+        "2026-05": 101.53,
+        "2026-06": 18.84
+      },
+      "avg_factor": 1.0,
+      "max_dd": -8.65,
+      "avg_modal": 10.0
+    },
+    "D_shift3": {
+      "total_pnl": 416.15,
+      "monthly": {
+        "2026-04": 228.36,
+        "2026-05": 153.71,
+        "2026-06": 34.08
+      },
+      "avg_factor": 1.333,
+      "avg_modal": 13.33,
+      "max_dd": -7.48
+    },
+    "Full Kelly (f*)": {
+      "total_pnl": 1420.31,
+      "monthly": {
+        "2026-04": 818.47,
+        "2026-05": 507.66,
+        "2026-06": 94.19
+      },
+      "avg_factor": 5.0,
+      "avg_modal": 50.0,
+      "max_dd": -43.26,
+      "final_bankroll": 2420.31,
+      "factor_range": [
+        5.0,
+        5.0
+      ]
+    },
+    "Half Kelly (f*/2)": {
+      "total_pnl": 1415.72,
+      "monthly": {
+        "2026-04": 813.88,
+        "2026-05": 507.66,
+        "2026-06": 94.19
+      },
+      "avg_factor": 4.991,
+      "avg_modal": 49.91,
+      "max_dd": -43.26,
+      "final_bankroll": 2415.72,
+      "factor_range": [
+        3.57,
+        5.0
+      ]
+    },
+    "Qtr Kelly (f*/4)": {
+      "total_pnl": 1384.38,
+      "monthly": {
+        "2026-04": 786.32,
+        "2026-05": 503.1,
+        "2026-06": 94.95
+      },
+      "avg_factor": 4.837,
+      "avg_modal": 48.37,
+      "max_dd": -42.66,
+      "final_bankroll": 2384.38,
+      "factor_range": [
+        1.77,
+        5.0
+      ]
+    }
+  }
+}

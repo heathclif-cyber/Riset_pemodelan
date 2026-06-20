@@ -1,0 +1,183 @@
+{
+  "meta": {
+    "run": "ic32_regime_v1",
+    "methodology": "genuine_oof_full_stack_adaptive_hmm",
+    "adaptive_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\ic32_regime_v1\\hmm_adaptive_config_c_ic32.json",
+    "guardian_model": "guardian_clean_v2.pkl",
+    "generated_at": "2026-06-18 01:33:18"
+  },
+  "candidates": [
+    {
+      "name": "C-static",
+      "aggregate": {
+        "total_trades": 11399,
+        "win_rate": 61.13,
+        "long_pct": 51.4,
+        "short_long_ratio": 0.946,
+        "total_pnl": 3256.56,
+        "pnl_per_trade": 0.2857,
+        "profit_factor": 1.851
+      },
+      "base_cfg": {
+        "0": [
+          0.69,
+          0.69
+        ],
+        "1": [
+          0.72,
+          0.72
+        ],
+        "2": [
+          0.69,
+          0.69
+        ],
+        "3": [
+          0.65,
+          0.65
+        ],
+        "-1": [
+          0.69,
+          0.59
+        ]
+      },
+      "offsets": null
+    },
+    {
+      "name": "A-H4-adaptive",
+      "aggregate": {
+        "total_trades": 8104,
+        "win_rate": 62.69,
+        "long_pct": 43.23,
+        "short_long_ratio": 1.313,
+        "total_pnl": 2637.36,
+        "pnl_per_trade": 0.3254,
+        "profit_factor": 2.027
+      },
+      "base_cfg": {
+        "0": [
+          0.69,
+          0.69
+        ],
+        "1": [
+          0.72,
+          0.72
+        ],
+        "2": [
+          0.69,
+          0.69
+        ],
+        "3": [
+          0.65,
+          0.65
+        ],
+        "-1": [
+          0.69,
+          0.59
+        ]
+      },
+      "offsets": {
+        "ranging_wt_tight": 0.05,
+        "ranging_ct_ease": 0.0,
+        "trending_wt_ease": 0.0,
+        "trending_ct_tight": 0.07
+      }
+    },
+    {
+      "name": "B-dir-combined",
+      "aggregate": {
+        "total_trades": 8833,
+        "win_rate": 62.48,
+        "long_pct": 56.31,
+        "short_long_ratio": 0.776,
+        "total_pnl": 2902.34,
+        "pnl_per_trade": 0.3286,
+        "profit_factor": 2.024
+      },
+      "base_cfg": {
+        "0": [
+          0.72,
+          0.72
+        ],
+        "1": [
+          0.72,
+          0.72
+        ],
+        "2": [
+          0.72,
+          0.72
+        ],
+        "3": [
+          0.65,
+          0.72
+        ],
+        "-1": [
+          0.69,
+          0.59
+        ]
+      },
+      "offsets": null
+    },
+    {
+      "name": "C-combined-adaptive",
+      "aggregate": {
+        "total_trades": 6229,
+        "win_rate": 63.53,
+        "long_pct": 47.25,
+        "short_long_ratio": 1.117,
+        "total_pnl": 2208.0,
+        "pnl_per_trade": 0.3545,
+        "profit_factor": 2.142
+      },
+      "base_cfg": {
+        "0": [
+          0.72,
+          0.72
+        ],
+        "1": [
+          0.72,
+          0.72
+        ],
+        "2": [
+          0.72,
+          0.72
+        ],
+        "3": [
+          0.65,
+          0.72
+        ],
+        "-1": [
+          0.69,
+          0.59
+        ]
+      },
+      "offsets": {
+        "ranging_wt_tight": 0.05,
+        "ranging_ct_ease": 0.0,
+        "trending_wt_ease": 0.0,
+        "trending_ct_tight": 0.07
+      }
+    }
+  ],
+  "vs_config_c_static_full_stack": {
+    "total_trades": 11399,
+    "trades_per_month": 152.0,
+    "win_rate": 61.13,
+    "long_wr": 59.55,
+    "short_wr": 62.8,
+    "long_pct": 51.4,
+    "short_long_ratio": 0.946,
+    "total_pnl": 3256.56,
+    "pnl_per_trade": 0.2857,
+    "profit_factor": 1.851,
+    "sl_rate_pct": 0.0,
+    "guardian_exit_pct": 66.37,
+    "outcome_counts": {
+      "LOSS": 2352,
+      "GUARDIAN_EXIT": 4136,
+      "GUARDIAN_MOMENTUM_EXIT": 3040,
+      "GUARDIAN_MOMENTUM_PARTIAL": 389,
+      "TIMEOUT_MOMENTUM": 1144,
+      "TIMEOUT": 338
+    }
+  }
+}

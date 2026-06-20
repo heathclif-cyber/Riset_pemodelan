@@ -1,0 +1,104 @@
+{
+  "run_name": "tb_ic_v2",
+  "final_features": [
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "atr_percentile_h1",
+    "stochrsi_d",
+    "Sell_Liq",
+    "ema_50_slope_h4",
+    "Buy_Liq",
+    "Fib_786",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_high",
+    "VAH",
+    "cvd_momentum_adv"
+  ],
+  "n_final": 15,
+  "vs_v3": {
+    "added": [
+      "stochrsi_d",
+      "ema_50_slope_h4",
+      "Buy_Liq",
+      "Fib_786",
+      "dist_swing_high"
+    ],
+    "removed": [
+      "etf_gbtc_change_usd",
+      "etf_total_change_usd",
+      "stochrsi_k",
+      "dist_liq_50x_short",
+      "funding_rate",
+      "dist_swing_low",
+      "dist_from_8h_high",
+      "ema_200_h1"
+    ],
+    "same": [
+      "cvd_slope_h4",
+      "ofi_h4_delta",
+      "wyckoff_phase",
+      "atr_percentile_h1",
+      "Sell_Liq",
+      "ema_7_h1",
+      "dow_cos",
+      "cvd_div_h4",
+      "VAH",
+      "cvd_momentum_adv"
+    ]
+  },
+  "new_features_result": {
+    "ls_pos_zscore_20d": {
+      "verdict": "KEEP",
+      "standalone_ic": 0.0591,
+      "tstat": 10.71
+    },
+    "oi_price_div_1d": {
+      "verdict": "KEEP",
+      "standalone_ic": 0.028,
+      "tstat": 5.07
+    },
+    "smart_retail_div_delta_1d": {
+      "verdict": "REDUNDANT",
+      "standalone_ic": 0.0342,
+      "tstat": 6.19
+    },
+    "oi_pct_1d": {
+      "verdict": "REDUNDANT",
+      "standalone_ic": 0.0287,
+      "tstat": 5.2
+    },
+    "lower_wick_ratio": {
+      "verdict": "WEAK",
+      "standalone_ic": -0.019,
+      "tstat": -3.45
+    },
+    "upper_wick_ratio": {
+      "verdict": "DROP",
+      "standalone_ic": 0.012,
+      "tstat": 2.16
+    },
+    "funding_rate_zscore_20d": {
+      "verdict": "DROP",
+      "standalone_ic": -0.0081,
+      "tstat": -1.46
+    },
+    "candle_range_atr_ratio": {
+      "verdict": "DROP",
+      "standalone_ic": 0.0063,
+      "tstat": 1.13
+    },
+    "candle_body_ratio": {
+      "verdict": "DROP",
+      "standalone_ic": 0.0055,
+      "tstat": 1.0
+    },
+    "funding_rate_change_8h": {
+      "verdict": "DROP",
+      "standalone_ic": -0.0013,
+      "tstat": -0.23
+    }
+  }
+}

@@ -1,0 +1,20 @@
+[
+  "long_short_ratio",
+  "rsi_slope_h4",
+  "cvd_slope_h4",
+  "cvd_momentum_adv",
+  "volume_delta",
+  "vol_price_confirm",
+  "Buy_Liq",
+  "absorption_at_swing",
+  "trend_accel_4h",
+  "etf_total_change_usd",
+  "dist_liq_50x_long",
+  "etf_gbtc_change_usd",
+  "ofi_z_score",
+  "whale_retail_divergence",
+  "log_ret_20",
+  "swing_momentum",
+  "ofi_h4_delta",
+  "stochrsi_d"
+]

@@ -1,0 +1,24 @@
+{
+  "name": "ic32_b_dir_combined",
+  "status": "FROZEN",
+  "selected_at": "2026-06-18",
+  "rationale": "Sweet spot OOF full-stack: PPT +$0.329, PF 2.02, WR 62.5%, 8833 trades",
+  "methodology": "simons_hmm_per_state_dir_aware",
+  "offsets": null,
+  "per_state_thresholds": {
+    "0": [0.72, 0.72],
+    "1": [0.72, 0.72],
+    "2": [0.72, 0.72],
+    "3": [0.65, 0.72],
+    "-1": [0.69, 0.59]
+  },
+  "oof_full_stack_reference": {
+    "total_trades": 8833,
+    "win_rate": 62.48,
+    "pnl_per_trade": 0.3286,
+    "profit_factor": 2.024,
+    "short_long_ratio": 0.776,
+    "total_pnl": 2902.34
+  },
+  "source": "models/runs/ic32_regime_v1/hmm_adaptive_config_c_ic32.json phase_b_combined_cfg"
+}

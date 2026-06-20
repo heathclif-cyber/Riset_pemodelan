@@ -1,0 +1,62 @@
+{
+  "audit_time": "2026-06-18T16:34:28.109041+00:00",
+  "post_fix": {
+    "post_fix_signals": 35,
+    "with_snapshot": 35,
+    "hmm_dist": {
+      "2.0": 12,
+      "1.0": 12,
+      "0.0": 9,
+      "3.0": 2
+    },
+    "lsr_live_mean": 0.6029635357409541,
+    "lsr_live_zero_pct": 0.4,
+    "oi_in_snapshot_pct": 1.0,
+    "compared": 35,
+    "hmm_match": 0.5714285714285714,
+    "mean_delta": {
+      "hmm_regime_enc": 0.457143,
+      "long_short_ratio": 0.402944,
+      "open_interest": 1396472810.321652,
+      "ofi_h4": 47839639.525957,
+      "cvd": 4293824320.682972,
+      "rsi_h4": 17.081511,
+      "h4_trend": 0.685714,
+      "cvd_slope_h4": 0.382447,
+      "stochrsi_d": 24.495823,
+      "log_ret_20": 0.030177,
+      "vol_ratio_20": 0.415016,
+      "atr_percentile_h1": 0.486231
+    }
+  },
+  "overlap_pre_fix": {
+    "n": 2860,
+    "hmm_dist": {
+      "0.0": 2734,
+      "1.0": 77,
+      "3.0": 29,
+      "2.0": 20
+    },
+    "lsr_zero_pct": 1.0,
+    "note": "Data historis pre-fix \u2014 hanya referensi"
+  },
+  "missing_feats_post_fix": {},
+  "findings": [
+    {
+      "critical": true,
+      "msg": "LSR masih 0: 0.4"
+    },
+    {
+      "ok": true,
+      "msg": "HMM bervariasi post-fix: {2.0: 12, 1.0: 12, 0.0: 9, 3.0: 2}"
+    },
+    {
+      "warn": true,
+      "msg": "Delta besar vs holdout: {'ofi_h4': 47839639.525957, 'rsi_h4': 17.081511, 'h4_trend': 0.685714, 'stochrsi_d': 24.495823}"
+    },
+    {
+      "info": true,
+      "msg": "cvd/ofi/oi delta besar diharapkan \u2014 holdout pakai synthetic, live pakai data asli"
+    }
+  ]
+}

@@ -1,0 +1,211 @@
+{
+  "evaluated_at": "2026-06-15T15:45:37.291396",
+  "oof_n": 25026,
+  "oof_base_wr": 0.3647,
+  "variants": {
+    "full": [
+      "p_short",
+      "p_flat",
+      "p_long",
+      "confidence",
+      "direction",
+      "hmm_regime_enc",
+      "atr_percentile_h1",
+      "funding_rate",
+      "vol_spike_zscore",
+      "ofi_h4_delta",
+      "cvd_slope_h4"
+    ],
+    "context_only": [
+      "direction",
+      "hmm_regime_enc",
+      "atr_percentile_h1",
+      "funding_rate",
+      "vol_spike_zscore",
+      "ofi_h4_delta",
+      "cvd_slope_h4"
+    ],
+    "orthogonal": [
+      "proba_margin",
+      "proba_entropy",
+      "conf_gap",
+      "direction",
+      "hmm_regime_enc",
+      "atr_percentile_h1",
+      "funding_rate",
+      "vol_spike_zscore",
+      "ofi_h4_delta",
+      "cvd_slope_h4"
+    ]
+  },
+  "train": {
+    "full": {
+      "auc_insample": 0.6699,
+      "features": [
+        "p_short",
+        "p_flat",
+        "p_long",
+        "confidence",
+        "direction",
+        "hmm_regime_enc",
+        "atr_percentile_h1",
+        "funding_rate",
+        "vol_spike_zscore",
+        "ofi_h4_delta",
+        "cvd_slope_h4"
+      ],
+      "n_features": 11
+    },
+    "context_only": {
+      "auc_insample": 0.6467,
+      "features": [
+        "direction",
+        "hmm_regime_enc",
+        "atr_percentile_h1",
+        "funding_rate",
+        "vol_spike_zscore",
+        "ofi_h4_delta",
+        "cvd_slope_h4"
+      ],
+      "n_features": 7
+    },
+    "orthogonal": {
+      "auc_insample": 0.6644,
+      "features": [
+        "proba_margin",
+        "proba_entropy",
+        "conf_gap",
+        "direction",
+        "hmm_regime_enc",
+        "atr_percentile_h1",
+        "funding_rate",
+        "vol_spike_zscore",
+        "ofi_h4_delta",
+        "cvd_slope_h4"
+      ],
+      "n_features": 10
+    }
+  },
+  "marginal_ic_holdout": {
+    "full": {
+      "n": 918,
+      "marginal_ic": 0.0551,
+      "t_marginal": 1.67,
+      "corr_meta_conf": 0.4745,
+      "gate_marginal": false,
+      "verdict": "FAIL"
+    },
+    "context_only": {
+      "n": 918,
+      "marginal_ic": -0.0363,
+      "t_marginal": -1.1,
+      "corr_meta_conf": -0.0357,
+      "gate_marginal": false,
+      "verdict": "FAIL"
+    },
+    "orthogonal": {
+      "n": 918,
+      "marginal_ic": -0.0054,
+      "t_marginal": -0.16,
+      "corr_meta_conf": 0.4773,
+      "gate_marginal": false,
+      "verdict": "FAIL"
+    }
+  },
+  "holdout_pnl": {
+    "primary_hmm": {
+      "trades": 918,
+      "wr": 69.06,
+      "pnl": 276.35,
+      "pf": 2.358,
+      "pnl_per_month": 110.54
+    },
+    "full_gate_0.45": {
+      "trades": 778,
+      "wr": 70.31,
+      "pnl": 256.82,
+      "pf": 2.513,
+      "pnl_per_month": 102.73
+    },
+    "full_gate_0.50": {
+      "trades": 634,
+      "wr": 71.92,
+      "pnl": 235.1,
+      "pf": 2.794,
+      "pnl_per_month": 94.04
+    },
+    "full_gate_0.55": {
+      "trades": 444,
+      "wr": 72.52,
+      "pnl": 173.19,
+      "pf": 2.982,
+      "pnl_per_month": 69.27
+    },
+    "full_mult": {
+      "trades": 904,
+      "wr": 68.92,
+      "pnl": 271.95,
+      "pf": 2.345,
+      "pnl_per_month": 108.78
+    },
+    "context_only_gate_0.45": {
+      "trades": 103,
+      "wr": 56.31,
+      "pnl": 31.0,
+      "pf": 1.861,
+      "pnl_per_month": 12.4
+    },
+    "context_only_gate_0.50": {
+      "trades": 25,
+      "wr": 60.0,
+      "pnl": 14.91,
+      "pf": 3.519,
+      "pnl_per_month": 5.96
+    },
+    "context_only_gate_0.55": {
+      "trades": 4,
+      "wr": 75.0,
+      "pnl": 5.77,
+      "pf": 89.805,
+      "pnl_per_month": 2.31
+    },
+    "context_only_mult": {
+      "trades": 702,
+      "wr": 69.52,
+      "pnl": 231.89,
+      "pf": 2.45,
+      "pnl_per_month": 92.76
+    },
+    "orthogonal_gate_0.45": {
+      "trades": 813,
+      "wr": 69.37,
+      "pnl": 258.85,
+      "pf": 2.405,
+      "pnl_per_month": 103.54
+    },
+    "orthogonal_gate_0.50": {
+      "trades": 690,
+      "wr": 69.71,
+      "pnl": 233.9,
+      "pf": 2.519,
+      "pnl_per_month": 93.56
+    },
+    "orthogonal_gate_0.55": {
+      "trades": 529,
+      "wr": 70.89,
+      "pnl": 197.23,
+      "pf": 2.796,
+      "pnl_per_month": 78.89
+    },
+    "orthogonal_mult": {
+      "trades": 895,
+      "wr": 68.6,
+      "pnl": 268.45,
+      "pf": 2.328,
+      "pnl_per_month": 107.38
+    }
+  },
+  "baseline_pnl": 276.35,
+  "best_meta_arm": "full_mult",
+  "verdict": "NO-GO \u2014 meta tidak beat primary_hmm di holdout"
+}

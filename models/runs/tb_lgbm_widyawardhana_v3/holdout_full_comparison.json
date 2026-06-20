@@ -1,0 +1,95 @@
+{
+  "ic32": {
+    "trades": 712,
+    "wr": 41.7135,
+    "long_wr": 42.5373,
+    "short_wr": 41.2162,
+    "long_pct": 37.6404,
+    "sl_rate": 53.6517,
+    "gdn_rate": 0.0,
+    "avg_hold": 23.1896,
+    "pnl": 185.0902,
+    "ppm": 37.018,
+    "ppt": 0.26
+  },
+  "ic32_gdn": {
+    "trades": 1041,
+    "wr": 61.6715,
+    "long_wr": 64.7368,
+    "short_wr": 59.9092,
+    "long_pct": 36.5034,
+    "sl_rate": 22.7666,
+    "gdn_rate": 76.561,
+    "avg_hold": 7.0749,
+    "pnl": 292.2703,
+    "ppm": 58.4541,
+    "ppt": 0.2808
+  },
+  "tb": {
+    "trades": 701,
+    "wr": 38.8017,
+    "long_wr": 42.8082,
+    "short_wr": 35.9413,
+    "long_pct": 41.6548,
+    "sl_rate": 57.632,
+    "gdn_rate": 0.0,
+    "avg_hold": 22.9073,
+    "pnl": 140.8868,
+    "ppm": 28.1774,
+    "ppt": 0.201
+  },
+  "tb_lstm_c": {
+    "trades": 486,
+    "wr": 42.5926,
+    "long_wr": 53.7634,
+    "short_wr": 39.9491,
+    "long_pct": 19.1358,
+    "sl_rate": 54.9383,
+    "gdn_rate": 0.0,
+    "avg_hold": 24.0391,
+    "pnl": 114.3803,
+    "ppm": 22.8761,
+    "ppt": 0.2354
+  },
+  "tb_gdn": {
+    "trades": 883,
+    "wr": 47.6784,
+    "long_wr": 47.5949,
+    "short_wr": 47.7459,
+    "long_pct": 44.7339,
+    "sl_rate": 31.4836,
+    "gdn_rate": 61.0419,
+    "avg_hold": 15.3567,
+    "pnl": 253.6993,
+    "ppm": 50.7399,
+    "ppt": 0.2873
+  },
+  "tb_lstm_c_gdn": {
+    "trades": 556,
+    "wr": 52.1583,
+    "long_wr": 54.6218,
+    "short_wr": 51.4874,
+    "long_pct": 21.4029,
+    "sl_rate": 29.8561,
+    "gdn_rate": 63.4892,
+    "avg_hold": 16.2554,
+    "pnl": 181.0778,
+    "ppm": 36.2156,
+    "ppt": 0.3257
+  },
+  "_meta": {
+    "description": "6-variant full comparison \u2014 ic32 vs TB, bare vs LSTM-C vs Guardian",
+    "lstm_model": "tb_lstm_widyawardhana_v1",
+    "lstm_cv_f1": 0.3622,
+    "lstm_variant": "FLIP hard veto (Variant C \u2014 argmax opposite blocks entry)",
+    "guardian_tb": "tb_guardian_widyawardhana_v2",
+    "guardian_ic32": "ic32_guardian_clean_v2 (production)",
+    "period": "Nov2025-Apr2026",
+    "coins": 21,
+    "decorrelation": {
+      "flip": 51.6,
+      "consensus": 45.1,
+      "neutral": 3.2
+    }
+  }
+}

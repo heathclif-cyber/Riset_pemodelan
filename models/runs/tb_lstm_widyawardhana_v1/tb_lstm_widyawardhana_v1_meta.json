@@ -1,0 +1,90 @@
+{
+  "run_name": "tb_lstm_widyawardhana_v1",
+  "labels": "Triple Barrier (SHORT/FLAT/LONG)",
+  "label_params": {
+    "tp_mult": 2.0,
+    "sl_mult": 1.5,
+    "max_hold": 36
+  },
+  "feature_source": "marginal_IC_test_step3 \u2014 13 features from 15 unique sources",
+  "features": [
+    "atr_14_h4",
+    "atr_percent_h4",
+    "atr_percentile_h1",
+    "buy_volume",
+    "sell_volume",
+    "vol_ratio_20",
+    "vol_spike_zscore",
+    "vol_efficiency",
+    "bars_since_BOS",
+    "dist_liq_20x_long",
+    "effort_vs_result",
+    "spread_to_volume",
+    "vwdp_smooth"
+  ],
+  "n_features": 13,
+  "seq_len": 16,
+  "architecture": "TradingLSTM(n_feat=13, hidden=64, layers=2, dropout=0.4)",
+  "n_samples": 392058,
+  "label_dist": {
+    "0": 219534,
+    "1": 13280,
+    "2": 159244
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "f1": 0.3452,
+      "acc": 0.4324,
+      "best_epoch": 88
+    },
+    {
+      "fold": 2,
+      "f1": 0.3634,
+      "acc": 0.4665,
+      "best_epoch": 6
+    },
+    {
+      "fold": 3,
+      "f1": 0.3528,
+      "acc": 0.4742,
+      "best_epoch": 2
+    },
+    {
+      "fold": 4,
+      "f1": 0.37,
+      "acc": 0.4822,
+      "best_epoch": 3
+    },
+    {
+      "fold": 5,
+      "f1": 0.3663,
+      "acc": 0.4796,
+      "best_epoch": 11
+    },
+    {
+      "fold": 6,
+      "f1": 0.3619,
+      "acc": 0.496,
+      "best_epoch": 12
+    },
+    {
+      "fold": 7,
+      "f1": 0.3608,
+      "acc": 0.4734,
+      "best_epoch": 19
+    },
+    {
+      "fold": 8,
+      "f1": 0.3772,
+      "acc": 0.492,
+      "best_epoch": 27
+    }
+  ],
+  "cv_f1_mean": 0.3622,
+  "cv_f1_std": 0.0092,
+  "random_baseline_f1": 0.333,
+  "gain_vs_random": 0.0292,
+  "training_period": "2020-01-01 to 2025-10-31",
+  "trained_at": "2026-06-12 18:07:03"
+}

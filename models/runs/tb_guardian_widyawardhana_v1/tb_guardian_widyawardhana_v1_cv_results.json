@@ -1,0 +1,70 @@
+{
+  "mean_f1": 0.8367,
+  "std_f1": 0.0041,
+  "folds": [
+    {
+      "fold": 1,
+      "f1_macro": 0.8378,
+      "f1_HOLD": 0.9497,
+      "f1_PARTIAL": 0.7321,
+      "f1_FULL": 0.8315,
+      "best_iter": 1739
+    },
+    {
+      "fold": 2,
+      "f1_macro": 0.8438,
+      "f1_HOLD": 0.9624,
+      "f1_PARTIAL": 0.7351,
+      "f1_FULL": 0.8339,
+      "best_iter": 1999
+    },
+    {
+      "fold": 3,
+      "f1_macro": 0.8348,
+      "f1_HOLD": 0.9317,
+      "f1_PARTIAL": 0.7406,
+      "f1_FULL": 0.8322,
+      "best_iter": 1994
+    },
+    {
+      "fold": 4,
+      "f1_macro": 0.833,
+      "f1_HOLD": 0.938,
+      "f1_PARTIAL": 0.7357,
+      "f1_FULL": 0.8252,
+      "best_iter": 1992
+    },
+    {
+      "fold": 5,
+      "f1_macro": 0.8427,
+      "f1_HOLD": 0.9379,
+      "f1_PARTIAL": 0.7539,
+      "f1_FULL": 0.8364,
+      "best_iter": 1596
+    },
+    {
+      "fold": 6,
+      "f1_macro": 0.8332,
+      "f1_HOLD": 0.9307,
+      "f1_PARTIAL": 0.7534,
+      "f1_FULL": 0.8156,
+      "best_iter": 2000
+    },
+    {
+      "fold": 7,
+      "f1_macro": 0.8322,
+      "f1_HOLD": 0.8999,
+      "f1_PARTIAL": 0.7702,
+      "f1_FULL": 0.8266,
+      "best_iter": 1997
+    },
+    {
+      "fold": 8,
+      "f1_macro": 0.8363,
+      "f1_HOLD": 0.9252,
+      "f1_PARTIAL": 0.7606,
+      "f1_FULL": 0.8229,
+      "best_iter": 1998
+    }
+  ]
+}

@@ -1,0 +1,63 @@
+{
+  "version": "ic32_meta_v1",
+  "purpose": "Binary meta-labeling gate (take/skip) on top of ic32 LGBM primary — evaluated vs hard_consensus cascade before production deploy",
+  "primary": {
+    "model": "ic32_regime_v1",
+    "task": "multiclass LGBM — direction from argmax directional proba",
+    "candidate_mode": {
+      "description": "Lower threshold for OOF label generation — meta learns which marginal signals to skip",
+      "rule": "max(p_long, p_short) >= candidate_thr AND winner beats loser",
+      "candidate_thr": 0.45
+    },
+    "production_mode": {
+      "description": "Production entry thresholds (for reference only, not used for meta training)",
+      "lgbm_threshold_long": 0.69,
+      "lgbm_threshold_short": 0.64
+    }
+  },
+  "meta": {
+    "task": "binary take/skip",
+    "label": "win = 1 if net_pnl > 0 after fees+slippage, else 0",
+    "label_source": "walk-forward OOF — LGBM retrained per fold, predict only on val fold (no leakage)",
+    "exit_sim_for_labeling": {
+      "sl_mult_atr": 1.5,
+      "max_hold_bars": 36,
+      "tp": "none — simplified for fast OOF generation",
+      "guardian": false,
+      "note": "Holdout ablation uses full_trading_report (swing TP/SL + Guardian) — label sim is intentionally simpler"
+    },
+    "features": [
+      "p_short", "p_flat", "p_long", "confidence", "direction",
+      "hmm_regime_enc", "atr_percentile_h1", "funding_rate",
+      "wyckoff_phase", "stochrsi_k", "ofi_h4_delta"
+    ],
+    "model": "LGBM binary",
+    "threshold_sweep": [0.45, 0.50, 0.55, 0.60]
+  },
+  "ablation_arms": [
+    "primary_only",
+    "primary_meta",
+    "cascade_baseline",
+    "cascade_meta"
+  ],
+  "pass_fail": {
+    "baseline_arm": "cascade_baseline",
+    "baseline_stack": "ic32 LGBM + LSTM hard_consensus + Guardian",
+    "pass_requires": [
+      "holdout_pnl >= baseline_pnl",
+      "OR (trade_drop_pct <= 30 AND profit_factor > baseline_pf)"
+    ],
+    "fail_if": [
+      "trade_drop_pct > 30 AND pnl < baseline_pnl",
+      "auc_only_improvement_without_pnl_gain"
+    ],
+    "max_trade_drop_pct": 30,
+    "min_pf_delta_if_heavy_filter": 0.10
+  },
+  "anti_patterns": [
+    "Do NOT use in-sample trade simulation for meta labels (meta_labeling_v1 leak)",
+    "Do NOT stack meta + LSTM + all entry filters without ablation",
+    "Do NOT deploy on AUC alone — PnL/PF on holdout is the gate",
+    "Do NOT replace Guardian with meta — entry and exit stay separate"
+  ]
+}

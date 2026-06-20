@@ -1,0 +1,142 @@
+{
+  "run_name": "tb_guardian_continuation_v1",
+  "trained_at": "2026-06-14T23:38:46.287379",
+  "entry_model": "tb_lgbm_flatboost_v2",
+  "basis": "tb_guardian_momentum_v1",
+  "n_static_selected": 19,
+  "n_dynamic": 10,
+  "n_total": 29,
+  "n_samples": 129893,
+  "label_dist": {
+    "0": 94566,
+    "1": 3208,
+    "2": 32119
+  },
+  "exit2_pnl_mean": 0.949,
+  "exit2_pct_pos": 78.2,
+  "continuation_importance_pct": 22.4,
+  "dynamic_importance_pct": 53.3,
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.273,
+      "f1_macro": 0.8376
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2862,
+      "f1_macro": 0.846
+    },
+    {
+      "fold": 3,
+      "logloss": 0.257,
+      "f1_macro": 0.8479
+    },
+    {
+      "fold": 4,
+      "logloss": 0.1962,
+      "f1_macro": 0.841
+    },
+    {
+      "fold": 5,
+      "logloss": 0.1895,
+      "f1_macro": 0.8254
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2323,
+      "f1_macro": 0.8381
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2423,
+      "f1_macro": 0.855
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2355,
+      "f1_macro": 0.8444
+    }
+  ],
+  "top12_features": [
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 2764.0
+    },
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 2358.0
+    },
+    {
+      "feature": "current_pnl_atr",
+      "importance": 2309.0
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 2005.0
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 1908.0
+    },
+    {
+      "feature": "ofi_h4_delta_entry",
+      "importance": 1495.0
+    },
+    {
+      "feature": "ema_7_h1",
+      "importance": 1268.0
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "importance": 1221.0
+    },
+    {
+      "feature": "ema_200_h1",
+      "importance": 1164.0
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "importance": 1081.0
+    },
+    {
+      "feature": "entry_price_ratio",
+      "importance": 1054.0
+    },
+    {
+      "feature": "Sell_Liq",
+      "importance": 1019.0
+    }
+  ],
+  "feat_cols": [
+    "Sell_Liq",
+    "VAH",
+    "absorption_z",
+    "atr_percentile_h1",
+    "cvd_momentum_adv",
+    "cvd_slope_h4",
+    "cvd_slope_h4_delta",
+    "dist_liq_50x_long",
+    "dist_liq_50x_short",
+    "dow_cos",
+    "ema_200_h1",
+    "ema_7_h1",
+    "funding_rate",
+    "h4_trend",
+    "hmm_regime_enc",
+    "ofi_h4_accel",
+    "ofi_h4_delta",
+    "rsi_h4_slope",
+    "wyckoff_phase",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio",
+    "cvd_slope_h4_delta_entry",
+    "ofi_h4_delta_entry",
+    "flow_momentum_3bar"
+  ]
+}

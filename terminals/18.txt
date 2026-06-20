@@ -1,0 +1,110 @@
+---
+pid: 7968
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "cd D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05_train_lstm_genuine_v2.py --all"
+started_at: 2026-06-16T09:21:18.269Z
+running_for_ms: 11019999 
+---
+
+==================================================================
+  LSTM Momentum Complement -- tb_lstm_genuine_v2
+  Partner : tb_lgbm_genuine_v2
+  Label   : momentum_v4 (gate bars only)
+  Features: 8 from lstm_v4_selected_features.json
+  Purge   : 36 | Folds: 8
+  Device  : privateuseone:0
+==================================================================
+
+2026-06-16 17:21:21 | INFO     | 05_lstm_genuine_v2 |   [BTCUSDT] gate=10,144 | BULL=10% NEU=66% BEAR=24%
+2026-06-16 17:21:21 | INFO     | 05_lstm_genuine_v2 |   [SOLUSDT] gate=9,281 | BULL=16% NEU=47% BEAR=37%
+2026-06-16 17:21:21 | INFO     | 05_lstm_genuine_v2 |   [ETHUSDT] gate=10,282 | BULL=13% NEU=58% BEAR=29%
+2026-06-16 17:21:21 | INFO     | 05_lstm_genuine_v2 |   [BNBUSDT] gate=10,037 | BULL=13% NEU=59% BEAR=28%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [XRPUSDT] gate=10,191 | BULL=14% NEU=56% BEAR=31%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [DOGEUSDT] gate=10,014 | BULL=14% NEU=53% BEAR=34%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [TONUSDT] gate=2,116 | BULL=14% NEU=56% BEAR=30%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [ADAUSDT] gate=9,914 | BULL=15% NEU=51% BEAR=34%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [TRXUSDT] gate=10,130 | BULL=10% NEU=64% BEAR=26%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [1000SHIBUSDT] gate=7,593 | BULL=13% NEU=52% BEAR=35%
+2026-06-16 17:21:22 | INFO     | 05_lstm_genuine_v2 |   [AVAXUSDT] gate=8,845 | BULL=15% NEU=47% BEAR=38%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [LINKUSDT] gate=9,946 | BULL=16% NEU=49% BEAR=35%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [DOTUSDT] gate=8,978 | BULL=15% NEU=50% BEAR=34%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [SUIUSDT] gate=4,468 | BULL=16% NEU=46% BEAR=38%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [POLUSDT] gate=1,971 | BULL=15% NEU=48% BEAR=37%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [NEARUSDT] gate=8,741 | BULL=16% NEU=45% BEAR=38%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [1000PEPEUSDT] gate=4,216 | BULL=15% NEU=44% BEAR=41%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [TAOUSDT] gate=2,792 | BULL=16% NEU=45% BEAR=39%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [ARBUSDT] gate=4,660 | BULL=15% NEU=49% BEAR=37%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [HBARUSDT] gate=9,903 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 17:21:23 | INFO     | 05_lstm_genuine_v2 |   [ONDOUSDT] gate=947 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 17:21:24 | INFO     | 05_lstm_genuine_v2 | Gate sequences: 155,169 | seq=72 | feat=8
+2026-06-16 17:21:24 | INFO     | 05_lstm_genuine_v2 |   BEARISH: 51,637 (33.3%)
+2026-06-16 17:21:24 | INFO     | 05_lstm_genuine_v2 |   NEUTRAL: 81,745 (52.7%)
+2026-06-16 17:21:24 | INFO     | 05_lstm_genuine_v2 |   BULLISH: 21,787 (14.0%)
+2026-06-16 17:21:33 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   1 | F1=0.3761 | Best=0.3761
+2026-06-16 17:21:40 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   5 | F1=0.3939 | Best=0.4037
+2026-06-16 17:21:51 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  10 | F1=0.4016 | Best=0.4037
+2026-06-16 17:22:01 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  15 | F1=0.4023 | Best=0.4061
+2026-06-16 17:22:12 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  20 | F1=0.4032 | Best=0.4061
+2026-06-16 17:22:15 | INFO     | 05_lstm_genuine_v2 |   Fold 1 DONE: F1=0.4061 BEAR=0.300 NEU=0.539 BULL=0.380
+2026-06-16 17:22:19 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch   1 | F1=0.3867 | Best=0.3867
+2026-06-16 17:22:34 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch   5 | F1=0.3743 | Best=0.3867
+2026-06-16 17:22:53 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch  10 | F1=0.3714 | Best=0.3867
+2026-06-16 17:22:57 | INFO     | 05_lstm_genuine_v2 |   Fold 2 DONE: F1=0.3867 BEAR=0.315 NEU=0.508 BULL=0.337
+2026-06-16 17:23:04 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch   1 | F1=0.3596 | Best=0.3596
+2026-06-16 17:23:27 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch   5 | F1=0.3715 | Best=0.3870
+2026-06-16 17:23:55 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch  10 | F1=0.3747 | Best=0.3870
+2026-06-16 17:24:14 | INFO     | 05_lstm_genuine_v2 |   Fold 3 DONE: F1=0.3870 BEAR=0.304 NEU=0.544 BULL=0.313
+2026-06-16 17:24:23 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch   1 | F1=0.3912 | Best=0.3912
+2026-06-16 17:24:53 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch   5 | F1=0.3746 | Best=0.3931
+2026-06-16 17:25:26 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  10 | F1=0.3757 | Best=0.3931
+2026-06-16 17:25:53 | INFO     | 05_lstm_genuine_v2 |   Fold 4 DONE: F1=0.3931 BEAR=0.271 NEU=0.623 BULL=0.285
+2026-06-16 17:26:03 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch   1 | F1=0.3968 | Best=0.3968
+2026-06-16 17:26:36 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch   5 | F1=0.3999 | Best=0.3999
+2026-06-16 17:27:19 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch  10 | F1=0.3834 | Best=0.4039
+2026-06-16 17:28:02 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch  15 | F1=0.3672 | Best=0.4039
+2026-06-16 17:28:11 | INFO     | 05_lstm_genuine_v2 |   Fold 5 DONE: F1=0.4039 BEAR=0.315 NEU=0.622 BULL=0.275
+2026-06-16 17:28:23 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch   1 | F1=0.3924 | Best=0.3924
+2026-06-16 17:29:04 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch   5 | F1=0.3963 | Best=0.3963
+2026-06-16 17:29:56 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  10 | F1=0.3883 | Best=0.3973
+2026-06-16 17:30:48 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  15 | F1=0.3900 | Best=0.4056
+2026-06-16 17:31:40 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  20 | F1=0.3971 | Best=0.4083
+2026-06-16 17:32:33 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  25 | F1=0.4038 | Best=0.4118
+2026-06-16 17:33:25 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  30 | F1=0.4172 | Best=0.4172
+2026-06-16 17:34:17 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  35 | F1=0.4098 | Best=0.4172
+2026-06-16 17:35:09 | INFO     | 05_lstm_genuine_v2 |   Fold 6 DONE: F1=0.4172 BEAR=0.344 NEU=0.589 BULL=0.319
+2026-06-16 17:35:24 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch   1 | F1=0.4035 | Best=0.4035
+2026-06-16 17:36:15 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch   5 | F1=0.3986 | Best=0.4040
+2026-06-16 17:37:19 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch  10 | F1=0.3920 | Best=0.4040
+2026-06-16 17:38:10 | INFO     | 05_lstm_genuine_v2 |   Fold 7 DONE: F1=0.4040 BEAR=0.362 NEU=0.513 BULL=0.336
+2026-06-16 17:38:27 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch   1 | F1=0.3664 | Best=0.3664
+2026-06-16 17:39:27 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch   5 | F1=0.3772 | Best=0.3827
+2026-06-16 17:40:43 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  10 | F1=0.3767 | Best=0.3827
+2026-06-16 17:41:59 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  15 | F1=0.3780 | Best=0.3837
+2026-06-16 17:43:15 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  20 | F1=0.3876 | Best=0.3876
+2026-06-16 17:44:31 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  25 | F1=0.3799 | Best=0.3920
+2026-06-16 17:45:46 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  30 | F1=0.3743 | Best=0.3920
+2026-06-16 17:46:18 | INFO     | 05_lstm_genuine_v2 |   Fold 8 DONE: F1=0.3920 BEAR=0.319 NEU=0.568 BULL=0.289
+2026-06-16 17:46:19 | INFO     | 05_lstm_genuine_v2 | Saved oof_lstm_predictions.parquet (142,427 bars)
+
+-- Complement Gate Sweep (OOF, LGBM flat + vol_spike>=2.0) --
+    thr       n  prec_dir  prec_all   cov%
+   0.40  18,441     0.515     0.313   47.1
+   0.45   9,671     0.492     0.318   24.7
+   0.50   4,660     0.465     0.319   11.9
+   0.55   1,710     0.460     0.337    4.4
+   0.60     503     0.469     0.340    1.3
+  BEST lstm_thr = 0.4
+2026-06-16 17:46:19 | INFO     | 05_lstm_genuine_v2 | 
+Retraining final model (20 epochs)...
+2026-06-16 17:46:38 | INFO     | 05_lstm_genuine_v2 |   Final epoch 1/20
+2026-06-16 17:49:07 | INFO     | 05_lstm_genuine_v2 |   Final epoch 10/20
+2026-06-16 17:51:50 | INFO     | 05_lstm_genuine_v2 |   Final epoch 20/20
+
+==================================================================
+  tb_lstm_genuine_v2 COMPLETE
+  CV Mean F1     : 0.3987 +/- 0.0101
+  Complement thr : 0.4 (OOF sweep)
+  OOF saved      : D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_genuine_v2/oof_lstm_predictions.parquet
+  Model          : D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_genuine_v2/lstm_momentum.pt
+==================================================================
+

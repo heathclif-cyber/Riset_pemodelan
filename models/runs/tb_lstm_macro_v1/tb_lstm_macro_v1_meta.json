@@ -1,0 +1,96 @@
+{
+  "run_name": "tb_lstm_macro_v1",
+  "label_type": "Triple Barrier",
+  "label_params": {
+    "tp_mult": 2.0,
+    "sl_mult": 1.5,
+    "max_hold": 36
+  },
+  "architecture": "VectorizedLSTM(n_feat=7, hidden=64, layers=2, dropout=0.35, seq_len=32)",
+  "seq_len": 32,
+  "batch_size": 128,
+  "n_samples": 195949,
+  "n_features": 7,
+  "feature_cols": [
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "ema_50_slope_h4",
+    "ema_21_slope_h4",
+    "cvd_momentum_adv",
+    "tlt_ret_5d_ff",
+    "vix_z20"
+  ],
+  "ohlcv_feats": [
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "ema_50_slope_h4",
+    "ema_21_slope_h4",
+    "cvd_momentum_adv"
+  ],
+  "macro_feats": [
+    "tlt_ret_5d_ff",
+    "vix_z20"
+  ],
+  "macro_lag": "T-1 (daily macro shift(1) to avoid look-ahead)",
+  "label_dist": {
+    "0": 109627,
+    "1": 6675,
+    "2": 79647
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "f1": 0.3456,
+      "acc": 0.4508,
+      "best_epoch": 4
+    },
+    {
+      "fold": 2,
+      "f1": 0.3517,
+      "acc": 0.4662,
+      "best_epoch": 22
+    },
+    {
+      "fold": 3,
+      "f1": 0.3332,
+      "acc": 0.4153,
+      "best_epoch": 5
+    },
+    {
+      "fold": 4,
+      "f1": 0.3819,
+      "acc": 0.5014,
+      "best_epoch": 14
+    },
+    {
+      "fold": 5,
+      "f1": 0.3905,
+      "acc": 0.4865,
+      "best_epoch": 18
+    },
+    {
+      "fold": 6,
+      "f1": 0.3719,
+      "acc": 0.4783,
+      "best_epoch": 29
+    },
+    {
+      "fold": 7,
+      "f1": 0.3824,
+      "acc": 0.5215,
+      "best_epoch": 3
+    },
+    {
+      "fold": 8,
+      "f1": 0.3952,
+      "acc": 0.5267,
+      "best_epoch": 17
+    }
+  ],
+  "cv_f1_mean": 0.369,
+  "cv_f1_std": 0.0213,
+  "cv_acc_mean": 0.4808,
+  "training_period": "2020-01-01 - 2026-04-01 00:00:00+00:00",
+  "trained_at": "2026-06-12 05:09:24",
+  "integration_note": "Intended as ic32 cascade complement \u2014 LONG/SHORT signal adjusts LGBM confidence by +/-0.05 (AGREE/DISAGREE with LGBM direction)"
+}

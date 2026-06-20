@@ -1,0 +1,129 @@
+{
+  "ic32": {
+    "trades": 712,
+    "wr": 41.7135,
+    "long_wr": 42.5373,
+    "short_wr": 41.2162,
+    "long_pct": 37.6404,
+    "sl_rate": 53.6517,
+    "gdn_rate": 0.0,
+    "avg_hold": 23.1896,
+    "pnl": 185.0902,
+    "ppm": 74.0361,
+    "ppt": 0.26
+  },
+  "ic32_gdn": {
+    "trades": 843,
+    "wr": 47.9241,
+    "long_wr": 52.7687,
+    "short_wr": 45.1493,
+    "long_pct": 36.4176,
+    "sl_rate": 28.1139,
+    "gdn_rate": 64.1756,
+    "avg_hold": 15.866,
+    "pnl": 257.395,
+    "ppm": 102.958,
+    "ppt": 0.3053
+  },
+  "tb": {
+    "trades": 1051,
+    "wr": 37.4881,
+    "long_wr": 40.1923,
+    "short_wr": 34.8399,
+    "long_pct": 49.4767,
+    "sl_rate": 58.6108,
+    "gdn_rate": 0.0,
+    "avg_hold": 21.8535,
+    "pnl": 129.9076,
+    "ppm": 51.9631,
+    "ppt": 0.1236
+  },
+  "tb_lstm_c": {
+    "trades": 766,
+    "wr": 38.5117,
+    "long_wr": 38.0435,
+    "short_wr": 38.6598,
+    "long_pct": 24.0209,
+    "sl_rate": 58.094,
+    "gdn_rate": 0.0,
+    "avg_hold": 22.4765,
+    "pnl": 134.2282,
+    "ppm": 53.6913,
+    "ppt": 0.1752
+  },
+  "tb_gdn": {
+    "trades": 1322,
+    "wr": 46.0666,
+    "long_wr": 48.1422,
+    "short_wr": 44.239,
+    "long_pct": 46.823,
+    "sl_rate": 33.2829,
+    "gdn_rate": 58.7746,
+    "avg_hold": 15.3253,
+    "pnl": 300.6852,
+    "ppm": 120.2741,
+    "ppt": 0.2274
+  },
+  "tb_lstm_c_gdn": {
+    "trades": 932,
+    "wr": 46.3519,
+    "long_wr": 43.7788,
+    "short_wr": 47.1329,
+    "long_pct": 23.2833,
+    "sl_rate": 33.7983,
+    "gdn_rate": 58.2618,
+    "avg_hold": 15.3895,
+    "pnl": 217.3253,
+    "ppm": 86.9301,
+    "ppt": 0.2332
+  },
+  "tb_shap": {
+    "trades": 1765,
+    "wr": 30.1416,
+    "long_wr": 29.101,
+    "short_wr": 31.7784,
+    "long_pct": 61.1331,
+    "sl_rate": 64.3626,
+    "gdn_rate": 0.0,
+    "avg_hold": 19.7382,
+    "pnl": -148.5263,
+    "ppm": -59.4105,
+    "ppt": -0.0842
+  },
+  "tb_shap_gdn": {
+    "trades": 2510,
+    "wr": 38.5259,
+    "long_wr": 37.4269,
+    "short_wr": 40.2678,
+    "long_pct": 61.3147,
+    "sl_rate": 34.3426,
+    "gdn_rate": 59.0438,
+    "avg_hold": 13.5749,
+    "pnl": 33.7959,
+    "ppm": 13.5184,
+    "ppt": 0.0135
+  },
+  "_meta": {
+    "period": "Apr2026-Jun2026",
+    "coins": 21,
+    "models": {
+      "ic32": "ic32_regime_v1 (33 feat)",
+      "tb_v3": "tb_lgbm_widyawardhana_v3 (18 feat)",
+      "tb_shap": "tb_fs_shap_v1 (61 feat, union IC+MI+Gain+SHAP)",
+      "guardian_ic32": "ic32_guardian_clean_v2",
+      "guardian_tb": "tb_guardian_widyawardhana_v2",
+      "lstm": "tb_lstm_widyawardhana_v1 (FLIP veto)"
+    },
+    "thresholds": {
+      "ic32_long": 0.69,
+      "ic32_short": 0.64,
+      "tb_v3": 0.42,
+      "tb_shap": 0.42
+    },
+    "decorrelation": {
+      "flip": 41.9,
+      "consensus": 55.8,
+      "neutral": 2.3
+    }
+  }
+}

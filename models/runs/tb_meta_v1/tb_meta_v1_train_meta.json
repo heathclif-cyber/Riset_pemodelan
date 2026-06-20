@@ -1,0 +1,117 @@
+{
+  "run_name": "tb_meta_v1",
+  "model_type": "binary_meta_lgbm",
+  "n_samples": 22988,
+  "base_win_rate": 0.4124,
+  "n_features": 11,
+  "features": [
+    "p_short",
+    "p_flat",
+    "p_long",
+    "confidence",
+    "direction",
+    "atr_percentile_h1",
+    "funding_rate",
+    "wyckoff_phase",
+    "stochrsi_k",
+    "ofi_h4_delta",
+    "Sell_Liq"
+  ],
+  "cv_mean_auc": 0.5949,
+  "cv_mean_wr_selected": 0.5811,
+  "cv_mean_wr_rejected": 0.3877,
+  "best_fold": 7,
+  "best_auc": 0.6424,
+  "final_n_estimators": 88,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 2514,
+      "n_val": 2385,
+      "best_iteration": 38,
+      "auc": 0.5244,
+      "accuracy": 0.5698,
+      "wr_selected": 0.6591,
+      "wr_rejected": 0.4319,
+      "n_selected": 44
+    },
+    {
+      "fold": 2,
+      "n_train": 4938,
+      "n_val": 2299,
+      "best_iteration": 92,
+      "auc": 0.595,
+      "accuracy": 0.605,
+      "wr_selected": 0.57,
+      "wr_rejected": 0.3873,
+      "n_selected": 414
+    },
+    {
+      "fold": 3,
+      "n_train": 7259,
+      "n_val": 2224,
+      "best_iteration": 93,
+      "auc": 0.5961,
+      "accuracy": 0.6196,
+      "wr_selected": 0.5961,
+      "wr_rejected": 0.3751,
+      "n_selected": 411
+    },
+    {
+      "fold": 4,
+      "n_train": 9509,
+      "n_val": 2362,
+      "best_iteration": 55,
+      "auc": 0.6092,
+      "accuracy": 0.624,
+      "wr_selected": 0.558,
+      "wr_rejected": 0.3672,
+      "n_selected": 276
+    },
+    {
+      "fold": 5,
+      "n_train": 11899,
+      "n_val": 2444,
+      "best_iteration": 58,
+      "auc": 0.5639,
+      "accuracy": 0.5867,
+      "wr_selected": 0.5663,
+      "wr_rejected": 0.4091,
+      "n_selected": 415
+    },
+    {
+      "fold": 6,
+      "n_train": 14377,
+      "n_val": 2772,
+      "best_iteration": 84,
+      "auc": 0.6182,
+      "accuracy": 0.6151,
+      "wr_selected": 0.5616,
+      "wr_rejected": 0.3749,
+      "n_selected": 438
+    },
+    {
+      "fold": 7,
+      "n_train": 17180,
+      "n_val": 2887,
+      "best_iteration": 197,
+      "auc": 0.6424,
+      "accuracy": 0.6211,
+      "wr_selected": 0.5897,
+      "wr_rejected": 0.3704,
+      "n_selected": 619
+    },
+    {
+      "fold": 8,
+      "n_train": 20109,
+      "n_val": 2812,
+      "best_iteration": 90,
+      "auc": 0.6099,
+      "accuracy": 0.6042,
+      "wr_selected": 0.5478,
+      "wr_rejected": 0.3856,
+      "n_selected": 429
+    }
+  ],
+  "trained_at": "2026-06-11T16:39:36.256772"
+}

@@ -1,0 +1,465 @@
+{
+  "by_regime": [
+    {
+      "group": "RANGING",
+      "n": 6173,
+      "wr": 38.6,
+      "pct": 38.4
+    },
+    {
+      "group": "TRENDING",
+      "n": 4474,
+      "wr": 38.8,
+      "pct": 27.8
+    },
+    {
+      "group": "UNKNOWN",
+      "n": 1775,
+      "wr": 41.4,
+      "pct": 11.0
+    },
+    {
+      "group": "VOLATILE",
+      "n": 3671,
+      "wr": 38.9,
+      "pct": 22.8
+    }
+  ],
+  "dir_x_regime": [
+    {
+      "direction": "LONG",
+      "regime": "TRENDING",
+      "n": 773,
+      "wr": 38.9,
+      "conf_avg": 0.752
+    },
+    {
+      "direction": "LONG",
+      "regime": "RANGING",
+      "n": 1528,
+      "wr": 40.4,
+      "conf_avg": 0.749
+    },
+    {
+      "direction": "LONG",
+      "regime": "VOLATILE",
+      "n": 1042,
+      "wr": 39.7,
+      "conf_avg": 0.749
+    },
+    {
+      "direction": "SHORT",
+      "regime": "TRENDING",
+      "n": 3701,
+      "wr": 38.7,
+      "conf_avg": 0.665
+    },
+    {
+      "direction": "SHORT",
+      "regime": "RANGING",
+      "n": 4645,
+      "wr": 38.0,
+      "conf_avg": 0.664
+    },
+    {
+      "direction": "SHORT",
+      "regime": "VOLATILE",
+      "n": 2629,
+      "wr": 38.6,
+      "conf_avg": 0.663
+    }
+  ],
+  "by_conf_bin": [
+    {
+      "group": "0.58-0.62",
+      "n": 3706,
+      "wr": 34.4,
+      "pct": 23.0
+    },
+    {
+      "group": "0.62-0.66",
+      "n": 3385,
+      "wr": 36.2,
+      "pct": 21.0
+    },
+    {
+      "group": "0.66-0.70",
+      "n": 2632,
+      "wr": 37.8,
+      "pct": 16.4
+    },
+    {
+      "group": "0.70-0.74",
+      "n": 2916,
+      "wr": 40.0,
+      "pct": 18.1
+    },
+    {
+      "group": "0.74-0.78",
+      "n": 1631,
+      "wr": 44.0,
+      "pct": 10.1
+    },
+    {
+      "group": "0.78+",
+      "n": 1823,
+      "wr": 49.1,
+      "pct": 11.3
+    }
+  ],
+  "by_msb_bos": [
+    {
+      "group": -1.0,
+      "n": 2402,
+      "wr": 38.7,
+      "pct": 14.9
+    },
+    {
+      "group": 0.0,
+      "n": 10217,
+      "wr": 38.8,
+      "pct": 63.5
+    },
+    {
+      "group": 1.0,
+      "n": 3474,
+      "wr": 39.7,
+      "pct": 21.6
+    }
+  ],
+  "by_h4_trend": [
+    {
+      "group": "dn",
+      "n": 7107,
+      "wr": 39.2,
+      "pct": 44.2
+    },
+    {
+      "group": "up",
+      "n": 8986,
+      "wr": 38.8,
+      "pct": 55.8
+    }
+  ],
+  "aligned_vs_counter": {
+    "with_trend_wr": 37.6,
+    "counter_trend_wr": 39.9,
+    "n_with": 6222,
+    "n_counter": 9871
+  },
+  "by_hour": [
+    {
+      "group": 0,
+      "n": 913,
+      "wr": 44.1,
+      "pct": 5.7
+    },
+    {
+      "group": 1,
+      "n": 619,
+      "wr": 40.4,
+      "pct": 3.8
+    },
+    {
+      "group": 2,
+      "n": 459,
+      "wr": 32.9,
+      "pct": 2.9
+    },
+    {
+      "group": 3,
+      "n": 466,
+      "wr": 28.5,
+      "pct": 2.9
+    },
+    {
+      "group": 4,
+      "n": 834,
+      "wr": 38.8,
+      "pct": 5.2
+    },
+    {
+      "group": 5,
+      "n": 690,
+      "wr": 36.7,
+      "pct": 4.3
+    },
+    {
+      "group": 6,
+      "n": 572,
+      "wr": 38.1,
+      "pct": 3.6
+    },
+    {
+      "group": 7,
+      "n": 504,
+      "wr": 29.4,
+      "pct": 3.1
+    },
+    {
+      "group": 8,
+      "n": 979,
+      "wr": 42.6,
+      "pct": 6.1
+    },
+    {
+      "group": 9,
+      "n": 647,
+      "wr": 38.2,
+      "pct": 4.0
+    },
+    {
+      "group": 10,
+      "n": 476,
+      "wr": 33.4,
+      "pct": 3.0
+    },
+    {
+      "group": 11,
+      "n": 410,
+      "wr": 24.6,
+      "pct": 2.5
+    },
+    {
+      "group": 12,
+      "n": 1153,
+      "wr": 49.8,
+      "pct": 7.2
+    },
+    {
+      "group": 13,
+      "n": 877,
+      "wr": 43.4,
+      "pct": 5.4
+    },
+    {
+      "group": 14,
+      "n": 666,
+      "wr": 38.9,
+      "pct": 4.1
+    },
+    {
+      "group": 15,
+      "n": 542,
+      "wr": 29.7,
+      "pct": 3.4
+    },
+    {
+      "group": 16,
+      "n": 917,
+      "wr": 46.3,
+      "pct": 5.7
+    },
+    {
+      "group": 17,
+      "n": 666,
+      "wr": 42.5,
+      "pct": 4.1
+    },
+    {
+      "group": 18,
+      "n": 526,
+      "wr": 39.7,
+      "pct": 3.3
+    },
+    {
+      "group": 19,
+      "n": 552,
+      "wr": 31.2,
+      "pct": 3.4
+    },
+    {
+      "group": 20,
+      "n": 965,
+      "wr": 45.2,
+      "pct": 6.0
+    },
+    {
+      "group": 21,
+      "n": 667,
+      "wr": 36.1,
+      "pct": 4.1
+    },
+    {
+      "group": 22,
+      "n": 535,
+      "wr": 32.0,
+      "pct": 3.3
+    },
+    {
+      "group": 23,
+      "n": 458,
+      "wr": 34.9,
+      "pct": 2.8
+    }
+  ],
+  "by_coin": [
+    {
+      "coin": "ONDOUSDT",
+      "n": 113,
+      "wr": 33.6
+    },
+    {
+      "coin": "TRXUSDT",
+      "n": 1008,
+      "wr": 35.9
+    },
+    {
+      "coin": "TONUSDT",
+      "n": 228,
+      "wr": 36.0
+    },
+    {
+      "coin": "ETHUSDT",
+      "n": 996,
+      "wr": 36.3
+    },
+    {
+      "coin": "BTCUSDT",
+      "n": 835,
+      "wr": 36.5
+    },
+    {
+      "coin": "LINKUSDT",
+      "n": 968,
+      "wr": 37.1
+    },
+    {
+      "coin": "ARBUSDT",
+      "n": 486,
+      "wr": 37.2
+    },
+    {
+      "coin": "SOLUSDT",
+      "n": 1052,
+      "wr": 37.4
+    },
+    {
+      "coin": "XRPUSDT",
+      "n": 1073,
+      "wr": 38.6
+    },
+    {
+      "coin": "DOTUSDT",
+      "n": 1016,
+      "wr": 38.7
+    },
+    {
+      "coin": "BNBUSDT",
+      "n": 961,
+      "wr": 39.1
+    },
+    {
+      "coin": "DOGEUSDT",
+      "n": 1116,
+      "wr": 39.4
+    },
+    {
+      "coin": "HBARUSDT",
+      "n": 914,
+      "wr": 39.7
+    },
+    {
+      "coin": "NEARUSDT",
+      "n": 980,
+      "wr": 39.8
+    },
+    {
+      "coin": "TAOUSDT",
+      "n": 225,
+      "wr": 40.0
+    },
+    {
+      "coin": "ADAUSDT",
+      "n": 1030,
+      "wr": 40.1
+    },
+    {
+      "coin": "AVAXUSDT",
+      "n": 954,
+      "wr": 41.5
+    },
+    {
+      "coin": "1000PEPEUSDT",
+      "n": 525,
+      "wr": 41.9
+    },
+    {
+      "coin": "1000SHIBUSDT",
+      "n": 974,
+      "wr": 42.8
+    },
+    {
+      "coin": "SUIUSDT",
+      "n": 447,
+      "wr": 43.2
+    },
+    {
+      "coin": "POLUSDT",
+      "n": 192,
+      "wr": 46.4
+    }
+  ],
+  "tree_feature_importance": [
+    {
+      "feature": "conf",
+      "importance": 0.4725
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "importance": 0.1211
+    },
+    {
+      "feature": "swing_momentum",
+      "importance": 0.1202
+    },
+    {
+      "feature": "hour",
+      "importance": 0.0955
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "importance": 0.0675
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "importance": 0.0493
+    },
+    {
+      "feature": "relative_strength_z",
+      "importance": 0.0377
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "importance": 0.0363
+    },
+    {
+      "feature": "h4_trend",
+      "importance": 0.0
+    },
+    {
+      "feature": "MSB_BOS",
+      "importance": 0.0
+    },
+    {
+      "feature": "rsi_6",
+      "importance": 0.0
+    },
+    {
+      "feature": "rsi_h4",
+      "importance": 0.0
+    },
+    {
+      "feature": "long_short_ratio",
+      "importance": 0.0
+    },
+    {
+      "feature": "aligned",
+      "importance": 0.0
+    },
+    {
+      "feature": "direction",
+      "importance": 0.0
+    }
+  ]
+}

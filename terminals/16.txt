@@ -1,0 +1,97 @@
+---
+pid: 30104
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-ExecutionPolicy -Scope Process -ExecutionPolicy RemoteSigned; & d:\\Apps-Dev\\Riset_pemodelan\\.venv\\Scripts\\Activate.ps1; python D:\\Apps-Dev\\Riset_pemodelan\\pipeline\\05k_train_lstm_complement_v1.py --all"
+started_at: 2026-06-16T06:05:27.961Z
+running_for_ms: 22630001 
+---
+
+======================================================================
+  LSTM COMPLEMENT RETRAIN -- tb_lstm_complement_v1
+  Sample: pump/dump gate + LGBM FLAT only
+  Loss: Focal gamma=2.0
+  Eval: complement BULL>=0.38 BEAR>=0.5
+  Folds: 8 | Purge: 36 | Coins: 21
+  Device: privateuseone:0
+======================================================================
+
+2026-06-16 14:05:33 | INFO     | 05k_lstm_complement_v1 |   [BTCUSDT] gate=10,144 flat=8,710 | BULL=10% NEU=66% BEAR=24%
+2026-06-16 14:05:33 | INFO     | 05k_lstm_complement_v1 |   [SOLUSDT] gate=9,281 flat=8,800 | BULL=16% NEU=47% BEAR=37%
+2026-06-16 14:05:33 | INFO     | 05k_lstm_complement_v1 |   [ETHUSDT] gate=10,282 flat=8,585 | BULL=13% NEU=58% BEAR=29%
+2026-06-16 14:05:33 | INFO     | 05k_lstm_complement_v1 |   [BNBUSDT] gate=10,037 flat=8,787 | BULL=13% NEU=60% BEAR=28%
+2026-06-16 14:05:33 | INFO     | 05k_lstm_complement_v1 |   [XRPUSDT] gate=10,191 flat=8,595 | BULL=14% NEU=56% BEAR=31%
+2026-06-16 14:05:34 | INFO     | 05k_lstm_complement_v1 |   [DOGEUSDT] gate=10,014 flat=8,527 | BULL=14% NEU=53% BEAR=33%
+2026-06-16 14:05:34 | INFO     | 05k_lstm_complement_v1 |   [TONUSDT] gate=2,116 flat=1,851 | BULL=14% NEU=55% BEAR=31%
+2026-06-16 14:05:34 | INFO     | 05k_lstm_complement_v1 |   [ADAUSDT] gate=9,914 flat=8,502 | BULL=15% NEU=51% BEAR=34%
+2026-06-16 14:05:34 | INFO     | 05k_lstm_complement_v1 |   [TRXUSDT] gate=10,130 flat=8,516 | BULL=11% NEU=64% BEAR=25%
+2026-06-16 14:05:34 | INFO     | 05k_lstm_complement_v1 |   [1000SHIBUSDT] gate=7,593 flat=7,045 | BULL=13% NEU=51% BEAR=36%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [AVAXUSDT] gate=8,845 flat=8,435 | BULL=15% NEU=47% BEAR=38%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [LINKUSDT] gate=9,946 flat=8,322 | BULL=16% NEU=49% BEAR=35%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [DOTUSDT] gate=8,978 flat=8,451 | BULL=16% NEU=50% BEAR=34%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [SUIUSDT] gate=4,468 flat=4,055 | BULL=16% NEU=46% BEAR=38%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [POLUSDT] gate=1,971 flat=1,832 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [NEARUSDT] gate=8,741 flat=8,118 | BULL=17% NEU=45% BEAR=38%
+2026-06-16 14:05:35 | INFO     | 05k_lstm_complement_v1 |   [1000PEPEUSDT] gate=4,216 flat=3,825 | BULL=15% NEU=45% BEAR=40%
+2026-06-16 14:05:36 | INFO     | 05k_lstm_complement_v1 |   [TAOUSDT] gate=2,792 flat=2,578 | BULL=16% NEU=45% BEAR=39%
+2026-06-16 14:05:36 | INFO     | 05k_lstm_complement_v1 |   [ARBUSDT] gate=4,660 flat=4,307 | BULL=14% NEU=49% BEAR=36%
+2026-06-16 14:05:36 | INFO     | 05k_lstm_complement_v1 |   [HBARUSDT] gate=9,903 flat=8,467 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 14:05:36 | INFO     | 05k_lstm_complement_v1 |   [ONDOUSDT] gate=947 flat=881 | BULL=15% NEU=49% BEAR=36%
+2026-06-16 14:05:37 | INFO     | 05k_lstm_complement_v1 | Complement pool: gate=155,169 -> flat=137,189 sequences
+2026-06-16 14:05:37 | INFO     | 05k_lstm_complement_v1 | Sequences: 137,189 | seq=72 | feat=8
+2026-06-16 14:05:58 | INFO     | 05k_lstm_complement_v1 |   Fold 1 Epoch   1 | F1=0.3215 | Best=0.3215
+2026-06-16 14:06:05 | INFO     | 05k_lstm_complement_v1 |   Fold 1 Epoch   5 | F1=0.3697 | Best=0.3697
+2026-06-16 14:06:13 | INFO     | 05k_lstm_complement_v1 |   Fold 1 Epoch  10 | F1=0.3615 | Best=0.3805
+2026-06-16 14:06:22 | INFO     | 05k_lstm_complement_v1 |   Fold 1 Epoch  15 | F1=0.3707 | Best=0.3805
+2026-06-16 14:06:34 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch   1 | F1=0.3515 | Best=0.3515
+2026-06-16 14:06:46 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch   5 | F1=0.3279 | Best=0.3625
+2026-06-16 14:07:02 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  10 | F1=0.3548 | Best=0.3638
+2026-06-16 14:07:17 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  15 | F1=0.3523 | Best=0.3718
+2026-06-16 14:07:33 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  20 | F1=0.3684 | Best=0.3718
+2026-06-16 14:07:49 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  25 | F1=0.3761 | Best=0.3794
+2026-06-16 14:08:05 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  30 | F1=0.3852 | Best=0.3852
+2026-06-16 14:08:21 | INFO     | 05k_lstm_complement_v1 |   Fold 2 Epoch  35 | F1=0.3795 | Best=0.3852
+2026-06-16 14:08:44 | INFO     | 05k_lstm_complement_v1 |   Fold 3 Epoch   1 | F1=0.3535 | Best=0.3535
+2026-06-16 14:09:05 | INFO     | 05k_lstm_complement_v1 |   Fold 3 Epoch   5 | F1=0.3555 | Best=0.3555
+2026-06-16 14:09:29 | INFO     | 05k_lstm_complement_v1 |   Fold 3 Epoch  10 | F1=0.3605 | Best=0.3605
+2026-06-16 14:09:55 | INFO     | 05k_lstm_complement_v1 |   Fold 3 Epoch  15 | F1=0.3619 | Best=0.3716
+2026-06-16 14:10:22 | INFO     | 05k_lstm_complement_v1 |   Fold 3 Epoch  20 | F1=0.3673 | Best=0.3716
+2026-06-16 14:10:50 | INFO     | 05k_lstm_complement_v1 |   Fold 4 Epoch   1 | F1=0.3493 | Best=0.3493
+2026-06-16 14:11:20 | INFO     | 05k_lstm_complement_v1 |   Fold 4 Epoch   5 | F1=0.3463 | Best=0.3493
+2026-06-16 14:11:58 | INFO     | 05k_lstm_complement_v1 |   Fold 4 Epoch  10 | F1=0.3471 | Best=0.3493
+2026-06-16 14:12:17 | INFO     | 05k_lstm_complement_v1 |   Fold 5 Epoch   1 | F1=0.3291 | Best=0.3291
+2026-06-16 14:12:56 | INFO     | 05k_lstm_complement_v1 |   Fold 5 Epoch   5 | F1=0.3338 | Best=0.3338
+2026-06-16 14:13:44 | INFO     | 05k_lstm_complement_v1 |   Fold 5 Epoch  10 | F1=0.3321 | Best=0.3338
+2026-06-16 14:14:31 | INFO     | 05k_lstm_complement_v1 |   Fold 5 Epoch  15 | F1=0.3319 | Best=0.3508
+2026-06-16 14:15:19 | INFO     | 05k_lstm_complement_v1 |   Fold 5 Epoch  20 | F1=0.3497 | Best=0.3508
+2026-06-16 14:15:42 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch   1 | F1=0.3122 | Best=0.3122
+2026-06-16 14:16:27 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch   5 | F1=0.3090 | Best=0.3263
+2026-06-16 14:17:25 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch  10 | F1=0.3350 | Best=0.3350
+2026-06-16 14:18:21 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch  15 | F1=0.3210 | Best=0.3469
+2026-06-16 14:19:18 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch  20 | F1=0.3305 | Best=0.3518
+2026-06-16 14:20:16 | INFO     | 05k_lstm_complement_v1 |   Fold 6 Epoch  25 | F1=0.3259 | Best=0.3518
+2026-06-16 14:20:44 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch   1 | F1=0.2986 | Best=0.2986
+2026-06-16 14:21:40 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch   5 | F1=0.3117 | Best=0.3117
+2026-06-16 14:22:50 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  10 | F1=0.2944 | Best=0.3408
+2026-06-16 14:23:58 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  15 | F1=0.3415 | Best=0.3415
+2026-06-16 14:25:06 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  20 | F1=0.3466 | Best=0.3466
+2026-06-16 14:26:13 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  25 | F1=0.3256 | Best=0.3466
+2026-06-16 14:27:22 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  30 | F1=0.3458 | Best=0.3526
+2026-06-16 14:28:29 | INFO     | 05k_lstm_complement_v1 |   Fold 7 Epoch  35 | F1=0.3216 | Best=0.3526
+2026-06-16 14:29:02 | INFO     | 05k_lstm_complement_v1 |   Fold 8 Epoch   1 | F1=0.3309 | Best=0.3309
+2026-06-16 14:30:07 | INFO     | 05k_lstm_complement_v1 |   Fold 8 Epoch   5 | F1=0.3297 | Best=0.3610
+2026-06-16 14:31:27 | INFO     | 05k_lstm_complement_v1 |   Fold 8 Epoch  10 | F1=0.3527 | Best=0.3610
+2026-06-16 14:32:01 | INFO     | 05k_lstm_complement_v1 | Retrain final model (20 epochs)...
+2026-06-16 14:32:21 | INFO     | 05k_lstm_complement_v1 |   Final epoch 1/20
+2026-06-16 14:35:00 | INFO     | 05k_lstm_complement_v1 |   Final epoch 10/20
+2026-06-16 14:37:58 | INFO     | 05k_lstm_complement_v1 |   Final epoch 20/20
+
+======================================================================
+  COMPLETE: tb_lstm_complement_v1
+  CV F1 macro: 0.3629 +/- 0.0134
+  Complement pool (OOF): n=36,481
+  Fires: n=1,776 (bull=928 bear=848)
+  Precision: bull=0.283 bear=0.492 mixed_dir=0.539
+  Model: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_complement_v1/lstm_momentum.pt
+  OOF:   D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_complement_v1/oof_lstm_predictions.parquet
+======================================================================
+

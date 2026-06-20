@@ -1,0 +1,32 @@
+{
+  "methodology": "holdout_diagnostic_once",
+  "period": "Apr-Jun 2026",
+  "guardian": "ic32_guardian_continuation_v1",
+  "entry": "B-dir-combined frozen",
+  "results": {
+    "min_hold_2": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 72.36,
+      "total_pnl": 237.89,
+      "pnl_per_trade": 0.4835,
+      "profit_factor": 3.733,
+      "avg_hold_bars": 12.39,
+      "median_hold_bars": 7.0,
+      "early_gdn_losers": 11
+    },
+    "min_hold_4": {
+      "trades": 492,
+      "trades_per_month": 196.8,
+      "win_rate": 72.36,
+      "total_pnl": 247.23,
+      "pnl_per_trade": 0.5025,
+      "profit_factor": 3.763,
+      "avg_hold_bars": 12.63,
+      "median_hold_bars": 7.0,
+      "early_gdn_losers": 0
+    }
+  },
+  "delta_ppt": 0.019,
+  "created": "2026-06-18T12:17:16.048683"
+}

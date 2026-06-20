@@ -1,0 +1,27 @@
+{
+  "run_name": "tb_lgbm_widyawardhana_v1",
+  "created": "2026-06-09T23:08:27.989373",
+  "labeling": "Triple Barrier",
+  "tp_atr_mult": 2.0,
+  "sl_atr_mult": 1.5,
+  "max_hold": 36,
+  "rr_ratio": 1.33,
+  "label_distribution": {
+    "SHORT": 329407,
+    "LONG": 317373,
+    "FLAT": 138405
+  },
+  "ic_summary": {
+    "KEEP": 18,
+    "REDUNDANT": 18,
+    "WEAK": 14,
+    "DROP": 59
+  },
+  "n_keep_features": 18,
+  "n_final_features": 16,
+  "cv_mean_f1_macro": 0.2245,
+  "cv_std_f1_macro": 0.0466,
+  "best_fold_f1": 0.3077,
+  "n_samples": 785185,
+  "n_coins": 21
+}

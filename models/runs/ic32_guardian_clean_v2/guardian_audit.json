@@ -1,0 +1,326 @@
+{
+  "feature_importance": [
+    {
+      "feature": "current_pnl_atr",
+      "importance": 0.05677
+    },
+    {
+      "feature": "ema_50_slope_h4",
+      "importance": 0.05097
+    },
+    {
+      "feature": "max_favorable_pnl_pct",
+      "importance": 0.04831
+    },
+    {
+      "feature": "drawdown_from_peak_pct",
+      "importance": 0.04796
+    },
+    {
+      "feature": "bars_held_norm",
+      "importance": 0.04386
+    },
+    {
+      "feature": "cvd_slope_h4",
+      "importance": 0.03489
+    },
+    {
+      "feature": "cvd",
+      "importance": 0.03416
+    },
+    {
+      "feature": "current_pnl_pct",
+      "importance": 0.03352
+    },
+    {
+      "feature": "Sell_Liq",
+      "importance": 0.03318
+    },
+    {
+      "feature": "entry_price_ratio",
+      "importance": 0.03291
+    },
+    {
+      "feature": "Buy_Liq",
+      "importance": 0.03177
+    },
+    {
+      "feature": "ema_50_h1",
+      "importance": 0.0293
+    },
+    {
+      "feature": "ofi_h4_delta",
+      "importance": 0.02719
+    },
+    {
+      "feature": "relative_strength_z",
+      "importance": 0.02667
+    },
+    {
+      "feature": "log_ret_20",
+      "importance": 0.02548
+    },
+    {
+      "feature": "trend_accel_4h",
+      "importance": 0.02492
+    },
+    {
+      "feature": "vol_price_confirm",
+      "importance": 0.02491
+    },
+    {
+      "feature": "whale_retail_divergence",
+      "importance": 0.02482
+    },
+    {
+      "feature": "cvd_momentum_adv",
+      "importance": 0.02381
+    },
+    {
+      "feature": "Fib_786",
+      "importance": 0.02359
+    },
+    {
+      "feature": "dist_from_8h_high",
+      "importance": 0.0235
+    },
+    {
+      "feature": "dist_liq_20x_short",
+      "importance": 0.02334
+    },
+    {
+      "feature": "stochrsi_d",
+      "importance": 0.02198
+    },
+    {
+      "feature": "rsi_h4",
+      "importance": 0.02179
+    },
+    {
+      "feature": "Fib_618",
+      "importance": 0.02151
+    },
+    {
+      "feature": "dist_liq_50x_long",
+      "importance": 0.02134
+    },
+    {
+      "feature": "ofi_acceleration",
+      "importance": 0.02036
+    },
+    {
+      "feature": "ema_21_slope_h4",
+      "importance": 0.02032
+    },
+    {
+      "feature": "dist_liq_20x_long",
+      "importance": 0.01991
+    },
+    {
+      "feature": "rsi_6",
+      "importance": 0.01967
+    },
+    {
+      "feature": "swing_momentum",
+      "importance": 0.01924
+    },
+    {
+      "feature": "dist_liq_50x_short",
+      "importance": 0.01904
+    },
+    {
+      "feature": "long_short_ratio",
+      "importance": 0.0187
+    },
+    {
+      "feature": "stochrsi_k",
+      "importance": 0.01818
+    },
+    {
+      "feature": "rsi_slope_h4",
+      "importance": 0.01772
+    },
+    {
+      "feature": "hmm_regime_enc",
+      "importance": 0.00669
+    },
+    {
+      "feature": "cvd_div_h4",
+      "importance": 0.00432
+    },
+    {
+      "feature": "direction",
+      "importance": 0.00301
+    },
+    {
+      "feature": "MSB_BOS",
+      "importance": 0.00028
+    },
+    {
+      "feature": "h4_trend",
+      "importance": 0.00012
+    }
+  ],
+  "concentration": {
+    "top5_pct": 24.79,
+    "top10_pct": 41.65,
+    "dynamic_pct": 26.63,
+    "static_pct": 73.37
+  },
+  "walk_forward": {
+    "monthly_stats": [
+      {
+        "month": "2025-11",
+        "n": 550,
+        "wr": 66.0,
+        "avg_pnl": 0.813,
+        "gd_pct": 83.3
+      },
+      {
+        "month": "2025-12",
+        "n": 550,
+        "wr": 70.7,
+        "avg_pnl": 1.116,
+        "gd_pct": 83.5
+      },
+      {
+        "month": "2026-01",
+        "n": 491,
+        "wr": 64.4,
+        "avg_pnl": 0.787,
+        "gd_pct": 77.4
+      },
+      {
+        "month": "2026-02",
+        "n": 369,
+        "wr": 68.8,
+        "avg_pnl": 0.833,
+        "gd_pct": 82.1
+      },
+      {
+        "month": "2026-03",
+        "n": 466,
+        "wr": 67.4,
+        "avg_pnl": 0.718,
+        "gd_pct": 78.3
+      }
+    ],
+    "wr_std": 2.18,
+    "wr_min": 64.4,
+    "wr_max": 70.7,
+    "stability": "STABLE (std < 5pp)"
+  },
+  "edge_concentration": {
+    "per_coin_wr_spread": 17.7,
+    "coin_stats": [
+      {
+        "coin": "1000PEPEUSDT",
+        "n": 89,
+        "wr": 89.9
+      },
+      {
+        "coin": "1000SHIBUSDT",
+        "n": 97,
+        "wr": 79.4
+      },
+      {
+        "coin": "ADAUSDT",
+        "n": 93,
+        "wr": 84.9
+      },
+      {
+        "coin": "ARBUSDT",
+        "n": 102,
+        "wr": 81.4
+      },
+      {
+        "coin": "AVAXUSDT",
+        "n": 117,
+        "wr": 79.5
+      },
+      {
+        "coin": "BNBUSDT",
+        "n": 98,
+        "wr": 80.6
+      },
+      {
+        "coin": "BTCUSDT",
+        "n": 89,
+        "wr": 85.4
+      },
+      {
+        "coin": "DOGEUSDT",
+        "n": 117,
+        "wr": 78.6
+      },
+      {
+        "coin": "DOTUSDT",
+        "n": 87,
+        "wr": 82.8
+      },
+      {
+        "coin": "ETHUSDT",
+        "n": 97,
+        "wr": 83.5
+      },
+      {
+        "coin": "HBARUSDT",
+        "n": 86,
+        "wr": 87.2
+      },
+      {
+        "coin": "LINKUSDT",
+        "n": 92,
+        "wr": 90.2
+      },
+      {
+        "coin": "NEARUSDT",
+        "n": 88,
+        "wr": 79.5
+      },
+      {
+        "coin": "ONDOUSDT",
+        "n": 75,
+        "wr": 81.3
+      },
+      {
+        "coin": "POLUSDT",
+        "n": 69,
+        "wr": 72.5
+      },
+      {
+        "coin": "SOLUSDT",
+        "n": 110,
+        "wr": 83.6
+      },
+      {
+        "coin": "SUIUSDT",
+        "n": 101,
+        "wr": 77.2
+      },
+      {
+        "coin": "TAOUSDT",
+        "n": 95,
+        "wr": 80.0
+      },
+      {
+        "coin": "TONUSDT",
+        "n": 71,
+        "wr": 73.2
+      },
+      {
+        "coin": "TRXUSDT",
+        "n": 88,
+        "wr": 72.7
+      },
+      {
+        "coin": "XRPUSDT",
+        "n": 104,
+        "wr": 84.6
+      }
+    ]
+  },
+  "ev_per_guardian_exit": 1.461,
+  "robustness_score": "3/4",
+  "robustness_verdict": "PROBABLY ROBUST \u2014 minor fragility in one dimension"
+}

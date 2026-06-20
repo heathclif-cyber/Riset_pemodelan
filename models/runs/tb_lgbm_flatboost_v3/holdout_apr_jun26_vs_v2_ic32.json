@@ -1,0 +1,49 @@
+{
+  "flatboost_v3": {
+    "name": "flatboost_v3 (29 feat)",
+    "trades": 1407,
+    "wr": 36.318407960199,
+    "long_wr": 35.89001447178003,
+    "short_wr": 36.73184357541899,
+    "long_pct": 49.111584932480454,
+    "pnl": 201.7006364660887,
+    "pnl_per_month": 80.68025458643548,
+    "pnl_per_trade": 0.14335510765180434,
+    "sl_rate": 58.84861407249466,
+    "time_exit_rate": 41.15138592750533,
+    "avg_hold": 21.55223880597015
+  },
+  "flatboost_v2": {
+    "name": "flatboost_v2 (27 feat)",
+    "trades": 1406,
+    "wr": 36.69985775248933,
+    "long_wr": 36.69590643274854,
+    "short_wr": 36.70360110803324,
+    "long_pct": 48.64864864864865,
+    "pnl": 216.9849138285897,
+    "pnl_per_month": 86.79396553143587,
+    "pnl_per_trade": 0.154327819223748,
+    "sl_rate": 59.103840682788054,
+    "time_exit_rate": 40.896159317211946,
+    "avg_hold": 21.57894736842105
+  },
+  "ic32_benchmark": {
+    "name": "ic32_regime_v1 (benchmark)",
+    "trades": 720,
+    "wr": 41.25,
+    "long_wr": 43.75,
+    "short_wr": 39.87068965517241,
+    "long_pct": 35.55555555555556,
+    "pnl": 174.08097681821513,
+    "pnl_per_month": 69.63239072728605,
+    "pnl_per_trade": 0.24177913446974325,
+    "sl_rate": 54.30555555555555,
+    "time_exit_rate": 45.69444444444444,
+    "avg_hold": 22.9875
+  },
+  "delta_v3_vs_v2": -15.2843,
+  "delta_v3_vs_ic32": 27.6197,
+  "period": "2026-04-01 to 2026-06-13",
+  "n_coins": 21,
+  "note": "Standalone LGBM, no LSTM/Guardian, live-like eval: SL=1.5xATR + max_hold=36 bar, NO TP, win=net_pnl>0"
+}

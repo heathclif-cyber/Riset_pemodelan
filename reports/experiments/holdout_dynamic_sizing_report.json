@@ -1,0 +1,94 @@
+{
+  "model": "tb_widyawardhana_v2_continuation",
+  "period": "Apr-Jun 2026",
+  "coins": 21,
+  "base_modal": 10.0,
+  "leverage": [
+    5.0
+  ],
+  "total_trades": 918,
+  "win_rate": 70.3,
+  "fixed": {
+    "total_pnl": 284.06,
+    "pnl_per_trade": 0.3094,
+    "profit_factor": 2.7,
+    "monthly": [
+      {
+        "month": "2026-04",
+        "trades": 471,
+        "wr": 72.4,
+        "pnl_fixed": 163.69,
+        "pnl_dynamic": 156.58,
+        "avg_factor": 0.85,
+        "delta": -7.12
+      },
+      {
+        "month": "2026-05",
+        "trades": 359,
+        "wr": 69.4,
+        "pnl_fixed": 101.53,
+        "pnl_dynamic": 103.76,
+        "avg_factor": 0.86,
+        "delta": 2.23
+      },
+      {
+        "month": "2026-06",
+        "trades": 88,
+        "wr": 62.5,
+        "pnl_fixed": 18.84,
+        "pnl_dynamic": 20.87,
+        "avg_factor": 0.83,
+        "delta": 2.04
+      }
+    ]
+  },
+  "dynamic": {
+    "total_pnl": 281.21,
+    "pnl_per_trade": 0.3063,
+    "profit_factor": 3.2,
+    "avg_factor": 0.85,
+    "avg_modal": 8.55,
+    "monthly": [
+      {
+        "month": "2026-04",
+        "trades": 471,
+        "wr": 72.4,
+        "pnl_fixed": 163.69,
+        "pnl_dynamic": 156.58,
+        "avg_factor": 0.85,
+        "delta": -7.12
+      },
+      {
+        "month": "2026-05",
+        "trades": 359,
+        "wr": 69.4,
+        "pnl_fixed": 101.53,
+        "pnl_dynamic": 103.76,
+        "avg_factor": 0.86,
+        "delta": 2.23
+      },
+      {
+        "month": "2026-06",
+        "trades": 88,
+        "wr": 62.5,
+        "pnl_fixed": 18.84,
+        "pnl_dynamic": 20.87,
+        "avg_factor": 0.83,
+        "delta": 2.04
+      }
+    ]
+  },
+  "improvement_usd": -2.85,
+  "improvement_pct": -1.0,
+  "factor_config": {
+    "base_modal": 10.0,
+    "factor_min": 0.5,
+    "factor_max": 2.0,
+    "conf_high_thr": 0.7,
+    "conf_low_thr": 0.6,
+    "streak_win_thr": 3,
+    "streak_loss_thr": -3,
+    "dd_guard_pct": -0.1,
+    "profit_guard": 0.2
+  }
+}

@@ -1,0 +1,12 @@
+{
+  "run_name": "tb_lgbm_widyawardhana_v3",
+  "created": "2026-06-14T15:49:10.810687",
+  "tp_atr_mult": 2.0,
+  "sl_atr_mult": 1.5,
+  "max_hold": 36,
+  "n_samples": 785185,
+  "n_coins": 21,
+  "n_features": 18,
+  "class_weight": "balanced",
+  "cv_mean_f1_macro": 0.3916
+}

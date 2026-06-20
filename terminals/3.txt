@@ -1,0 +1,41 @@
+---
+pid: 15628
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05_train_lstm_genuine_v2.py --all"
+started_at: 2026-06-15T17:23:32.331Z
+running_for_ms: 32200006 
+---
+
+==================================================================
+  LSTM Momentum Complement -- tb_lstm_genuine_v2
+  Partner : tb_lgbm_genuine_v2
+  Label   : momentum_v4 (gate bars only)
+  Features: 8 from lstm_v4_selected_features.json
+  Purge   : 36 | Folds: 8
+  Device  : privateuseone:0
+==================================================================
+
+Traceback (most recent call last):
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 590, in <module>
+    main()
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 465, in main
+    X, y, ts, meta_df, feat_cols_used = load_data(coins, feat_cols)
+                                        ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "D:\Apps-Dev\Riset_pemodelan\pipeline\05_train_lstm_genuine_v2.py", line 133, in load_data
+    df = df.join(reg[["hmm_regime_enc"]], how="left")
+         ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\frame.py", line 10784, in join
+    return merge(
+           ^^^^^^
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\reshape\merge.py", line 184, in merge
+    return op.get_result(copy=copy)
+           ^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\reshape\merge.py", line 888, in get_result
+    result = self._reindex_and_concat(
+             ^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\reshape\merge.py", line 840, in _reindex_and_concat
+    llabels, rlabels = _items_overlap_with_suffix(
+                       ^^^^^^^^^^^^^^^^^^^^^^^^^^^
+  File "C:\Users\Bagas\AppData\Local\Programs\Python\Python312\Lib\site-packages\pandas\core\reshape\merge.py", line 2721, in _items_overlap_with_suffix
+    raise ValueError(f"columns overlap but no suffix specified: {to_rename}")
+ValueError: columns overlap but no suffix specified: Index(['hmm_regime_enc'], dtype='object')

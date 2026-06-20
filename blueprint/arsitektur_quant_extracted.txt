@@ -1,0 +1,889 @@
+WORKING PAPER  •  QUANTITATIVE RESEARCH
+ 
+Arsitektur Model Statistik Multi-Lapis
+untuk Swing Trading Crypto dengan Leverage 5×
+Pendekatan ala Medallion Fund untuk Trader Quant Ritel
+Universe: 20 koin marketcap terbesar (non-stablecoin)
+Timeframe keputusan: H4  •  Sumber fitur: H1 / H4 / D1
+Juni 2026  •  Versi 1.0
+DISCLAIMER — Dokumen riset edukatif. Bukan nasihat keuangan. Leverage 5× pada
+crypto sangat berisiko dan dapat menyebabkan kehilangan seluruh modal.
+Daftar Isi
+Abstrak
+Paper ini menyajikan rancangan sistem trading kuantitatif berlapis yang terinspirasi oleh filosofi Renaissance Technologies / Medallion Fund, diadaptasi untuk realitas pasar crypto dan keterbatasan resource seorang trader quant ritel. Sistem dirancang untuk swing trading dengan horizon 1–3 hari pada 20 aset crypto berkapitalisasi terbesar di luar stablecoin, dengan leverage maksimum 5×.
+Tesis utamanya bukan memprediksi harga, melainkan mengekstraksi sejumlah edge statistik kecil yang stabil dan menggabungkannya sedemikian rupa sehingga error antar-komponen tidak berkorelasi. Sistem dibangun dari lima lapis: (0) deteksi rezim dengan Hidden Markov Model, (1) ensemble prediktor arah per-rezim yang menggabungkan Gradient Boosting, Survival Analysis, Kalman Filter, Gaussian Process, dan LSTM, (2) meta-labeling untuk menyaring kualitas sinyal, (3) sizing engine berbasis Kelly yang dimodulasi keyakinan model, dan (4) exit model terpisah yang juga berbasis pembelajaran.
+Paper menjelaskan untuk tiap model: skema pelabelan yang digunakan, fitur yang menjadi input, setup pelatihan, alasan pemilihan (beserta pro dan kontra), serta bagaimana semua keluaran dikombinasikan. Bagian akhir membahas protokol tuning anti-overfitting (walk-forward bersarang, purging, embargo) dan kerangka manajemen risiko yang menjadi penentu kelangsungan hidup pada leverage tinggi.
+Catatan tentang atribusi ke Simons
+Renaissance tidak pernah mempublikasikan arsitektur sebenarnya. Apa pun yang ditulis di sini adalah rekonstruksi prinsip yang masuk akal berdasarkan informasi publik (latar belakang tim di signal processing, matematika, dan astronomi; penekanan pada banyak sinyal lemah yang tidak berkorelasi; dan kewaspadaan ekstrem terhadap overfitting). Ini bukan klaim bahwa Medallion benar-benar memakai susunan model ini.
+1. Filosofi Desain
+1.1 Edge kecil, frekuensi tinggi, kombinasi besar
+Prinsip inti yang membedakan pendekatan ini dari trading diskresioner: kita tidak mencari satu sinyal hebat dengan akurasi tinggi. Kita mencari banyak sinyal lemah yang masing-masing hanya sedikit lebih baik dari tebakan acak, tetapi error-nya saling independen. Secara matematis, bila kita menggabungkan N prediktor dengan akurasi individual rendah namun error tidak berkorelasi, varians keputusan gabungan menurun mendekati rasio 1/N, sementara edge rata-rata tetap dipertahankan.
+Konsekuensi desain
+Karena edge per-sinyal kecil, biaya transaksi menjadi musuh utama. Setiap keputusan arsitektur — timeframe keputusan H4 (bukan H1), filter likuiditas universe, threshold keyakinan minimum — pada akhirnya adalah upaya menjaga agar edge tidak habis tergerus fee, funding, dan slippage.
+1.2 Lima prinsip operasional
+Decorrelation di atas akurasi. Sebuah model dengan akurasi 54% yang error-nya tidak berkorelasi dengan ensemble lebih berharga daripada model 62% yang error-nya meniru anggota yang sudah ada.
+Setiap prediksi harus membawa estimasi ketidakpastian. Keputusan sizing membutuhkan bukan hanya arah, tetapi seberapa yakin. Model yang hanya memberi titik estimasi tanpa confidence kurang berguna.
+Sistem harus tahu kapan diam. Rezim krisis dan kondisi tanpa-edge harus menghasilkan posisi nol. Idle adalah keputusan valid.
+Online / incremental update. Pasar crypto non-stasioner; parameter harus bisa menyesuaikan tanpa retrain dari nol setiap saat.
+Paranoia terhadap overfitting. Validasi walk-forward bersarang dengan purging dan embargo bukan opsional — ini fondasi yang menentukan apakah hasil backtest punya arti.
+2. Universe & Pemilihan Aset
+Universe adalah 20 cryptocurrency dengan kapitalisasi pasar terbesar di luar stablecoin dan wrapped/pegged token (mengikuti metodologi yang lazim dipakai indeks seperti CMC20). Daftar konkret bersifat dinamis dan di-rebalance bulanan, tetapi pada Juni 2026 komposisi tipikalnya mencakup aset-aset berikut sebagai kandidat.
+Tier
+Aset (contoh tipikal)
+Karakter untuk model
+Inti likuiditas
+BTC, ETH
+Noise rendah, basis untuk fitur beta/residual; jangkar regime
+Large-cap L1/pay
+BNB, XRP, SOL, ADA, TON, AVAX, TRX
+Likuiditas tinggi, perp dalam, cocok H4 swing
+High-beta L1/infra
+SUI, DOT, LINK, NEAR, APT, ICP
+Beta tinggi terhadap BTC, peluang alpha residual
+Meme / sentiment
+DOGE, SHIB, PEPE
+Sangat volatil; sizing wajib lebih kecil, funding sering ekstrem
+Penting: keanggotaan top-20 bukan izin untuk men-trade ke-20 setiap candle. Filter likuiditas dinamis diterapkan tiap H4: hanya aset yang lolos ambang volume, kedalaman perp, biaya funding wajar, dan kualitas data yang masuk kandidat eksekusi. Biasanya tersisa 6–10 aset per periode.
+2.1 Filter likuiditas dinamis (per H4)
+Volume rolling 24 jam > ambang minimum (mis. di atas persentil ke-30 universe) — menjamin slippage kecil.
+Tersedia perpetual futures dengan open interest cukup di bursa eksekusi — syarat untuk leverage.
+Funding rate tidak ekstrem (|funding| di bawah ambang per 8 jam) — biaya carry tidak menggerus edge.
+Bukan listing baru < 60 hari — butuh sejarah cukup untuk fitur rolling dan pelatihan.
+Kualitas data bersih — tanpa gap candle aneh, tanpa lonjakan harga yang jelas error feed.
+3. Gambaran Arsitektur
+Sistem mengalir dari deteksi konteks ke prediksi arah, lalu penyaringan kualitas, penentuan ukuran, dan terakhir manajemen keluar. Setiap lapis memiliki tugas, pelabelan, dan fitur yang berbeda.
+                       DATA: OHLCV + funding + OI + cross-asset
+                       (H1 granular  •  H4 keputusan  •  D1 konteks)
+                                      |
+             +------------------------v------------------------+
+  LAYER 0    |  REGIME DETECTOR  -  Hidden Markov Model (HMM)   |
+  (context)  |  output: P(trending), P(ranging), P(crisis)     |
+             +------------------------+------------------------+
+                          crisis? --> STOP (posisi nol)
+                                      |
+             +------------------------v------------------------+
+  LAYER 1    |  ENSEMBLE PREDIKTOR ARAH  (dilatih per-rezim)    |
+  (alpha)    |  GBM | Survival(Cox) | Kalman | GP | LSTM        |
+             |  label: Triple Barrier  ->  WIN / LOSS / NEUTRAL |
+             +------------------------+------------------------+
+                                      | prob arah + ketidakpastian
+             +------------------------v------------------------+
+  LAYER 2    |  META-LABEL MODEL  -  GBM ringan                 |
+  (filter)   |  label: BINARY  ->  prediksi L1 BENAR / SALAH    |
+             +------------------------+------------------------+
+                                      | p(benar) = quality score
+             +------------------------v------------------------+
+  LAYER 3    |  SIZING ENGINE  -  Kelly x confidence x vol      |
+  (size)     |  label: CONTINUOUS  ->  fraksi modal optimal     |
+             +------------------------+------------------------+
+                                      | order + leverage efektif
+             +------------------------v------------------------+
+  LAYER 4    |  EXIT MODEL  -  Survival + trailing + time stop  |
+  (exit)     |  label: durasi-ke-barrier & arah hazard          |
+             +-------------------------------------------------+
+4. Layer 0 — Regime Detector (HMM)
+4.1 Peran
+HMM adalah gerbang konteks. Ia menjawab pertanyaan: pasar sedang berada dalam keadaan tersembunyi yang mana? Outputnya bukan label keras melainkan distribusi probabilitas tiga state, dan distribusi inilah yang menjadi fitur bagi seluruh lapis berikutnya serta sakelar darurat ketika state krisis dominan.
+4.2 Pelabelan
+Label: TIDAK ADA (unsupervised)
+HMM dilatih tanpa label. Ia menemukan sendiri jumlah dan batas rezim dari struktur data. Kita hanya memberi makna ekonomis pada state setelah konvergen: state dengan volatilitas tertinggi dan korelasi antar-aset yang melonjak diberi label Crisis; state dengan drift terarah kuat diberi label Trending; sisanya Ranging.
+4.3 Fitur input HMM
+HMM bekerja pada vektor observasi yang ringkas dan stasioner-relatif (deliberately sedikit, agar tidak overfit state):
+Log-return H4 dari indeks universe (rata-rata tertimbang kapitalisasi) — menangkap drift.
+Volatilitas realized jangka pendek (estimator Garman–Klass / Parkinson) — pembeda utama antar rezim.
+Anomali volume (log volume relatif terhadap rata-rata bergulir) — lonjakan menandai transisi.
+Dispersi korelasi antar-aset — saat korelasi semua aset melonjak ke ~1, itu tanda khas crisis (risk-off).
+Funding rate agregat — sentimen leverage pasar secara keseluruhan.
+4.4 Setup
+Gaussian HMM dengan 3 state (uji 2–4 state via BIC; 3 biasanya paling stabil dan interpretable).
+Covariance type: full, agar korelasi antar observasi tertangkap.
+Dilatih ulang berkala (mis. bulanan) dengan jendela bergulir; state di-relabel via aturan ekonomis di atas agar konsisten antar retrain.
+Output predict_proba (soft assignment), bukan predict (hard). Probabilitas inilah yang dialirkan.
+4.5 Mengapa HMM — pro & kontra
+Pro
+Kontra
+Unsupervised — tidak butuh label rezim yang memang tidak kita ketahui di muka.
+Asumsi distribusi Gaussian per-state bisa terlalu kaku untuk fat tails crypto.
+Memberi probabilitas state (soft), bukan klasifikasi kaku — ideal sebagai fitur.
+Jumlah state harus ditentukan; salah pilih menghasilkan rezim tak bermakna.
+Berakar pada signal processing — selaras dengan DNA pendekatan Simons.
+Bisa lambat bereaksi pada transisi rezim yang sangat mendadak (flash crash).
+Ringan secara komputasi, mudah retrain online.
+Label state dapat 'berpindah' antar retrain bila tidak di-anchor dengan aturan.
+5. Proses Labeling Triple Barrier — Step-by-Step
+Labeling adalah proses memberi 'jawaban benar' pada data historis sehingga model bisa belajar. Di sistem ini, labeling bukan sekadar 'naik/turun,' melainkan framework Triple Barrier yang sadar volatilitas. Bagian ini menjelaskan prosesnya dari A sampai Z dengan contoh konkret.
+1. Input Data Historis
+Dimulai dengan data OHLCV per H4 untuk periode historis (mis. 6 bulan terakhir):
+Timestamp    | Open   | High   | Low    | Close  | Volume
+─────────────┼────────┼────────┼────────┼────────┼─────────
+2026-01-01   | 100.00 | 101.50 | 99.50  | 100.80 | 1000000
+2026-01-05   | 100.80 | 103.20 | 100.20 | 102.50 | 1200000
+2026-01-09   | 102.50 | 104.80 | 102.10 | 103.50 | 900000
+   ...       |  ...   |  ...   |  ...   |  ...   | ...
+2026-06-30   | 110.20 | 112.50 | 110.00 | 111.80 | 800000
+2. Hitung ATR(14) — Volatilitas Pembagi Barrier
+ATR (Average True Range) adalah estimasi volatilitas yang seimbang dan mudah dihitung dari OHLC saja. Formula:
+True Range(t) = max(
+                  high(t) - low(t),
+                  |high(t) - close(t-1)|,
+                  |low(t) - close(t-1)|
+                )
+ 
+ATR(t, period=14) = SMA(True Range, 14 candle terakhir)
+ 
+Contoh untuk timestamp tertentu:
+  True Range @ 2026-01-09 = max(104.8-102.1, |104.8-102.5|, |102.1-102.5|)
+                            = max(2.7, 2.3, 0.4) = 2.7
+  ATR(14) @ 2026-01-09   = rata-rata 14 True Range terakhir
+                         ≈ 2.15  (contoh)
+3. Tentukan Entry Signal — Arah Mana (LONG / SHORT)?
+Sistem belum ada model di tahap ini; kita sedang setup labelisasi. Untuk labeling, kita ambil setiap candle sebagai 'calon entry point' dan tanyakan: jika kita masuk LONG (atau SHORT) di close candle ini, apa yang terjadi?
+Perhatian penting
+Saat labeling, kita BUKAN memprediksi arah. Kita membuat dua skenario: 'jika masuk LONG,' dan 'jika masuk SHORT,' lalu lihat apa hasilnya. Model nanti akan belajar kapan LONG lebih layak vs SHORT. Labeling hanya menjawab: untuk setiap entry direction, apa outcome-nya?
+4. Setup Triple Barrier untuk Setiap Entry
+Untuk setiap entry point (candle t), atur tiga barrier:
+Entry price      = close(t)
+ATR_at_entry     = ATR(14) calculated at time t
+ 
+===== UNTUK SKENARIO LONG =====
+TP barrier       = entry_price + ku × ATR_at_entry     (misal ku = 2.0)
+SL barrier       = entry_price - kl × ATR_at_entry     (misal kl = 1.0)
+Time barrier     = t + N_candle                        (misal N = 12 candle H4)
+ 
+===== UNTUK SKENARIO SHORT =====
+TP barrier       = entry_price - ku × ATR_at_entry     (dikurangi untuk short)
+SL barrier       = entry_price + kl × ATR_at_entry     (ditambah untuk short)
+Time barrier     = t + N_candle                        (sama)
+ 
+Contoh numerik @ 2026-01-09, entry @ 103.50 (close), ATR=2.15:
+ 
+LONG barriers:
+  TP (upper) = 103.50 + 2.0×2.15 = 103.50 + 4.30 = 107.80
+  SL (lower) = 103.50 - 1.0×2.15 = 103.50 - 2.15 = 101.35
+  Time      = 2026-01-09 + 12 candle = sampai 2026-02-09 (kira2)
+ 
+SHORT barriers:
+  TP (lower) = 103.50 - 2.0×2.15 = 103.50 - 4.30 = 99.20
+  SL (upper) = 103.50 + 1.0×2.15 = 103.50 + 2.15 = 105.65
+  Time      = 2026-01-09 + 12 candle = sampai 2026-02-09
+5. Forward-Walk Harga & Cek Barrier Mana Tersentuh
+Mulai dari candle t+1 (hari berikutnya), lihat harga bergerak. Untuk setiap candle ke depan, periksa:
+Untuk LONG position:
+  ├─ if high(t+k) >= TP_barrier  → PERTAMA KALI sentuh TP
+  │                                 → LABEL = +1 (WIN)
+  │                                 → BERHENTI CEK
+  ├─ if low(t+k) <= SL_barrier   → PERTAMA KALI sentuh SL
+  │                                 → LABEL = -1 (LOSS)
+  │                                 → BERHENTI CEK
+  └─ if (t+k) >= time_barrier AND belum sentuh TP/SL
+                                     → LABEL = 0 (NEUTRAL)
+                                     → BERHENTI CEK
+ 
+Untuk SHORT position:
+  ├─ if low(t+k) <= TP_barrier   → PERTAMA KALI sentuh TP
+  │                                 → LABEL = +1 (WIN)
+  │                                 → BERHENTI CEK
+  ├─ if high(t+k) >= SL_barrier  → PERTAMA KALI sentuh SL
+  │                                 → LABEL = -1 (LOSS)
+  │                                 → BERHENTI CEK
+  └─ if (t+k) >= time_barrier AND belum sentuh TP/SL
+                                     → LABEL = 0 (NEUTRAL)
+                                     → BERHENTI CEK
+6. Contoh Konkret: Follow Harga 4 Minggu ke Depan
+Mari simulasikan labeling LONG untuk entry @ 2026-01-09 close=103.50:
+Entry: 2026-01-09  close=103.50  ATR=2.15
+LONG TP=107.80  SL=101.35  Time_end=2026-02-09
+ 
+Candle  | High   | Low    | Outcome check
+────────┼────────┼────────┼─────────────────────────────────
+2026-01-13| 104.50 | 102.80 | High < TP, Low > SL, belum time → lanjut
+2026-01-17| 106.20 | 103.00 | High < TP, Low > SL, belum time → lanjut
+2026-01-21| 108.50 | 106.10 | High 108.50 >= 107.80 TP → SENTUH TP
+                           ✓ LABEL = +1 (WIN)
+                           ✓ EXIT LONG, hitung profit
+ 
+Profit (simulated):
+  Entry price = 103.50
+  Exit price ≈ 107.80 (di TP barrier)
+  Profit per unit = 107.80 - 103.50 = 4.30  (+4.16%)
+  Dengan notional $500 & leverage 5x:
+    Profit = 4.30 / 103.50 × $500 × 5 ≈ $104  (20.8% return modal)
+Sekarang contoh skenario yang berbeda:
+Entry: 2026-02-15  close=109.00  ATR=2.40
+LONG TP=114.80  SL=106.60  Time_end=2026-03-17
+ 
+Candle  | High   | Low    | Outcome check
+────────┼────────┼────────┼─────────────────────────────────
+2026-02-19| 110.50 | 108.50 | High < TP, Low > SL, belum time → lanjut
+2026-02-23| 111.20 | 107.80 | High < TP, Low > SL, belum time → lanjut
+2026-02-27| 112.50 | 105.50 | Low 105.50 <= 106.60 SL → SENTUH SL
+                           ✓ LABEL = -1 (LOSS)
+                           ✓ EXIT LONG, hitung loss
+ 
+Loss (simulated):
+  Entry price = 109.00
+  Exit price ≈ 106.60 (di SL barrier)
+  Loss per unit = 109.00 - 106.60 = 2.40  (-2.20%)
+  Dengan notional $500 & leverage 5x:
+    Loss = 2.40 / 109.00 × $500 × 5 ≈ $55  (hard stop, -11% modal)
+Contoh ketiga — timeout:
+Entry: 2026-03-25  close=108.00  ATR=1.90
+LONG TP=111.80  SL=106.10  Time_end=2026-04-24
+ 
+Candle  | High   | Low    | Outcome check
+────────┼────────┼────────┼─────────────────────────────────
+2026-03-29| 109.20 | 107.80 | High < TP, Low > SL, belum time → lanjut
+2026-04-02| 109.50 | 107.90 | High < TP, Low > SL, belum time → lanjut
+2026-04-15| 110.10 | 107.50 | High < TP, Low > SL, belum time → lanjut
+2026-04-24| 110.80 | 107.20 | High < TP, Low > SL, TIME = 12 candle habis
+                           ✓ LABEL = 0 (NEUTRAL)
+                           ✓ EXIT by time, hitung P/L terkini
+ 
+P/L saat timeout:
+  Entry = 108.00
+  Close @ 2026-04-24 = 110.80
+  Profit unrealized = 110.80 - 108.00 = 2.80  (+2.59%)
+  Dengan notional $500 & leverage 5x:
+    Unrealized P/L ≈ $70  (13% return sebelum timeout)
+  Tapi LABEL tetap = 0 (NEUTRAL) karena barrier tidak tersentuh.
+7. Ulangi untuk Setiap Entry Point Historis
+Proses di atas (step 3–6) diulang untuk SETIAP candle dalam dataset historis. Jika punya 6 bulan data H4, itu ~180 candle, sehingga 180 label dihitung (atau lebih, jika overlap diizinkan dengan purging). Untuk SHORT, proses identik, hanya barrier terbalik.
+Output labeling
+Hasil akhir adalah 3 kolom tambahan di dataset:
+1. label_long  = +1 / -1 / 0  (outcome jika entry LONG)
+2. label_short = +1 / -1 / 0  (outcome jika entry SHORT)
+3. duration_to_barrier (candle berapa sampai barrier tercapai)
+8. Distribusi Label & Sanity Check
+Setelah labeling selesai, periksa distribusi:
+Label LONG distribution:
+  WIN      (label=+1) : 120 sampel (33%)
+  LOSS     (label=-1) : 85 sampel  (24%)
+  NEUTRAL  (label=0)  : 155 sampel (43%)
+  Total              : 360 sampel
+ 
+Label SHORT distribution:
+  WIN      (label=+1) : 105 sampel (29%)
+  LOSS     (label=-1) : 95 sampel  (26%)
+  NEUTRAL  (label=0)  : 160 sampel (45%)
+  Total              : 360 sampel
+Target: WIN 25–35%, LOSS 20–30%, NEUTRAL 35–45%. Contoh di atas sehat. Jika NEUTRAL > 55%, kalibrasi ulang barrier (kl atau ku terlalu ketat / ku terlalu besar).
+9. Fitur Extraction — Input untuk Model
+Bersamaan dengan labeling, ekstrak fitur dari periode SEBELUM entry (jangan gunakan informasi masa depan):
+Untuk setiap entry point, hitung fitur dari:
+  - 30 candle terakhir sebelum entry (lookback window)
+  - Cross-asset dari periode sama
+  - HMM state pada entry time
+ 
+Contoh fitur @ 2026-01-09 (entry point):
+  momentum_ema_cross = (EMA_8 - EMA_21) / ATR  dari candle 2025-12-05 sampai 2026-01-08
+  z_score            = (close - mean_30) / std_30  di candle 2026-01-08
+  volatility_atr     = ATR(14) / close
+  volume_imbalance   = (buy_vol - sell_vol) rolling 10 candle
+  funding_zscore     = (funding_rate - mean_168) / std_168
+  beta_btc           = covariance(return_alt, return_btc) / variance(return_btc) last 48 candle
+  ... (80+ fitur lagi)
+10. Dataset Final untuk Training
+Setiap row di dataset final berisi:
+Kolom
+Isi
+Tujuan
+timestamp
+2026-01-09
+Referensi waktu
+feature_1 ... feature_100
+nilai numerik
+Input untuk model ML
+label_long
++1 / -1 / 0
+Target training untuk long model
+label_short
++1 / -1 / 0
+Target training untuk short model
+hmm_prob_trend
+0.75
+Fitur rezim (dari Layer 0)
+duration_long
+12
+Candle sampai barrier tersentuh (LONG)
+duration_short
+10
+Candle sampai barrier tersentuh (SHORT)
+Dataset ini siap untuk diumpankan ke GBM, LSTM, Kalman, atau model lainnya dengan labeling terpisah per arah.
+11. Pseudocode Lengkap (Python-like)
+def triple_barrier_labeling(price_data, atr_period=14, ku=2.0, kl=1.0, time_barrier_candle=12):
+    labels_long = []
+    labels_short = []
+    durations = []
+    
+    for t in range(len(price_data)):
+        entry_price = price_data[t].close
+        atr = calculate_atr(price_data, t, atr_period)
+        entry_time = t
+        time_barrier = t + time_barrier_candle
+        
+        # LONG setup
+        tp_long = entry_price + ku * atr
+        sl_long = entry_price - kl * atr
+        
+        # SHORT setup
+        tp_short = entry_price - ku * atr
+        sl_short = entry_price + kl * atr
+        
+        # Forward walk
+        label_long = 0  # default neutral
+        label_short = 0
+        duration = None
+        
+        for k in range(t+1, min(time_barrier+1, len(price_data))):
+            high = price_data[k].high
+            low = price_data[k].low
+            
+            # Check LONG
+            if label_long == 0:  # belum tersentuh
+                if high >= tp_long:
+                    label_long = +1
+                    duration = k - t
+                elif low <= sl_long:
+                    label_long = -1
+                    duration = k - t
+            
+            # Check SHORT
+            if label_short == 0:
+                if low <= tp_short:
+                    label_short = +1
+                    duration = k - t
+                elif high >= sl_short:
+                    label_short = -1
+                    duration = k - t
+        
+        labels_long.append(label_long)
+        labels_short.append(label_short)
+        durations.append(duration)
+    
+    return labels_long, labels_short, durations
+12. Kesalahan Umum Labeling (Lookahead Bias)
+BAHAYA: Lookahead Bias
+Kesalahan klasik: menghitung fitur dari SELURUH histori (termasuk masa depan entry). Contoh:
+❌ SALAH: z_score = (close - mean_ALL_HISTORY) / std_ALL_HISTORY
+✓ BENAR: z_score = (close - mean_LOOKBACK_30) / std_LOOKBACK_30
+Kesalahan pertama akan membuat backtest indah tapi live trading jelek karena live kita tidak punya data masa depan.
+13. Purging & Embargo (Anti-leakage dalam Walk-forward)
+Saat melakukan walk-forward validation:
+Period train      : 2025-01-01 sampai 2025-10-31 (300 hari)
+Period validation  : 2025-11-01 sampai 2025-11-30 (30 hari)
+Period test       : 2025-12-01 sampai 2025-12-31 (30 hari)
+ 
+Purging (T0 barrier overlap):
+  Karena label @ 2025-11-15 baru final setelah barrier tersentuh
+  (bisa sampai 2025-11-27), hapus dari train data yang ada label
+  overlap dengan periode test.
+ 
+Embargo (jeda):
+  Setelah test selesai 2025-12-31, jangan langsung train pd 2026-01-01.
+  Beri jeda 5-10 hari agar tidak ada informasi bocor dari edge periode.
+ 
+Hasilnya: kebocoran informasi diminimalkan, backtest lebih realistis.
+6. Layer 1 — Pelabelan Triple Barrier
+Sebelum membahas model arah, kita tetapkan pelabelannya, karena seluruh model di Layer 1 berbagi label yang sama. Pelabelan naif (return H-candle ke depan di atas/bawah ambang tetap) ditolak karena mengabaikan jalur harga dan volatilitas. Sebagai gantinya digunakan Triple Barrier Method (Lopez de Prado).
+5.1 Tiga barrier
+  Upper barrier (Take Profit)   =  entry + ku * ATR(14, H4)
+  Lower barrier (Stop Loss)     =  entry - kl * ATR(14, H4)
+  Vertical barrier (Time stop)  =  entry + N candle H4 (adaptif)
+ 
+  Barrier mana yang TERSENTUH LEBIH DULU menentukan label:
+     upper dulu  ->  +1  (WIN)
+     lower dulu  ->  -1  (LOSS)
+     waktu habis ->   0  (NEUTRAL)
+Karena jarak barrier diskala oleh ATR, label otomatis menyesuaikan volatilitas: aset yang sedang bergejolak mendapat barrier lebih lebar, yang tenang lebih sempit. Asimetri ku > kl (mis. 2.0 vs 1.0) menanamkan rasio risk:reward yang sehat langsung ke dalam definisi target.
+5.2 Time barrier adaptif (mengatasi idle terlalu lama)
+Time barrier tidak kaku. Ia diturunkan dari ekspektasi waktu mencapai barrier sebagai fungsi volatilitas, sehingga distribusi label seimbang secara organik dan modal tidak menganggur terlalu lama hanya karena horizon dipasang asal.
+Kondisi volatilitas
+Lebar barrier
+Time barrier
+Efek
+Tinggi
+Lebih lebar
+Lebih pendek
+Resolusi cepat, hindari NEUTRAL berlebih
+Rendah
+Lebih sempit
+Lebih panjang
+Beri waktu konfirmasi, tetap selektif
+Distribusi label yang sehat (target monitoring)
+WIN 25–35%  •  LOSS 20–30%  •  NEUTRAL 35–45%. Bila NEUTRAL melewati 55%, barrier terlalu ketat / time barrier terlalu pendek — kalibrasi ulang. Bila NEUTRAL di bawah 25%, barrier terlalu longgar dan label kehilangan selektivitas.
+5.3 Mengapa NEUTRAL dipertahankan
+NEUTRAL bukan 'tidak terjadi apa-apa' melainkan 'pasar tidak memberi edge yang cukup'. Pada leverage 5×, kemampuan untuk tidak masuk posisi adalah sumber profitabilitas tersendiri karena menghindari gerusan funding dan slippage. Membuang NEUTRAL akan melatih model untuk selalu punya pendapat arah — justru sumber overtrading.
+7. Layer 1 — Ensemble Prediktor Arah
+Lima model dipilih bukan karena populer, melainkan karena asumsi dan mode kegagalannya berbeda-beda, sehingga error-nya cenderung tidak berkorelasi. Semua dilatih terpisah per rezim (model untuk Trending dilatih hanya pada candle saat P_trending dominan, dan seterusnya). Rezim Crisis tidak punya model — keluarannya otomatis NEUTRAL.
+Fitur bersama vs fitur khusus
+Feature factory menghasilkan satu set fitur besar (≈80–120) dari tiga timeframe. Setiap model mengambil subset yang sesuai dengan bentuk inputnya: GBM dan GP memakai snapshot fitur tabular; LSTM memakai sequence; Kalman dan Survival memakai deret/observasi spesifiknya. Labelnya identik (Triple Barrier); yang berbeda adalah bentuk input dan bobot yang dipelajari tiap model.
+6.1 Gradient Boosting Machine (GBM)
+Peran & label
+Pekerja keras tabular yang menangkap interaksi non-linear antar fitur. Label: Triple Barrier 3 kelas (WIN/LOSS/NEUTRAL), klasifikasi multikelas.
+Fitur utama (snapshot per H4)
+Momentum multi-TF: EMA cross ternormalisasi ATR, ROC pada lag Fibonacci (H1+H4+D1).
+Mean-reversion: z-score harga terhadap mean bergulir, jarak dari VWAP.
+Volatilitas: Parkinson & Garman–Klass, rasio ATR jangka pendek/panjang.
+Mikrostruktur: imbalance volume proxy, Amihud illiquidity, CVD proxy.
+Cross-asset: beta terhadap BTC, return residual (alpha), pergeseran dominasi ETH.
+Funding/derivatif: z-score funding, momentum funding, perubahan open interest, basis spot-futures.
+State HMM: tiga probabilitas rezim sebagai fitur kondisional.
+Setup
+LightGBM, depth dangkal (3–4) untuk menahan overfit, learning rate kecil (~0.05), subsample baris 0.7 dan kolom 0.6 (meniru ragam Random Forest).
+min_child_samples tinggi (~30) dan regularisasi L2 untuk stabilitas pada noise crypto.
+class_weight balanced untuk menangani dominasi NEUTRAL; alternatif: threshold tuning daripada resampling.
+Pro & kontra
+Pro
+Kontra
+Sangat kuat menangkap interaksi non-linear; cepat dilatih & di-debug.
+Buta terhadap urutan waktu — tidak paham sequence.
+Feature importance memudahkan deteksi signal decay.
+Rawan overfit pada noise bila dibiarkan dalam (depth besar).
+Robust dengan sedikit tuning; baseline andal.
+Tidak menghasilkan ketidakpastian terkalibrasi secara alami.
+6.2 Survival Analysis (Cox Proportional Hazard)
+Peran & label
+Triple Barrier secara matematis adalah masalah competing risks: upper dan lower barrier bersaing menjadi 'kejadian' yang lebih dulu terjadi. Survival analysis adalah kerangka yang tepat secara teoretis. Label: durasi sampai barrier tersentuh plus indikator barrier mana (event type), bukan sekadar menang/kalah.
+Fitur
+Subset fitur GBM yang paling berkaitan dengan kecepatan gerak: volatilitas, momentum, funding extremity, imbalance volume.
+Covariate yang masuk akal mempercepat/memperlambat hazard: kompresi volatilitas (menahan), lonjakan OI (mempercepat).
+Setup
+Cox PH untuk interpretasi hazard ratio; atau Accelerated Failure Time bila ingin estimasi waktu langsung.
+Diformulasikan sebagai competing-risks (cause-specific hazards) agar upper vs lower terpisah.
+Output diubah menjadi P(upper duluan), P(lower duluan), dan ekspektasi durasi — berguna ganda untuk Layer 1 (arah) dan Layer 4 (exit).
+Pro & kontra
+Pro
+Kontra
+Selaras secara statistik dengan definisi Triple Barrier.
+Asumsi proportional hazards bisa dilanggar saat rezim berganti.
+Memberi estimasi WAKTU, bukan hanya arah — langka & bernilai.
+Lebih sulit diimplementasi & dijelaskan dibanding GBM.
+Error-nya cenderung tak berkorelasi dengan model tabular biasa.
+Sensitif terhadap censoring bila time barrier sering tercapai.
+6.3 Kalman Filter
+Peran & label
+Inilah 'roh' pendekatan Simons yang berakar pada signal processing. Kalman tidak diberi label klasifikasi; ia melakukan estimasi state tersembunyi secara online: trend laten dan mean yang bergeser. Sinyal arah diturunkan dari tanda dan kemiringan state laten yang diestimasi, lalu dipetakan ke probabilitas arah agar sebanding dengan model lain.
+Fitur / observasi
+Deret harga/return H4 sebagai observasi; state laten = level + slope (local linear trend).
+Opsi pasangan: spread terhadap BTC untuk estimasi mean-reversion residual (statistical arbitrage ringan).
+Setup
+Local linear trend / dynamic linear model; noise proses & observasi diestimasi via maximum likelihood pada jendela bergulir.
+Update tiap candle baru tanpa retrain penuh — keunggulan utamanya untuk non-stasionaritas.
+Dapat dibungkus per-rezim: parameter noise berbeda untuk trending vs ranging.
+Pro & kontra
+Pro
+Kontra
+Online & adaptif — ideal untuk pasar non-stasioner; jalan sejak hari pertama.
+Asumsi linear-Gaussian; perlu varian (EKF/UKF) untuk non-linear berat.
+Sangat hemat data — tak butuh dataset besar.
+Bisa lag pada perubahan struktural tiba-tiba.
+Estimasi state + ketidakpastian (kovarians) langsung tersedia.
+Memerlukan penalaan noise yang hati-hati; salah set → terlalu kaku/lincah.
+6.4 Gaussian Process (GP)
+Peran & label
+GP menyumbang prediksi yang sadar-ketidakpastian. Daripada men-train pada seluruh dataset (mahal, O(n³)), GP dipakai pada jendela terbaru / sparse (inducing points). Label dapat berupa return ke depan ternormalisasi ATR (regresi) yang lalu dipetakan ke probabilitas arah; nilai utamanya bukan titik prediksi melainkan lebar interval kepercayaannya.
+Fitur
+Subset fitur ter-PCA (dimensi rendah) — GP buruk pada dimensi tinggi, jadi reduksi dimensi wajib.
+Kernel dirancang menangkap struktur: RBF untuk kehalusan, periodik untuk pola musiman intraday/funding cycle.
+Setup
+Sparse GP / inducing points agar skalabel; jendela bergulir terbaru.
+Kombinasi kernel (RBF + periodic + white noise) di-tuning via marginal likelihood.
+Output mean & varians prediktif; varians dialirkan langsung ke sizing engine.
+Pro & kontra
+Pro
+Kontra
+Ketidakpastian terkalibrasi paling baik di antara semua model — emas untuk sizing.
+Skalabilitas buruk; butuh aproksimasi sparse.
+Kernel fleksibel menyandikan prior (periodisitas, kehalusan).
+Sangat sensitif terhadap dimensi — wajib PCA/seleksi fitur.
+Bekerja baik pada data terbatas (mis. rezim crisis yang jarang).
+Pemilihan kernel adalah seni; salah kernel → prediksi menyesatkan.
+6.5 LSTM + Attention
+Peran & label
+Penangkap pola sekuensial yang sulit diekspresikan sebagai fitur tabular. Label: Triple Barrier 3 kelas, sama seperti GBM, tetapi input berupa sequence 30–50 candle. Lapisan attention membantu model menimbang langkah waktu yang relevan.
+Fitur
+Sequence multi-kanal: return, volatilitas, volume imbalance, funding, beta-BTC per langkah waktu (H1 di-rollup + H4).
+Encoding waktu: sesi pasar, jam menjelang funding settlement, hari dalam minggu.
+Setup
+2 lapis LSTM (hidden ~64) + multi-head attention + dropout 0.2–0.3; output softmax 3 kelas.
+Hanya dilatih untuk rezim dengan sampel cukup; bila sampel kurang, lewati LSTM dan andalkan model lain.
+Early stopping ketat pada walk-forward; LSTM paling rawan overfit di sini.
+Pro & kontra
+Pro
+Kontra
+Menangkap dependensi temporal & pola non-linear sekuensial.
+Haus data; rezim jarang tak punya cukup sampel.
+Attention memberi sedikit interpretabilitas atas langkah waktu penting.
+Mahal dilatih & di-retrain; lambat untuk iterasi ritel.
+Menambah ragam error yang berbeda dari model tabular.
+Interpretabilitas rendah; sulit debug saat performa turun.
+8. Long vs Short — Setup Eksplisit
+Bagian ini melengkapi paper yang menyebutkan 'prediksi arah' namun tidak rinci tentang mekanika long vs short. Berikut adalah rincian lengkap cara sistem menangani keduanya.
+A. Labelisasi Asimetris per Setup
+Triple Barrier Method yang dijelaskan sebelumnya adalah umum untuk entry dua arah (long atau short). Dalam praktik, labelisasi dilakukan TERPISAH untuk long dan short, dengan fitur yang berbeda.
+A.1 Setup LONG
+Entry signal: prediksi arah = +1 (UP)
+ 
+Entry mechanics:
+  Buka posisi long: buy future/spot dengan leverage ≤ 5x
+  Notional = modal × fraksi × leverage
+ 
+Triple Barrier untuk LONG:
+  Upper barrier (TP) = entry_price + ku × ATR(14)    [take profit lama]
+  Lower barrier (SL) = entry_price - kl × ATR(14)    [stop loss ketat]
+  Time barrier      = entry + N candle
+ 
+Label kemungkinan outcomes:
+  Upper tercapai dulu → +1 (WIN)
+    Profit = (upper - entry) × notional / leverage
+  Lower tercapai dulu → -1 (LOSS)
+    Loss    = (entry - lower) × notional / leverage  [hard loss]
+  Time barrier tercapai → 0 (NEUTRAL/timeout)
+ 
+Fitur spesifik LONG:
+  Momentum upside (EMA cross, ROC positif, funding ekstrem negatif)
+  Mean reversion (z-score < -2 = oversold, setup pembelian)
+  Divergensi vol (price up tapi CVD turun = warning untuk long)
+  Cross-asset: apakah altcoin ini outperforming BTC = long lebih bagus
+A.2 Setup SHORT
+Entry signal: prediksi arah = -1 (DOWN)
+ 
+Entry mechanics:
+  Buka posisi short: sell future dengan leverage ≤ 5x
+  Notional = modal × fraksi × leverage  [nilai absolut]
+ 
+Triple Barrier untuk SHORT:
+  Lower barrier (TP) = entry_price - ku × ATR(14)    [take profit short]
+  Upper barrier (SL) = entry_price + kl × ATR(14)    [stop loss ketat]
+  Time barrier       = entry + N candle
+ 
+Label kemungkinan outcomes:
+  Lower tercapai dulu → +1 (WIN)
+    Profit = (entry - lower) × notional / leverage
+  Upper tercapai dulu → -1 (LOSS)
+    Loss    = (upper - entry) × notional / leverage  [hard loss]
+  Time barrier tercapai → 0 (NEUTRAL/timeout)
+ 
+Fitur spesifik SHORT:
+  Momentum downside (EMA cross negatif, ROC negatif, funding ekstrem positif)
+  Mean reversion (z-score > +2 = overbought, setup penjualan)
+  Divergensi vol (price down tapi CVD naik = warning untuk short)
+  Cross-asset: apakah altcoin ini underperforming BTC = short lebih bagus
+B. Fitur Input per Arah
+Poin kunci: fitur BUKAN hanya ditandai sesuai arah (momentum positif untuk long, negatif untuk short). Melainkan, untuk LONG digunakan fitur yang natural mengidentifikasi oversold/bottom; untuk SHORT, fitur yang mengidentifikasi overbought/top. Ini membuat ensemble model per-arah lebih coherent.
+Kategori fitur
+Input untuk LONG model
+Input untuk SHORT model
+Momentum
+ROC positif, EMA fast > slow, funding rate sangat negatif (overleveraged shorts)
+ROC negatif, EMA fast < slow, funding rate sangat positif (overleveraged longs)
+Mean-reversion
+Z-score harga < -2 (oversold), jarak dari lower band Bollinger
+Z-score harga > +2 (overbought), jarak dari upper band Bollinger
+Volatilitas
+Kompresi volatilitas sebelum break up, ATR mulai membesar
+Volatilitas tinggi di top, tanda distribusi
+Divergensi
+Price low tapi CVD stabil/naik (belum surrender)
+Price high tapi OBV flat/menurun (belum akumulasi)
+Cross-asset
+Beta terhadap BTC << 1 (outperform), residual positif
+Beta terhadap BTC > 1.2 (outperform saat up = siap turun?), atau residual negatif
+Funding
+Funding rate sangat negatif (shorts dipukul)
+Funding rate sangat positif (longs overleveraged)
+C. Perbedaan Biaya & Risk per Setup
+C.1 Funding Rate Asymetri
+Funding rate adalah biaya yang dialirkan berdasarkan komposisi leverage market. Biaya ini TIDAK simetris:
+Funding POSITIF: longs bayar shorts (buruk untuk long).
+Funding NEGATIF: shorts bayar longs (buruk untuk short).
+Ekstrem funding: ketika market sangat overleveraged satu sisi, biaya bisa 0.1%+ per 8 jam — itu 1.2% per hari yang bisa menggerus edge kecil.
+Long position value: notional_long
+Daily cost = notional_long × funding_rate × 3 × leverage_ratio  [3x per hari = 8H x3]
+ 
+Short position value: notional_short
+Daily cost = notional_short × |funding_rate| × 3  [saat funding negatif]
+ 
+Implikasi: saat funding sangat positif, SHORT lebih murah dari LONG
+              saat funding sangat negatif, LONG lebih murah dari SHORT
+              sistem harus mempertimbangkan ini dalam sizing dan model selection.
+C.2 Slippage & Execution Risk
+LONG biasanya punya slippage lebih kecil saat market trending up (natural buy interest). SHORT punya slippage lebih kecil saat trending down. Pada pasar yang tidak likuid atau saat volatil, asymmetri ini bisa material.
+D. Implikasi untuk Training & Ensemble
+D.1 Model Terpisah Long vs Short, atau Unified?
+Ada dua pendekatan:
+Approach 1 (Separate): latih GBM-long, GBM-short, Kalman-long, Kalman-short, dst terpisah. Fitur masuk berbeda per model. Hasilnya: ensemble 10 model (5 tipe × 2 arah). Keuntungan: coherence tinggi per arah. Kerugian: data per-model terpotong setengah, lebih rawan overfit.
+Approach 2 (Unified + direction feature): latih model tunggal dengan fitur yang mencakup semua yang relevan, ditambah fitur eksplisit 'arah prediksi saat ini (-1, 0, +1)'. Model belajar interaksi. Keuntungan: data lebih banyak per model, lebih stabil. Kerugian: model perlu cukup power untuk menangani non-linearity arah.
+Rekomendasi untuk ritel: Approach 1 (separate) lebih clean dan predictable meski lebih expensive. Karena ritel punya data leverage (H1+H4+D1) cukup lama (berbulan-bulan), splitting model tidak terlalu mengorbankan sampel. GBM bisa dilatih per-arah dengan min_child_samples sedikit lebih besar untuk stabilitas.
+D.2 Meta-labeling & Sizing per Arah
+Layer 2 (meta-label) dan Layer 3 (sizing) juga bisa per-arah atau unified, dengan pertimbangan yang sama. Untuk sederhana, rekomendasi:
+Meta-label: UNIFIED (satu model yang menerima prediksi long/short dari Layer 1, belajar kapan masing-masing terpercaya).
+Sizing: UNIFIED dengan conditional (fraksi = f(..., direction); bisa beda hasil untuk long vs short dari aset yang sama).
+E. Exit Mechanics per Arah
+E.1 Stop Loss & Take Profit Placement
+Dalam Long:
+Stop Loss    : di bawah entry (lower barrier)
+Take Profit  : di atas entry (upper barrier)
+Trailing TP  : move stop-loss naik mengikuti harga, locked-in profit partiel
+Dalam Short:
+Stop Loss    : di atas entry (upper barrier)
+Take Profit  : di bawah entry (lower barrier)
+Trailing TP  : move stop-loss turun mengikuti harga, locked-in profit partiel
+E.2 Signal Flip Behavior
+Bila model mengubah pendapat dari LONG → SHORT atau sebaliknya:
+Opsi A (Immediate exit + reverse): tutup long sepenuhnya, buka short baru. Mengakumulasi biaya entry 2x.
+Opsi B (Partial exit + accumulate opposite): tutup 50% long, buka short 50% baru saat confidence tinggi. Lebih efisien. 
+Opsi C (Wait for confirmation): hold long, tunggu signal flip konfirmasi 2-3 candle sebelum tutup. Kurangi overtrading tapi lambat react.
+Rekomendasi: Opsi B (partial) paling seimbang untuk ritel — reduce biaya double-entry, tetap responsif arah.
+F. Contoh Konkret: ADA 1 Koin, 2 Arah
+Mari ilustrasikan satu candlestick H4 pada ADA/USDT dengan keseluruhan setup:
+═══════════════════════════════════════════════════════════════
+Time: 2026-06-09 08:00 UTC  |  Aset: ADA/USDT  |  ATR(14,H4)=0.05
+ 
+Current price: 1.20  |  Funding rate: +0.015% per 8H  |  Regime: Trending
+═══════════════════════════════════════════════════════════════
+ 
+SKENARIO A: Model predict +1 (LONG)
+ 
+  Entry @ 1.20, notional = $1000 cap × 0.15 fraksi × 5 leverage = $750
+  
+  Triple Barrier LONG:
+    TP (upper) = 1.20 + 2.0 × 0.05 = 1.30    [aim: +$75 atau +10% notional]
+    SL (lower) = 1.20 - 1.0 × 0.05 = 1.15    [cap: -$37.5 atau -5% notional]
+    Risk:reward = 1:2 (asimetri yang diinginkan)
+    Time = 12 candle H4 = 2 hari
+ 
+  Funding cost daily = $750 × 0.015% × 3 = $0.34/hari
+  Over 2 hari = ~$0.68 ≈ 0.09% dari notional (kecil, masuk)
+ 
+  Fitur yang penting untuk long pada ADA saat Trending:
+    ✓ ROC(5,H4) = +0.8% (momentum up)
+    ✓ z-score = -1.5 (mild oversold, entry lebih bagus)
+    ✓ Funding rate positif (shorts dibukul, punya tailwind)
+    ✓ Beta ADA vs BTC = 1.1 (outperform sedikit)
+ 
+═══════════════════════════════════════════════════════════════
+ 
+SKENARIO B: Model predict -1 (SHORT)
+ 
+  Entry @ 1.20, notional = $1000 cap × 0.12 fraksi × 4 leverage = $480
+                                                      (leverage lebih kecil)
+ 
+  Triple Barrier SHORT:
+    TP (lower) = 1.20 - 2.0 × 0.05 = 1.10    [aim: +$48 atau +10% notional]
+    SL (upper) = 1.20 + 1.0 × 0.05 = 1.25    [cap: -$24 atau -5% notional]
+    Risk:reward = 1:2 (sama dengan long)
+    Time = 12 candle H4 = 2 hari
+ 
+  Funding cost daily = $480 × |-0.015%| × 3 = $0.21/hari  [negatif funding]
+  Over 2 hari = ~$0.42 ≈ 0.09% dari notional (similar)
+ 
+  Fitur yang penting untuk short pada ADA saat Trending:
+    ✓ ROC(5,H4) = -0.3% (momentum down, mulai retreat)
+    ✓ z-score = +1.8 (mild overbought, ketahanan tipis)
+    ✓ Funding rate positif (longs overleveraged, siap squeeze)
+    ✗ Beta ADA vs BTC = 1.1 (underperform saat market down = risk short)
+ 
+  Sizing lebih kecil (0.12 vs 0.15) karena beta tinggi menambah risk short.
+═══════════════════════════════════════════════════════════════
+Catatan: Bagian ini adalah amendment untuk melengkapi detail long/short yang tidak eksplist di paper utama.
+9. Mengombinasikan Model — Stacking & Meta-Labeling
+7.1 Penggabungan di Layer 1 (stacking)
+Kelima model menghasilkan probabilitas arah (dan, untuk sebagian, estimasi ketidakpastian/waktu). Penggabungan tidak dilakukan dengan rata-rata sederhana, melainkan dipelajari oleh sebuah meta-learner kecil yang belajar kapan harus mempercayai model mana, dikondisikan pada rezim.
+  Input meta-learner (vektor fitur tingkat-meta):
+    GBM      -> [P_up, P_down, P_flat]
+    Survival -> [P_upper_first, P_lower_first, E(durasi)]
+    Kalman   -> [slope_laten, sign, kovarians]
+    GP       -> [mean, varians_prediktif]
+    LSTM     -> [P_up, P_down, P_flat]   (jika tersedia utk rezim)
+    HMM      -> [P_trend, P_range, P_crisis]
+    interaksi-> (prob model x prob rezim)
+  Output:
+    arah final + confidence (probabilitas terkalibrasi)
+Karena setiap model menyumbang sudut pandang yang error-nya tak berkorelasi, meta-learner memperoleh sinyal yang lebih stabil daripada model mana pun secara individual. Decorrelation inilah, bukan akurasi tiap anggota, yang menjadi sumber utama edge.
+7.2 Meta-Labeling (Layer 2)
+Layer 2 berbeda secara konseptual: ia tidak memprediksi arah baru, melainkan menilai apakah keputusan arah Layer 1 layak dieksekusi. Inilah teknik meta-labeling yang memisahkan keputusan 'arah' dari keputusan 'bertaruh atau tidak'.
+Pelabelan Layer 2 (BINARY)
+  Jalankan Layer 1 pada data historis, untuk tiap sinyal arah cek hasilnya:
+     prediksi WIN  dan benar WIN   -> meta-label = 1  (BENAR)
+     prediksi WIN  tapi jadi LOSS  -> meta-label = 0  (SALAH)
+     prediksi LOSS dan benar LOSS  -> meta-label = 1  (BENAR)
+     prediksi LOSS tapi jadi WIN   -> meta-label = 0  (SALAH)
+     prediksi NEUTRAL              -> dikecualikan (tak ada taruhan)
+Fitur khusus Layer 2 (tak dilihat Layer 1)
+Sinyal meta dari Layer 1: confidence tiap model, apakah model saling setuju, jarak confidence dari threshold.
+Konteks pasar saat sinyal: probabilitas rezim, rezim volatilitas, kedekatan dengan funding settlement.
+Kesehatan model terkini: win-rate 20 sinyal terakhir — bila model sedang 'dingin', kepercayaan dikurangi meski confidence tinggi.
+Mengapa binary & mengapa terpisah
+Memisahkan arah (Layer 1) dari kelayakan taruhan (Layer 2) memungkinkan masing-masing dioptimalkan untuk metrik yang tepat: Layer 1 untuk akurasi arah, Layer 2 untuk presisi (menekan false positive yang mahal pada leverage). Hasilnya: sebuah sinyal arah dengan confidence sedang bisa di-skip bila meta-model menilai konteksnya buruk, dan sebaliknya.
+Pro meta-labeling
+Kontra
+Meningkatkan presisi & menurunkan overtrading.
+Menambah satu lapis yang juga bisa overfit — butuh validasi sendiri.
+Memisahkan 'arah' dari 'ukuran taruhan' secara bersih.
+Bergantung pada kualitas prediksi Layer 1 sebagai input.
+Menghasilkan probabilitas terkalibrasi untuk sizing.
+Kompleksitas implementasi & pipeline bertambah.
+10. Layer 3 — Sizing Engine
+Dengan leverage 5×, sizing adalah penentu kelangsungan hidup. Ukuran posisi bukan biner melainkan kontinum, diturunkan dari keyakinan terkalibrasi Layer 2, ketidakpastian model, dan kondisi volatilitas/portofolio.
+8.1 Pelabelan (CONTINUOUS / regresi)
+  target = fraksi modal optimal (0.0 .. 1.0) yang, secara historis,
+           memaksimalkan utilitas risiko-tersesuaikan (mis. log-wealth
+           ala Kelly) untuk konteks fitur tersebut.
+ 
+  fitur input: p(benar) Layer 2, varians GP, ATR%, prob rezim,
+               jumlah & korelasi posisi terbuka, jarak ke funding.
+8.2 Rumus inti
+  fraksi  =  half_Kelly  x  conf_scalar  x  vol_scalar  x  corr_scalar
+ 
+  half_Kelly  : Kelly dibagi 2 (konservatif, lawan estimation error)
+  conf_scalar : naik terhadap p(benar) dari Layer 2 (clip 0.3..1.0)
+  vol_scalar  : turun saat ATR% tinggi (target risiko ~1.5%/trade)
+  corr_scalar : turun bila sudah ada posisi berkorelasi tinggi
+ 
+  notional = modal x fraksi x leverage(<=5x)
+  -> leverage efektif rata-rata DITARGETKAN 2-3x, bukan selalu 5x
+Intuisi non-linear yang dipelajari model
+Confidence tinggi + volatilitas sangat tinggi → ukuran justru lebih kecil, karena barrier lebih lebar berarti risiko per trade naik. Confidence sedang + portofolio sudah terekspos pada aset berkorelasi → ukuran kecil meski sinyal lumayan. Interaksi semacam ini sulit ditangkap rumus tetap, sehingga regresi terpisah lebih unggul.
+8.3 Mengapa setengah-Kelly
+Kelly penuh mengasumsikan probabilitas diketahui persis; dalam praktik estimasi kita berisik, dan Kelly penuh menghukum kesalahan estimasi secara brutal (drawdown ekstrem). Setengah-Kelly mengorbankan sedikit pertumbuhan teoretis demi penurunan drawdown yang besar — pertukaran yang nyaris selalu layak pada leverage tinggi.
+11. Layer 4 — Exit Model
+Banyak sistem hanya memodelkan entry dan menyerahkan exit pada aturan kaku. Di sini exit adalah model tersendiri, sebagian besar mewarisi mesin Survival Analysis dari Layer 1 karena pertanyaan exit pada dasarnya adalah pertanyaan waktu dan hazard.
+9.1 Pelabelan exit
+  Dari Survival/competing-risks model:
+     P(upper duluan)  -> keyakinan target tercapai
+     P(lower duluan)  -> risiko stop tersentuh
+     E(durasi)        -> estimasi berapa lama posisi 'hidup'
+ 
+  Label tambahan untuk exit-classifier ringan:
+     'keluar sekarang' vs 'tahan'  berdasarkan apakah menahan
+     secara historis menambah/mengurangi utilitas risiko-tersesuaikan.
+9.2 Hierarki aturan exit (urutan prioritas)
+Stop loss — pada lower barrier (ATR-based); hard cap mutlak agar kerugian per trade < ~2.5% modal setelah leverage.
+Signal flip — bila skor arah Layer 1+2 berbalik melewati threshold, keluar segera tanpa menunggu barrier.
+Take profit dinamis — TRENDING: trailing stop ~2×ATR untuk membiarkan profit berjalan; RANGING: target tetap dekat mean.
+Time stop adaptif — keluar saat estimasi E(durasi) terlampaui jauh tanpa progres (default ~12 candle H4 ≈ 2 hari).
+Funding stop — bila biaya funding per 8 jam melebihi ambang yang menggerus ekspektasi profit, tutup posisi.
+Regime stop — bila HMM beralih ke Crisis (P_crisis dominan), seluruh posisi diratakan.
+9.3 Mengapa exit berbasis model — pro & kontra
+Pro
+Kontra
+Exit konsisten dengan pelabelan entry (Triple Barrier) — satu kerangka.
+Menambah model yang harus divalidasi & dipantau decay-nya.
+Estimasi durasi membantu time-stop yang adaptif, bukan kaku.
+Survival bisa keliru saat rezim berubah di tengah posisi.
+Trailing dinamis menangkap fat-tail profit di trending.
+Aturan berlapis butuh penanganan konflik prioritas yang cermat.
+12. Tuning & Validasi Anti-Overfitting
+Bagian ini adalah yang paling menentukan apakah seluruh sistem punya arti atau hanya kurva yang dipaskan ke masa lalu. Pendekatan Simons terkenal paranoid di sini, dan kita meniru kewaspadaan itu.
+10.1 Walk-forward bersarang
+  |<---- train (mis. 6 bln) ---->|<- valid 1 bln ->|<- test 1 bln ->|
+  geser ke depan, ulangi. JANGAN PERNAH menguji pada data yang
+  dipakai melatih atau memilih hyperparameter.
+ 
+  - loop dalam : pilih hyperparameter pada set validasi
+  - loop luar  : ukur performa pada set test yang belum tersentuh
+10.2 Purging & embargo
+Karena label Triple Barrier 'membentang' ke depan (sebuah label baru final setelah barrier tersentuh), sampel train dan test bisa tumpang tindih dalam waktu dan membocorkan informasi. Solusinya: purging (buang sampel train yang labelnya tumpang tindih dengan periode test) dan embargo (beri jeda setelah test sebelum train berikutnya).
+10.3 Uji konsistensi, bukan sekadar rata-rata
+Sharpe per-periode harus konsisten. Bila rata-rata Sharpe bagus tapi variansnya besar antar periode → tanda overfit.
+Persentase periode profit. Sistem sehat profit di mayoritas jendela walk-forward, bukan ditolong satu-dua periode ekstrem.
+Deflated Sharpe Ratio. Koreksi Sharpe terhadap jumlah percobaan yang dilakukan — mencegah self-deception dari banyak eksperimen.
+10.4 Hyperparameter yang dituning (per model, per rezim)
+Model
+Parameter kunci yang dituning
+HMM
+jumlah state (BIC), covariance type, panjang jendela retrain
+GBM
+depth, learning rate, subsample, min_child_samples, regularisasi
+Survival
+pemilihan covariate, bentuk baseline hazard, penanganan censoring
+Kalman
+rasio noise proses/observasi, model state (level vs level+slope)
+GP
+komposisi & skala kernel, jumlah inducing points, dimensi PCA
+LSTM
+panjang sequence, hidden size, dropout, learning rate, early-stop patience
+Meta (L2)
+threshold confidence, fitur kesehatan-model, depth GBM meta
+Sizing (L3)
+fraksi Kelly, target risiko/trade, batas korelasi & eksposur
+10.5 Deteksi signal decay (data drift)
+Setiap edge punya umur. Sistem memantau (a) pergeseran distribusi fitur live vs train, dan (b) penurunan feature importance & win-rate per sinyal. Sinyal yang importance-nya meluruh dipensiunkan; ini meniru praktik Renaissance membuang sinyal yang sudah tidak prediktif.
+13. Urutan Pelatihan (Tidak Boleh Dibalik)
+Karena tiap lapis bergantung pada keluaran lapis sebelumnya, urutan training bersifat kausal dan seluruhnya dijalankan dalam kerangka walk-forward agar tidak ada kebocoran informasi masa depan.
+  1. Latih HMM      -> hasilkan probabilitas rezim utk seluruh histori
+  2. Latih Layer 1  -> tiap model, dipisah per rezim, label Triple Barrier
+  3. Inferensi L1   -> kumpulkan prediksi out-of-sample utk seluruh histori
+  4. Latih Layer 2  -> meta-label biner, pakai prediksi L1 sbg fitur
+  5. Latih Layer 3  -> sizing regresi, pakai output L1+L2 sbg input
+  6. Latih Layer 4  -> exit (Survival + classifier), konsisten Triple Barrier
+ 
+  Semua langkah: purging + embargo aktif, test set selalu unseen.
+14. Manajemen Risiko Portofolio
+Di atas sizing per-trade, ada circuit breaker tingkat portofolio yang menjadi jaring pengaman terakhir pada leverage 5×.
+Pengaman
+Ambang contoh
+Aksi
+Daily loss limit
+-3% modal
+Hentikan trading hari itu
+Weekly loss limit
+-8% modal
+Pause 3 hari, review model
+Max drawdown
+-15% modal
+Hentikan sistem, audit menyeluruh
+Max posisi simultan
+3 aset
+Diversifikasi, hindari konsentrasi
+Leverage efektif rata-rata
+2–3x
+Bukan 5x penuh setiap saat
+Batas korelasi
+rho > 0.8
+Jangan buka 2 aset sangat berkorelasi
+Idle budget
+> 40% waktu NEUTRAL
+Trigger review: apakah edge meluruh?
+Aritmetika likuidasi yang harus selalu diingat
+Pada 5×, pergerakan ~-20% harga (tergantung bursa) memicu likuidasi. Maka stop loss wajib jauh di dalam jarak itu (mis. < -12% harga, ≈ -2.4% modal setelah leverage). Volatilitas altcoin yang bisa menembus puluhan persen dalam jam membuat sizing konservatif bukan pilihan, melainkan syarat bertahan hidup.
+15. Keterbatasan & Risiko Arsitektur
+Lookahead bias. Semua transformasi fitur harus rolling/expanding; kesalahan kecil (mis. z-score memakai seluruh histori) membuat backtest indah tapi palsu.
+Non-stasionaritas & regime shift. Model yang dilatih di bull tidak otomatis jalan di bear; retraining kontinu & drift detection wajib.
+Kompleksitas vs resource ritel. Lima model + meta + sizing + exit adalah pipeline besar. Mulai dari subset (lihat roadmap) lebih realistis daripada membangun semua sekaligus.
+Biaya tersembunyi. Funding, slippage saat volatil, dan fee dapat menghapus edge kecil; backtest harus memodelkannya secara konservatif.
+Overfitting di lapis meta. Menambah lapis menambah cara untuk overfit; tiap lapis butuh validasi out-of-sample sendiri.
+Risiko platform. Outage bursa, perubahan aturan funding, atau delisting aset dapat membatalkan asumsi universe.
+13.1 Roadmap implementasi realistis untuk ritel
+Tahap
+Bangun
+Alasan
+1
+HMM + GBM + Triple Barrier + sizing setengah-Kelly
+Edge dasar dengan effort minimum
+2
+Tambah Kalman Filter
+Online, hemat data, jalan sejak awal
+3
+Tambah Survival + exit model
+Selaras dengan Triple Barrier; perbaiki exit
+4
+Tambah meta-labeling (Layer 2)
+Naikkan presisi, kurangi overtrading
+5
+Tambah GP lalu LSTM
+Perbaiki sizing & ragam error; paling mahal, terakhir
+16. Kesimpulan
+Arsitektur ini menerjemahkan filosofi Medallion — banyak sinyal lemah yang tak berkorelasi, digabung dengan disiplin, dijaga ketat dari overfitting — ke dalam konteks crypto leverage 5× yang dapat dikelola seorang trader ritel. Kunci desainnya bukan satu model ajaib, melainkan: pelabelan Triple Barrier yang sadar-volatilitas, ensemble lima model dengan mode kegagalan berbeda, pemisahan arah dari kelayakan taruhan via meta-labeling, sizing yang dimodulasi keyakinan, exit berbasis model, dan validasi walk-forward bersarang yang tanpa ampun.
+Yang paling sering menentukan keberhasilan bukan akurasi prediksi, melainkan decorrelation antar komponen, kalibrasi ketidakpastian untuk sizing, dan manajemen risiko yang menjaga sistem tetap hidup cukup lama agar edge statistik kecil sempat terakumulasi.
+Satu kalimat untuk diingat
+Jangan optimalkan untuk menang besar sekali; optimalkan untuk bertahan hidup sambil mengumpulkan ribuan kemenangan kecil yang independen.
+17. Referensi & Bacaan Lanjut
+Lopez de Prado, M. — Advances in Financial Machine Learning (Triple Barrier, meta-labeling, purging/embargo, deflated Sharpe).
+Zuckerman, G. — The Man Who Solved the Market (konteks historis Renaissance/Medallion).
+Rabiner, L. — A Tutorial on Hidden Markov Models (fondasi HMM).
+Cox, D. R. — Regression Models and Life-Tables (proportional hazards).
+Rasmussen & Williams — Gaussian Processes for Machine Learning.
+Harvey & Liu — berbagai makalah tentang multiple testing & backtest overfitting di keuangan.
+— Akhir Dokumen —

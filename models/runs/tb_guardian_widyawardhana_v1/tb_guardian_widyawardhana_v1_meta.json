@@ -1,0 +1,59 @@
+{
+  "run_name": "tb_guardian_widyawardhana_v1",
+  "entry_model": "tb_lgbm_widyawardhana_v3",
+  "n_features": 25,
+  "n_static": 18,
+  "n_dynamic": 7,
+  "n_samples": 414847,
+  "label_dist": {
+    "HOLD": 269566,
+    "PARTIAL": 36507,
+    "FULL_EXIT": 108774
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.3905,
+      "f1": 0.8037
+    },
+    {
+      "fold": 2,
+      "logloss": 0.3714,
+      "f1": 0.81
+    },
+    {
+      "fold": 3,
+      "logloss": 0.3824,
+      "f1": 0.7887
+    },
+    {
+      "fold": 4,
+      "logloss": 0.4141,
+      "f1": 0.7622
+    },
+    {
+      "fold": 5,
+      "logloss": 0.4185,
+      "f1": 0.7531
+    },
+    {
+      "fold": 6,
+      "logloss": 0.3861,
+      "f1": 0.7796
+    },
+    {
+      "fold": 7,
+      "logloss": 0.3706,
+      "f1": 0.7947
+    },
+    {
+      "fold": 8,
+      "logloss": 0.374,
+      "f1": 0.79
+    }
+  ],
+  "best_cv_logloss": 0.3706,
+  "exit_method": "SL=1.5xATR + max_hold=36bar, no TP",
+  "train_period": "2020-01-01 \u2013 2026-04-01 00:00:00+00:00",
+  "trained_at": "2026-06-10 19:05:42"
+}

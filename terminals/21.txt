@@ -1,0 +1,128 @@
+---
+pid: 33664
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05p_lstm_lgbm_conf_feat_v1.py --all"
+started_at: 2026-06-16T10:20:20.386Z
+running_for_ms: 7480003  
+---
+2026-06-16 18:20:23 | INFO     | 05p_lstm_lgbm_conf_feat_v1 | LGBM OOF loaded: 729,212 bars (has_oof=True)
+
+==================================================================
+  LSTM + LGBM Seq History -- tb_lstm_lgbm_seq_v1
+  Partner : tb_lgbm_genuine_v2 (OOF p0/p1/p2 per timestep)
+  Variant : B — 8 market + 3 LGBM = 11 feat/step
+  Seq len : 72 | Purge: 36 | Folds: 8
+  Device  : privateuseone:0
+==================================================================
+
+2026-06-16 18:20:23 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [BTCUSDT] gate=10,144 kept=8,966 (skip_no_oof=1,178) | BULL=10% NEU=66% BEAR=24%
+2026-06-16 18:20:23 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [SOLUSDT] gate=9,281 kept=9,055 (skip_no_oof=226) | BULL=16% NEU=47% BEAR=37%
+2026-06-16 18:20:23 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [ETHUSDT] gate=10,282 kept=9,028 (skip_no_oof=1,254) | BULL=13% NEU=58% BEAR=29%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [BNBUSDT] gate=10,037 kept=8,828 (skip_no_oof=1,209) | BULL=13% NEU=59% BEAR=28%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [XRPUSDT] gate=10,191 kept=8,922 (skip_no_oof=1,269) | BULL=14% NEU=56% BEAR=31%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [DOGEUSDT] gate=10,014 kept=8,732 (skip_no_oof=1,282) | BULL=14% NEU=53% BEAR=34%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [TONUSDT] gate=2,116 kept=2,092 (skip_no_oof=24) | BULL=14% NEU=56% BEAR=30%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [ADAUSDT] gate=9,914 kept=8,692 (skip_no_oof=1,222) | BULL=15% NEU=51% BEAR=34%
+2026-06-16 18:20:24 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [TRXUSDT] gate=10,130 kept=8,849 (skip_no_oof=1,281) | BULL=10% NEU=64% BEAR=26%
+2026-06-16 18:20:25 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [1000SHIBUSDT] gate=7,593 kept=7,460 (skip_no_oof=133) | BULL=13% NEU=52% BEAR=35%
+2026-06-16 18:20:25 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [AVAXUSDT] gate=8,845 kept=8,694 (skip_no_oof=151) | BULL=15% NEU=47% BEAR=38%
+2026-06-16 18:20:25 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [LINKUSDT] gate=9,946 kept=8,686 (skip_no_oof=1,260) | BULL=16% NEU=49% BEAR=35%
+2026-06-16 18:20:25 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [DOTUSDT] gate=8,978 kept=8,799 (skip_no_oof=179) | BULL=15% NEU=50% BEAR=34%
+2026-06-16 18:20:25 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [SUIUSDT] gate=4,468 kept=4,396 (skip_no_oof=72) | BULL=16% NEU=46% BEAR=38%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [POLUSDT] gate=1,971 kept=1,946 (skip_no_oof=25) | BULL=15% NEU=48% BEAR=37%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [NEARUSDT] gate=8,741 kept=8,595 (skip_no_oof=146) | BULL=16% NEU=45% BEAR=38%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [1000PEPEUSDT] gate=4,216 kept=4,163 (skip_no_oof=53) | BULL=15% NEU=44% BEAR=41%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [TAOUSDT] gate=2,792 kept=2,742 (skip_no_oof=50) | BULL=16% NEU=45% BEAR=39%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [ARBUSDT] gate=4,660 kept=4,575 (skip_no_oof=85) | BULL=15% NEU=49% BEAR=37%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [HBARUSDT] gate=9,903 kept=8,622 (skip_no_oof=1,281) | BULL=15% NEU=49% BEAR=36%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   [ONDOUSDT] gate=947 kept=947 (skip_no_oof=0) | BULL=15% NEU=49% BEAR=36%
+2026-06-16 18:20:26 | INFO     | 05p_lstm_lgbm_conf_feat_v1 | Total skipped (incomplete LGBM OOF window): 12,380
+2026-06-16 18:20:27 | INFO     | 05p_lstm_lgbm_conf_feat_v1 | Gate sequences: 142,789 | seq=72 | feat=11
+2026-06-16 18:20:27 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   BEARISH: 47,845 (33.5%)
+2026-06-16 18:20:27 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   NEUTRAL: 74,987 (52.5%)
+2026-06-16 18:20:27 | INFO     | 05p_lstm_lgbm_conf_feat_v1 |   BULLISH: 19,957 (14.0%)
+2026-06-16 18:20:37 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   1 | F1=0.3528 | Best=0.3528
+2026-06-16 18:20:44 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch   5 | F1=0.3865 | Best=0.3898
+2026-06-16 18:20:53 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  10 | F1=0.4020 | Best=0.4020
+2026-06-16 18:21:02 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  15 | F1=0.4016 | Best=0.4020
+2026-06-16 18:21:11 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  20 | F1=0.3973 | Best=0.4023
+2026-06-16 18:21:20 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  25 | F1=0.4016 | Best=0.4072
+2026-06-16 18:21:29 | INFO     | 05_lstm_genuine_v2 |   Fold 1 Epoch  30 | F1=0.4009 | Best=0.4072
+2026-06-16 18:21:36 | INFO     | 05_lstm_genuine_v2 |   Fold 1 DONE: F1=0.4072 BEAR=0.360 NEU=0.500 BULL=0.361
+2026-06-16 18:21:40 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch   1 | F1=0.3903 | Best=0.3903
+2026-06-16 18:21:52 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch   5 | F1=0.3918 | Best=0.3918
+2026-06-16 18:22:08 | INFO     | 05_lstm_genuine_v2 |   Fold 2 Epoch  10 | F1=0.3837 | Best=0.3918
+2026-06-16 18:22:24 | INFO     | 05_lstm_genuine_v2 |   Fold 2 DONE: F1=0.3918 BEAR=0.294 NEU=0.572 BULL=0.310
+2026-06-16 18:22:30 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch   1 | F1=0.3936 | Best=0.3936
+2026-06-16 18:22:48 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch   5 | F1=0.3978 | Best=0.3978
+2026-06-16 18:23:11 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch  10 | F1=0.3954 | Best=0.3978
+2026-06-16 18:23:35 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch  15 | F1=0.3996 | Best=0.3996
+2026-06-16 18:23:58 | INFO     | 05_lstm_genuine_v2 |   Fold 3 Epoch  20 | F1=0.3917 | Best=0.3996
+2026-06-16 18:24:21 | INFO     | 05_lstm_genuine_v2 |   Fold 3 DONE: F1=0.3996 BEAR=0.327 NEU=0.599 BULL=0.273
+2026-06-16 18:24:29 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch   1 | F1=0.3934 | Best=0.3934
+2026-06-16 18:24:54 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch   5 | F1=0.3839 | Best=0.3974
+2026-06-16 18:25:25 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  10 | F1=0.3985 | Best=0.3985
+2026-06-16 18:25:56 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  15 | F1=0.3954 | Best=0.4014
+2026-06-16 18:26:27 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  20 | F1=0.4070 | Best=0.4070
+2026-06-16 18:26:58 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  25 | F1=0.4067 | Best=0.4072
+2026-06-16 18:27:29 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  30 | F1=0.4042 | Best=0.4103
+2026-06-16 18:27:59 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  35 | F1=0.4068 | Best=0.4103
+2026-06-16 18:28:30 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  40 | F1=0.4087 | Best=0.4104
+2026-06-16 18:29:01 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  45 | F1=0.3991 | Best=0.4121
+2026-06-16 18:29:32 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  50 | F1=0.4002 | Best=0.4133
+2026-06-16 18:30:03 | INFO     | 05_lstm_genuine_v2 |   Fold 4 Epoch  55 | F1=0.4053 | Best=0.4133
+2026-06-16 18:30:22 | INFO     | 05_lstm_genuine_v2 |   Fold 4 DONE: F1=0.4133 BEAR=0.339 NEU=0.633 BULL=0.268
+2026-06-16 18:30:32 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch   1 | F1=0.3999 | Best=0.3999
+2026-06-16 18:31:03 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch   5 | F1=0.4013 | Best=0.4149
+2026-06-16 18:31:45 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch  10 | F1=0.4206 | Best=0.4208
+2026-06-16 18:32:44 | INFO     | 05_lstm_genuine_v2 |   Fold 5 Epoch  15 | F1=0.4080 | Best=0.4208
+2026-06-16 18:33:09 | INFO     | 05_lstm_genuine_v2 |   Fold 5 DONE: F1=0.4208 BEAR=0.326 NEU=0.641 BULL=0.295
+2026-06-16 18:33:25 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch   1 | F1=0.3944 | Best=0.3944
+2026-06-16 18:34:21 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch   5 | F1=0.4010 | Best=0.4052
+2026-06-16 18:35:31 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  10 | F1=0.4012 | Best=0.4083
+2026-06-16 18:36:42 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  15 | F1=0.4084 | Best=0.4114
+2026-06-16 18:37:51 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  20 | F1=0.4116 | Best=0.4180
+2026-06-16 18:39:01 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  25 | F1=0.4183 | Best=0.4185
+2026-06-16 18:40:12 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  30 | F1=0.4136 | Best=0.4185
+2026-06-16 18:41:22 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  35 | F1=0.4189 | Best=0.4212
+2026-06-16 18:42:31 | INFO     | 05_lstm_genuine_v2 |   Fold 6 Epoch  40 | F1=0.4155 | Best=0.4212
+2026-06-16 18:43:25 | INFO     | 05_lstm_genuine_v2 |   Fold 6 DONE: F1=0.4212 BEAR=0.347 NEU=0.609 BULL=0.308
+2026-06-16 18:43:44 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch   1 | F1=0.4066 | Best=0.4066
+2026-06-16 18:44:46 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch   5 | F1=0.4128 | Best=0.4128
+2026-06-16 18:46:04 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch  10 | F1=0.4075 | Best=0.4215
+2026-06-16 18:47:23 | INFO     | 05_lstm_genuine_v2 |   Fold 7 Epoch  15 | F1=0.4090 | Best=0.4215
+2026-06-16 18:48:12 | INFO     | 05_lstm_genuine_v2 |   Fold 7 DONE: F1=0.4215 BEAR=0.393 NEU=0.528 BULL=0.344
+2026-06-16 18:48:34 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch   1 | F1=0.3731 | Best=0.3731
+2026-06-16 18:49:48 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch   5 | F1=0.3930 | Best=0.3999
+2026-06-16 18:51:21 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  10 | F1=0.3953 | Best=0.3999
+2026-06-16 18:52:55 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  15 | F1=0.4001 | Best=0.4027
+2026-06-16 18:54:28 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  20 | F1=0.4031 | Best=0.4059
+2026-06-16 18:56:01 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  25 | F1=0.4117 | Best=0.4117
+2026-06-16 18:57:34 | INFO     | 05_lstm_genuine_v2 |   Fold 8 Epoch  30 | F1=0.4067 | Best=0.4117
+2026-06-16 18:59:08 | INFO     | 05_lstm_genuine_v2 |   Fold 8 DONE: F1=0.4117 BEAR=0.352 NEU=0.591 BULL=0.292
+2026-06-16 18:59:08 | INFO     | 05p_lstm_lgbm_conf_feat_v1 | Saved oof_lstm_predictions.parquet (130,137 bars)
+
+-- Complement Gate Sweep (OOF, LGBM flat + vol_spike>=2.0) --
+    thr       n  prec_dir  prec_all   cov%
+   0.40  17,187     0.539     0.328   48.3
+   0.45   9,504     0.517     0.336   26.7
+   0.50   4,418     0.490     0.334   12.4
+   0.55   1,712     0.480     0.346    4.8
+   0.60     471     0.466     0.350    1.3
+  BEST lstm_thr = 0.4
+2026-06-16 18:59:08 | INFO     | 05p_lstm_lgbm_conf_feat_v1 | 
+Retraining final model (24 epochs)...
+2026-06-16 18:59:34 | INFO     | 05_lstm_genuine_v2 |   Final epoch 1/24
+2026-06-16 19:02:51 | INFO     | 05_lstm_genuine_v2 |   Final epoch 10/24
+2026-06-16 19:06:29 | INFO     | 05_lstm_genuine_v2 |   Final epoch 20/24
+
+==================================================================
+  tb_lstm_lgbm_seq_v1 COMPLETE
+  CV Mean F1     : 0.4109 +/- 0.0102  (baseline 0.3987)
+  F1 delta       : +0.0122
+  Complement thr : 0.4 (OOF sweep)
+  Next step      : 05j eval with lstm_run=tb_lstm_lgbm_seq_v1
+  OOF saved      : D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_lgbm_seq_v1/oof_lstm_predictions.parquet
+  Model          : D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lstm_lgbm_seq_v1/lstm_momentum.pt
+==================================================================
+

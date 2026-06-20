@@ -1,0 +1,67 @@
+---
+pid: 4984
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05g_hmm_promote_dynsize_sweep.py"
+started_at: 2026-06-16T04:24:55.733Z
+running_for_ms: 28205005 
+---
+
+==============================================================================
+  05g: HMM Config B vs D + DynSize OOF Re-sweep (36f stack)
+  Genuine OOF only | holdout NOT touched
+==============================================================================
+  Preloading coin data...
+  Coins loaded: 21
+
+==============================================================================
+  PART 1: HMM Config B (deploy) vs Config D (sweep winner)
+==============================================================================
+
+  Stage                              N    WR%         PnL      PPT  PPT_norm     PF    Avg$
+
+  --- Config B | HMM ---
+  hmm                           34,122   66.8%  $    16294  +0.4775   +0.4775  2.268  $  10.0
+
+  --- Config B | FULL ---
+  full                          34,122   69.0%  $    16443  +0.4819   +0.4819  2.535  $  10.0
+
+  --- Config B | DYN ---
+  dyn                           34,122   69.0%  $    22748  +0.6667   +0.5006  2.543  $  13.3
+
+  --- Config D | HMM ---
+  hmm                           32,620   66.2%  $    15757  +0.4831   +0.4831  2.205  $  10.0
+
+  --- Config D | FULL ---
+  full                          32,620   68.7%  $    15611  +0.4786   +0.4786  2.454  $  10.0
+
+  --- Config D | DYN ---
+  dyn                           32,620   68.7%  $    21424  +0.6568   +0.5014  2.485  $  13.1
+
+  HMM DECISION: KEEP_B
+    - D PF 2.485 < B PF 2.543
+    ACTION: keep Config B in inference_config (Guardian already aligned)
+
+==============================================================================
+  PART 2: DynSize re-sweep (12 configs, HMM=KEEP_B)
+==============================================================================
+  current_deploy     N=34,122  WR= 69.0%  PPT_norm=+0.5006  PF=2.543  AvgModal=$13.32
+  cw_0.08            N=34,122  WR= 69.0%  PPT_norm=+0.4982  PF=2.534  AvgModal=$13.56
+  cw_0.12            N=34,122  WR= 69.0%  PPT_norm=+0.5024  PF=2.550  AvgModal=$13.10
+  cm_0.40            N=34,122  WR= 69.0%  PPT_norm=+0.4970  PF=2.520  AvgModal=$12.98
+  cm_0.60            N=34,122  WR= 69.0%  PPT_norm=+0.5041  PF=2.565  AvgModal=$13.60
+  s3l_1.25           N=34,122  WR= 69.0%  PPT_norm=+0.5026  PF=2.576  AvgModal=$12.97
+  s3l_1.75           N=34,122  WR= 69.0%  PPT_norm=+0.4980  PF=2.522  AvgModal=$13.47
+  s3s_0.50           N=34,122  WR= 69.0%  PPT_norm=+0.4990  PF=2.537  AvgModal=$13.16
+  s3s_1.00           N=34,122  WR= 69.0%  PPT_norm=+0.5022  PF=2.549  AvgModal=$13.48
+  clamp_1.5          N=34,122  WR= 69.0%  PPT_norm=+0.4966  PF=2.568  AvgModal=$12.69
+  clamp_2.5          N=34,122  WR= 69.0%  PPT_norm=+0.5038  PF=2.545  AvgModal=$13.52
+  combo_best_cw_cm   N=34,122  WR= 69.0%  PPT_norm=+0.4994  PF=2.538  AvgModal=$14.04
+
+  DynSize WINNER: cm_0.60
+    PPT_norm=+0.5041  PF=2.565  vs current +0.5006 (delta +0.0035)
+  DynSize UPDATED in inference_config.json
+
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\hmm_promote_dynsize_sweep.json
+
+==============================================================================
+

@@ -1,0 +1,108 @@
+---
+pid: 34644
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/08_oof_ic32_full_stack.py"
+started_at: 2026-06-17T05:07:15.306Z
+running_for_ms: 86400008 
+---
+
+================================================================================
+  ic32_regime_v1 — FULL-STACK GENUINE OOF (live config)
+  Period  : training until 2026-04-01
+  LGBM thr: 0.69/0.59 | CONF: 0.59
+  Guardian: guardian_clean_v2.pkl exit=0.65 min_hold=2
+  FLIP    : True | Dynamic size: OFF
+================================================================================
+
+2026-06-17 13:07:27 | INFO     | evaluator | [BTCUSDT] Winrate: 54.75% (657W / 543L / 1200 trades | time_exit=63) | Sharpe=0.41 Sortino=0.32 Calmar=0.30 PF=1.35
+2026-06-17 13:07:29 | INFO     | evaluator | [BTCUSDT] Lev 5.0x -> PnL: $+103.56 | DD: 171.93%
+2026-06-17 13:07:29 | INFO     | 08_ic32_oof |   [BTCUSDT] 1200 trades | WR=54.8% | PnL=$+103.56 | oof_bars=45261
+2026-06-17 13:07:37 | INFO     | evaluator | [SOLUSDT] Winrate: 55.71% (990W / 787L / 1777 trades | time_exit=181) | Sharpe=0.04 Sortino=0.03 Calmar=0.22 PF=1.49
+2026-06-17 13:07:39 | INFO     | evaluator | [SOLUSDT] Lev 5.0x -> PnL: $+342.43 | DD: 449.52%
+2026-06-17 13:07:39 | INFO     | 08_ic32_oof |   [SOLUSDT] 1777 trades | WR=55.7% | PnL=$+342.43 | oof_bars=45261
+2026-06-17 13:07:48 | INFO     | evaluator | [ETHUSDT] Winrate: 57.65% (855W / 628L / 1483 trades | time_exit=107) | Sharpe=0.38 Sortino=0.94 Calmar=0.37 PF=1.61
+2026-06-17 13:07:49 | INFO     | evaluator | [ETHUSDT] Lev 5.0x -> PnL: $+249.72 | DD: 201.71%
+2026-06-17 13:07:49 | INFO     | 08_ic32_oof |   [ETHUSDT] 1483 trades | WR=57.6% | PnL=$+249.72 | oof_bars=45261
+2026-06-17 13:07:59 | INFO     | evaluator | [BNBUSDT] Winrate: 52.76% (831W / 744L / 1575 trades | time_exit=124) | Sharpe=-0.45 Sortino=-0.23 Calmar=0.18 PF=1.17
+2026-06-17 13:08:01 | INFO     | evaluator | [BNBUSDT] Lev 5.0x -> PnL: $+89.50 | DD: 271.34%
+2026-06-17 13:08:01 | INFO     | 08_ic32_oof |   [BNBUSDT] 1575 trades | WR=52.8% | PnL=$+89.50 | oof_bars=45261
+2026-06-17 13:08:10 | INFO     | evaluator | [XRPUSDT] Winrate: 56.60% (931W / 714L / 1645 trades | time_exit=207) | Sharpe=-0.03 Sortino=-0.02 Calmar=0.17 PF=1.27
+2026-06-17 13:08:12 | INFO     | evaluator | [XRPUSDT] Lev 5.0x -> PnL: $+145.89 | DD: 362.29%
+2026-06-17 13:08:12 | INFO     | 08_ic32_oof |   [XRPUSDT] 1645 trades | WR=56.6% | PnL=$+145.89 | oof_bars=45261
+2026-06-17 13:08:22 | INFO     | evaluator | [DOGEUSDT] Winrate: 51.89% (960W / 890L / 1850 trades | time_exit=267) | Sharpe=0.13 Sortino=0.12 Calmar=0.02 PF=1.06
+2026-06-17 13:08:24 | INFO     | evaluator | [DOGEUSDT] Lev 5.0x -> PnL: $+48.10 | DD: 1426.61%
+2026-06-17 13:08:24 | INFO     | 08_ic32_oof |   [DOGEUSDT] 1850 trades | WR=51.9% | PnL=$+48.10 | oof_bars=45261
+2026-06-17 13:08:26 | INFO     | evaluator | [TONUSDT] Winrate: 55.83% (182W / 144L / 326 trades | time_exit=23) | Sharpe=-0.11 Sortino=-0.06 Calmar=1.93 PF=1.57
+2026-06-17 13:08:26 | INFO     | evaluator | [TONUSDT] Lev 5.0x -> PnL: $+54.34 | DD: 183.88%
+2026-06-17 13:08:26 | INFO     | 08_ic32_oof |   [TONUSDT] 326 trades | WR=55.8% | PnL=$+54.34 | oof_bars=10757
+2026-06-17 13:08:35 | INFO     | evaluator | [ADAUSDT] Winrate: 55.32% (878W / 709L / 1587 trades | time_exit=228) | Sharpe=0.59 Sortino=2.10 Calmar=0.07 PF=1.22
+2026-06-17 13:08:37 | INFO     | evaluator | [ADAUSDT] Lev 5.0x -> PnL: $+132.94 | DD: 769.69%
+2026-06-17 13:08:37 | INFO     | 08_ic32_oof |   [ADAUSDT] 1587 trades | WR=55.3% | PnL=$+132.94 | oof_bars=45261
+2026-06-17 13:08:46 | INFO     | evaluator | [TRXUSDT] Winrate: 55.93% (853W / 672L / 1525 trades | time_exit=118) | Sharpe=1.24 Sortino=1.10 Calmar=0.13 PF=1.36
+2026-06-17 13:08:48 | INFO     | evaluator | [TRXUSDT] Lev 5.0x -> PnL: $+155.32 | DD: 490.20%
+2026-06-17 13:08:48 | INFO     | 08_ic32_oof |   [TRXUSDT] 1525 trades | WR=55.9% | PnL=$+155.32 | oof_bars=45261
+2026-06-17 13:08:56 | INFO     | evaluator | [1000SHIBUSDT] Winrate: 54.99% (1003W / 821L / 1824 trades | time_exit=292) | Sharpe=0.06 Sortino=0.04 Calmar=0.12 PF=1.12
+2026-06-17 13:08:58 | INFO     | evaluator | [1000SHIBUSDT] Lev 5.0x -> PnL: $+87.88 | DD: 536.48%
+2026-06-17 13:08:58 | INFO     | 08_ic32_oof |   [1000SHIBUSDT] 1824 trades | WR=55.0% | PnL=$+87.88 | oof_bars=39113
+2026-06-17 13:09:05 | INFO     | evaluator | [AVAXUSDT] Winrate: 56.91% (861W / 652L / 1513 trades | time_exit=189) | Sharpe=0.00 Sortino=0.00 Calmar=0.47 PF=1.61
+2026-06-17 13:09:07 | INFO     | evaluator | [AVAXUSDT] Lev 5.0x -> PnL: $+330.71 | DD: 213.59%
+2026-06-17 13:09:07 | INFO     | 08_ic32_oof |   [AVAXUSDT] 1513 trades | WR=56.9% | PnL=$+330.71 | oof_bars=44605
+2026-06-17 13:09:15 | INFO     | evaluator | [LINKUSDT] Winrate: 55.09% (807W / 658L / 1465 trades | time_exit=155) | Sharpe=-0.21 Sortino=-0.11 Calmar=0.29 PF=1.50
+2026-06-17 13:09:17 | INFO     | evaluator | [LINKUSDT] Lev 5.0x -> PnL: $+259.70 | DD: 258.75%
+2026-06-17 13:09:17 | INFO     | 08_ic32_oof |   [LINKUSDT] 1465 trades | WR=55.1% | PnL=$+259.70 | oof_bars=45261
+2026-06-17 13:09:25 | INFO     | evaluator | [DOTUSDT] Winrate: 53.36% (969W / 847L / 1816 trades | time_exit=156) | Sharpe=-0.52 Sortino=-0.25 Calmar=0.17 PF=1.38
+2026-06-17 13:09:27 | INFO     | evaluator | [DOTUSDT] Lev 5.0x -> PnL: $+244.94 | DD: 502.18%
+2026-06-17 13:09:27 | INFO     | 08_ic32_oof |   [DOTUSDT] 1816 trades | WR=53.4% | PnL=$+244.94 | oof_bars=45261
+2026-06-17 13:09:31 | INFO     | evaluator | [SUIUSDT] Winrate: 62.93% (443W / 261L / 704 trades | time_exit=100) | Sharpe=3.28 Sortino=5.22 Calmar=1.97 PF=2.15
+2026-06-17 13:09:31 | INFO     | evaluator | [SUIUSDT] Lev 5.0x -> PnL: $+249.99 | DD: 136.29%
+2026-06-17 13:09:31 | INFO     | 08_ic32_oof |   [SUIUSDT] 704 trades | WR=62.9% | PnL=$+249.99 | oof_bars=21827
+2026-06-17 13:09:33 | INFO     | evaluator | [POLUSDT] Winrate: 65.62% (210W / 110L / 320 trades | time_exit=35) | Sharpe=4.24 Sortino=5.70 Calmar=14.06 PF=2.41
+2026-06-17 13:09:33 | INFO     | evaluator | [POLUSDT] Lev 5.0x -> PnL: $+106.94 | DD: 55.39%
+2026-06-17 13:09:33 | INFO     | 08_ic32_oof |   [POLUSDT] 320 trades | WR=65.6% | PnL=$+106.94 | oof_bars=9893
+2026-06-17 13:09:41 | INFO     | evaluator | [NEARUSDT] Winrate: 55.43% (847W / 681L / 1528 trades | time_exit=180) | Sharpe=1.24 Sortino=1.49 Calmar=0.33 PF=1.48
+2026-06-17 13:09:42 | INFO     | evaluator | [NEARUSDT] Lev 5.0x -> PnL: $+293.98 | DD: 290.04%
+2026-06-17 13:09:42 | INFO     | 08_ic32_oof |   [NEARUSDT] 1528 trades | WR=55.4% | PnL=$+293.98 | oof_bars=44078
+2026-06-17 13:09:46 | INFO     | evaluator | [1000PEPEUSDT] Winrate: 53.33% (456W / 399L / 855 trades | time_exit=143) | Sharpe=0.97 Sortino=2.17 Calmar=0.73 PF=1.32
+2026-06-17 13:09:46 | INFO     | evaluator | [1000PEPEUSDT] Lev 5.0x -> PnL: $+124.06 | DD: 251.56%
+2026-06-17 13:09:46 | INFO     | 08_ic32_oof |   [1000PEPEUSDT] 855 trades | WR=53.3% | PnL=$+124.06 | oof_bars=21773
+2026-06-17 13:09:49 | INFO     | evaluator | [TAOUSDT] Winrate: 60.42% (200W / 131L / 331 trades | time_exit=55) | Sharpe=1.74 Sortino=1.84 Calmar=2.78 PF=1.99
+2026-06-17 13:09:49 | INFO     | evaluator | [TAOUSDT] Lev 5.0x -> PnL: $+105.98 | DD: 138.36%
+2026-06-17 13:09:49 | INFO     | 08_ic32_oof |   [TAOUSDT] 331 trades | WR=60.4% | PnL=$+105.98 | oof_bars=13591
+2026-06-17 13:09:53 | INFO     | evaluator | [ARBUSDT] Winrate: 58.25% (445W / 319L / 764 trades | time_exit=93) | Sharpe=2.37 Sortino=2.94 Calmar=1.85 PF=1.78
+2026-06-17 13:09:54 | INFO     | evaluator | [ARBUSDT] Lev 5.0x -> PnL: $+182.87 | DD: 113.87%
+2026-06-17 13:09:54 | INFO     | 08_ic32_oof |   [ARBUSDT] 764 trades | WR=58.2% | PnL=$+182.87 | oof_bars=22787
+2026-06-17 13:10:02 | INFO     | evaluator | [HBARUSDT] Winrate: 55.82% (734W / 581L / 1315 trades | time_exit=155) | Sharpe=0.40 Sortino=0.62 Calmar=0.09 PF=1.39
+2026-06-17 13:10:04 | INFO     | evaluator | [HBARUSDT] Lev 5.0x -> PnL: $+210.10 | DD: 804.22%
+2026-06-17 13:10:04 | INFO     | 08_ic32_oof |   [HBARUSDT] 1315 trades | WR=55.8% | PnL=$+210.10 | oof_bars=45261
+2026-06-17 13:10:05 | INFO     | evaluator | [ONDOUSDT] Winrate: 54.40% (105W / 88L / 193 trades | time_exit=11) | Sharpe=2.43 Sortino=3.49 Calmar=16.81 PF=1.63
+2026-06-17 13:10:05 | INFO     | evaluator | [ONDOUSDT] Lev 5.0x -> PnL: $+44.91 | DD: 123.20%
+2026-06-17 13:10:05 | INFO     | 08_ic32_oof |   [ONDOUSDT] 193 trades | WR=54.4% | PnL=$+44.91 | oof_bars=4869
+
+================================================================================
+  OOF SCORECARD — ic32_regime_v1 full stack (live config)
+================================================================================
+  Total Trades     : 25,596
+  Trades/bulan     : 341
+  Win Rate         : 55.7%
+  LONG WR          : 59.1% (6187 trades, 24.2%)
+  SHORT WR         : 54.6% (19409 trades)
+  Net PnL          : $+3563.87
+  PnL/trade        : $+0.1392
+  Profit Factor    : 1.393
+  SL hit rate      : 0.0%
+  Guardian exits   : 65.5%
+
+  vs Holdout archived (Apr-Jun 2026):
+    Holdout: 936 trades | WR 62.1% | PF 1.96
+    OOF    : 25596 trades | WR 55.7% | PF 1.39
+
+  Saved -> D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_regime_v1\oof_full_stack_scorecard.json
+  Saved -> D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_regime_v1\oof_trade_history.csv
+================================================================================
+
+
+---
+exit_code: -1
+elapsed_ms: 86400008
+ended_at: 2026-06-18T05:08:14.701Z
+---

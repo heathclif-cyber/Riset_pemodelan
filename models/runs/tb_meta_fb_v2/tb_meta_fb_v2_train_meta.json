@@ -1,0 +1,64 @@
+{
+  "run_name": "tb_meta_fb_v2",
+  "base_model": "tb_lgbm_flatboost_v2",
+  "trained_at": "2026-06-15T15:30:27.895428",
+  "n_oof_trades": 25026,
+  "base_win_rate": 0.3647,
+  "cv_mean_auc": 0.5823,
+  "best_fold_auc": 0.6056,
+  "features": [
+    "p_short",
+    "p_flat",
+    "p_long",
+    "confidence",
+    "direction",
+    "hmm_regime_enc",
+    "atr_percentile_h1",
+    "funding_rate",
+    "vol_spike_zscore",
+    "ofi_h4_delta",
+    "cvd_slope_h4"
+  ],
+  "cv_metrics": [
+    {
+      "fold": 1,
+      "auc": 0.5566,
+      "wr_sel": 0.62
+    },
+    {
+      "fold": 2,
+      "auc": 0.5494,
+      "wr_sel": 0.5536
+    },
+    {
+      "fold": 3,
+      "auc": 0.5979,
+      "wr_sel": 0.5442
+    },
+    {
+      "fold": 4,
+      "auc": 0.5864,
+      "wr_sel": 0.4345
+    },
+    {
+      "fold": 5,
+      "auc": 0.5731,
+      "wr_sel": 0.5472
+    },
+    {
+      "fold": 6,
+      "auc": 0.5907,
+      "wr_sel": 0.5459
+    },
+    {
+      "fold": 7,
+      "auc": 0.6056,
+      "wr_sel": 0.5743
+    },
+    {
+      "fold": 8,
+      "auc": 0.5985,
+      "wr_sel": 0.488
+    }
+  ]
+}

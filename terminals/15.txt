@@ -1,0 +1,55 @@
+---
+pid: 9892
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "python D:\\Apps-Dev\\Riset_pemodelan\\pipeline\\05i_lstm_fusion_stage2_pipeline.py"
+started_at: 2026-06-16T05:13:20.796Z
+running_for_ms: 25749999 
+---
+
+==============================================================================
+  STAGE 2: LSTM Score Fusion — FULL PIPELINE (OOF genuine)
+  Candidates: 13 (baseline + top-12 from Stage 1)
+  Stack: HMM-B + Guardian + DynSize cm_0.60 | holdout sealed
+==============================================================================
+  Preloading coins...
+  Coins: 21
+  [1/13] baseline_no_lstm: N=34,122 PPT_norm=+0.5041 PF=2.565 (23s)
+  [2/13] pre_hmm_all_oof_b10_n4_o6: N=38,268 PPT_norm=+0.4655 PF=2.338 (26s)
+  [3/13] pre_hmm_all_oof_b10_n4_o10: N=37,992 PPT_norm=+0.4632 PF=2.331 (26s)
+  [4/13] pre_hmm_all_oof_b10_n4_o14: N=37,860 PPT_norm=+0.4619 PF=2.326 (26s)
+  [5/13] pre_hmm_all_oof_b10_n6_o6: N=37,807 PPT_norm=+0.4660 PF=2.337 (26s)
+  [6/13] pre_hmm_all_oof_b10_n6_o10: N=37,531 PPT_norm=+0.4637 PF=2.330 (26s)
+  [7/13] pre_hmm_all_oof_b10_n6_o14: N=37,399 PPT_norm=+0.4624 PF=2.325 (26s)
+  [8/13] pre_hmm_all_oof_b10_n8_o6: N=37,468 PPT_norm=+0.4652 PF=2.332 (26s)
+  [9/13] pre_hmm_all_oof_b10_n8_o10: N=37,192 PPT_norm=+0.4628 PF=2.324 (26s)
+  [10/13] pre_hmm_all_oof_b10_n8_o14: N=37,060 PPT_norm=+0.4615 PF=2.319 (25s)
+  [11/13] pre_hmm_all_oof_b8_n4_o6: N=36,073 PPT_norm=+0.4819 PF=2.422 (24s)
+  [12/13] pre_hmm_all_oof_b8_n4_o10: N=35,797 PPT_norm=+0.4795 PF=2.415 (24s)
+  [13/13] pre_hmm_all_oof_b8_n4_o14: N=35,665 PPT_norm=+0.4782 PF=2.409 (27s)
+
+==============================================================================
+  STAGE 2 RESULTS vs BASELINE
+==============================================================================
+  BASELINE: N=34,122 WR=69.0% PPT_norm=+0.5041 PF=2.565
+
+  Label                                            N     dN PPT_norm    dPPT    PF PASS
+  pre_hmm_all_oof_b8_n4_o6                    36,073 +1,951  +0.4819 -0.0223 2.422    N
+  pre_hmm_all_oof_b8_n4_o10                   35,797 +1,675  +0.4795 -0.0246 2.415    N
+  pre_hmm_all_oof_b8_n4_o14                   35,665 +1,543  +0.4782 -0.0259 2.409    N
+  pre_hmm_all_oof_b10_n6_o6                   37,807 +3,685  +0.4660 -0.0381 2.337    N
+  pre_hmm_all_oof_b10_n4_o6                   38,268 +4,146  +0.4655 -0.0386 2.338    N
+  pre_hmm_all_oof_b10_n8_o6                   37,468 +3,346  +0.4652 -0.0390 2.332    N
+  pre_hmm_all_oof_b10_n6_o10                  37,531 +3,409  +0.4637 -0.0405 2.330    N
+  pre_hmm_all_oof_b10_n4_o10                  37,992 +3,870  +0.4632 -0.0409 2.331    N
+  pre_hmm_all_oof_b10_n8_o10                  37,192 +3,070  +0.4628 -0.0413 2.324    N
+  pre_hmm_all_oof_b10_n6_o14                  37,399 +3,277  +0.4624 -0.0418 2.325    N
+  pre_hmm_all_oof_b10_n4_o14                  37,860 +3,738  +0.4619 -0.0422 2.326    N
+  pre_hmm_all_oof_b10_n8_o14                  37,060 +2,938  +0.4615 -0.0426 2.319    N
+
+  No config passes gate. Best PPT_norm: pre_hmm_all_oof_b8_n4_o6
+
+  Elapsed: 5.5 min
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\lstm_fusion_stage2_pipeline.json
+  NOTE: trade mix changed >5% — Guardian retrain recommended before deploy
+==============================================================================
+

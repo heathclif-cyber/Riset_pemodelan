@@ -1,0 +1,32 @@
+{
+  "flatboost_v2": {
+    "name": "flatboost_v2 (27 feat)",
+    "trades": 14083,
+    "wr": 49.130156926791166,
+    "long_wr": 51.11803000283045,
+    "short_wr": 47.12840245118996,
+    "long_pct": 50.173968614641765,
+    "pnl": 788.4161999999998,
+    "pnl_per_month": 315.3664799999999,
+    "pnl_per_trade": 0.05598354043882694,
+    "sl_rate": 0.0,
+    "time_exit_rate": 0.0
+  },
+  "ic32_benchmark": {
+    "name": "ic32_regime_v1 (benchmark)",
+    "trades": 1690,
+    "wr": 55.20710059171597,
+    "long_wr": 62.180579216354346,
+    "short_wr": 51.4959202175884,
+    "long_pct": 34.73372781065089,
+    "pnl": 330.91169999999994,
+    "pnl_per_month": 132.36467999999996,
+    "pnl_per_trade": 0.1958057396449704,
+    "sl_rate": 0.0,
+    "time_exit_rate": 0.0
+  },
+  "delta_pnl": 457.50449999999984,
+  "period": "2026-04-01 to 2026-06-13",
+  "n_coins": 21,
+  "note": "Standalone LGBM only, no LSTM, no Guardian, ATR TP/SL (no swing circular bias): TP=2xATR SL=1.5xATR, $10/5x"
+}

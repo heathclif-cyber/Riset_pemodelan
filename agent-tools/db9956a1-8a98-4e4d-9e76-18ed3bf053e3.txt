@@ -1,0 +1,620 @@
+2026-06-18 23:15:00 | INFO     | 01_fetch | ============================================================
+2026-06-18 23:15:00 | INFO     | 01_fetch |   FETCH DATA: TRAINING | ALL COINS (2020-01-01 -> 2026-04-01)
+2026-06-18 23:15:00 | INFO     | 01_fetch |   Mode    : TRAINING
+2026-06-18 23:15:00 | INFO     | 01_fetch |   Output  : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:00 | INFO     | 01_fetch |   Koin    : ['BTCUSDT', 'SOLUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'TONUSDT', 'ADAUSDT', 'TRXUSDT', '1000SHIBUSDT', 'AVAXUSDT', 'LINKUSDT', 'DOTUSDT', 'SUIUSDT', 'POLUSDT', 'NEARUSDT', '1000PEPEUSDT', 'TAOUSDT', 'ARBUSDT', 'HBARUSDT', 'ONDOUSDT']
+2026-06-18 23:15:00 | INFO     | 01_fetch |   Macro   : 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:00 | INFO     | 01_fetch | ============================================================
+2026-06-18 23:15:00 | INFO     | 01_fetch | Progress loaded: 86 keys selesai.
+2026-06-18 23:15:01 | INFO     | binance_client | ✅ Connection OK via spot_cdn
+2026-06-18 23:15:01 | INFO     | 01_fetch | Koneksi Binance OK.
+2026-06-18 23:15:01 | INFO     | 01_fetch | 
+--- FETCH MACRO DATA ---
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | FETCH MACRO DATA
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | Fear & Greed sudah di-fetch sebelumnya, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | Fear & Greed: 74 hari OK
+2026-06-18 23:15:01 | INFO     | fetchers | BTC Dominance sudah di-fetch sebelumnya, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | BTC Dominance: 74 hari OK
+2026-06-18 23:15:01 | INFO     | 01_fetch | [1/21] Fetching BTCUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: BTCUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | binance_client | [fapi] fapi.binance.com mengembalikan 403 - kemungkinan geo/IP block. Akan di-retry dalam 30 menit.
+2026-06-18 23:15:01 | WARNING  | binance_client | 403 Forbidden: https://fapi.binance.com/futures/data/openInterestHist - kemungkinan geo block
+2026-06-18 23:15:01 | WARNING  | binance_client | [fapi] fapi.binance.com mengembalikan 403 - kemungkinan geo/IP block. Akan di-retry dalam 30 menit.
+2026-06-18 23:15:01 | WARNING  | fetchers | [BTCUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [BTCUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [BTCUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: BTCUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [2/21] Fetching SOLUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: SOLUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [SOLUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [SOLUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [SOLUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: SOLUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 45,766  gaps=  10  ohlc_err=  0  zero_vol=   2
+  [OK ]  4h   rows= 11,447  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  1,908  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 59,121  |  Total issues: 10
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [3/21] Fetching ETHUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: ETHUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [ETHUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [ETHUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [ETHUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: ETHUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [4/21] Fetching BNBUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: BNBUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [BNBUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [BNBUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [BNBUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: BNBUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [5/21] Fetching XRPUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: XRPUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [XRPUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [XRPUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [XRPUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: XRPUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [6/21] Fetching DOGEUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: DOGEUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [DOGEUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [DOGEUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [DOGEUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: DOGEUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [7/21] Fetching TONUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: TONUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [TONUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [TONUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [TONUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: TONUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows= 10,790  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  2,698  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    450  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 13,938  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [8/21] Fetching ADAUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: ADAUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [ADAUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [ADAUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [ADAUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: ADAUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [9/21] Fetching TRXUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: TRXUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [TRXUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [TRXUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [TRXUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: TRXUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [10/21] Fetching 1000SHIBUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: 1000SHIBUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] Fetching Open Interest...
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:01 | WARNING  | fetchers | [1000SHIBUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:01 | INFO     | fetchers | [1000SHIBUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:01 | WARNING  | fetchers | [1000SHIBUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:01 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: 1000SHIBUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 39,246  gaps=   3  ohlc_err=  0  zero_vol=   1
+  [OK ]  4h   rows=  9,814  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  1,636  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 50,696  |  Total issues: 3
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:01 | INFO     | 01_fetch | [11/21] Fetching AVAXUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:01 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:01 | INFO     | fetchers |   FETCHING: AVAXUSDT
+2026-06-18 23:15:01 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:01 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:01 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:01 | INFO     | fetchers | [AVAXUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [AVAXUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:01 | INFO     | fetchers | [AVAXUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [AVAXUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [AVAXUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [AVAXUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [AVAXUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [AVAXUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [AVAXUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [AVAXUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: AVAXUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 44,758  gaps=  10  ohlc_err=  0  zero_vol=   2
+  [OK ]  4h   rows= 11,195  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  1,866  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 57,819  |  Total issues: 10
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [12/21] Fetching LINKUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: LINKUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [LINKUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [LINKUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [LINKUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: LINKUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [13/21] Fetching DOTUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: DOTUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [DOTUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [DOTUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [DOTUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: DOTUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 45,581  gaps=  10  ohlc_err=  0  zero_vol=   2
+  [OK ]  4h   rows= 11,401  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  1,901  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 58,883  |  Total issues: 10
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [14/21] Fetching SUIUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: SUIUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [SUIUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [SUIUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [SUIUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: SUIUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows= 21,900  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  5,475  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    913  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 28,288  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [15/21] Fetching POLUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: POLUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [POLUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [POLUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [POLUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: POLUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows=  9,926  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  2,482  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    414  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 12,822  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [16/21] Fetching NEARUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: NEARUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [NEARUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [NEARUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [NEARUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: NEARUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 44,231  gaps=  10  ohlc_err=  0  zero_vol=   2
+  [OK ]  4h   rows= 11,063  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  1,844  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 57,138  |  Total issues: 10
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [17/21] Fetching 1000PEPEUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: 1000PEPEUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [1000PEPEUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [1000PEPEUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [1000PEPEUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: 1000PEPEUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows= 21,846  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  5,462  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    911  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 28,219  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [18/21] Fetching TAOUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: TAOUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [TAOUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [TAOUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [TAOUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: TAOUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows= 13,644  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  3,411  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    569  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 17,624  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [19/21] Fetching ARBUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: ARBUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [ARBUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [ARBUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [ARBUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: ARBUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 22,880  gaps=   1  ohlc_err=  0  zero_vol=   1
+  [OK ]  4h   rows=  5,721  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    954  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 29,555  |  Total issues: 1
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [20/21] Fetching HBARUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: HBARUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [HBARUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [HBARUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [HBARUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: HBARUSDT
+───────────────────────────────────────────────────────
+  [WARN]  1h   rows= 51,112  gaps=  15  ohlc_err=  0  zero_vol=   2
+  [WARN]  4h   rows= 12,785  gaps=   1  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=  2,131  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 66,028  |  Total issues: 16
+───────────────────────────────────────────────────────
+
+2026-06-18 23:15:02 | INFO     | 01_fetch | [21/21] Fetching ONDOUSDT (2020-01-01 -> 2026-04-01)...
+2026-06-18 23:15:02 | INFO     | fetchers | 
+=======================================================
+2026-06-18 23:15:02 | INFO     | fetchers |   FETCHING: ONDOUSDT
+2026-06-18 23:15:02 | INFO     | fetchers |   Periode: 2020-01-01 -> 2026-04-01
+2026-06-18 23:15:02 | INFO     | fetchers |   Output : D:\Apps-Dev\Riset_pemodelan\data\training
+2026-06-18 23:15:02 | INFO     | fetchers | =======================================================
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] 1h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] 4h klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] 1d klines sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] Funding rate sudah ada, skip.
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] Fetching Open Interest...
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] OI lookback dibatasi 500 jam (API limit) - 2026-03-11 -> 2026-04-01
+2026-06-18 23:15:02 | WARNING  | fetchers | [ONDOUSDT] Open Interest: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] Fetching Long/Short Ratio...
+2026-06-18 23:15:02 | INFO     | fetchers | [ONDOUSDT] L/S lookback dibatasi 500 jam (API limit)
+2026-06-18 23:15:02 | WARNING  | fetchers | [ONDOUSDT] Long/Short Ratio: tidak ada data (kemungkinan di-block atau limit waktu terlampaui)
+2026-06-18 23:15:02 | INFO     | fetchers | 
+───────────────────────────────────────────────────────
+  Summary: ONDOUSDT
+───────────────────────────────────────────────────────
+  [OK ]  1h   rows=  4,882  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  4h   rows=  1,221  gaps=   0  ohlc_err=  0  zero_vol=   0
+  [OK ]  1d   rows=    204  gaps=   0  ohlc_err=  0  zero_vol=   0
+───────────────────────────────────────────────────────
+  Total rows: 6,307  |  Total issues: 0
+───────────────────────────────────────────────────────
+
+
+============================================================
+  FETCH SELESAI — TRAINING
+============================================================
+  Berhasil : 21 koin — ['BTCUSDT', 'SOLUSDT', 'ETHUSDT', 'BNBUSDT', 'XRPUSDT', 'DOGEUSDT', 'TONUSDT', 'ADAUSDT', 'TRXUSDT', '1000SHIBUSDT', 'AVAXUSDT', 'LINKUSDT', 'DOTUSDT', 'SUIUSDT', 'POLUSDT', 'NEARUSDT', '1000PEPEUSDT', 'TAOUSDT', 'ARBUSDT', 'HBARUSDT', 'ONDOUSDT']
+  Gagal    : 0  koin — []
+  Output   : D:\Apps-Dev\Riset_pemodelan\data\training
+  Progress : D:\Apps-Dev\Riset_pemodelan\data\training\.fetch_progress.json
+============================================================
+

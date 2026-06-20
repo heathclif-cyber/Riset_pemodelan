@@ -1,0 +1,910 @@
+{
+  "generated_at": "2026-06-17T16:31:26.562770+00:00",
+  "db_cache": "D:\\Apps-Dev\\Riset_pemodelan\\data\\live_cache\\app.db",
+  "config": {
+    "breadth_gate": {
+      "bear_threshold": 0.3,
+      "block_counter_trend": true,
+      "bull_threshold": 0.7,
+      "enabled": true,
+      "note": "Block counter-trend SHORT saat market_breadth>=0.70 (bull) dan counter-trend LONG saat breadth<=0.30."
+    },
+    "hmm_controller": {
+      "block_counter_trend_in_trending": true,
+      "enabled": true,
+      "note": "Block counter-trend SHORT di TRENDING_UP (enc=3) dan counter-trend LONG di TRENDING_DOWN (enc=0)."
+    },
+    "short_offset": 0.06,
+    "regime_breadth_aware": true
+  },
+  "signal_summary": {
+    "directional_total": 777,
+    "would_block": 293,
+    "would_pass": 484,
+    "block_rate_pct": 37.7,
+    "bull_counter_short_signals": 12,
+    "bull_counter_short_blocked": 12
+  },
+  "live_trades_actual": {
+    "n_closed": 144,
+    "pnl_net": -31.71,
+    "wr_pct": 45.8,
+    "long_short": {
+      "LONG": {
+        "n": 66,
+        "pnl": -24.848200000000006,
+        "wr": 0.4090909090909091
+      },
+      "SHORT": {
+        "n": 78,
+        "pnl": -6.857099999999999,
+        "wr": 0.5
+      }
+    }
+  },
+  "live_trades_counterfactual": {
+    "n_kept": 60,
+    "n_blocked": 84,
+    "pnl_net_kept": -12.87,
+    "wr_pct_kept": 51.7,
+    "losses_mitigated_n": 49,
+    "losses_mitigated_usd": 34.75,
+    "wins_sacrificed_n": 35,
+    "wins_sacrificed_usd": 15.91,
+    "net_improvement_usd": 18.83,
+    "long_short_kept": {
+      "LONG": {
+        "n": 24,
+        "pnl": -9.2481,
+        "wr": 0.4583333333333333
+      },
+      "SHORT": {
+        "n": 36,
+        "pnl": -3.623099999999999,
+        "wr": 0.5555555555555556
+      }
+    },
+    "long_short_blocked": {
+      "LONG": {
+        "n": 42,
+        "pnl": -15.600099999999998,
+        "wr": 0.38095238095238093
+      },
+      "SHORT": {
+        "n": 42,
+        "pnl": -3.234,
+        "wr": 0.4523809523809524
+      }
+    }
+  },
+  "blocker_breakdown_on_trades": {
+    "conf_0.65<0.65": {
+      "n": 2,
+      "pnl": -2.209,
+      "losses": 1
+    },
+    "macro_veto-0.65": {
+      "n": 6,
+      "pnl": -0.5292,
+      "losses": 4
+    },
+    "hmm_trend_down_block_long": {
+      "n": 24,
+      "pnl": -9.3129,
+      "losses": 13
+    },
+    "conf_0.57<0.65": {
+      "n": 2,
+      "pnl": -0.757,
+      "losses": 2
+    },
+    "conf_0.60<0.65": {
+      "n": 1,
+      "pnl": 0.0378,
+      "losses": 0
+    },
+    "conf_0.14<0.59": {
+      "n": 1,
+      "pnl": 0.0279,
+      "losses": 0
+    },
+    "conf_0.24<0.65": {
+      "n": 1,
+      "pnl": 0.224,
+      "losses": 0
+    },
+    "conf_0.57<0.59": {
+      "n": 1,
+      "pnl": -0.0137,
+      "losses": 1
+    },
+    "conf_0.58<0.59": {
+      "n": 4,
+      "pnl": -4.938999999999999,
+      "losses": 4
+    },
+    "conf_0.19<0.65": {
+      "n": 1,
+      "pnl": -0.5397,
+      "losses": 1
+    },
+    "conf_0.61<0.65": {
+      "n": 2,
+      "pnl": 0.14490000000000003,
+      "losses": 1
+    },
+    "conf_0.58<0.65": {
+      "n": 3,
+      "pnl": 1.2648000000000001,
+      "losses": 1
+    },
+    "conf_0.59<0.65": {
+      "n": 1,
+      "pnl": 0.0881,
+      "losses": 0
+    },
+    "conf_0.64<0.65": {
+      "n": 3,
+      "pnl": 0.07339999999999991,
+      "losses": 2
+    },
+    "conf_0.62<0.65": {
+      "n": 4,
+      "pnl": 0.7287000000000001,
+      "losses": 3
+    },
+    "conf_0.54<0.65": {
+      "n": 1,
+      "pnl": -0.2896,
+      "losses": 1
+    },
+    "conf_0.55<0.65": {
+      "n": 1,
+      "pnl": -0.233,
+      "losses": 1
+    },
+    "conf_0.56<0.65": {
+      "n": 5,
+      "pnl": 0.4541,
+      "losses": 1
+    },
+    "conf_0.35<0.59": {
+      "n": 1,
+      "pnl": -0.2076,
+      "losses": 1
+    },
+    "conf_0.53<0.59": {
+      "n": 2,
+      "pnl": 0.3529,
+      "losses": 0
+    },
+    "conf_0.54<0.59": {
+      "n": 1,
+      "pnl": -0.3782,
+      "losses": 1
+    },
+    "conf_0.33<0.59": {
+      "n": 1,
+      "pnl": -0.2341,
+      "losses": 1
+    },
+    "conf_0.32<0.59": {
+      "n": 4,
+      "pnl": -0.5896,
+      "losses": 3
+    },
+    "conf_0.38<0.65": {
+      "n": 1,
+      "pnl": 0.1209,
+      "losses": 0
+    },
+    "conf_0.34<0.65": {
+      "n": 1,
+      "pnl": 0.2025,
+      "losses": 0
+    },
+    "conf_0.36<0.65": {
+      "n": 1,
+      "pnl": -0.2136,
+      "losses": 1
+    },
+    "hmm_trend_up_block_short": {
+      "n": 3,
+      "pnl": 0.08230000000000001,
+      "losses": 1
+    },
+    "conf_0.47<0.65": {
+      "n": 3,
+      "pnl": -0.47940000000000005,
+      "losses": 2
+    },
+    "conf_0.56<0.59": {
+      "n": 2,
+      "pnl": -1.3315000000000001,
+      "losses": 2
+    },
+    "conf_0.50<0.59": {
+      "n": 1,
+      "pnl": 0.6511,
+      "losses": 0
+    },
+    "conf_0.53<0.65": {
+      "n": 1,
+      "pnl": -0.2447,
+      "losses": 1
+    },
+    "conf_0.42<0.59": {
+      "n": 1,
+      "pnl": 0.5747,
+      "losses": 0
+    },
+    "conf_0.44<0.65": {
+      "n": 1,
+      "pnl": -0.8135,
+      "losses": 1
+    },
+    "conf_0.43<0.65": {
+      "n": 1,
+      "pnl": -0.6781,
+      "losses": 1
+    },
+    "conf_0.48<0.65": {
+      "n": 1,
+      "pnl": 0.2277,
+      "losses": 0
+    }
+  },
+  "blocked_loss_trades_detail": [
+    {
+      "symbol": "DOTUSDT",
+      "direction": "LONG",
+      "pnl_net": -4.04,
+      "pnl_pct": -8.43,
+      "h4": "UP",
+      "breadth": 0.3,
+      "block_reason": "conf_0.58<0.59",
+      "entry_price": 1.010505,
+      "opened_at": "2026-06-16 02:06"
+    },
+    {
+      "symbol": "TAOUSDT",
+      "direction": "LONG",
+      "pnl_net": -2.74,
+      "pnl_pct": -13.71,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 273.39662999999996,
+      "opened_at": "2026-05-27 20:05"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "direction": "LONG",
+      "pnl_net": -2.57,
+      "pnl_pct": -9.88,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 8.991493499999999,
+      "opened_at": "2026-06-02 01:05"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "direction": "SHORT",
+      "pnl_net": -2.31,
+      "pnl_pct": -9.23,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "conf_0.65<0.65",
+      "entry_price": 0.11024485,
+      "opened_at": "2026-05-21 14:05"
+    },
+    {
+      "symbol": "TONUSDT",
+      "direction": "LONG",
+      "pnl_net": -2.08,
+      "pnl_pct": -8.33,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 1.7605798499999998,
+      "opened_at": "2026-05-29 21:05"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "direction": "LONG",
+      "pnl_net": -1.9,
+      "pnl_pct": -9.48,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.9844919999999999,
+      "opened_at": "2026-05-27 21:05"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "direction": "LONG",
+      "pnl_net": -1.73,
+      "pnl_pct": -6.64,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 692.7762149999999,
+      "opened_at": "2026-06-02 00:05"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "direction": "LONG",
+      "pnl_net": -1.4,
+      "pnl_pct": -6.99,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 9.3276615,
+      "opened_at": "2026-05-27 21:05"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "direction": "LONG",
+      "pnl_net": -1.1,
+      "pnl_pct": -13.2,
+      "h4": "UP",
+      "breadth": 0.0,
+      "block_reason": "conf_0.56<0.59",
+      "entry_price": 1.02051,
+      "opened_at": "2026-06-16 12:07"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.82,
+      "pnl_pct": -8.18,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.56<0.65",
+      "entry_price": 1664.3973850000002,
+      "opened_at": "2026-06-12 13:05"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.81,
+      "pnl_pct": -11.69,
+      "h4": "DOWN",
+      "breadth": 0.85,
+      "block_reason": "conf_0.44<0.65",
+      "entry_price": 1.0084955,
+      "opened_at": "2026-06-16 04:07"
+    },
+    {
+      "symbol": "ONDOUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.72,
+      "pnl_pct": -7.17,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.34897439999999996,
+      "opened_at": "2026-05-30 07:05"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.68,
+      "pnl_pct": -10.51,
+      "h4": "DOWN",
+      "breadth": 0.25,
+      "block_reason": "conf_0.43<0.65",
+      "entry_price": 1773.69271,
+      "opened_at": "2026-06-16 08:05"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.63,
+      "pnl_pct": -6.27,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.62<0.65",
+      "entry_price": 0.7560218,
+      "opened_at": "2026-06-12 12:05"
+    },
+    {
+      "symbol": "DOTUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.58,
+      "pnl_pct": -5.77,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.64<0.65",
+      "entry_price": 0.963518,
+      "opened_at": "2026-06-13 04:05"
+    },
+    {
+      "symbol": "NEARUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.54,
+      "pnl_pct": -10.79,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.19<0.65",
+      "entry_price": 2.1039475000000003,
+      "opened_at": "2026-06-08 12:05"
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.49,
+      "pnl_pct": -4.9,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 6.599298,
+      "opened_at": "2026-06-12 19:05"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.46,
+      "pnl_pct": -9.18,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.61<0.65",
+      "entry_price": 0.7506245,
+      "opened_at": "2026-06-11 09:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.46,
+      "pnl_pct": -9.11,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.0031617801,
+      "opened_at": "2026-06-03 16:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.42,
+      "pnl_pct": -8.5,
+      "h4": "UP",
+      "breadth": 0.25,
+      "block_reason": "conf_0.62<0.65",
+      "entry_price": 0.00291204325,
+      "opened_at": "2026-06-15 04:05"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.42,
+      "pnl_pct": -10.48,
+      "h4": "DOWN",
+      "breadth": 0.62,
+      "block_reason": "macro_veto-0.65",
+      "entry_price": 0.08559718,
+      "opened_at": "2026-06-17 00:06"
+    },
+    {
+      "symbol": "TONUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.41,
+      "pnl_pct": -8.26,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.57<0.65",
+      "entry_price": 1.8444773,
+      "opened_at": "2026-05-31 03:05"
+    },
+    {
+      "symbol": "POLUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.41,
+      "pnl_pct": -4.12,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.08746370999999999,
+      "opened_at": "2026-05-28 23:05"
+    },
+    {
+      "symbol": "HBARUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.41,
+      "pnl_pct": -8.1,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.58<0.59",
+      "entry_price": 0.09630812999999999,
+      "opened_at": "2026-06-01 07:05"
+    },
+    {
+      "symbol": "HBARUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.38,
+      "pnl_pct": -7.69,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.08072034,
+      "opened_at": "2026-06-09 13:05"
+    },
+    {
+      "symbol": "TONUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.38,
+      "pnl_pct": -7.56,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.54<0.59",
+      "entry_price": 1.7397694499999998,
+      "opened_at": "2026-06-13 18:05"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.38,
+      "pnl_pct": -7.55,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.62<0.65",
+      "entry_price": 0.08034980500000001,
+      "opened_at": "2026-06-11 08:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.37,
+      "pnl_pct": -7.43,
+      "h4": "DOWN",
+      "breadth": 0.62,
+      "block_reason": "macro_veto-0.65",
+      "entry_price": 0.0029505240000000004,
+      "opened_at": "2026-06-17 00:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.36,
+      "pnl_pct": -7.12,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.58<0.65",
+      "entry_price": 0.00276211825,
+      "opened_at": "2026-06-11 08:05"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.35,
+      "pnl_pct": -6.98,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long",
+      "entry_price": 0.09294644999999999,
+      "opened_at": "2026-06-03 16:05"
+    },
+    {
+      "symbol": "ARBUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.35,
+      "pnl_pct": -6.93,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.32<0.59",
+      "entry_price": 0.08540268,
+      "opened_at": "2026-06-13 23:05"
+    },
+    {
+      "symbol": "AVAXUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.34,
+      "pnl_pct": -3.44,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.57<0.65",
+      "entry_price": 8.914540500000001,
+      "opened_at": "2026-05-30 10:05"
+    },
+    {
+      "symbol": "POLUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.33,
+      "pnl_pct": -6.68,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "conf_0.47<0.65",
+      "entry_price": 0.0751624,
+      "opened_at": "2026-06-14 16:05"
+    },
+    {
+      "symbol": "TONUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.33,
+      "pnl_pct": -6.56,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.58<0.59",
+      "entry_price": 1.72316115,
+      "opened_at": "2026-06-14 00:05"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.33,
+      "pnl_pct": -7.31,
+      "h4": "UP",
+      "breadth": 0.25,
+      "block_reason": "hmm_trend_up_block_short|conf_0.47<0.65",
+      "entry_price": 1.2328832500000002,
+      "opened_at": "2026-06-16 08:06"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.31,
+      "pnl_pct": -6.27,
+      "h4": "UP",
+      "breadth": 0.25,
+      "block_reason": "conf_0.64<0.65",
+      "entry_price": 0.08872561500000001,
+      "opened_at": "2026-06-15 04:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.29,
+      "pnl_pct": -5.79,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.54<0.65",
+      "entry_price": 0.0027839073500000003,
+      "opened_at": "2026-06-12 00:05"
+    },
+    {
+      "symbol": "BNBUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.24,
+      "pnl_pct": -4.89,
+      "h4": "UP",
+      "breadth": 0.25,
+      "block_reason": "conf_0.53<0.65",
+      "entry_price": 617.4611150000001,
+      "opened_at": "2026-06-15 04:05"
+    },
+    {
+      "symbol": "ADAUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.23,
+      "pnl_pct": -4.68,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.33<0.59",
+      "entry_price": 0.17178585,
+      "opened_at": "2026-06-13 20:05"
+    },
+    {
+      "symbol": "DOGEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.23,
+      "pnl_pct": -4.66,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.55<0.65",
+      "entry_price": 0.085847055,
+      "opened_at": "2026-06-12 02:05"
+    },
+    {
+      "symbol": "1000SHIBUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.23,
+      "pnl_pct": -4.58,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.56<0.59",
+      "entry_price": 0.0050035005,
+      "opened_at": "2026-06-14 09:05"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.22,
+      "pnl_pct": -4.41,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.32<0.59",
+      "entry_price": 0.7691844,
+      "opened_at": "2026-06-13 22:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.21,
+      "pnl_pct": -4.27,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "conf_0.36<0.65",
+      "entry_price": 0.00281859,
+      "opened_at": "2026-06-14 07:05"
+    },
+    {
+      "symbol": "1000PEPEUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.21,
+      "pnl_pct": -4.15,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.35<0.59",
+      "entry_price": 0.0028432208999999995,
+      "opened_at": "2026-06-13 17:05"
+    },
+    {
+      "symbol": "LINKUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.19,
+      "pnl_pct": -3.72,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "macro_veto-0.65",
+      "entry_price": 7.9769865,
+      "opened_at": "2026-06-13 23:05"
+    },
+    {
+      "symbol": "TRXUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.17,
+      "pnl_pct": -2.63,
+      "h4": "DOWN",
+      "breadth": 0.76,
+      "block_reason": "conf_0.58<0.59",
+      "entry_price": 0.31733859,
+      "opened_at": "2026-06-16 16:06"
+    },
+    {
+      "symbol": "ETHUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.13,
+      "pnl_pct": -2.65,
+      "h4": "UP",
+      "breadth": 0.5,
+      "block_reason": "conf_0.32<0.59",
+      "entry_price": 1684.8119849999998,
+      "opened_at": "2026-06-13 22:05"
+    },
+    {
+      "symbol": "XRPUSDT",
+      "direction": "SHORT",
+      "pnl_net": -0.05,
+      "pnl_pct": -0.22,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "macro_veto-0.65",
+      "entry_price": 1.317341,
+      "opened_at": "2026-05-23 10:05"
+    },
+    {
+      "symbol": "SUIUSDT",
+      "direction": "LONG",
+      "pnl_net": -0.01,
+      "pnl_pct": -0.27,
+      "h4": "DOWN",
+      "breadth": 0.5,
+      "block_reason": "hmm_trend_down_block_long|conf_0.57<0.59",
+      "entry_price": 0.9060527999999999,
+      "opened_at": "2026-05-31 11:05"
+    }
+  ],
+  "rejected_by_filter_count": 0,
+  "signal_klines_simulation": {
+    "simulated_signals": 770,
+    "period_from": "2026-05-01",
+    "note": "Simplified TP/SL/TIME exit, no guardian, $10/5x",
+    "all_directional": {
+      "n": 770,
+      "pnl": 83.99,
+      "wr": 55.1,
+      "pf": 1.22,
+      "long_n": 274,
+      "short_n": 496
+    },
+    "proposed_gates_kept": {
+      "n": 478,
+      "pnl": 96.37,
+      "wr": 56.9,
+      "pf": 1.44,
+      "long_n": 154,
+      "short_n": 324
+    },
+    "proposed_gates_blocked": {
+      "n": 292,
+      "pnl": -12.37,
+      "wr": 52.1,
+      "pf": 0.92,
+      "long_n": 120,
+      "short_n": 172
+    },
+    "breadth_gate_only_kept": {
+      "n": 758,
+      "pnl": 79.78,
+      "wr": 54.7,
+      "pf": 1.21,
+      "long_n": 274,
+      "short_n": 484
+    },
+    "losses_in_blocked": 140,
+    "wins_in_blocked": 152,
+    "losses_in_kept": 206,
+    "mitigated_loss_usd": 160.84,
+    "sacrificed_win_usd": 148.47,
+    "worst_blocked": [
+      {
+        "symbol": "BNBUSDT",
+        "direction": "LONG",
+        "pnl_usd": -4.616111291026598,
+        "exit_reason": "TIME",
+        "block_reason": "hmm_trend_down_block_long|conf_0.42<0.59"
+      },
+      {
+        "symbol": "BNBUSDT",
+        "direction": "LONG",
+        "pnl_usd": -4.0926323272246465,
+        "exit_reason": "TIME",
+        "block_reason": "hmm_trend_down_block_long|conf_0.58<0.59"
+      },
+      {
+        "symbol": "ONDOUSDT",
+        "direction": "LONG",
+        "pnl_usd": -4.0099585342724,
+        "exit_reason": "SL",
+        "block_reason": "hmm_trend_down_block_long"
+      },
+      {
+        "symbol": "BNBUSDT",
+        "direction": "LONG",
+        "pnl_usd": -4.0080643211559766,
+        "exit_reason": "TIME",
+        "block_reason": "hmm_trend_down_block_long|conf_0.54<0.59"
+      },
+      {
+        "symbol": "TONUSDT",
+        "direction": "SHORT",
+        "pnl_usd": -3.134028185256887,
+        "exit_reason": "SL",
+        "block_reason": "conf_0.16<0.65"
+      }
+    ],
+    "best_kept": [
+      {
+        "symbol": "TONUSDT",
+        "direction": "LONG",
+        "pnl_usd": 5.681564901977722,
+        "exit_reason": "TP"
+      },
+      {
+        "symbol": "TONUSDT",
+        "direction": "LONG",
+        "pnl_usd": 4.245578386605787,
+        "exit_reason": "TP"
+      },
+      {
+        "symbol": "TONUSDT",
+        "direction": "LONG",
+        "pnl_usd": 3.9399240368963655,
+        "exit_reason": "TP"
+      },
+      {
+        "symbol": "TONUSDT",
+        "direction": "LONG",
+        "pnl_usd": 3.938717114986699,
+        "exit_reason": "TP"
+      },
+      {
+        "symbol": "TONUSDT",
+        "direction": "SHORT",
+        "pnl_usd": 3.5429754379192167,
+        "exit_reason": "TP"
+      }
+    ]
+  }
+}

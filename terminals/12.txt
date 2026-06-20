@@ -1,0 +1,7 @@
+---
+pid: 11828
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline\\05i_lstm_score_fusion_eval.py"
+started_at: 2026-06-16T04:53:17.761Z
+running_for_ms: 26815003 
+---

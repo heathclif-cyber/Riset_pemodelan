@@ -1,0 +1,43 @@
+{
+  "run_name": "tb_lstm_meta_guardian_v1",
+  "target": "binary Guardian-WIN=1/LOSS=0",
+  "n_samples": 20166,
+  "base_win_rate": 0.477,
+  "selected_feats": [
+    "atr_percent_h4"
+  ],
+  "n_features": 1,
+  "n_feat_total": 2,
+  "seq_len": 32,
+  "hidden": 32,
+  "n_layers": 1,
+  "dropout": 0.3,
+  "lr": 0.0005,
+  "patience": 20,
+  "cv_mean_auc": 0.5062,
+  "cv_std_auc": 0.0148,
+  "avg_best_epoch": 19,
+  "marginal_ic": {
+    "ic": -0.0003,
+    "t_stat": -0.04,
+    "n": 17921,
+    "pval": 0.9699
+  },
+  "gate_pass": false,
+  "fold_aucs": [
+    0.4936,
+    0.4799,
+    0.5021,
+    0.5153,
+    0.5042,
+    0.5129,
+    0.5081,
+    0.5336
+  ],
+  "pos_weight": 1.096,
+  "ic_thresholds": {
+    "IC_MIN": 0.015,
+    "T_MIN": 1.5,
+    "MARG_MIN": 0.005
+  }
+}

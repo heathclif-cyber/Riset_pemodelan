@@ -1,0 +1,11 @@
+{
+  "run_name": "ic32_guardian_delta_v1",
+  "entry_model": "ic32_regime_v1",
+  "n_samples": 270158,
+  "n_coins": 21,
+  "n_features": 26,
+  "cv_f1": 0.7364,
+  "hold_pct": 60.05,
+  "thresh_long": 0.69,
+  "thresh_short": 0.59
+}

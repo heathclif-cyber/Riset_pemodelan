@@ -1,0 +1,147 @@
+---
+pid: 22944
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05u_train_lstm_ic32_swing_complement_v1.py --all"
+started_at: 2026-06-17T14:42:14.686Z
+running_for_ms: 86400000 
+---
+
+======================================================================
+  LSTM IC32 SWING COMPLEMENT -- ic32_lstm_swing_complement_v2
+  Partner: ic32_regime_v1 | Label: swing H4
+  Features: production ic32 LSTM (11 feat, same as lstm_best.pt)
+  Sample: pump/dump gate + LGBM FLAT (ic32 thr 0.69/0.59)
+  Loss: Focal gamma=2.0
+  Eval: complement BULL>=0.38 BEAR>=0.5
+  Folds: 8 | Purge: 36 | Coins: 21
+  Device: privateuseone:0
+======================================================================
+
+2026-06-17 22:42:18 | INFO     | 05u_ic32_swing_complement |   [BTCUSDT] gate=10,144 flat=8,498 | LONG=21% FLAT=60% SHORT=19%
+2026-06-17 22:42:18 | INFO     | 05u_ic32_swing_complement |   [SOLUSDT] gate=9,281 flat=8,413 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 22:42:18 | INFO     | 05u_ic32_swing_complement |   [ETHUSDT] gate=10,282 flat=8,394 | LONG=20% FLAT=61% SHORT=19%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [BNBUSDT] gate=10,037 flat=8,299 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [XRPUSDT] gate=10,191 flat=8,277 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [DOGEUSDT] gate=10,014 flat=7,947 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [TONUSDT] gate=2,116 flat=1,966 | LONG=17% FLAT=65% SHORT=19%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [ADAUSDT] gate=9,914 flat=8,080 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 22:42:19 | INFO     | 05u_ic32_swing_complement |   [TRXUSDT] gate=10,130 flat=8,177 | LONG=20% FLAT=63% SHORT=17%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [1000SHIBUSDT] gate=7,593 flat=6,721 | LONG=17% FLAT=66% SHORT=17%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [AVAXUSDT] gate=8,845 flat=8,139 | LONG=19% FLAT=64% SHORT=18%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [LINKUSDT] gate=9,946 flat=8,158 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [DOTUSDT] gate=8,978 flat=8,190 | LONG=18% FLAT=63% SHORT=18%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [SUIUSDT] gate=4,468 flat=4,158 | LONG=19% FLAT=62% SHORT=19%
+2026-06-17 22:42:20 | INFO     | 05u_ic32_swing_complement |   [POLUSDT] gate=1,971 flat=1,841 | LONG=18% FLAT=63% SHORT=19%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [NEARUSDT] gate=8,741 flat=8,066 | LONG=19% FLAT=63% SHORT=18%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [1000PEPEUSDT] gate=4,216 flat=3,798 | LONG=18% FLAT=65% SHORT=17%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [TAOUSDT] gate=2,792 flat=2,657 | LONG=20% FLAT=62% SHORT=18%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [ARBUSDT] gate=4,660 flat=4,391 | LONG=18% FLAT=61% SHORT=20%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [HBARUSDT] gate=9,903 flat=8,133 | LONG=19% FLAT=63% SHORT=17%
+2026-06-17 22:42:21 | INFO     | 05u_ic32_swing_complement |   [ONDOUSDT] gate=947 flat=861 | LONG=19% FLAT=62% SHORT=18%
+2026-06-17 22:42:22 | INFO     | 05u_ic32_swing_complement | Complement pool: gate=155,169 -> flat=133,164 sequences
+2026-06-17 22:42:22 | INFO     | 05u_ic32_swing_complement | Sequences: 133,164 | seq=72 | feat=11
+2026-06-17 22:42:31 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch   1 | F1=0.2843 | Best=0.2843
+2026-06-17 22:42:38 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch   5 | F1=0.3140 | Best=0.3196
+2026-06-17 22:42:47 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  10 | F1=0.3304 | Best=0.3304
+2026-06-17 22:42:55 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  15 | F1=0.3293 | Best=0.3304
+2026-06-17 22:43:03 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  20 | F1=0.3358 | Best=0.3358
+2026-06-17 22:43:12 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  25 | F1=0.3393 | Best=0.3459
+2026-06-17 22:43:20 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  30 | F1=0.3496 | Best=0.3499
+2026-06-17 22:43:29 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  35 | F1=0.3755 | Best=0.3755
+2026-06-17 22:43:37 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  40 | F1=0.3631 | Best=0.3785
+2026-06-17 22:43:46 | INFO     | 05u_ic32_swing_complement |   Fold 1 Epoch  45 | F1=0.3625 | Best=0.3785
+2026-06-17 22:43:52 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch   1 | F1=0.2687 | Best=0.2687
+2026-06-17 22:44:03 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch   5 | F1=0.3306 | Best=0.3306
+2026-06-17 22:44:17 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  10 | F1=0.3297 | Best=0.3409
+2026-06-17 22:44:32 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  15 | F1=0.3417 | Best=0.3573
+2026-06-17 22:44:46 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  20 | F1=0.3479 | Best=0.3757
+2026-06-17 22:45:00 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  25 | F1=0.3500 | Best=0.3852
+2026-06-17 22:45:15 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  30 | F1=0.3838 | Best=0.3875
+2026-06-17 22:45:29 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  35 | F1=0.3592 | Best=0.3941
+2026-06-17 22:45:43 | INFO     | 05u_ic32_swing_complement |   Fold 2 Epoch  40 | F1=0.3705 | Best=0.3941
+2026-06-17 22:45:55 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch   1 | F1=0.2740 | Best=0.2740
+2026-06-17 22:46:13 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch   5 | F1=0.3262 | Best=0.3262
+2026-06-17 22:46:34 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  10 | F1=0.3609 | Best=0.3609
+2026-06-17 22:46:56 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  15 | F1=0.3589 | Best=0.3609
+2026-06-17 22:47:18 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  20 | F1=0.3792 | Best=0.3792
+2026-06-17 22:47:40 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  25 | F1=0.3819 | Best=0.3900
+2026-06-17 22:48:02 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  30 | F1=0.3908 | Best=0.3953
+2026-06-17 22:48:25 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  35 | F1=0.4040 | Best=0.4052
+2026-06-17 22:48:47 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  40 | F1=0.3919 | Best=0.4209
+2026-06-17 22:49:09 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  45 | F1=0.3985 | Best=0.4209
+2026-06-17 22:49:31 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  50 | F1=0.4132 | Best=0.4270
+2026-06-17 22:49:53 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  55 | F1=0.4296 | Best=0.4306
+2026-06-17 22:50:15 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  60 | F1=0.4181 | Best=0.4362
+2026-06-17 22:50:37 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  65 | F1=0.4431 | Best=0.4431
+2026-06-17 22:50:59 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  70 | F1=0.4341 | Best=0.4431
+2026-06-17 22:51:21 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  75 | F1=0.4386 | Best=0.4438
+2026-06-17 22:51:43 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  80 | F1=0.4452 | Best=0.4518
+2026-06-17 22:52:05 | INFO     | 05u_ic32_swing_complement |   Fold 3 Epoch  85 | F1=0.4457 | Best=0.4518
+2026-06-17 22:52:18 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch   1 | F1=0.3000 | Best=0.3000
+2026-06-17 22:52:42 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch   5 | F1=0.3174 | Best=0.3201
+2026-06-17 22:53:12 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  10 | F1=0.3508 | Best=0.3508
+2026-06-17 22:53:42 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  15 | F1=0.3706 | Best=0.3706
+2026-06-17 22:54:12 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  20 | F1=0.3697 | Best=0.3784
+2026-06-17 22:54:42 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  25 | F1=0.3732 | Best=0.3913
+2026-06-17 22:55:12 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  30 | F1=0.4104 | Best=0.4104
+2026-06-17 22:55:42 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  35 | F1=0.3925 | Best=0.4117
+2026-06-17 22:56:13 | INFO     | 05u_ic32_swing_complement |   Fold 4 Epoch  40 | F1=0.3962 | Best=0.4117
+2026-06-17 22:56:35 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch   1 | F1=0.2825 | Best=0.2825
+2026-06-17 22:57:05 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch   5 | F1=0.3182 | Best=0.3182
+2026-06-17 22:57:45 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  10 | F1=0.3654 | Best=0.3654
+2026-06-17 22:58:28 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  15 | F1=0.3838 | Best=0.3838
+2026-06-17 22:59:13 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  20 | F1=0.3884 | Best=0.4135
+2026-06-17 22:59:57 | INFO     | 05u_ic32_swing_complement |   Fold 5 Epoch  25 | F1=0.3790 | Best=0.4135
+2026-06-17 23:00:31 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch   1 | F1=0.2782 | Best=0.2782
+2026-06-17 23:01:17 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch   5 | F1=0.3055 | Best=0.3066
+2026-06-17 23:02:12 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  10 | F1=0.3490 | Best=0.3490
+2026-06-17 23:03:08 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  15 | F1=0.3705 | Best=0.3773
+2026-06-17 23:04:04 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  20 | F1=0.3828 | Best=0.3992
+2026-06-17 23:05:02 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  25 | F1=0.3997 | Best=0.3997
+2026-06-17 23:06:00 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  30 | F1=0.4098 | Best=0.4098
+2026-06-17 23:06:58 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  35 | F1=0.4305 | Best=0.4305
+2026-06-17 23:07:55 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  40 | F1=0.4158 | Best=0.4314
+2026-06-17 23:08:52 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  45 | F1=0.4244 | Best=0.4427
+2026-06-17 23:09:51 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  50 | F1=0.4531 | Best=0.4531
+2026-06-17 23:10:48 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  55 | F1=0.4565 | Best=0.4607
+2026-06-17 23:11:44 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  60 | F1=0.4534 | Best=0.4695
+2026-06-17 23:12:41 | INFO     | 05u_ic32_swing_complement |   Fold 6 Epoch  65 | F1=0.4557 | Best=0.4695
+2026-06-17 23:13:37 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch   1 | F1=0.2964 | Best=0.2964
+2026-06-17 23:14:40 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch   5 | F1=0.3586 | Best=0.3586
+2026-06-17 23:15:59 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  10 | F1=0.4351 | Best=0.4351
+2026-06-17 23:17:16 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  15 | F1=0.4449 | Best=0.4449
+2026-06-17 23:18:34 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  20 | F1=0.4684 | Best=0.4684
+2026-06-17 23:19:52 | INFO     | 05u_ic32_swing_complement |   Fold 7 Epoch  25 | F1=0.4529 | Best=0.4684
+2026-06-17 23:21:31 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch   1 | F1=0.2925 | Best=0.2925
+2026-06-17 23:22:45 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch   5 | F1=0.3600 | Best=0.3616
+2026-06-17 23:24:16 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  10 | F1=0.4030 | Best=0.4030
+2026-06-17 23:25:47 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  15 | F1=0.4484 | Best=0.4484
+2026-06-17 23:27:19 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  20 | F1=0.4453 | Best=0.4513
+2026-06-17 23:28:52 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  25 | F1=0.4388 | Best=0.4607
+2026-06-17 23:30:26 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  30 | F1=0.4676 | Best=0.4676
+2026-06-17 23:32:01 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  35 | F1=0.4838 | Best=0.4838
+2026-06-17 23:33:36 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  40 | F1=0.4572 | Best=0.4838
+2026-06-17 23:35:11 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  45 | F1=0.4782 | Best=0.5003
+2026-06-17 23:36:46 | INFO     | 05u_ic32_swing_complement |   Fold 8 Epoch  50 | F1=0.4784 | Best=0.5003
+2026-06-17 23:38:04 | INFO     | 05u_ic32_swing_complement | Retrain final model (39 epochs)...
+2026-06-17 23:39:11 | INFO     | 05u_ic32_swing_complement |   Final epoch 1/39 (device=privateuseone:0)
+2026-06-17 23:48:44 | INFO     | 05u_ic32_swing_complement |   Final epoch 10/39 (device=privateuseone:0)
+2026-06-17 23:59:24 | INFO     | 05u_ic32_swing_complement |   Final epoch 20/39 (device=privateuseone:0)
+2026-06-18 00:10:25 | INFO     | 05u_ic32_swing_complement |   Final epoch 30/39 (device=privateuseone:0)
+
+======================================================================
+  COMPLETE: ic32_lstm_swing_complement_v2
+  CV F1 macro: 0.4360 +/- 0.0399
+  Complement pool (OOF): n=32,068
+  Fires: n=10,372 (bull=9,720 bear=652)
+  Precision: bull=0.455 bear=0.494 mixed_dir=0.564
+  Model: D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_lstm_swing_complement_v2/lstm_momentum.pt
+  OOF:   D:\Apps-Dev\Riset_pemodelan\models\runs\ic32_lstm_swing_complement_v2/oof_lstm_predictions.parquet
+======================================================================
+
+
+---
+exit_code: -1
+elapsed_ms: 86400000
+ended_at: 2026-06-18T14:42:14.832Z
+---

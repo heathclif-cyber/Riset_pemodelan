@@ -1,0 +1,154 @@
+---
+pid: 15900
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "Set-Location D:\\Apps-Dev\\Riset_pemodelan; python -c \"
+import numpy as np, pandas as pd
+from config import TRAIN_CUTOFF_DATE, LABEL_DIR, ALL_COINS, MODEL_DIR, MODAL_PER_TRADE, LEVERAGE_SIM, FEE_PER_SIDE, SLIPPAGE_PER_SIDE, MAX_HOLDING_BARS, SWING_LABEL_MIN_RR, SWING_LABEL_MIN_TP, SWING_LABEL_MAX_SL, TP_SL_FALLBACK_TP, TP_SL_FALLBACK_SL
+from core.evaluator import simulate_trades_swing
+from core.utils import ensure_utc_index
+
+oof = pd.read_parquet(MODEL_DIR / 'runs/tb_lgbm_genuine_v2/oof_predictions.parquet')
+HMM = {0:(0.55,0.55),1:(0.55,0.55),2:(0.50,0.50),3:(0.45,0.50),-1:(0.45,0.45)}
+
+def apply_hmm(p0,p2,hmm):
+    n=len(p0); tl=np.full(n,0.45); ts=np.full(n,0.45)
+    for s,(a,b) in HMM.items():
+        if s==-1: continue
+        m=hmm==s; tl[m]=a; ts[m]=b
+    y=np.ones(n,dtype=np.int32)
+    lm=p2>=tl; y[lm]=2
+    sm=(p0>=ts)&~lm; y[sm]=0
+    return y
+
+def cs_apply(group, k, min_p2=0.0, min_p0=0.0):
+    g = group.copy()
+    g['abs_y'] = apply_hmm(g.p0.values, g.p2.values, g.hmm.values)
+    g['cs_long'] = False; g['cs_short'] = False
+    if k > 0:
+        long_cands = g[g.p2 >= min_p2].nlargest(min(k, (g.p2 >= min_p2).sum()), 'p2')
+        short_cands = g[g.p0 >= min_p0].nlargest(min(k, (g.p0 >= min_p0).sum()), 'p0')
+        g.loc[long_cands.index, 'cs_long'] = True
+        # short only if not cs_long
+        short_cands = short_cands[~short_cands.index.isin(long_cands.index)]
+        g.loc[short_cands.index, 'cs_short'] = True
+    g['cs_y'] = 1
+    g.loc[g.cs_long, 'cs_y'] = 2
+    g.loc[g.cs_short, 'cs_y'] = 0
+    return g
+
+rows=[]
+for sym in ALL_COINS:
+    p=LABEL_DIR/f'{sym}_features_v3.parquet'
+    if not p.exists(): continue
+    df=ensure_utc_index(pd.read_parquet(p)).sort_index(); df=df[df.index<TRAIN_CUTOFF_DATE]
+    pr=oof[(oof.coin==sym)&(oof.has_oof==True)][['p0','p2']].reindex(df.index)
+    m=pr.p0.notna();
+    if m.sum()<100: continue
+    sub=df[m].copy(); pr=pr[m]
+    for i,ts in enumerate(sub.index):
+        rows.append({
+            'ts':ts,'coin':sym,
+            'p0':float(pr.p0.iloc[i]),'p2':float(pr.p2.iloc[i]),
+            'hmm':int(sub.hmm_regime_enc.iloc[i]) if 'hmm_regime_enc' in sub.columns else -1,
+            'close':float(sub.close.iloc[i]),'high':float(sub.high.iloc[i]),'low':float(sub.low.iloc[i]),
+            'atr':float(sub.atr_14_h1.iloc[i]),
+            'h4sh':float(sub.h4_swing_high.iloc[i]) if 'h4_swing_high' in sub.columns else np.nan,
+            'h4sl':float(sub.h4_swing_low.iloc[i]) if 'h4_swing_low' in sub.columns else np.nan,
+            'ret4':float(np.log(sub.close.iloc[i]/sub.close.shift(4).iloc[i])) if i>=4 else 0.0,
+        })
+base=pd.DataFrame(rows)
+mkt=base.groupby('ts').agg(mkt_ret4=('ret4','mean'), frac_up=('ret4',lambda s:(s>0).mean())).reset_index()
+
+configs = [
+    ('ABS Config B', None, None),
+    ('CS top-3 (no floor)', 3, 0.0),
+    ('CS top-3 + p2>=0.35', 3, 0.35),
+    ('CS top-5 (no floor)', 5, 0.0),
+    ('CS top-5 + p2>=0.38', 5, 0.38),
+]
+
+print('='*72)
+print('DEVIL ADVOCATE: CS rank vs ABS — tambahan sinyal salah?')
+print('='*72)
+
+for name, k, floor in configs:
+    all_trades=[]
+    extra_rows=0
+    for sym, gsym in base.groupby('coin'):
+        gsym=gsym.sort_values('ts').reset_index(drop=True)
+        if name.startswith('ABS'):
+            y=apply_hmm(gsym.p0.values, gsym.p2.values, gsym.hmm.values)
+        else:
+            parts=[]
+            for ts, gg in gsym.groupby('ts'):
+                parts.append(cs_apply(gg, k=k, min_p2=floor, min_p0=floor))
+            gsym=pd.concat(parts)
+            y=gsym.cs_y.values
+        if (y!=1).sum()==0: continue
+        res=simulate_trades_swing(
+            y_pred=y.astype(np.int32),
+            close=gsym.close.values, high=gsym.high.values, low=gsym.low.values, atr=gsym.atr.values,
+            h4_swing_highs=gsym.h4sh.values, h4_swing_lows=gsym.h4sl.values,
+            modal=MODAL_PER_TRADE, leverage=LEVERAGE_SIM[0], fee_per_side=FEE_PER_SIDE, slippage=SLIPPAGE_PER_SIDE,
+            max_hold=MAX_HOLDING_BARS, min_rr=SWING_LABEL_MIN_RR, min_tp_atr=SWING_LABEL_MIN_TP, max_sl_atr=SWING_LABEL_MAX_SL,
+            tp_fallback_atr=TP_SL_FALLBACK_TP, sl_fallback_atr=TP_SL_FALLBACK_SL, guardian_enabled=False,
+        )
+        for t in res.get('trades',[]):
+            bi=t['bar_in']
+            all_trades.append({'ts':gsym.ts.iloc[bi],'coin':sym,'dir':'LONG' if y[bi]==2 else 'SHORT','pnl':t['net_pnl'],'win':t['net_pnl']>0})
+
+    tr=pd.DataFrame(all_trades)
+    tr=tr.merge(mkt,on='ts')
+    n=len(tr); wr=tr.win.mean()*100; ppt=tr.pnl.mean(); tpnl=tr.pnl.sum()
+
+    # cluster wipeout
+    cl=tr.groupby('ts').agg(n=('coin','count'),wins=('win','sum'),pnl=('pnl','sum')).reset_index()
+    multi=cl[cl.n>=2]; wipe=multi[multi.wins==0]
+
+    # bad market LONG: mkt_ret4<0 but took LONG
+    longs=tr[tr.dir=='LONG']
+    bad_long=longs[longs.mkt_ret4<0]
+    good_long=longs[longs.mkt_ret4>=0]
+
+    # low momentum multi wipeout
+    hi=tr.mkt_ret4>=tr.mkt_ret4.quantile(0.90)
+    lo=tr.mkt_ret4<=tr.mkt_ret4.quantile(0.10)
+    cl_hi=tr[hi].groupby('ts').agg(n=('coin','count'),wins=('win','sum'),pnl=('pnl','sum')).reset_index()
+    wipe_hi=cl_hi[(cl_hi.n>=2)&(cl_hi.wins==0)]
+    cl_lo=tr[lo].groupby('ts').agg(n=('coin','count'),wins=('win','sum'),pnl=('pnl','sum')).reset_index()
+    wipe_lo=cl_lo[(cl_lo.n>=2)&(cl_lo.wins==0)]
+
+    print(f'\\n{name}')
+    print(f'  Trades={n:,}  WR={wr:.1f}%  PPT={ppt:+.4f}  TotalPnL={tpnl:,.0f}')
+    print(f'  Multi-signal bars: {len(multi):,} | wipeout bars: {len(wipe):,} ({len(wipe)/max(len(multi),1)*100:.1f}%) | wipeout PnL={wipe.pnl.sum():.0f}')
+    print(f'  LONG saat market down (mkt_ret4<0): n={len(bad_long):,} WR={bad_long.win.mean()*100 if len(bad_long) else 0:.1f}% PPT={bad_long.pnl.mean() if len(bad_long) else 0:+.4f}')
+    print(f'  LONG saat market up   (mkt_ret4>=0): n={len(good_long):,} WR={good_long.win.mean()*100 if len(good_long) else 0:.1f}% PPT={good_long.pnl.mean() if len(good_long) else 0:+.4f}')
+    print(f'  Hi-mom wipeout bars (2+): {len(wipe_hi):,} PnL={wipe_hi.pnl.sum():.0f} | Lo-mom wipeout: {len(wipe_lo):,} PnL={wipe_lo.pnl.sum():.0f}')
+
+# incremental harm: CS-only trades (not in ABS)
+print('\\n' + '='*72)
+print('INCREMENTAL HARM: trades CS top-3 adds beyond ABS')
+print('='*72)
+abs_ts_coin=set()
+cs_ts_coin=set()
+# rebuild sets
+for sym, gsym in base.groupby('coin'):
+    gsym=gsym.sort_values('ts')
+    y_abs=apply_hmm(gsym.p0.values, gsym.p2.values, gsym.hmm.values)
+    parts=[]
+    for ts,gg in gsym.groupby('ts'):
+        parts.append(cs_apply(gg,k=3,min_p2=0.35))
+    g2=pd.concat(parts)
+    y_cs=g2.cs_y.values
+    for i,(ts,ya,yc) in enumerate(zip(gsym.ts,y_abs,y_cs)):
+        if ya!=1: abs_ts_coin.add((ts,sym,ya))
+        if yc!=1: cs_ts_coin.add((ts,sym,yc))
+only_cs = cs_ts_coin - abs_ts_coin
+print(f'CS-only entries (top3 p2>=0.35): {len(only_cs):,}')
+
+# simulate pnl for cs-only entries using fwd4 proxy + full sim would be better
+# quick: load from prior sim - approximate with merged trade table
+\""
+started_at: 2026-06-16T03:44:36.594Z
+running_for_ms: 30924993 
+---

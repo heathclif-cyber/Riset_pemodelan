@@ -1,0 +1,171 @@
+{
+  "run_name": "tb_lstm_lgbm_seq_v1",
+  "model_type": "lstm_momentum_lgbm_seq",
+  "variant": "B_lgbm_history_per_timestep",
+  "lgbm_partner": "tb_lgbm_genuine_v2",
+  "lgbm_input_source": "oof_predictions.parquet has_oof=True",
+  "lgbm_input_cols": [
+    "lgbm_p_short",
+    "lgbm_p_flat",
+    "lgbm_p_long"
+  ],
+  "lgbm_seq_policy": "full_window_oof_required_no_ffill",
+  "role": "momentum on gate bars with LGBM score context",
+  "label_type": "momentum_v4_continuation_option_A",
+  "sample_filter": "is_pump_dump_bar == 1",
+  "n_market_features": 8,
+  "n_features": 11,
+  "features": [
+    "cvd_slope_h4",
+    "ofi_acceleration",
+    "ofi_raw",
+    "ofi_z_score",
+    "buy_volume",
+    "sell_volume",
+    "trend_accel_4h",
+    "cvd",
+    "lgbm_p_short",
+    "lgbm_p_flat",
+    "lgbm_p_long"
+  ],
+  "seq_len": 72,
+  "purge_gap": 36,
+  "n_folds": 8,
+  "hidden": 96,
+  "layers": 2,
+  "dropout": 0.45,
+  "n_samples": 142789,
+  "n_coins": 21,
+  "mean_f1_macro": 0.4109,
+  "std_f1_macro": 0.0102,
+  "baseline_f1_tb_lstm_genuine_v2": 0.3987,
+  "f1_delta_vs_baseline": 0.0122,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.4072,
+      "f1_BEARISH": 0.3603,
+      "f1_NEUTRAL": 0.4998,
+      "f1_BULLISH": 0.3614,
+      "best_epoch": 24
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.3918,
+      "f1_BEARISH": 0.2941,
+      "f1_NEUTRAL": 0.5718,
+      "f1_BULLISH": 0.3096,
+      "best_epoch": 5
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.3996,
+      "f1_BEARISH": 0.3272,
+      "f1_NEUTRAL": 0.5989,
+      "f1_BULLISH": 0.2725,
+      "best_epoch": 15
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.4133,
+      "f1_BEARISH": 0.3389,
+      "f1_NEUTRAL": 0.6332,
+      "f1_BULLISH": 0.2678,
+      "best_epoch": 48
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.4208,
+      "f1_BEARISH": 0.3259,
+      "f1_NEUTRAL": 0.6414,
+      "f1_BULLISH": 0.2953,
+      "best_epoch": 7
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.4212,
+      "f1_BEARISH": 0.3469,
+      "f1_NEUTRAL": 0.6091,
+      "f1_BULLISH": 0.3076,
+      "best_epoch": 34
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.4215,
+      "f1_BEARISH": 0.3927,
+      "f1_NEUTRAL": 0.5283,
+      "f1_BULLISH": 0.3436,
+      "best_epoch": 8
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.4117,
+      "f1_BEARISH": 0.3518,
+      "f1_NEUTRAL": 0.591,
+      "f1_BULLISH": 0.2921,
+      "best_epoch": 25
+    }
+  ],
+  "complement_gate": {
+    "best_lstm_thr": 0.4,
+    "vol_spike_thr": 2.0,
+    "oof_sweep": [
+      {
+        "lstm_thr": 0.4,
+        "n_complement": 17187,
+        "n_candidates": 35572,
+        "precision_all": 0.3284,
+        "precision_directional": 0.5394,
+        "coverage_pct": 48.32,
+        "bull_pct": 0.5687,
+        "bear_pct": 0.4313
+      },
+      {
+        "lstm_thr": 0.45,
+        "n_complement": 9504,
+        "n_candidates": 35572,
+        "precision_all": 0.3361,
+        "precision_directional": 0.5171,
+        "coverage_pct": 26.72,
+        "bull_pct": 0.6858,
+        "bear_pct": 0.3142
+      },
+      {
+        "lstm_thr": 0.5,
+        "n_complement": 4418,
+        "n_candidates": 35572,
+        "precision_all": 0.3339,
+        "precision_directional": 0.49,
+        "coverage_pct": 12.42,
+        "bull_pct": 0.8205,
+        "bear_pct": 0.1795
+      },
+      {
+        "lstm_thr": 0.55,
+        "n_complement": 1712,
+        "n_candidates": 35572,
+        "precision_all": 0.3458,
+        "precision_directional": 0.4797,
+        "coverage_pct": 4.81,
+        "bull_pct": 0.8966,
+        "bear_pct": 0.1034
+      },
+      {
+        "lstm_thr": 0.6,
+        "n_complement": 471,
+        "n_candidates": 35572,
+        "precision_all": 0.3503,
+        "precision_directional": 0.4661,
+        "coverage_pct": 1.32,
+        "bull_pct": 0.9469,
+        "bear_pct": 0.0531
+      }
+    ],
+    "best_precision_directional": 0.5394,
+    "best_n_complement": 17187
+  },
+  "inference_note": "Live: append LGBM p0/p1/p2 history per bar to market seq (same order as features.json). LGBM runs before LSTM.",
+  "created": "2026-06-16T19:07:57.721089",
+  "train_cutoff": "2026-04-01",
+  "methodology": "purged CV OOF LSTM, scaler per fold, LGBM OOF per timestep (no in-sample LGBM, no ffill), gate bars only, holdout not used"
+}

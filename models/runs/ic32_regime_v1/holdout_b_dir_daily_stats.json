@@ -1,0 +1,100 @@
+{
+  "total_trades": 492,
+  "active_days": 72,
+  "calendar_days": 73,
+  "avg_per_active_day": 6.83,
+  "avg_per_calendar_day": 6.74,
+  "median_per_day": 5.0,
+  "min_max_per_day": [
+    1,
+    23
+  ],
+  "best_day": {
+    "date": "2026-05-22",
+    "trades": 9,
+    "wins": 8,
+    "losses": 1,
+    "pnl": 15.44
+  },
+  "worst_day": {
+    "date": "2026-05-15",
+    "trades": 4,
+    "wins": 0,
+    "losses": 4,
+    "pnl": -4.24
+  },
+  "top5_best": [
+    {
+      "date": "2026-05-22",
+      "trades": 9,
+      "wins": 8,
+      "losses": 1,
+      "pnl": 15.440999999999999
+    },
+    {
+      "date": "2026-04-07",
+      "trades": 11,
+      "wins": 11,
+      "losses": 0,
+      "pnl": 11.4871
+    },
+    {
+      "date": "2026-04-02",
+      "trades": 11,
+      "wins": 11,
+      "losses": 0,
+      "pnl": 11.1
+    },
+    {
+      "date": "2026-04-01",
+      "trades": 9,
+      "wins": 9,
+      "losses": 0,
+      "pnl": 10.280100000000001
+    },
+    {
+      "date": "2026-06-11",
+      "trades": 17,
+      "wins": 17,
+      "losses": 0,
+      "pnl": 10.0203
+    }
+  ],
+  "top5_worst": [
+    {
+      "date": "2026-05-15",
+      "trades": 4,
+      "wins": 0,
+      "losses": 4,
+      "pnl": -4.2413
+    },
+    {
+      "date": "2026-04-22",
+      "trades": 4,
+      "wins": 0,
+      "losses": 4,
+      "pnl": -3.9493
+    },
+    {
+      "date": "2026-05-24",
+      "trades": 5,
+      "wins": 1,
+      "losses": 4,
+      "pnl": -2.7624
+    },
+    {
+      "date": "2026-05-11",
+      "trades": 12,
+      "wins": 5,
+      "losses": 7,
+      "pnl": -2.6464
+    },
+    {
+      "date": "2026-06-04",
+      "trades": 3,
+      "wins": 1,
+      "losses": 2,
+      "pnl": -1.7460999999999998
+    }
+  ]
+}

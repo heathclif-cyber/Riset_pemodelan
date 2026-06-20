@@ -1,0 +1,137 @@
+{
+  "created": "2026-06-16T20:19:16.186458",
+  "script": "07_holdout_genuine_v3_lstm_cond.py",
+  "model_version": "tb_genuine_v2_dynsize_lstm_cond",
+  "train_cutoff": "2026-04-01",
+  "holdout_start": "2026-04-01",
+  "holdout_end": "2026-07-01",
+  "n_coins": 21,
+  "fusion_cfg": {
+    "fusion": "lstm",
+    "mode": "conditional_momentum",
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "boost": 0.1,
+    "opposite_pen": 0.14,
+    "near_miss_gap": 0.03,
+    "vol_thr": 2.0,
+    "proportional": true,
+    "enable_boost": true,
+    "enable_penalty": true,
+    "label": "ref_lstm_cond_from_inference_config"
+  },
+  "lstm_signal": {
+    "boost_unlock": 22,
+    "penalty_block": 7
+  },
+  "hmm_state_dist": {
+    "1": 36666
+  },
+  "baseline": {
+    "portfolio": {
+      "n": 1638,
+      "wr": 73.5653,
+      "pnl": 876.5425,
+      "ppt": 0.5351,
+      "pf": 3.0287,
+      "sl_pct": 25.1526,
+      "avg_modal": 13.8653,
+      "ppt_norm": 0.3859
+    },
+    "all_long": {
+      "n": 966,
+      "wr": 74.8447,
+      "pnl": 541.5175,
+      "ppt": 0.5606,
+      "pf": 3.1838,
+      "sl_pct": 24.1201,
+      "avg_modal": 13.9056,
+      "ppt_norm": 0.4031
+    },
+    "all_short": {
+      "n": 672,
+      "wr": 71.7262,
+      "pnl": 335.025,
+      "ppt": 0.4985,
+      "pf": 2.8198,
+      "sl_pct": 26.6369,
+      "avg_modal": 13.8075,
+      "ppt_norm": 0.3611
+    },
+    "pump_short": {
+      "n": 10,
+      "wr": 70.0,
+      "pnl": 8.0234,
+      "ppt": 0.8023,
+      "pf": 5.3109,
+      "sl_pct": 20.0,
+      "avg_modal": 15.424,
+      "ppt_norm": 0.5202
+    },
+    "rally_short": {
+      "n": 164,
+      "wr": 73.1707,
+      "pnl": 100.4392,
+      "ppt": 0.6124,
+      "pf": 3.2739,
+      "sl_pct": 26.8293,
+      "avg_modal": 14.2085,
+      "ppt_norm": 0.431
+    }
+  },
+  "ref_lstm": {
+    "portfolio": {
+      "n": 1648,
+      "wr": 73.4223,
+      "pnl": 875.4225,
+      "ppt": 0.5312,
+      "pf": 3.0024,
+      "sl_pct": 25.3034,
+      "avg_modal": 13.8377,
+      "ppt_norm": 0.3839
+    },
+    "all_long": {
+      "n": 981,
+      "wr": 74.5158,
+      "pnl": 541.1396,
+      "ppt": 0.5516,
+      "pf": 3.1228,
+      "sl_pct": 24.4648,
+      "avg_modal": 13.8571,
+      "ppt_norm": 0.3981
+    },
+    "all_short": {
+      "n": 667,
+      "wr": 71.8141,
+      "pnl": 334.2829,
+      "ppt": 0.5012,
+      "pf": 2.8341,
+      "sl_pct": 26.5367,
+      "avg_modal": 13.8092,
+      "ppt_norm": 0.3629
+    },
+    "pump_short": {
+      "n": 10,
+      "wr": 70.0,
+      "pnl": 7.1534,
+      "ppt": 0.7153,
+      "pf": 4.8434,
+      "sl_pct": 20.0,
+      "avg_modal": 14.935,
+      "ppt_norm": 0.479
+    },
+    "rally_short": {
+      "n": 164,
+      "wr": 73.1707,
+      "pnl": 99.5692,
+      "ppt": 0.6071,
+      "pf": 3.2542,
+      "sl_pct": 26.8293,
+      "avg_modal": 14.1787,
+      "ppt_norm": 0.4282
+    }
+  },
+  "delta_port_ppt_norm": -0.002067,
+  "methodology": "first_look_frozen_config_no_holdout_tuning",
+  "supersedes": "2026-06-15_genuine_v2_holdout.md (34f, no LSTM \u2014 STALE)"
+}

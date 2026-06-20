@@ -1,0 +1,72 @@
+---
+pid: 21452
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "cd D:\\Apps-Dev\\Riset_pemodelan; python pipeline/05j_lstm_conditional_momentum_eval.py"
+started_at: 2026-06-16T09:55:16.560Z
+running_for_ms: 8920004  
+---
+
+==============================================================================
+  05j: Conditional LSTM Momentum Fusion (genuine OOF)
+  LSTM run: tb_lstm_genuine_v2
+  BOOST flat/near-miss | PENALTY wrong-way entry | vol_spike>=2.0
+  Stage A signal configs: 298 | Stage B pipeline top-10
+==============================================================================
+  Coins: 21
+  Baseline signals: dir=38,285 (mom vol bars tracked in sweep)
+
+  STAGE A — TOP 8 SIGNAL
+  Label                                                boost+ pen_blk   n_dir
+  cond_BP_bu38_be50_g3_b10_o14                             72     108  38,249
+  cond_BP_bu38_be50_g5_b10_o14                             72     108  38,249
+  cond_BP_bu38_be50_g8_b10_o14                             72     108  38,249
+  cond_BP_bu38_be55_g3_b10_o14                             72     106  38,251
+  cond_BP_bu38_be55_g5_b10_o14                             72     106  38,251
+  cond_BP_bu38_be55_g8_b10_o14                             72     106  38,251
+  cond_BP_bu38_be57_g3_b10_o14                             72     106  38,251
+  cond_BP_bu38_be57_g5_b10_o14                             72     106  38,251
+
+  STAGE B — PIPELINE (11 configs)
+  [1] baseline_no_lstm
+       port PPT=+0.5041 | new_mom N=0 PPT=+0.0000 (23s)
+  [2] cond_BP_bu38_be50_g3_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [3] cond_BP_bu38_be50_g5_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [4] cond_BP_bu38_be50_g8_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [5] cond_BP_bu38_be55_g3_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [6] cond_BP_bu38_be55_g5_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [7] cond_BP_bu38_be55_g8_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [8] cond_BP_bu38_be57_g3_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [9] cond_BP_bu38_be57_g5_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [10] cond_BP_bu38_be57_g8_b10_o14
+       port PPT=+0.5049 | new_mom N=46 PPT=+0.7398 (23s)
+  [11] cond_BP_bu38_be50_g3_b8_o14
+       port PPT=+0.5047 | new_mom N=32 PPT=+0.6119 (23s)
+
+==============================================================================
+  STAGE B SUMMARY (new momentum trades = LSTM-caused entries)
+==============================================================================
+  BASELINE: port PPT=+0.5041 | mom PPT=+0.6728
+  Label                                    newMomN  newMomPPT   portPPT   dPort PASS
+  cond_BP_bu38_be50_g3_b10_o14                  46    +0.7398   +0.5049 +0.0008    Y
+  cond_BP_bu38_be50_g5_b10_o14                  46    +0.7398   +0.5049 +0.0008    Y
+  cond_BP_bu38_be50_g8_b10_o14                  46    +0.7398   +0.5049 +0.0008    Y
+  cond_BP_bu38_be55_g3_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be55_g5_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be55_g8_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be57_g3_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be57_g5_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be57_g8_b10_o14                  46    +0.7398   +0.5049 +0.0007    Y
+  cond_BP_bu38_be50_g3_b8_o14                   32    +0.6119   +0.5047 +0.0006    Y
+
+  Decision: PROMOTE_CANDIDATE | Elapsed: 4.6 min
+  Saved: D:\Apps-Dev\Riset_pemodelan\models\runs\tb_lgbm_genuine_v2\lstm_conditional_momentum_eval.json
+==============================================================================
+

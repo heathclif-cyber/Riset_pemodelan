@@ -1,0 +1,10 @@
+---
+pid: 34800
+cwd: "D:\Apps-Dev\Riset_pemodelan"
+command: "ssh -o BatchMode=yes root@139.180.157.176 'grep -E \"model_version|sl_trigger_mode|per_state\" /home/swint/swint_tradev2/models/inference_config.json | head -20'"
+started_at: 2026-06-17T17:42:45.530Z
+running_for_ms: 340008   
+---
+bash: line 1: per_state: command not found
+bash: line 1: sl_trigger_mode: command not found
+Connection to 139.180.157.176 closed by remote host.

@@ -1,0 +1,92 @@
+{
+  "run_name": "tb_lstm_meta_short_win_v1",
+  "target": "SHORT trade WIN=1 / LOSS=0",
+  "question": "If LGBM wants SHORT now, will this trade win?",
+  "oof_source": "D:\\Apps-Dev\\Riset_pemodelan\\models\\runs\\tb_lstm_genuine_v2\\oof_trade_dataset.parquet",
+  "lgbm_partner": "tb_lgbm_genuine_v2",
+  "n_samples": 18100,
+  "base_win_rate": 0.6848,
+  "n_features": 14,
+  "feat_cols": [
+    "ofi_raw",
+    "ofi_z_score",
+    "buy_volume",
+    "sell_volume",
+    "cvd",
+    "vol_spike_zscore",
+    "vol_accel_3h",
+    "absorption_z",
+    "ultra_high_vol",
+    "range_expansion_h4",
+    "vol_ratio_20",
+    "no_supply",
+    "no_demand",
+    "effort_vs_result"
+  ],
+  "excluded_lgbm_overlap": [],
+  "seq_len": 32,
+  "hidden": 32,
+  "cv_mean_auc": 0.5728,
+  "cv_std_auc": 0.0172,
+  "marginal_ic": {
+    "ic": 0.0629,
+    "t_stat": 7.94,
+    "n": 15891,
+    "pval": 0.0
+  },
+  "gate_pass": true,
+  "gate_criteria": {
+    "min_marginal_ic": 0.015,
+    "min_t_stat": 2.0
+  },
+  "threshold_sweep": [
+    {
+      "threshold": 0.45,
+      "selected": 10596,
+      "coverage_pct": 66.68,
+      "wr_selected": 0.7068,
+      "wr_base": 0.6861
+    },
+    {
+      "threshold": 0.5,
+      "selected": 8188,
+      "coverage_pct": 51.53,
+      "wr_selected": 0.7192,
+      "wr_base": 0.6861
+    },
+    {
+      "threshold": 0.55,
+      "selected": 6129,
+      "coverage_pct": 38.57,
+      "wr_selected": 0.7355,
+      "wr_base": 0.6861
+    },
+    {
+      "threshold": 0.6,
+      "selected": 4429,
+      "coverage_pct": 27.87,
+      "wr_selected": 0.7503,
+      "wr_base": 0.6861
+    },
+    {
+      "threshold": 0.65,
+      "selected": 2961,
+      "coverage_pct": 18.63,
+      "wr_selected": 0.7602,
+      "wr_base": 0.6861
+    }
+  ],
+  "fold_aucs": [
+    0.5848,
+    0.5654,
+    0.5747,
+    0.5844,
+    0.5629,
+    0.6051,
+    0.5596,
+    0.5459
+  ],
+  "deploy_note": "Do NOT deploy live until gate PASS + OOF trade eval vs conditional_momentum",
+  "created": "2026-06-16T17:24:43.026425",
+  "train_cutoff": "2026-04-01"
+}

@@ -1,0 +1,64 @@
+{
+  "run_name": "tb_guardian_widyawardhana_v2",
+  "entry_model": "tb_lgbm_widyawardhana_v3",
+  "trade_pool": "Triple Barrier (TP=2xATR, SL=1.5xATR, max_hold=36)",
+  "n_features_total": 25,
+  "n_features_sel": 23,
+  "n_dropped": 2,
+  "dropped_features": [
+    "wyckoff_phase",
+    "direction"
+  ],
+  "n_samples": 198261,
+  "label_dist": {
+    "HOLD": 153675,
+    "PARTIAL": 8304,
+    "FULL_EXIT": 36282
+  },
+  "cv_results": [
+    {
+      "fold": 1,
+      "logloss": 0.252,
+      "f1": 0.8798
+    },
+    {
+      "fold": 2,
+      "logloss": 0.2362,
+      "f1": 0.8725
+    },
+    {
+      "fold": 3,
+      "logloss": 0.2372,
+      "f1": 0.8461
+    },
+    {
+      "fold": 4,
+      "logloss": 0.2837,
+      "f1": 0.7776
+    },
+    {
+      "fold": 5,
+      "logloss": 0.2626,
+      "f1": 0.8125
+    },
+    {
+      "fold": 6,
+      "logloss": 0.2346,
+      "f1": 0.8453
+    },
+    {
+      "fold": 7,
+      "logloss": 0.2239,
+      "f1": 0.8638
+    },
+    {
+      "fold": 8,
+      "logloss": 0.2115,
+      "f1": 0.8508
+    }
+  ],
+  "best_cv_logloss": 0.2115,
+  "min_imp_frac": 0.01,
+  "train_period": "2020-01-01 \u2013 2026-04-01 00:00:00+00:00",
+  "trained_at": "2026-06-10 19:16:42"
+}

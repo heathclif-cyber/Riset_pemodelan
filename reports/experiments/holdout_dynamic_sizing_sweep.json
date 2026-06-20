@@ -1,0 +1,220 @@
+{
+  "model": "tb_widyawardhana_v2_continuation",
+  "period": "Apr-Jun 2026",
+  "total_trades": 918,
+  "win_rate": 70.3,
+  "fixed_pnl": 284.06,
+  "base_modal": 10.0,
+  "scenarios": {
+    "A_baseline": {
+      "config": "HIGH=0.70 LOW=0.60 (original)",
+      "total_pnl": 281.21,
+      "pnl_per_trade": 0.3063,
+      "delta_usd": -2.85,
+      "delta_pct": -1.0,
+      "avg_factor": 0.85,
+      "avg_modal": 8.55,
+      "best_month": 156.58,
+      "worst_month": 20.87,
+      "pct_boost": 27.1,
+      "pct_reduced": 72.9,
+      "factor_dist": {
+        "0.5": 143,
+        "0.6": 126,
+        "0.7": 129,
+        "0.9": 271,
+        "1.1": 141,
+        "1.2": 41,
+        "1.4": 51,
+        "1.6": 8,
+        "1.7": 1,
+        "1.9": 7
+      },
+      "monthly_pnls": [
+        156.58,
+        103.76,
+        20.87
+      ]
+    },
+    "B_shift1": {
+      "config": "HIGH=0.62 LOW=0.54",
+      "total_pnl": 379.67,
+      "pnl_per_trade": 0.4136,
+      "delta_usd": 95.61,
+      "delta_pct": 33.7,
+      "avg_factor": 1.18,
+      "avg_modal": 11.76,
+      "best_month": 215.09,
+      "worst_month": 27.47,
+      "pct_boost": 65.0,
+      "pct_reduced": 35.0,
+      "factor_dist": {
+        "0.5": 14,
+        "0.6": 24,
+        "0.7": 67,
+        "0.9": 216,
+        "1.1": 161,
+        "1.2": 71,
+        "1.3": 12,
+        "1.4": 188,
+        "1.6": 105,
+        "1.7": 33,
+        "1.9": 27
+      },
+      "monthly_pnls": [
+        215.09,
+        137.1,
+        27.47
+      ]
+    },
+    "C_shift2": {
+      "config": "HIGH=0.60 LOW=0.52",
+      "total_pnl": 404.26,
+      "pnl_per_trade": 0.4404,
+      "delta_usd": 120.2,
+      "delta_pct": 42.3,
+      "avg_factor": 1.27,
+      "avg_modal": 12.7,
+      "best_month": 224.23,
+      "worst_month": 31.73,
+      "pct_boost": 77.0,
+      "pct_reduced": 23.0,
+      "factor_dist": {
+        "0.5": 6,
+        "0.6": 17,
+        "0.7": 39,
+        "0.9": 149,
+        "1.1": 128,
+        "1.2": 90,
+        "1.3": 30,
+        "1.4": 237,
+        "1.6": 141,
+        "1.7": 40,
+        "1.9": 41
+      },
+      "monthly_pnls": [
+        224.23,
+        148.3,
+        31.73
+      ]
+    },
+    "D_shift3": {
+      "config": "HIGH=0.58 LOW=0.51",
+      "total_pnl": 416.15,
+      "pnl_per_trade": 0.4533,
+      "delta_usd": 132.09,
+      "delta_pct": 46.5,
+      "avg_factor": 1.33,
+      "avg_modal": 13.33,
+      "best_month": 228.36,
+      "worst_month": 34.08,
+      "pct_boost": 84.4,
+      "pct_reduced": 15.6,
+      "factor_dist": {
+        "0.5": 3,
+        "0.6": 14,
+        "0.7": 16,
+        "0.9": 110,
+        "1.1": 103,
+        "1.2": 102,
+        "1.3": 35,
+        "1.4": 268,
+        "1.6": 166,
+        "1.7": 51,
+        "1.9": 50
+      },
+      "monthly_pnls": [
+        228.36,
+        153.71,
+        34.08
+      ]
+    },
+    "E_narrow": {
+      "config": "HIGH=0.60 LOW=0.54 spread=0.06",
+      "total_pnl": 395.5,
+      "pnl_per_trade": 0.4308,
+      "delta_usd": 111.44,
+      "delta_pct": 39.2,
+      "avg_factor": 1.24,
+      "avg_modal": 12.36,
+      "best_month": 220.98,
+      "worst_month": 28.28,
+      "pct_boost": 70.7,
+      "pct_reduced": 29.3,
+      "factor_dist": {
+        "0.5": 14,
+        "0.6": 17,
+        "0.7": 67,
+        "0.9": 171,
+        "1.1": 128,
+        "1.2": 62,
+        "1.3": 25,
+        "1.4": 211,
+        "1.6": 141,
+        "1.7": 40,
+        "1.9": 42
+      },
+      "monthly_pnls": [
+        220.98,
+        146.24,
+        28.28
+      ]
+    },
+    "F_aggressive": {
+      "config": "HIGH=0.58 LOW=0.51 MAX=2.5x",
+      "total_pnl": 416.15,
+      "pnl_per_trade": 0.4533,
+      "delta_usd": 132.09,
+      "delta_pct": 46.5,
+      "avg_factor": 1.33,
+      "avg_modal": 13.33,
+      "best_month": 228.36,
+      "worst_month": 34.08,
+      "pct_boost": 84.4,
+      "pct_reduced": 15.6,
+      "factor_dist": {
+        "0.5": 3,
+        "0.6": 14,
+        "0.7": 16,
+        "0.9": 110,
+        "1.1": 103,
+        "1.2": 102,
+        "1.3": 35,
+        "1.4": 268,
+        "1.6": 166,
+        "1.7": 51,
+        "1.9": 50
+      },
+      "monthly_pnls": [
+        228.36,
+        153.71,
+        34.08
+      ]
+    },
+    "G_no_streak": {
+      "config": "HIGH=0.60 LOW=0.52 streak=OFF",
+      "total_pnl": 364.24,
+      "pnl_per_trade": 0.3968,
+      "delta_usd": 80.18,
+      "delta_pct": 28.2,
+      "avg_factor": 1.21,
+      "avg_modal": 12.09,
+      "best_month": 202.32,
+      "worst_month": 28.8,
+      "pct_boost": 67.3,
+      "pct_reduced": 32.7,
+      "factor_dist": {
+        "0.7": 74,
+        "0.9": 226,
+        "1.2": 193,
+        "1.4": 330,
+        "1.7": 95
+      },
+      "monthly_pnls": [
+        202.32,
+        133.11,
+        28.8
+      ]
+    }
+  }
+}
