@@ -139,6 +139,36 @@ Lihat contoh kode di `METHODOLOGY.md § Aturan 3`.
 - `shift(-N)` pada fitur = leakage — dilarang tanpa lag kompensasi
 - Fitur IC > 0.10 tanpa justifikasi domain → investigasi leakage dulu
 
+### ATURAN 6 — Setiap fitur non-H1 (multi-timeframe) WAJIB verifikasi kausalitas sebelum digunakan.
+
+**Latar belakang insiden:** `resample("4h").sum()` di pandas melabeli agregat di **awal window** (bar 00:00 berisi nilai dari bar 01:00, 02:00, 03:00 = masa depan). Fitur `cvd_slope_h4`, `ofi_h4_delta`, `cvd_div_h4` bocor 3 dari 4 bar H1 → WR OOF terlihat 64.7% padahal jujurnya 50.8%. Ini cost ratusan token riset dan beberapa minggu kepercayaan pada model yang salah.
+
+**Aturan wajib untuk semua fitur timeframe > H1:**
+
+1. **Setiap `resample()` HARUS diikuti index shift ke akhir window sebelum diff/ffill:**
+   ```python
+   # BENAR — label di akhir window (kausal = live)
+   agg = series.resample("4h").sum()
+   agg.index = agg.index + pd.Timedelta("4h")   # WAJIB sebelum diff/ffill
+   feat = agg.diff().reindex(...).ffill()
+
+   # SALAH — label di awal window (lookahead 3/4 bar)
+   agg = series.resample("4h").sum()
+   feat = agg.diff().reindex(...).ffill()        # BUG
+   ```
+
+2. **`ffill()` hanya valid SETELAH shift.** ffill tanpa shift menyebarkan nilai masa depan ke H1 bars yang seharusnya belum tahu.
+
+3. **Checklist verifikasi wajib sebelum fitur non-H1 masuk training:**
+   - [ ] Pilih timestamp H1 `T` yang bukan awal window (misal T = 01:00, 02:00, 03:00 dalam 4h window).
+   - [ ] Print nilai fitur di `T`. Nilai harus identik dengan nilai di bar awal window sebelumnya (bar 00:00 dari window sebelumnya yang sudah komplet), BUKAN dari window yang berakhir di 04:00.
+   - [ ] Bandingkan nilai fitur di training vs nilai yang dihasilkan live inference pada kline identik. Harus sama.
+   - [ ] IC > 0.05 pada fitur baru non-H1 → **wajib jalankan cek ini dulu** sebelum lanjut training.
+
+4. **Timeframe yang terdampak aturan ini:** H2, H4, H6, H8, H12, D1, dan semua window > H1. Fitur H1 rolling standar (rolling(N).mean() pada H1 series) tidak perlu shift karena pandas rolling sudah backward-looking secara default.
+
+5. **Sebelum menambah fitur non-H1 baru:** tulis di EXPERIMENTS.md bagian "Yang Diubah" — "fitur X dari resample Y, verifikasi kausal: [hasil]". Tanpa bukti verifikasi, fitur tidak boleh masuk training.
+
 ---
 
 ## Larangan (Do NOT)
@@ -148,7 +178,7 @@ Lihat contoh kode di `METHODOLOGY.md § Aturan 3`.
 - **Jangan re-implement TP/SL regressor/classifier** — file sudah dihapus; diskusi dulu sebelum membuat ulang
 - **Jangan pakai fixed model untuk extended backtest** — IN-SAMPLE LEAKAGE. Harus purged CV OOF retrain per fold.
 - **Jangan modifikasi file di `swint_tradev2` secara manual** — deployment via `tools/deploy_production.py`
-- **Metrik lama TIDAK VALID** — WR 88.93%, PnL $169k dicabut karena data leakage (2026-06-04). Detail: `EXPERIMENTS.md § 2026-06-04`
+- **Metrik lama TIDAK VALID** — WR 65%+ ic32_regime_v2 dicabut karena H4 lookahead bias (2026-06-22). Baseline valid: lihat `reports/widyawardhana_model.md`
 - **Jangan tune parameter berdasarkan holdout** — holdout bukan development set. Lihat Aturan 1.
 
 ## Penamaan Model — Standar Baku
@@ -230,7 +260,7 @@ Web App jalan di **VPS** (`139.180.157.176`). File lokal **BASI** — jangan dip
 | `core/evaluator.py` | `simulate_trades_swing()` + Guardian per-bar check + partial exit |
 | `core/models.py` | `TradingLSTM`, `ManualLSTMCell` |
 | `core/features.py` | Feature engineering + swing labeling v3 |
-| `pipeline/07_holdout_backtest.py` | Genuine OOS holdout backtest |
+| `pipeline/07_holdout_ic32_regime_v2.py` | Genuine OOS holdout backtest |
 | `tools/deploy_production.py` | **Deploy seamless** Riset → swint lokal → git + scp → VPS restart |
 | `tools/deploy_model.py` | Salin ke swint lokal saja (merge inference_config) |
 | `tools/live_db_bridge.py` | Tarik DB live (signal/trade) dari VPS via scp → DataFrame + CSV |
@@ -238,8 +268,8 @@ Web App jalan di **VPS** (`139.180.157.176`). File lokal **BASI** — jangan dip
 
 ## Pipeline Sequence
 
-Pipeline dirapikan 2026-06-20. Script lama diarsipkan ke `pipeline/archive/` (180+ file).
-Core pipeline: 13 script. LSTM di-restore untuk full retrain ic32_regime_v2+.
+Pipeline dirapikan 2026-06-22. Script lama diarsipkan ke `archive/2026-06-22_cleanup/pipeline/`.
+Core pipeline: 10 script.
 
 ```
 01_fetch.py                     → Fetch data training (2020 → TRAIN_CUTOFF_DATE)
@@ -273,4 +303,4 @@ python pipeline/07_holdout_ic32_regime_v2.py  # SEKALI, freeze dulu
 
 ## Eksperimen Baru — Wajib Benchmark
 
-Setiap train model baru wajib benchmark terhadap model terbaik yang ada (`ic32_regime_v1`) atau model yang ditentukan user. Gunakan data holdout yang sama. Tampilkan scorecard + leak audit + identifikasi kejanggalan. Simpan hasil di `models/runs/{run_name}/`.
+Setiap train model baru wajib benchmark terhadap `ic32_regime_v2_parity` (baseline aktif). Gunakan data holdout yang sama. Tampilkan scorecard + leak audit + verifikasi ATURAN 6 (non-H1 causality). Simpan hasil di `models/runs/{run_name}/`.
