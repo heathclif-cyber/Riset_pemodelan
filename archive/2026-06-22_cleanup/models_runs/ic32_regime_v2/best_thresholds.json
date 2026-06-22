@@ -1,0 +1,172 @@
+{
+  "thr_long": 0.75,
+  "thr_short": 0.7,
+  "oof_pnl": 3632.0,
+  "oof_wr": 0.6473,
+  "oof_trades": 12861,
+  "pnl_per_trade": 0.2824,
+  "sweep_method": "OOF_simulation",
+  "sweep_all": [
+    {
+      "thr_long": 0.75,
+      "thr_short": 0.7,
+      "trades": 12861,
+      "wr": 0.6473,
+      "pnl": 3632.0,
+      "pnl_per_trade": 0.2824
+    },
+    {
+      "thr_long": 0.7,
+      "thr_short": 0.7,
+      "trades": 15401,
+      "wr": 0.633,
+      "pnl": 4168.72,
+      "pnl_per_trade": 0.2707
+    },
+    {
+      "thr_long": 0.65,
+      "thr_short": 0.7,
+      "trades": 18711,
+      "wr": 0.6124,
+      "pnl": 4674.54,
+      "pnl_per_trade": 0.2498
+    },
+    {
+      "thr_long": 0.75,
+      "thr_short": 0.65,
+      "trades": 17138,
+      "wr": 0.62,
+      "pnl": 4205.29,
+      "pnl_per_trade": 0.2454
+    },
+    {
+      "thr_long": 0.7,
+      "thr_short": 0.65,
+      "trades": 19322,
+      "wr": 0.6118,
+      "pnl": 4661.45,
+      "pnl_per_trade": 0.2413
+    },
+    {
+      "thr_long": 0.65,
+      "thr_short": 0.65,
+      "trades": 22114,
+      "wr": 0.5982,
+      "pnl": 5076.72,
+      "pnl_per_trade": 0.2296
+    },
+    {
+      "thr_long": 0.6,
+      "thr_short": 0.7,
+      "trades": 22445,
+      "wr": 0.5903,
+      "pnl": 5045.2,
+      "pnl_per_trade": 0.2248
+    },
+    {
+      "thr_long": 0.7,
+      "thr_short": 0.6,
+      "trades": 23540,
+      "wr": 0.5924,
+      "pnl": 5103.1,
+      "pnl_per_trade": 0.2168
+    },
+    {
+      "thr_long": 0.75,
+      "thr_short": 0.6,
+      "trades": 21739,
+      "wr": 0.5952,
+      "pnl": 4665.54,
+      "pnl_per_trade": 0.2146
+    },
+    {
+      "thr_long": 0.6,
+      "thr_short": 0.65,
+      "trades": 25293,
+      "wr": 0.5833,
+      "pnl": 5422.2,
+      "pnl_per_trade": 0.2144
+    },
+    {
+      "thr_long": 0.65,
+      "thr_short": 0.6,
+      "trades": 25785,
+      "wr": 0.5846,
+      "pnl": 5464.91,
+      "pnl_per_trade": 0.2119
+    },
+    {
+      "thr_long": 0.6,
+      "thr_short": 0.6,
+      "trades": 28288,
+      "wr": 0.5743,
+      "pnl": 5740.12,
+      "pnl_per_trade": 0.2029
+    },
+    {
+      "thr_long": 0.55,
+      "thr_short": 0.7,
+      "trades": 26057,
+      "wr": 0.5674,
+      "pnl": 5147.24,
+      "pnl_per_trade": 0.1975
+    },
+    {
+      "thr_long": 0.55,
+      "thr_short": 0.65,
+      "trades": 28317,
+      "wr": 0.5642,
+      "pnl": 5466.32,
+      "pnl_per_trade": 0.193
+    },
+    {
+      "thr_long": 0.65,
+      "thr_short": 0.55,
+      "trades": 29286,
+      "wr": 0.5679,
+      "pnl": 5611.37,
+      "pnl_per_trade": 0.1916
+    },
+    {
+      "thr_long": 0.7,
+      "thr_short": 0.55,
+      "trades": 27559,
+      "wr": 0.5715,
+      "pnl": 5269.09,
+      "pnl_per_trade": 0.1912
+    },
+    {
+      "thr_long": 0.6,
+      "thr_short": 0.55,
+      "trades": 31192,
+      "wr": 0.5614,
+      "pnl": 5856.5,
+      "pnl_per_trade": 0.1878
+    },
+    {
+      "thr_long": 0.55,
+      "thr_short": 0.6,
+      "trades": 30688,
+      "wr": 0.5597,
+      "pnl": 5758.62,
+      "pnl_per_trade": 0.1877
+    },
+    {
+      "thr_long": 0.75,
+      "thr_short": 0.55,
+      "trades": 26143,
+      "wr": 0.5715,
+      "pnl": 4882.79,
+      "pnl_per_trade": 0.1868
+    },
+    {
+      "thr_long": 0.55,
+      "thr_short": 0.55,
+      "trades": 33022,
+      "wr": 0.5512,
+      "pnl": 5909.29,
+      "pnl_per_trade": 0.179
+    }
+  ],
+  "created": "2026-06-21T23:52:37.299602"
+}

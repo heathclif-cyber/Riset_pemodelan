@@ -151,9 +151,38 @@ Lihat contoh kode di `METHODOLOGY.md § Aturan 3`.
 - **Metrik lama TIDAK VALID** — WR 88.93%, PnL $169k dicabut karena data leakage (2026-06-04). Detail: `EXPERIMENTS.md § 2026-06-04`
 - **Jangan tune parameter berdasarkan holdout** — holdout bukan development set. Lihat Aturan 1.
 
+## Penamaan Model — Standar Baku
+
+Format: `{universe}.{pipeline}.{component}.{specs}`
+
+```
+ic32.rv2.lgbm.36f.sw4.r8       # LGBM: 36 feat, swing H4 label, 8-fold rolling
+ic32.rv2.lstm.11f.s72.c55      # LSTM v2: 11 feat, seq=72, cand_thr≥0.55
+ic32.rv2.lstm.14f.s36.c55      # LSTM v3: 14 feat, seq=36, cand_thr≥0.55
+ic32.rv2.guard.oof              # Guardian: dilatih di OOF trades
+```
+
+**Field guide:**
+
+| Field | Format | Arti |
+|---|---|---|
+| `ic32` | universe | 21-coin H1 config |
+| `rv{N}` | pipeline | regime_v{N} — HMM regime features |
+| `lgbm` / `lstm` / `guard` | component | komponen model |
+| `{N}f` | fitur | jumlah fitur input |
+| `sw4` / `sw1` | label | swing H4 atau H1 label |
+| `tb` | label | triple barrier (jika dipakai) |
+| `r{K}` | fold (lgbm) | K-fold rolling walk-forward |
+| `s{S}` | seq len (lstm) | sequence length |
+| `c{T}` | cand thr (lstm) | LGBM confident bar thr × 100 (c55 = 0.55) |
+| `oof` | domain (guard) | dilatih hanya pada OOF trades |
+
+Run directory: `models/runs/{nama_model_tanpa_titik}/` — ganti titik dengan underscore.
+Contoh: `ic32.rv2.lstm.14f.s36.c55` → `models/runs/ic32_rv2_lstm_14f_s36_c55/`
+
 ## Retraining Protocol
 
-Sebelum training model baru, tanyakan nama versi secara eksplisit (contoh: `cascade_v4.4`). Setelah ditentukan, catat di sini: tanggal training, fitur yang dipakai, periode holdout OOS, dan path model (`models/runs/{run_id}/`).
+Sebelum training model baru, tanyakan nama versi secara eksplisit menggunakan format baku di atas. Setelah ditentukan, catat di sini: tanggal training, fitur yang dipakai, periode holdout OOS, dan path model (`models/runs/{run_id}/`).
 
 ## Cross-Repo: Production (swint_tradev2)
 
@@ -209,7 +238,8 @@ Web App jalan di **VPS** (`139.180.157.176`). File lokal **BASI** — jangan dip
 
 ## Pipeline Sequence
 
-Pipeline dirapikan 2026-06-15. Script lama diarsipkan ke `pipeline/archive/`.
+Pipeline dirapikan 2026-06-20. Script lama diarsipkan ke `pipeline/archive/` (180+ file).
+Core pipeline: 13 script. LSTM di-restore untuk full retrain ic32_regime_v2+.
 
 ```
 01_fetch.py                     → Fetch data training (2020 → TRAIN_CUTOFF_DATE)
@@ -219,20 +249,22 @@ Pipeline dirapikan 2026-06-15. Script lama diarsipkan ke `pipeline/archive/`.
 03e_regime_hmm.py               → HMM regime labels (OOF walk-forward)
 03e_regime_hmm_holdout.py       → HMM regime labels untuk holdout period
 
-04_train_lgbm_genuine_v1.py     → [GENUINE] LGBM CV + OOF predictions + threshold sweep
-06_train_guardian_genuine_v1.py → [GENUINE] Guardian training pada OOF trades
-07_holdout_genuine_v1.py        → [SEKALI] Holdout eval — set HOLDOUT_EVALUATED=True setelah run
+04_train_lgbm_ic32_regime_v2.py     → [GENUINE] LGBM rolling walk-forward CV + OOF + threshold sweep
+05_train_lstm_ic32_regime_v2.py     → [GENUINE] LSTM momentum filter training
+06_train_guardian_ic32_regime_v2.py → [GENUINE] Guardian training pada OOF trades
+07_holdout_ic32_regime_v2.py        → [SEKALI] Holdout eval — set HOLDOUT_EVALUATED=True setelah run
 ```
 
 Urutan eksekusi:
-```bash
+```powershell
 python pipeline/01_fetch.py --all
 python pipeline/02_clean.py
 python pipeline/03_engineer.py
 python pipeline/03e_regime_hmm.py
-python pipeline/04_train_lgbm_genuine_v1.py
-python pipeline/06_train_guardian_genuine_v1.py
-python pipeline/07_holdout_genuine_v1.py  # SEKALI, freeze dulu
+python pipeline/04_train_lgbm_ic32_regime_v2.py
+python pipeline/05_train_lstm_ic32_regime_v2.py
+python pipeline/06_train_guardian_ic32_regime_v2.py
+python pipeline/07_holdout_ic32_regime_v2.py  # SEKALI, freeze dulu
 ```
 
 ## Slash Commands

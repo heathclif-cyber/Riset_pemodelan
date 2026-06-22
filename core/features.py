@@ -109,39 +109,45 @@ def calc_ema(close: pd.Series, span: int) -> pd.Series:
 # VOLUME FLOW
 # ═══════════════════════════════════════════════════════════════════════════════
 
-def calc_cvd(df: pd.DataFrame) -> pd.Series:
-    """Cumulative Volume Delta — proxy tekanan beli/jual taker."""
+def _taker_buy_sell_delta(df: pd.DataFrame) -> pd.Series:
+    """Delta taker (buy - sell) per bar — sumber tunggal untuk cvd & volume_delta.
+
+    PARITY LIVE: Binance kline hanya menyediakan taker_buy_volume (bukan sell).
+    Live (swint data_service) menurunkan taker_sell = volume - taker_buy.
+    Riset HARUS pakai definisi yang sama, jika tidak cvd training (proxy lama
+    sign×volume) menyimpang dari cvd live (buy-sell asli) → model salah umpan.
+    Lihat audit 2026-06-22 [[project_live_vs_sim_gap]].
+    """
     buy_col  = _col(df, "taker_buy_volume", "1h_taker_buy_volume",
                     "taker_ratio_takerBuyVol")
     sell_col = _col(df, "taker_sell_volume", "1h_taker_sell_volume",
                     "taker_ratio_takerSellVol")
+    vol_col  = _col(df, "volume", "1h_volume")
 
     if buy_col and sell_col:
-        delta = df[buy_col].fillna(0) - df[sell_col].fillna(0)
-    else:
-        # Fallback: estimasi dari arah harga × volume
-        close  = df.get("close", df.get("1h_close", pd.Series(np.nan, index=df.index)))
-        volume = df.get("volume", df.get("1h_volume", pd.Series(np.nan, index=df.index)))
-        sign   = np.sign(close.diff().fillna(0))
-        delta  = sign * volume.fillna(0)
+        return (df[buy_col].fillna(0) - df[sell_col].fillna(0))
 
-    return delta.cumsum()
+    if buy_col and vol_col:
+        # Turunkan taker_sell = volume - taker_buy (identik dengan live).
+        buy  = df[buy_col].fillna(0)
+        sell = (df[vol_col].fillna(0) - buy).clip(lower=0)
+        return buy - sell
 
-
-def calc_volume_delta(df: pd.DataFrame) -> pd.Series:
-    """Volume Delta per bar (bukan kumulatif)."""
-    buy_col  = _col(df, "taker_buy_volume", "1h_taker_buy_volume",
-                    "taker_ratio_takerBuyVol")
-    sell_col = _col(df, "taker_sell_volume", "1h_taker_sell_volume",
-                    "taker_ratio_takerSellVol")
-
-    if buy_col and sell_col:
-        return (df[buy_col] - df[sell_col]).fillna(0)
-
+    # Fallback terakhir (tidak ada data taker): estimasi arah harga × volume.
     close  = df.get("close", df.get("1h_close", pd.Series(np.nan, index=df.index)))
     volume = df.get("volume", df.get("1h_volume", pd.Series(np.nan, index=df.index)))
     sign   = np.sign(close.diff().fillna(0))
     return sign * volume.fillna(0)
+
+
+def calc_cvd(df: pd.DataFrame) -> pd.Series:
+    """Cumulative Volume Delta — tekanan beli/jual taker (buy - sell, kumulatif)."""
+    return _taker_buy_sell_delta(df).cumsum()
+
+
+def calc_volume_delta(df: pd.DataFrame) -> pd.Series:
+    """Volume Delta per bar (taker buy - sell, bukan kumulatif)."""
+    return _taker_buy_sell_delta(df)
 
 
 def compute_synthetic_oi(
@@ -538,7 +544,18 @@ def calc_cvd_divergence(
         )
     )
     cvd_div_h4_raw  = pd.Series(div_raw, index=h4_close_4h.index)
-    cvd_slope_raw   = h4_cvd_4h.diff(window) / (h4_cvd_4h.abs().rolling(window).mean() + 1e-10)
+    # Z-score normalization: delta dibagi rolling std-nya (bukan abs CVD level).
+    # diff() dari cumsum bersifat stasioner → rolling std stabil di live maupun training.
+    _delta          = h4_cvd_4h.diff(window)
+    _delta_std      = _delta.rolling(50, min_periods=20).std()
+    cvd_slope_raw   = (_delta / (_delta_std + 1e-10)).fillna(0.0).clip(-3.0, 3.0)
+
+    # ANTI-LOOKAHEAD: grid 4h dilabeli di AWAL window (resample default). Nilai window
+    # [L, L+4h) — yang memakai .last()/diff sampai akhir window — baru komplet di L+4h.
+    # Geser label ke akhir window agar bar H1 hanya melihat H4 yang SUDAH selesai
+    # (kausal, = live). Lihat ATURAN 5.
+    cvd_div_h4_raw.index  = cvd_div_h4_raw.index  + pd.Timedelta("4h")
+    cvd_slope_raw.index   = cvd_slope_raw.index   + pd.Timedelta("4h")
 
     # Align ke base index (H1) — ffill saja, tidak ada interpolasi
     cvd_div_h4 = cvd_div_h4_raw.reindex(
@@ -682,6 +699,10 @@ def calc_ofi_features(
     ofi_z_score = ((ofi_raw - ofi_mean) / ofi_std).fillna(0)
 
     ofi_h4_sum   = ofi_raw.resample(window_h4).sum()
+    # ANTI-LOOKAHEAD: resample melabeli agregat di AWAL window. Nilai window [L, L+4h)
+    # baru komplet di L+4h. Geser label ke akhir window agar bar H1 hanya melihat
+    # window H4 yang SUDAH selesai (kausal, = live). Lihat ATURAN 5.
+    ofi_h4_sum.index = ofi_h4_sum.index + pd.Timedelta(window_h4)
     ofi_h4_delta = ofi_h4_sum.diff()
     ofi_h4_delta = ofi_h4_delta.reindex(
         ofi_h4_delta.index.union(ofi_raw.index)
@@ -738,8 +759,9 @@ def calc_cvd_hidden_divergence(
     cvd_momentum    : rate of change CVD dinormalisasi
     """
     price_momentum = close.pct_change(window).fillna(0)
-    cvd_ma         = cvd.abs().rolling(window, min_periods=3).mean().replace(0, np.nan)
-    cvd_momentum   = (cvd.diff(window) / cvd_ma).fillna(0)
+    _cdelta        = cvd.diff(window)
+    _cdelta_std    = _cdelta.rolling(200, min_periods=20).std()
+    cvd_momentum   = (_cdelta / (_cdelta_std + 1e-10)).fillna(0).clip(-3.0, 3.0)
 
     hidden_bull = ((price_momentum < -price_threshold) &
                    (cvd_momentum > cvd_threshold)).astype(float)
@@ -1431,8 +1453,14 @@ def engineer_features(
 
     buy_col  = _col(df, "taker_buy_volume",  "1h_taker_buy_volume")
     sell_col = _col(df, "taker_sell_volume", "1h_taker_sell_volume")
-    feat["buy_volume"]  = df[buy_col]  if buy_col  else (v * 0.5)
-    feat["sell_volume"] = df[sell_col] if sell_col else (v * 0.5)
+    feat["buy_volume"]  = df[buy_col] if buy_col else (v * 0.5)
+    if sell_col:
+        feat["sell_volume"] = df[sell_col]
+    elif buy_col:
+        # Turunkan taker_sell = volume - taker_buy (parity live), bukan v*0.5.
+        feat["sell_volume"] = (v - df[buy_col].fillna(0)).clip(lower=0)
+    else:
+        feat["sell_volume"] = v * 0.5
 
     # ── 6. H4 CVD (untuk smart money divergence) ──────────────────────────────
     cvd_series  = feat["cvd"]
@@ -1788,6 +1816,18 @@ def engineer_features(
     cvd_z = (cvd_series - cvd_sma24) / cvd_std24
     
     feat["whale_retail_divergence"] = (cvd_z - ls_z).fillna(0.0).clip(-5.0, 5.0)
+
+    # ── CVD stationarization (parity live/training) ───────────────────────────
+    # `cvd` mentah = cumsum delta sejak awal histori → level path-dependent:
+    # cumsum live (~3000 bar) beda konstanta C dari cumsum training (~50k bar).
+    # Rolling de-mean z-score menghapus C (offset konstan ter-cancel) → nilai
+    # IDENTIK live vs training utk kline sama. Semua turunan cvd di atas
+    # (slope/momentum/divergence/whale + synthetic OI) sudah memakai cumsum mentah,
+    # jadi overwrite kolom ekspor `cvd` di sini tidak mengubahnya.
+    _cvd_raw  = feat["cvd"]
+    _cvd_mean = _cvd_raw.rolling(168, min_periods=20).mean()
+    _cvd_std  = _cvd_raw.rolling(168, min_periods=20).std().replace(0, np.nan)
+    feat["cvd"] = ((_cvd_raw - _cvd_mean) / (_cvd_std + 1e-10)).fillna(0.0).clip(-5.0, 5.0)
 
     # Feature 4: ATR Z-Score (Volatility Spike Detector)
     # Seberapa jauh ATR H1 saat ini dari rata-rata 20-hari (480 bar)?

@@ -267,7 +267,13 @@
       "Bash(grep -rn -i \"LIVE_MODAL_PER_TRADE\\\\|LIVE_LEVERAGE\\\\|TRADING_MODE\\\\|PAPER_MODAL\" docker-compose*.yml Dockerfile* *.sh *.ps1 *.bat start* run*)",
       "Bash(ls -la .env*)",
       "Bash(grep -vi \"key\\\\|secret\\\\|token\\\\|password\\\\|webhook\" .env)",
-      "PowerShell(Set-ExecutionPolicy *)"
+      "PowerShell(Set-ExecutionPolicy *)",
+      "PowerShell(Get-Process python -ErrorAction SilentlyContinue | Select-Object Id, @{N='CPU_min';E={[math]::Round\\($_.CPU/60,1\\)}}, @{N='RAM_MB';E={[math]::Round\\($_.WorkingSet64/1MB,0\\)}})",
+      "Bash(echo \"EXIT1:$?\")",
+      "Bash(echo \"EXIT3:$?\")",
+      "Bash(awk -F: '$1>1430')",
+      "Bash(ssh root@139.180.157.176 \"grep -A5 'model_version\\\\|model_type' /home/swint/swint_tradev2/inference_config.json | head -20\")",
+      "Bash(ssh root@139.180.157.176 \"find /home/swint -name 'inference_config.json' 2>/dev/null\")"
     ],
     "additionalDirectories": [
       "d:\\Apps-Dev\\Riset_pemodelan\\%TEMP%"

@@ -1,0 +1,119 @@
+{
+  "run_name": "ic32_lstm_regime_v2",
+  "model_type": "lstm_swing_complement_flat_only",
+  "lgbm_partner": "ic32_regime_v2",
+  "label_source": "swing_h4 (features_v3 label column)",
+  "sample_filter": "pump_dump_gate AND lgbm_flat",
+  "lgbm_thr_long": 0.75,
+  "lgbm_thr_short": 0.7,
+  "loss": "focal_loss",
+  "complement_cfg": {
+    "bull_thr": 0.38,
+    "bear_thr": 0.5,
+    "vol_spike_thr": 2.0,
+    "focal_gamma": 2.0,
+    "alpha_bear_boost": 1.6,
+    "alpha_bull_boost": 1.3,
+    "alpha_neu_scale": 0.9
+  },
+  "n_features": 11,
+  "features": [
+    "ofi_z_score",
+    "ofi_acceleration",
+    "cvd_momentum_adv",
+    "absorption_z",
+    "volume_delta",
+    "vol_ratio_20",
+    "log_ret_1",
+    "log_ret_5",
+    "log_ret_20",
+    "rsi_6",
+    "btc_h1_return"
+  ],
+  "seq_len": 72,
+  "purge_gap": 72,
+  "n_folds": 8,
+  "n_samples": 152200,
+  "mean_f1_macro": 0.4906,
+  "std_f1_macro": 0.0258,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.4302,
+      "f1_SHORT": 0.1338,
+      "f1_FLAT": 0.7956,
+      "f1_LONG": 0.3613,
+      "best_epoch": 42
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.5024,
+      "f1_SHORT": 0.3221,
+      "f1_FLAT": 0.8276,
+      "f1_LONG": 0.3576,
+      "best_epoch": 48
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.5153,
+      "f1_SHORT": 0.3453,
+      "f1_FLAT": 0.8314,
+      "f1_LONG": 0.3694,
+      "best_epoch": 62
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.4855,
+      "f1_SHORT": 0.3443,
+      "f1_FLAT": 0.8332,
+      "f1_LONG": 0.279,
+      "best_epoch": 41
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.4896,
+      "f1_SHORT": 0.3209,
+      "f1_FLAT": 0.8292,
+      "f1_LONG": 0.3185,
+      "best_epoch": 23
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.4858,
+      "f1_SHORT": 0.2849,
+      "f1_FLAT": 0.8229,
+      "f1_LONG": 0.3496,
+      "best_epoch": 9
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.5192,
+      "f1_SHORT": 0.3451,
+      "f1_FLAT": 0.8424,
+      "f1_LONG": 0.37,
+      "best_epoch": 14
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.4972,
+      "f1_SHORT": 0.2919,
+      "f1_FLAT": 0.8387,
+      "f1_LONG": 0.361,
+      "best_epoch": 16
+    }
+  ],
+  "complement_asymmetric_oof": {
+    "n_pool": 36914,
+    "n_complement": 14855,
+    "n_bull": 14844,
+    "n_bear": 11,
+    "bull_precision": 0.4286,
+    "bear_precision": 0.5455,
+    "mixed_precision_dir": 0.5208,
+    "bull_thr": 0.38,
+    "bear_thr": 0.5
+  },
+  "created": "2026-06-21T10:08:58.537851",
+  "train_cutoff": "2026-04-01",
+  "methodology": "purged CV OOF, scaler per fold, swing labels, holdout not used"
+}

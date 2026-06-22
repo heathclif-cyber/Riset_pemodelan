@@ -74,6 +74,10 @@ def _classify_deploy_paths() -> tuple[list[str], list[str]]:
             code_paths.append(rel)
         elif rel.endswith(MODEL_SUFFIXES):
             model_paths.append(rel)
+    # model_registry.json tidak ada di DEPLOY_MAPPING tapi perlu di-scp
+    # (di-generate oleh deploy_model.update_swint_registry, bukan copy dari Riset)
+    if "models/model_registry.json" not in model_paths:
+        model_paths.append("models/model_registry.json")
     return code_paths, model_paths
 
 

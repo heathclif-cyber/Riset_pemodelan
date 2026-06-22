@@ -1,0 +1,118 @@
+{
+  "run_name": "ic32_rv3_guard_oof",
+  "created": "2026-06-22T16:25:46.863064",
+  "lgbm_source": "ic32_regime_v3",
+  "thr_long": 0.75,
+  "thr_short": 0.7,
+  "n_samples": 145019,
+  "n_features": 30,
+  "features": [
+    "etf_gbtc_change_usd",
+    "etf_total_change_usd",
+    "cvd_slope_h4",
+    "ofi_h4_delta",
+    "wyckoff_phase",
+    "Sell_Liq",
+    "atr_percentile_h1",
+    "stochrsi_k",
+    "dist_liq_50x_short",
+    "funding_rate",
+    "ema_7_h1",
+    "dow_cos",
+    "cvd_div_h4",
+    "dist_swing_low",
+    "VAH",
+    "cvd_momentum_adv",
+    "dist_from_8h_high",
+    "ema_200_h1",
+    "hmm_regime_enc",
+    "log_ret_20",
+    "h4_trend",
+    "bars_held_norm",
+    "current_pnl_pct",
+    "current_pnl_atr",
+    "max_favorable_pnl_pct",
+    "drawdown_from_peak_pct",
+    "direction",
+    "entry_price_ratio",
+    "lgbm_entry_conf",
+    "mfe_atr_ratio"
+  ],
+  "n_folds": 8,
+  "purge_bars": 36,
+  "mean_logloss": 0.1733,
+  "best_logloss": 0.1535,
+  "mean_f1_macro": 0.8624,
+  "folds": [
+    {
+      "fold": 1,
+      "n_train": 16078,
+      "n_val": 16078,
+      "logloss": 0.158,
+      "f1_macro": 0.8427,
+      "best_iter": 268
+    },
+    {
+      "fold": 2,
+      "n_train": 32192,
+      "n_val": 16077,
+      "logloss": 0.1804,
+      "f1_macro": 0.858,
+      "best_iter": 411
+    },
+    {
+      "fold": 3,
+      "n_train": 48305,
+      "n_val": 16077,
+      "logloss": 0.1835,
+      "f1_macro": 0.862,
+      "best_iter": 497
+    },
+    {
+      "fold": 4,
+      "n_train": 64418,
+      "n_val": 16077,
+      "logloss": 0.1535,
+      "f1_macro": 0.8614,
+      "best_iter": 446
+    },
+    {
+      "fold": 5,
+      "n_train": 80531,
+      "n_val": 16077,
+      "logloss": 0.1769,
+      "f1_macro": 0.8668,
+      "best_iter": 624
+    },
+    {
+      "fold": 6,
+      "n_train": 96644,
+      "n_val": 16077,
+      "logloss": 0.1797,
+      "f1_macro": 0.8622,
+      "best_iter": 728
+    },
+    {
+      "fold": 7,
+      "n_train": 112757,
+      "n_val": 16077,
+      "logloss": 0.1849,
+      "f1_macro": 0.874,
+      "best_iter": 962
+    },
+    {
+      "fold": 8,
+      "n_train": 128870,
+      "n_val": 16077,
+      "logloss": 0.1695,
+      "f1_macro": 0.8717,
+      "best_iter": 1062
+    }
+  ],
+  "label_dist": {
+    "HOLD": 109133,
+    "PARTIAL": 15928,
+    "EXIT": 19958
+  },
+  "methodology": "OOF trades, scaler per fold \u2014 Genuine v1"
+}

@@ -37,17 +37,24 @@ REGIME_ENC_3 = {name: i for i, name in enumerate(REGIME_NAMES_3)}
 
 # ─── Feature Builder ──────────────────────────────────────────────────────────
 
-def _build_hmm_features(df_h4: pd.DataFrame) -> np.ndarray:
+def _build_hmm_features(
+    df_h4: pd.DataFrame,
+    btc_h4: pd.DataFrame | None = None,
+) -> np.ndarray:
     """
-    Build 4-feature matrix untuk HMM dari H4 OHLCV.
+    Build feature matrix untuk HMM dari H4 OHLCV.
 
-    Features:
+    Features (base):
       0: return_1bar     — pct_change close-to-close
       1: volatility_24   — rolling 24-bar std of returns
       2: momentum_48     — close / rolling_mean_48 - 1
       3: volume_ratio    — log(vol / rolling_mean_48)
 
-    Semua NaN di-fill dengan 0 atau mean — aman untuk HMM.
+    Features tambahan jika btc_h4 diberikan:
+      4: btc_ret_h4      — BTC pct_change, di-align ke index df_h4
+      5: btc_mom_48      — BTC momentum 48-bar
+
+    Semua NaN di-fill 0 — aman untuk HMM.
     """
     ret = df_h4["close"].pct_change().fillna(0.0)
     vol = ret.rolling(24, min_periods=4).std().fillna(ret.std())
@@ -55,7 +62,17 @@ def _build_hmm_features(df_h4: pd.DataFrame) -> np.ndarray:
     vr  = (df_h4["volume"] / df_h4["volume"].rolling(48, min_periods=8).mean()).clip(0.01, 20.0)
     lvr = np.log(vr).fillna(0.0)
 
-    X = np.column_stack([ret.values, vol.values, mom.values, lvr.values])
+    cols = [ret.values, vol.values, mom.values, lvr.values]
+
+    if btc_h4 is not None:
+        btc_ret = btc_h4["close"].pct_change().fillna(0.0)
+        btc_mom = (btc_h4["close"] / btc_h4["close"].rolling(48, min_periods=8).mean() - 1).fillna(0.0)
+        # align ke index coin — ffill karena BTC dan altcoin pakai index yang sama (H4 UTC)
+        br = btc_ret.reindex(df_h4.index).ffill().fillna(0.0)
+        bm = btc_mom.reindex(df_h4.index).ffill().fillna(0.0)
+        cols.extend([br.values, bm.values])
+
+    X = np.column_stack(cols)
     return np.nan_to_num(X, nan=0.0, posinf=0.0, neginf=0.0)
 
 
@@ -102,6 +119,7 @@ def fit_hmm(
     n_states: int = 4,
     n_iter: int = 100,
     random_state: int = 42,
+    btc_h4: pd.DataFrame | None = None,
 ) -> tuple:
     """
     Fit GaussianHMM on df_h4.
@@ -111,7 +129,7 @@ def fit_hmm(
       labels_array: np.ndarray of regime name strings (same len as df_h4)
       state_map: dict[int → str] — raw state idx → canonical name
     """
-    X = _build_hmm_features(df_h4)
+    X = _build_hmm_features(df_h4, btc_h4=btc_h4)
 
     model = GaussianHMM(
         n_components=n_states,
@@ -134,9 +152,10 @@ def predict_hmm(
     model: GaussianHMM,
     df_h4: pd.DataFrame,
     state_map: dict,
+    btc_h4: pd.DataFrame | None = None,
 ) -> np.ndarray:
     """Predict regime for new H4 bars using a previously fitted model."""
-    X = _build_hmm_features(df_h4)
+    X = _build_hmm_features(df_h4, btc_h4=btc_h4)
     raw_labels = model.predict(X)
     return np.array([state_map[int(s)] for s in raw_labels])
 
@@ -150,6 +169,7 @@ def generate_oof_regime_labels(
     purge: int = 6,       # H4 bars to purge between train/val (6 × 4h = 24h)
     n_iter: int = 100,
     random_state: int = 42,
+    btc_h4: pd.DataFrame | None = None,
 ) -> pd.Series:
     """
     Generate walk-forward OOF regime labels — leak-free.
@@ -188,8 +208,8 @@ def generate_oof_regime_labels(
         df_val   = df_h4.iloc[val_start:val_end]
 
         try:
-            model, _, state_map = fit_hmm(df_train, n_states, n_iter, random_state)
-            val_labels = predict_hmm(model, df_val, state_map)
+            model, _, state_map = fit_hmm(df_train, n_states, n_iter, random_state, btc_h4=btc_h4)
+            val_labels = predict_hmm(model, df_val, state_map, btc_h4=btc_h4)
             labels_out[val_start:val_end] = val_labels
 
             dist = dict(pd.Series(val_labels).value_counts())
@@ -208,9 +228,9 @@ def generate_oof_regime_labels(
     if empty_mask[:head_end].any():
         try:
             df_head = df_h4.iloc[:fold_size]
-            model_h, _, state_map_h = fit_hmm(df_head, n_states, n_iter, random_state)
+            model_h, _, state_map_h = fit_hmm(df_head, n_states, n_iter, random_state, btc_h4=btc_h4)
             # Predict the full head range using this model
-            head_pred = predict_hmm(model_h, df_h4.iloc[:head_end], state_map_h)
+            head_pred = predict_hmm(model_h, df_h4.iloc[:head_end], state_map_h, btc_h4=btc_h4)
             for i in range(head_end):
                 if labels_out[i] == "":
                     labels_out[i] = head_pred[i]

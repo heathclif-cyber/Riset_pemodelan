@@ -1,0 +1,104 @@
+{
+  "run_name": "ic32_lstm_candidate_v3_seq36",
+  "lgbm_partner": "ic32_regime_v2",
+  "seq_len": 36,
+  "purge_gap": 36,
+  "cand_thr": 0.55,
+  "n_features": 14,
+  "features": [
+    "rsi_6",
+    "log_ret_5",
+    "absorption_z",
+    "cvd_momentum_adv",
+    "log_ret_1",
+    "vol_ratio_20",
+    "dist_from_8h_high",
+    "ema_7_h1",
+    "rsi_h4",
+    "swing_momentum",
+    "stochrsi_k",
+    "trend_accel_4h",
+    "ultra_high_vol",
+    "dist_liq_50x_short"
+  ],
+  "n_folds": 8,
+  "n_samples": 114373,
+  "mean_f1_macro": 0.4114,
+  "std_f1_macro": 0.0178,
+  "folds": [
+    {
+      "fold": 1,
+      "val_f1": 0.382,
+      "f1_SHORT": 0.3777,
+      "f1_FLAT": 0.2721,
+      "f1_LONG": 0.4961,
+      "best_epoch": 25
+    },
+    {
+      "fold": 2,
+      "val_f1": 0.3979,
+      "f1_SHORT": 0.3967,
+      "f1_FLAT": 0.3017,
+      "f1_LONG": 0.4954,
+      "best_epoch": 70
+    },
+    {
+      "fold": 3,
+      "val_f1": 0.4046,
+      "f1_SHORT": 0.4629,
+      "f1_FLAT": 0.3113,
+      "f1_LONG": 0.4396,
+      "best_epoch": 39
+    },
+    {
+      "fold": 4,
+      "val_f1": 0.3997,
+      "f1_SHORT": 0.4229,
+      "f1_FLAT": 0.3487,
+      "f1_LONG": 0.4277,
+      "best_epoch": 31
+    },
+    {
+      "fold": 5,
+      "val_f1": 0.4107,
+      "f1_SHORT": 0.4251,
+      "f1_FLAT": 0.3043,
+      "f1_LONG": 0.5026,
+      "best_epoch": 31
+    },
+    {
+      "fold": 6,
+      "val_f1": 0.4287,
+      "f1_SHORT": 0.4869,
+      "f1_FLAT": 0.31,
+      "f1_LONG": 0.4893,
+      "best_epoch": 40
+    },
+    {
+      "fold": 7,
+      "val_f1": 0.4356,
+      "f1_SHORT": 0.4669,
+      "f1_FLAT": 0.352,
+      "f1_LONG": 0.4879,
+      "best_epoch": 59
+    },
+    {
+      "fold": 8,
+      "val_f1": 0.4321,
+      "f1_SHORT": 0.4769,
+      "f1_FLAT": 0.3776,
+      "f1_LONG": 0.442,
+      "best_epoch": 64
+    }
+  ],
+  "focal_cfg": {
+    "focal_gamma": 2.0,
+    "alpha_bear_boost": 1.6,
+    "alpha_bull_boost": 1.3,
+    "alpha_neu_scale": 0.9
+  },
+  "created": "2026-06-21T16:45:56.776815",
+  "train_cutoff": "2026-04-01",
+  "benchmark_v2_f1": 0.3748,
+  "methodology": "purged CV OOF, scaler per fold, swing labels, holdout not used"
+}

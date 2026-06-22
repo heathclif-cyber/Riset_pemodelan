@@ -1,0 +1,19 @@
+{
+  "lgbm_thr_long": 0.7,
+  "lgbm_thr_short": 0.7,
+  "lstm_thr": 0.6,
+  "oof_trades": 280,
+  "oof_wr": 0.675,
+  "oof_pf": 2.673,
+  "oof_pnl": 100.45,
+  "pnl_per_trade": 0.3588,
+  "baseline_lgbm_only": {
+    "thr_long": 0.75,
+    "thr_short": 0.7,
+    "oof_wr": 0.642,
+    "oof_trades": 12992,
+    "oof_pnl": 3554.73,
+    "pnl_per_trade": 0.2736
+  },
+  "created": "2026-06-21T17:03:20.213433"
+}

@@ -1,0 +1,36 @@
+{
+  "run_name": "ic32_rv2_lr_meta_c55",
+  "lgbm_run": "ic32_regime_v2",
+  "lstm_run": "ic32_lstm_candidate_v3_seq36",
+  "lr_C": 1.0,
+  "purge_gap": 36,
+  "n_folds": 8,
+  "meta_features": [
+    "lgbm_p0",
+    "lgbm_p1",
+    "lgbm_p2",
+    "lstm_p0",
+    "lstm_p1",
+    "lstm_p2",
+    "lstm_in_domain"
+  ],
+  "cv_f1_macro_mean": 0.5912,
+  "cv_f1_macro_folds": [
+    0.5877,
+    0.5939,
+    0.5788,
+    0.5774,
+    0.5942,
+    0.5941,
+    0.6015,
+    0.6021
+  ],
+  "oof_metrics_argmax": {
+    "trades": 40026,
+    "wr": 0.4849,
+    "pf": 1.461,
+    "pnl": 4658.14,
+    "pnl_per_trade": 0.1164
+  },
+  "created": "2026-06-21T17:31:19.716678"
+}

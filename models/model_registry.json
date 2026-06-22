@@ -1,161 +1,69 @@
 {
-  "active": "ic32_regime_v1",
-  "run_id": "ic32_regime_v1",
-  "model_type": "ic32_regime_v1",
-  "n_features": 36,
+  "active": "ic32_regime_v2_parity",
+  "run_id": "ic32_regime_v2_parity",
+  "model_type": "ic32_regime_v2_parity",
+  "n_features": 33,
   "deployed_to_production": true,
-  "deployed_date": "2026-06-17",
-  "frozen_date": "2026-06-16",
-  "architecture": "LGBM 36f+dow + HMM B + Guardian v2 + DynSize cm_0.60 + LSTM conditional momentum",
-  "last_updated": "2026-06-17",
+  "deployed_date": "2026-06-22",
+  "architecture": "LGBM 33f + HMM 4-state + Guardian OOF (LSTM disabled). H4-causal + CVD-real + LSR-real.",
+  "last_updated": "2026-06-22",
   "stack": {
     "lgbm": {
-      "run": "tb_lgbm_genuine_v2_dow",
-      "promoted": "models/lgbm_baseline.pkl",
-      "features": "models/feature_cols_v2.json",
-      "oof_f1_macro": 0.4004,
+      "run": "ic32_regime_v2_parity",
+      "features": "models/runs/ic32_regime_v2_parity/features.json",
+      "n_features": 33,
       "base_threshold": {
-        "thr_long": 0.45,
-        "thr_short": 0.45
+        "thr_long": 0.75,
+        "thr_short": 0.70,
+        "thr_short_trend_up": 0.80
       }
-    },
-    "hmm": {
-      "model": "models/hmm_regime_model.pkl",
-      "config": "B",
-      "per_state_thresholds": {
-        "0": [
-          0.55,
-          0.55
-        ],
-        "1": [
-          0.55,
-          0.55
-        ],
-        "2": [
-          0.5,
-          0.5
-        ],
-        "3": [
-          0.45,
-          0.5
-        ],
-        "-1": [
-          0.45,
-          0.45
-        ]
-      },
-      "sweep_winner_rejected": "Config D (S1=0.58) \u2014 PF trade-off vs B"
     },
     "guardian": {
-      "run": "tb_guardian_genuine_v2_hmm_v2",
-      "promoted": "models/guardian_best.pkl",
-      "features": 25,
-      "exit_threshold": 0.55,
-      "min_hold_bars": 4
-    },
-    "sizing": {
-      "mode": "dynamic",
-      "conf_window": 0.1,
-      "conf_max_mult": 0.6,
-      "clamp": [
-        0.5,
-        2.0
-      ],
-      "regime_mult": {
-        "0": 0.75,
-        "1": 1.0,
-        "2": 1.0,
-        "3_long": 1.5,
-        "3_short": 0.75,
-        "-1": 0.8
-      }
+      "run": "ic32_rv2_parity_guard_oof",
+      "features": 30,
+      "cv_f1_macro": 0.847,
+      "exit_threshold": 0.90,
+      "min_hold_bars": 2
     },
     "lstm": {
-      "enabled": true,
-      "run": "tb_lstm_genuine_v2",
-      "fusion": "conditional_momentum",
-      "vol_thr": 2.0,
-      "bull_thr": 0.38,
-      "bear_thr": 0.5,
-      "near_miss_gap": 0.03,
-      "boost": 0.1,
-      "opposite_pen": 0.14,
-      "oof_new_momentum_trades": 46,
-      "oof_new_momentum_ppt_norm": 0.7398,
-      "pump_short_slice_oof": {
-        "n": 724,
-        "wr_pct": 77.6,
-        "profit_factor": 4.88,
-        "ppt_norm_usd": 0.701,
-        "penalty_block": 106,
-        "source": "pump_short_slice_eval.json ref_genuine_v2",
-        "decision": "LOCK-IN Ref over tb_lstm_lgbm_seq_v1 (seq o18 rejected 2026-06-16)"
-      }
+      "run": "ic32_lstm_regime_v2",
+      "enabled": false,
+      "note": "Deployed tapi dinonaktifkan (lstm_confirmation_enabled: false)"
+    },
+    "hmm": {
+      "type": "per-coin",
+      "n_states": 4,
+      "path": "models/hmm/"
     }
   },
-  "oof_scorecard_training": {
-    "period": "2020-01-01 to 2026-03-31 (purged CV OOF, TRAIN_CUTOFF=2026-04-01)",
-    "methodology": "genuine_oof_full_stack",
-    "stack": "ic32_regime_v1 live config (thr 0.69/0.59, hard_consensus LSTM, FLIP, Guardian clean_v2, NO dynamic sizing)",
-    "lgbm_oof_f1_macro": 0.5908,
-    "full_pipeline": {
-      "trades": 25596,
-      "wr_pct": 55.7,
-      "profit_factor": 1.393,
-      "total_pnl_usd": 3563.87,
-      "ppt_usd": 0.1392,
-      "trades_per_month": 341.3,
-      "guardian_exit_pct": 65.5,
-      "sl_hit_pct": 0.0,
-      "evaluated": "2026-06-17",
-      "source": "models/runs/ic32_regime_v1/oof_full_stack_scorecard.json"
-    },
-    "supersedes_stale": "tb_genuine_v2_dynsize_lstm_cond OOF (pre-revert, not current production)"
+  "oof_scorecard": {
+    "period": "2020-01-01 to 2026-04-01 (purged CV OOF, TRAIN_CUTOFF=2026-04-01)",
+    "methodology": "genuine_oof_rolling_8fold_purge36",
+    "trades": 4812,
+    "wr_pct": 50.8,
+    "pnl_usd": 583.06,
+    "ppt_usd": 0.1212
   },
   "holdout_scorecard": {
-    "period": "Apr 1 - Jun 13, 2026",
-    "status": "CURRENT \u2014 36f + LSTM Ref + Guardian v2 + DynSize",
-    "script": "07_holdout_genuine_v3_lstm_cond.py",
-    "evaluated": "2026-06-16",
-    "train_cutoff": "2026-04-01",
-    "stack": "ref_lstm_cond (tb_genuine_v2_dynsize_lstm_cond)",
-    "trades": 1648,
-    "wr_pct": 73.4,
-    "profit_factor": 3.002,
-    "pnl_usd": 875.42,
-    "ppt_norm_usd": 0.3839,
-    "avg_modal_usd": 13.8,
-    "pump_short_n": 10,
-    "pump_short_wr_pct": 70.0,
-    "pump_short_pf": 4.84,
-    "baseline_no_lstm": {
-      "trades": 1638,
-      "wr_pct": 73.6,
-      "profit_factor": 3.029,
-      "pnl_usd": 876.54,
-      "ppt_norm_usd": 0.3859
+    "period": "2026-04-01 to 2026-06-22",
+    "status": "SEALED — dibuka sekali 2026-06-22",
+    "no_guardian": {
+      "trades": 56,
+      "wr_pct": 42.86,
+      "profit_factor": 0.796,
+      "pnl_usd": -3.28
     },
-    "supersedes": "2026-06-15_genuine_v2_holdout (34f, no LSTM \u2014 STALE)",
-    "source": "reports/experiments/2026-06-16_genuine_v3_lstm_cond_holdout.json"
+    "with_guardian": {
+      "trades": 56,
+      "wr_pct": 41.07,
+      "profit_factor": 0.599,
+      "pnl_usd": -5.34
+    }
   },
-  "production_reference": {
-    "swint_tradev2": "tb_genuine_v2_dynsize_lstm_cond",
-    "lstm_run": "tb_lstm_genuine_v2",
-    "note": "Ref locked 2026-06-16 \u2014 pump/SHORT PF+WR optimal. seq_v1 research only."
-  },
-  "next_research": [
-    "Breadth-gated boost (frac_up>=0.8) untuk multi-coin pump \u2014 tanpa CS ke LGBM",
-    "near_miss_gap / bull_thr sweep pada rally bars",
-    "Train final lstm_momentum.pt (05_train_lstm_genuine_v2 --all)",
-    "Holdout re-eval requires new sealed period OR explicit reopen"
-  ],
-  "sl_floor": {
-    "min_sl_pct": 0.008,
-    "deployed_date": "2026-06-17",
-    "rationale": "low-vol stop-out mitigation (TRX), OOF+holdout validated 2026-06-17",
-    "applies_in": "paper_trading._calculate_tp_sl via rr_gate.min_sl_pct"
-  },
-  "note": "Emergency revert from tb_genuine_v2 due to live low-confidence TB entries causing rapid SL hits and floating losses. Switched to ic32_regime_v1 (higher LGBM thresh 0.69/0.59, hard_consensus LSTM, regime FLIP, structural filters). See EXPERIMENTS.md 2026-06-17 entry. | CLARIFICATION (user 2026-06-17): This ic32_regime_v1 is the OLD setup (pre-dynamic size entry). Dynamic sizing (conf_window etc) NOT enabled yet. OOF test for this exact live config has NOT been performed yet. Revert was emergency due to TB live degradation. | USER CLARIFICATION (2026-06-17): Current ic32_regime_v1 is the OLD pre-dynamic-size setup (no conf-based dynamic sizing / regime_mult like in genuine_v2). Dynamic size entry NOT active. OOF test for this exact live configuration has NOT been run yet. This is an emergency fallback revert only.",
-  "ic32_version_note": "Pre-dynamic-size. Genuine OOF completed 2026-06-17.",
-  "ic32_setup_note": "OLD ic32 (no dynamic sizing). OOF full-stack: WR 55.7%, PF 1.39, 25.6k trades."
+  "note": "Baseline bersih post-lookahead-fix. Model sebelumnya (ic32_regime_v2) ter-inflasi H4 lookahead, WR 65% tidak valid. Ini titik start jujur untuk improvement iteratif.",
+  "fixes_from_previous": [
+    "H4 lookahead: resample label +4h shift (cvd_slope_h4, ofi_h4_delta, cvd_div_h4)",
+    "CVD real: cumsum(buy_taker - sell_taker) identik live",
+    "LSR real: data.binance.vision daily metrics"
+  ]
 }

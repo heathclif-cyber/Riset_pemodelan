@@ -107,6 +107,7 @@ def process_coin(
     n_folds: int,
     purge_h4: int,
     cutoff=None,
+    btc_h4: pd.DataFrame | None = None,
 ) -> bool:
     logger.info(f"[{coin}] Processing HMM regime...")
     try:
@@ -117,6 +118,9 @@ def process_coin(
             return False
         logger.info(f"[{coin}] H4 bars: {len(df_h4)} | {df_h4.index.min().date()} - {df_h4.index.max().date()}")
 
+        # BTC cross-asset features (jika bukan BTC sendiri dan data tersedia)
+        btc_ctx = btc_h4 if (coin != "BTCUSDT" and btc_h4 is not None) else None
+
         # generate OOF regime labels (walk-forward, leak-free)
         regime_h4 = generate_oof_regime_labels(
             df_h4,
@@ -124,6 +128,7 @@ def process_coin(
             n_folds=n_folds,
             purge=purge_h4,
             n_iter=n_iter,
+            btc_h4=btc_ctx,
         )
 
         # load H1 features untuk dapatkan H1 index
@@ -188,6 +193,14 @@ def main():
     print(f" Config: n_iter={args.n_iter}, n_folds={args.n_folds}, purge_h4={args.purge_h4}")
     print(f"{'='*65}\n")
 
+    # Load BTC H4 sekali untuk semua koin (cross-asset context)
+    btc_h4 = None
+    try:
+        btc_h4 = load_h4_from_processed("BTCUSDT", cutoff=TRAIN_CUTOFF_DATE)
+        logger.info(f"BTC H4 loaded: {len(btc_h4)} bars (cross-asset context)")
+    except Exception as e:
+        logger.warning(f"Gagal load BTC H4 ({e}) — HMM tanpa BTC features")
+
     success, failed = [], []
     for coin in coins:
         ok = process_coin(
@@ -197,6 +210,7 @@ def main():
             n_folds=args.n_folds,
             purge_h4=args.purge_h4,
             cutoff=TRAIN_CUTOFF_DATE,
+            btc_h4=btc_h4,
         )
         (success if ok else failed).append(coin)
 
@@ -216,7 +230,8 @@ def main():
                 # untuk holdout: fit model pada semua training data, predict holdout
                 df_h4_train = load_h4_from_processed(coin, cutoff=TRAIN_CUTOFF_DATE)
                 from core.regime import fit_hmm, predict_hmm
-                model, _, state_map = fit_hmm(df_h4_train, n_states=args.n_states, n_iter=args.n_iter)
+                btc_ctx_hold = btc_h4 if (coin != "BTCUSDT" and btc_h4 is not None) else None
+                model, _, state_map = fit_hmm(df_h4_train, n_states=args.n_states, n_iter=args.n_iter, btc_h4=btc_ctx_hold)
 
                 # load holdout processed
                 hold_proc_path = holdout_proc / f"{coin}_clean.parquet"
@@ -234,7 +249,7 @@ def main():
                     continue
 
                 regime_hold_h4 = pd.Series(
-                    predict_hmm(model, df_h4_hold[["open","high","low","close","volume"]], state_map),
+                    predict_hmm(model, df_h4_hold[["open","high","low","close","volume"]], state_map, btc_h4=btc_ctx_hold),
                     index=df_h4_hold.index,
                 )
 

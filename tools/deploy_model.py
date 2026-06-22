@@ -23,20 +23,39 @@ from datetime import datetime
 SOURCE_REPO_DIR = os.path.abspath(os.path.join(os.path.dirname(__file__), ".."))
 TARGET_REPO_DIR = r"D:\Apps-Dev\swint_tradev2"
 
+# -------------------------------------------------------
+# ACTIVE STACK — ubah ini saat ganti model
+# Nama harus cocok dengan direktori di models/runs/
+# -------------------------------------------------------
+ACTIVE_STACK = {
+    "lgbm":     "ic32_regime_v2_parity",         # H4 lookahead fix + CVD real + real LSR
+    "lstm":     "ic32_lstm_regime_v2",            # DISABLED di config — LGBM-murni
+    "guardian": "ic32_rv2_parity_guard_oof",      # Guardian retrain di OOF parity
+}
+
+# Derived filenames — jangan edit manual, ikut ACTIVE_STACK
+def _named(component, run_id, ext):
+    return f"models/{component}_{run_id}{ext}"
+
+_L  = ACTIVE_STACK["lgbm"]
+_LS = ACTIVE_STACK["lstm"]
+_G  = ACTIVE_STACK["guardian"]
+
 # File model, scaler, dan code yang akan disalin (source relative to SOURCE_REPO_DIR, target relative to TARGET_REPO_DIR)
 DEPLOY_MAPPING = {
-    # 1. Models & Scalers (Source -> Target)
-    "models/lgbm_baseline.pkl": "models/lgbm_baseline.pkl",
-    "models/guardian_best.pkl": "models/guardian_best.pkl",
-    "models/guardian_scaler.pkl": "models/guardian_scaler.pkl",
-    # LSTM momentum complement (8f, seq 72) — conditional_momentum stack
-    "models/runs/tb_lstm_genuine_v2/lstm_momentum.pt": "models/runs/tb_lstm_genuine_v2/lstm_momentum.pt",
-    "models/runs/tb_lstm_genuine_v2/lstm_momentum_scaler.pkl": "models/runs/tb_lstm_genuine_v2/lstm_momentum_scaler.pkl",
-    "models/runs/tb_lstm_genuine_v2/lstm_v4_selected_features.json": "models/runs/tb_lstm_genuine_v2/lstm_v4_selected_features.json",
+    # 1. Models & Scalers — named by run_id agar traceable
+    f"models/runs/{_L}/lgbm.pkl":                        _named("lgbm", _L, ".pkl"),
+    f"models/runs/{_LS}/lstm_momentum.pt":               _named("lstm", _LS, ".pt"),
+    f"models/runs/{_LS}/lstm_momentum_scaler.pkl":       _named("scaler_lstm", _LS, ".pkl"),
+    f"models/runs/{_G}/guardian.pkl":                    _named("guard", _G, ".pkl"),
+    f"models/runs/{_G}/guardian_scaler.pkl":             _named("scaler_guard", _G, ".pkl"),
 
-    # 2. Configs & Features
-    "models/feature_cols_v2.json": "models/feature_cols_v2.json",
-    "models/guardian_feature_cols.json": "models/guardian_feature_cols.json",
+    # 2. Feature files — named by run_id
+    f"models/runs/{_L}/features.json":                   _named("feats_lgbm", _L, ".json"),
+    f"models/runs/{_LS}/lstm_v4_selected_features.json": _named("feats_lstm", _LS, ".json"),
+    f"models/runs/{_G}/guardian_features.json":          _named("feats_guard", _G, ".json"),
+
+    # 3. Inference config & misc
     "models/training_feature_standards.json": "models/training_feature_standards.json",
     "models/inference_config.json": "models/inference_config.json",
     
@@ -97,6 +116,98 @@ def _set_nested(d, dotted, value):
     cur[parts[-1]] = value
 
 
+def _build_models_section():
+    """Buat `models` section di inference_config berdasarkan ACTIVE_STACK."""
+    L, LS, G = _L, _LS, _G
+    return {
+        "lgbm":             f"lgbm_{L}.pkl",
+        "lgbm_features":    f"feats_lgbm_{L}.json",
+        "lstm":             f"lstm_{LS}.pt",
+        "lstm_features":    f"feats_lstm_{LS}.json",
+        "lstm_scaler":      f"scaler_lstm_{LS}.pkl",
+        "guardian":         f"guard_{G}.pkl",
+        "guardian_features": f"feats_guard_{G}.json",
+        "guardian_scaler":  f"scaler_guard_{G}.pkl",
+    }
+
+
+def update_swint_registry():
+    """Auto-update model_registry.json di swint berdasarkan ACTIVE_STACK + inference_config.
+
+    Dipanggil setelah copy_files() agar registry selalu sinkron dengan model yang di-deploy.
+    Format output: {"versions": [...]} dengan entry baru sebagai active, entry lama archived.
+    """
+    reg_path = os.path.join(TARGET_REPO_DIR, "models", "model_registry.json")
+    ic_path  = os.path.join(TARGET_REPO_DIR, "models", "inference_config.json")
+
+    with open(ic_path, encoding="utf-8") as f:
+        ic = json.load(f)
+
+    model_version = ic.get("model_version", _L)
+    trained_at    = datetime.now().strftime("%Y-%m-%dT%H:%M:%S+00:00")
+    lstm_on       = ic.get("cascade", {}).get("lstm_confirmation_enabled", True)
+
+    # Baca registry lama, fallback ke struktur kosong
+    data = {"versions": []}
+    if os.path.exists(reg_path):
+        try:
+            with open(reg_path, encoding="utf-8") as f:
+                raw = json.load(f)
+            # Dukung dua format: {"versions":[...]} atau flat {"active":...}
+            if isinstance(raw.get("versions"), list):
+                data = raw
+        except (json.JSONDecodeError, OSError):
+            pass
+
+    # Archive semua entry active lama
+    for v in data["versions"]:
+        if isinstance(v, dict) and v.get("status") == "active":
+            v["status"] = "archived"
+
+    models_sec = _build_models_section()
+    # Hitung n_features dari features file yang sudah tersalin
+    n_feat = 0
+    feat_path = os.path.join(TARGET_REPO_DIR, "models", models_sec["lgbm_features"])
+    if os.path.exists(feat_path):
+        try:
+            with open(feat_path, encoding="utf-8") as f:
+                n_feat = len(json.load(f))
+        except Exception:
+            pass
+
+    new_entry = {
+        "run_id":     model_version,
+        "model_type": model_version,
+        "status":     "active",
+        "n_features": n_feat,
+        "version":    model_version,
+        "trained_at": trained_at,
+        "note": (
+            f"Deployed via deploy_model.py | "
+            f"LGBM={_L} LSTM={_LS}(enabled={lstm_on}) Guardian={_G}"
+        ),
+        "paths": {
+            "lgbm":              f"models/{models_sec['lgbm']}",
+            "lstm":              f"models/{models_sec['lstm']}",
+            "scaler":            f"models/{models_sec['lstm_scaler']}",
+            "guardian":          f"models/{models_sec['guardian']}",
+            "guardian_scaler":   f"models/{models_sec['guardian_scaler']}",
+            "lgbm_features":     f"models/{models_sec['lgbm_features']}",
+            "lstm_features":     f"models/{models_sec['lstm_features']}",
+            "guardian_features": f"models/{models_sec['guardian_features']}",
+            "inference_config":  "models/inference_config.json",
+        },
+    }
+
+    data["versions"].insert(0, new_entry)
+
+    with open(reg_path, "w", encoding="utf-8") as f:
+        json.dump(data, f, indent=2, ensure_ascii=False)
+        f.write("\n")
+
+    print(f"     [REGISTRY] model_registry.json diupdate: {model_version} -> active")
+
+
 def merge_inference_config(src_path, tgt_path):
     """Salin config dari source, tapi preserve PRESERVE_KEYS dari target lama.
 
@@ -123,6 +234,10 @@ def merge_inference_config(src_path, tgt_path):
                         preserved.append(f"{key}={val}")
         except (json.JSONDecodeError, OSError) as e:
             print(f"     [WARNING] Gagal baca config target untuk preserve: {e}")
+
+    # Paksa models section ikut ACTIVE_STACK agar inference_config selalu konsisten
+    cfg["models"] = _build_models_section()
+    print(f"     [STACK] models section diupdate: {cfg['models']}")
 
     with open(tgt_path, "w", encoding="utf-8") as f:
         json.dump(cfg, f, indent=2, ensure_ascii=False)
@@ -308,7 +423,13 @@ def main():
         print(f"\n[ERROR] Gagal saat melakukan penyalinan file: {str(e)}")
         print("[!] Memulihkan dari backup sangat disarankan jika file dalam keadaan rusak.")
         return
-        
+
+    # Langkah 3b: Update model_registry.json di swint (agar signal page tampil versi benar)
+    try:
+        update_swint_registry()
+    except Exception as e:
+        print(f"     [WARNING] Gagal update registry: {e} — tidak fatal, lanjut.")
+
     # Langkah 4: Validasi pasca-salin
     if validate_deployment():
         duration = (datetime.now() - start_time).total_seconds()

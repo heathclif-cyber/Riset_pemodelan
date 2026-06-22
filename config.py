@@ -585,6 +585,9 @@ GUARDIAN_SL_SAFETY_ATR         = 1.5    # SL floor = 1.5x ATR dari entry
 GUARDIAN_TP_ATR                = 2.0    # TP ceiling = 2.0x ATR (override swing)
 GUARDIAN_MIN_HOLD_BARS         = 4      # OOF +9% PPT vs 2; holdout +4% PPT; early-cut losers eliminated
 GUARDIAN_ACTIVATION_ATR        = 0.0    # guardian aktif instant (tanpa ATR minimum)
+# Trailing floor saat momentum mode (post-TP): kunci minimal frac×MFE sebagai hard
+# safety. Jaring pengaman bila Guardian telat exit saat reversal tajam. 0 = nonaktif.
+GUARDIAN_MOMENTUM_FLOOR_FRAC   = 0.7  # OOF sweep 2026-06-22: 0.7 best PnL $3904 (vs 0.5=$3789)
 
 # ─── Trailing Stop (non-ML) ────────────────────────────────────────────────
 TRAILING_STOP_ENABLED          = False  # Guardian solo — RUN C holdout

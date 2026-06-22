@@ -1,14 +1,17 @@
 """
-app/services/guardian_service.py — Guardian dynamic exit (continuation_v1).
+app/services/guardian_service.py — Guardian dynamic exit (ic32_rv2_guard_oof_v3mom).
 
 Multiclass LGBM: 0=HOLD, 1=PARTIAL_EXIT, 2=FULL_EXIT.
-Supports tb_guardian_continuation_v1 feature set (29 feat):
-  static market context + derived momentum + 10 dynamic (incl. entry-relative).
+v3mom feature set (30 feat = 21 static + 9 dynamic):
+  static market context (incl. hmm_regime_enc, log_ret_20, h4_trend) +
+  9 dynamic trade-state feats (incl. lgbm_entry_conf, mfe_atr_ratio).
+
+PENTING — parity dengan riset: build_feature_row() di sini WAJIB identik
+dengan core/evaluator.py::_assemble_guardian_row() agar exit live == backtest.
 """
 
 import json
 import logging
-from datetime import timezone
 from pathlib import Path
 
 import joblib
@@ -19,6 +22,8 @@ logger = logging.getLogger(__name__)
 
 ROOT = Path(__file__).parent.parent.parent
 
+# Dynamic feats v3mom — dihitung dari state trade (bukan kolom feature_df).
+# Harus = DYNAMIC_FEATS di pipeline/07 + evaluator._assemble_guardian_row.
 DYNAMIC_BASE = {
     "bars_held_norm",
     "current_pnl_pct",
@@ -27,19 +32,9 @@ DYNAMIC_BASE = {
     "drawdown_from_peak_pct",
     "direction",
     "entry_price_ratio",
-    "cvd_slope_h4_delta_entry",
-    "ofi_h4_delta_entry",
-    "flow_momentum_3bar",
+    "lgbm_entry_conf",
+    "mfe_atr_ratio",
 }
-
-DERIVED_STATIC = {
-    "cvd_slope_h4_delta",
-    "ofi_h4_accel",
-    "rsi_h4_slope",
-    "flow_momentum_3bar",
-}
-
-FLOW_MOM_WINDOW = 3
 
 
 class GuardianService:
@@ -130,44 +125,24 @@ class GuardianService:
             logger.error(f"[Guardian] check_exit error trade_id={trade.id}: {e}", exc_info=True)
             return "hold"
 
-    def _entry_bar_row(self, trade, features_df: pd.DataFrame | None) -> pd.Series | None:
-        if features_df is None or features_df.empty or trade.opened_at is None:
-            return None
-        opened = trade.opened_at
-        if opened.tzinfo is None:
-            opened = opened.replace(tzinfo=timezone.utc)
-        idx = features_df.index
-        if getattr(idx, "tz", None) is None and opened.tzinfo is not None:
-            sub = features_df[features_df.index <= opened.replace(tzinfo=None)]
-        else:
-            sub = features_df[idx <= opened]
-        if sub.empty:
-            return features_df.iloc[0]
-        return sub.iloc[-1]
-
-    def _compute_derived_static(self, features_df: pd.DataFrame | None) -> dict:
-        out = {k: 0.0 for k in DERIVED_STATIC}
-        if features_df is None or len(features_df) < 1:
-            return out
-
-        last = features_df.iloc[-1]
-        if "cvd_slope_h4" in features_df.columns and len(features_df) >= 2:
-            out["cvd_slope_h4_delta"] = float(
-                last["cvd_slope_h4"] - features_df.iloc[-2]["cvd_slope_h4"]
-            )
-        if "ofi_h4_delta" in features_df.columns and len(features_df) >= 3:
-            out["ofi_h4_accel"] = float(
-                last["ofi_h4_delta"] - features_df.iloc[-3]["ofi_h4_delta"]
-            )
-        if "rsi_h4" in features_df.columns and len(features_df) >= 3:
-            out["rsi_h4_slope"] = float(last["rsi_h4"] - features_df.iloc[-3]["rsi_h4"])
-        if "ofi_z_score" in features_df.columns:
-            out["flow_momentum_3bar"] = float(
-                features_df["ofi_z_score"].tail(FLOW_MOM_WINDOW).mean()
-            )
-        return out
+    def _entry_confidence(self, trade) -> float:
+        """LGBM entry confidence — dari Signal terkait. Pada mode LGBM-murni
+        (LSTM/FLIP off) confidence final == proba LGBM arah terpilih = lgbm_entry_conf
+        seperti di riset (lgbm_conf_arr[entry_bar])."""
+        try:
+            sig = getattr(trade, "signal", None)
+            if sig is not None and sig.confidence is not None:
+                return float(sig.confidence)
+        except Exception:
+            pass
+        return 0.0
 
     def _build_feature_row(self, trade, features_df, close_price: float, atr: float) -> np.ndarray:
+        """Bangun baris fitur v3mom — WAJIB identik evaluator._assemble_guardian_row.
+
+        Static feats diambil langsung dari kolom features_df (bar terakhir).
+        Dynamic feats dihitung dari state trade.
+        """
         entry = trade.entry_price or 1.0
         hold_bars = trade.hold_bars or 0
         is_long = trade.direction == "LONG"
@@ -179,6 +154,7 @@ class GuardianService:
         bars_held_norm = hold_bars / 24.0
         current_pnl_atr = pnl_pct * entry / atr if atr > 0 else 0.0
 
+        # MFE running peak — sama dengan evaluator (mfe_pnl per-arah, clamp >= 0)
         if trade.max_favorable_price is None:
             trade.max_favorable_price = entry
         if is_long:
@@ -195,19 +171,11 @@ class GuardianService:
         entry_ratio = entry / close_price if close_price > 0 else 1.0
         direction_enc = 1.0 if is_long else 0.0
 
-        entry_row = self._entry_bar_row(trade, features_df)
-        cur_cvd = cur_ofi = 0.0
-        ent_cvd = ent_ofi = 0.0
-        if features_df is not None and len(features_df) > 0:
-            last = features_df.iloc[-1]
-            cur_cvd = float(last.get("cvd_slope_h4", 0) or 0)
-            cur_ofi = float(last.get("ofi_h4_delta", 0) or 0)
-        if entry_row is not None:
-            ent_cvd = float(entry_row.get("cvd_slope_h4", 0) or 0)
-            ent_ofi = float(entry_row.get("ofi_h4_delta", 0) or 0)
+        # mfe_atr_ratio = mfe_pnl / (atr/entry) — evaluator atr_pct = atr/entry
+        atr_pct = atr / entry if entry > 0 else 0.01
+        mfe_atr_ratio = mfe_pnl / atr_pct if atr_pct > 0 else 0.0
 
-        derived = self._compute_derived_static(features_df)
-        flow_mom = derived.get("flow_momentum_3bar", 0.0)
+        lgbm_entry_conf = self._entry_confidence(trade)
 
         dynamic = {
             "bars_held_norm": bars_held_norm,
@@ -217,18 +185,15 @@ class GuardianService:
             "drawdown_from_peak_pct": dd_from_peak,
             "direction": direction_enc,
             "entry_price_ratio": entry_ratio,
-            "cvd_slope_h4_delta_entry": float(cur_cvd - ent_cvd),
-            "ofi_h4_delta_entry": float(cur_ofi - ent_ofi),
-            "flow_momentum_3bar": flow_mom,
+            "lgbm_entry_conf": float(lgbm_entry_conf),
+            "mfe_atr_ratio": float(mfe_atr_ratio),
         }
 
         static_vals = {}
         if features_df is not None and len(features_df) > 0:
             last = features_df.iloc[-1]
             for col in self._static_cols:
-                if col in DERIVED_STATIC:
-                    static_vals[col] = derived.get(col, 0.0)
-                elif col in last.index and not pd.isna(last[col]):
+                if col in last.index and not pd.isna(last[col]):
                     static_vals[col] = float(last[col])
                 else:
                     static_vals[col] = 0.0

@@ -30,7 +30,7 @@ from config import (
     GUARDIAN_ENABLED, GUARDIAN_EXIT_THRESHOLD, GUARDIAN_SL_EXIT_THRESHOLD,
     GUARDIAN_SL_SAFETY_ATR, GUARDIAN_TP_ATR,
     GUARDIAN_MIN_HOLD_BARS, GUARDIAN_ACTIVATION_ATR,
-    GUARDIAN_PARTIAL_EXIT_RATIO,
+    GUARDIAN_PARTIAL_EXIT_RATIO, GUARDIAN_MOMENTUM_FLOOR_FRAC,
     TRAILING_STOP_ENABLED, TRAILING_STOP_ATR, TRAILING_STOP_MIN_BARS,
 )
 from core.utils import setup_logger
@@ -268,6 +268,7 @@ def _assemble_guardian_row(
     atr_val: float,
     max_favorable_pnl: float,
     flow_momentum_3bar: float = 0.0,
+    lgbm_entry_conf: float = 0.0,
 ) -> np.ndarray:
     """Build guardian feature row in feat_cols order (static snapshot + dynamic)."""
     pnl_pct = (current_price - entry_price) / entry_price
@@ -288,6 +289,9 @@ def _assemble_guardian_row(
     ofi_cur = g_static_cur[static_idx["ofi_h4_delta"]] if "ofi_h4_delta" in static_idx else 0.0
     ofi_ent = g_static_ent[static_idx["ofi_h4_delta"]] if "ofi_h4_delta" in static_idx else 0.0
 
+    atr_pct = atr_val / entry_price if entry_price > 0 else 0.01
+    mfe_atr_ratio = max_favorable_pnl / atr_pct if atr_pct > 0 else 0.0
+
     dynamic_vals = {
         "bars_held_norm": bars_held_norm,
         "current_pnl_pct": pnl_pct,
@@ -299,6 +303,8 @@ def _assemble_guardian_row(
         "cvd_slope_h4_delta_entry": float(cvd_cur - cvd_ent),
         "ofi_h4_delta_entry": float(ofi_cur - ofi_ent),
         "flow_momentum_3bar": float(flow_momentum_3bar),
+        "lgbm_entry_conf": float(lgbm_entry_conf),
+        "mfe_atr_ratio": float(mfe_atr_ratio),
     }
 
     row = np.zeros(len(feat_cols), dtype=np.float64)
@@ -454,9 +460,11 @@ def simulate_trades_swing(
     guardian_min_hold_bars    = GUARDIAN_MIN_HOLD_BARS,
     guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
     guardian_enabled          = GUARDIAN_ENABLED,
+    guardian_momentum_floor_frac = GUARDIAN_MOMENTUM_FLOOR_FRAC,  # post-TP trailing floor
     guardian_feat_cols        = None,   # full feature order for custom guardian models
     guardian_static_names     = None,   # static column names matching X_guardian
     flow_momentum_arr         = None,   # optional per-bar flow_momentum_3bar array
+    lgbm_conf_arr             = None,   # optional per-bar LGBM confidence (p2 LONG / p0 SHORT)
     # ── Guardian Delta mode (binary, delta features) ─────────────────────
     guardian_delta_raw        = None,   # dict {feat_name: np.ndarray}
     guardian_delta_feats      = None,   # list[str] — model's feature order
@@ -795,11 +803,11 @@ def simulate_trades_swing(
                 sl_hit = (high[j] >= sl_price) if sl_trigger_mode == "highlow" else (close[j] >= sl_price)
 
             # ── SL hard exit ── trigger & exit price per sl_trigger_mode
-            # "close"  : SL triggered saat close lewati SL → exit @ close (ga bisa fill di SL)
+            # "close"  : SL triggered saat close lewati SL → exit @ sl_price (stop order fill di SL)
             # "highlow": SL triggered saat wick sentuh SL → exit @ sl_price (bisa fill via stop order)
             if sl_hit:
                 outcome = "LOSS"
-                raw_exit = close[j] if sl_trigger_mode == "close" else sl_price
+                raw_exit = sl_price
                 break
 
             # ── TP → momentum mode (match production) ──────────────────
@@ -809,6 +817,17 @@ def simulate_trades_swing(
             elif tp_hit and not guardian_active:
                 # No Guardian → legacy hard TP close
                 outcome = "WIN"; raw_exit = tp_price; break
+
+            # ── Trailing floor (momentum mode) — kunci min frac×MFE ──────
+            # Jaring pengaman: setelah lewat TP (momentum mode), bila give-back
+            # menembus floor → exit walau Guardian belum memutuskan. Simetris
+            # long/short (mfe_pnl & cur_pnl sudah per-arah).
+            if tp_touched and guardian_momentum_floor_frac > 0.0 and mfe_pnl > 0.0:
+                cur_pnl = (close[j] - price) / price if sig == LONG else (price - close[j]) / price
+                if cur_pnl < guardian_momentum_floor_frac * mfe_pnl:
+                    outcome = "GUARDIAN_MOMENTUM_FLOOR"
+                    raw_exit = close[j]
+                    break
 
             # ── Guardian Multiclass (3-class: 0=HOLD, 1=PARTIAL, 2=FULL) ──
             # momentum_mode = tp_touched — bypasses min_hold + activation gates
@@ -826,11 +845,13 @@ def simulate_trades_swing(
                             fm_val = 0.0
                             if flow_momentum_arr is not None and j < len(flow_momentum_arr):
                                 fm_val = float(flow_momentum_arr[j])
+                            lec = float(lgbm_conf_arr[i]) if lgbm_conf_arr is not None and i < len(lgbm_conf_arr) else 0.0
                             g_row = _assemble_guardian_row(
                                 guardian_feat_cols, guardian_static_names,
                                 g_static_cur, g_static_ent,
                                 bars_held, price, close[j], sig, atr_i, mfe_pnl,
                                 flow_momentum_3bar=fm_val,
+                                lgbm_entry_conf=lec,
                             )
                             g_feat = g_row.reshape(1, -1)
                         else:
@@ -999,7 +1020,7 @@ def simulate_trades_swing(
 
     guardian_outcomes = ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL",
                          "GUARDIAN_MOMENTUM_EXIT", "GUARDIAN_MOMENTUM_PARTIAL",
-                         "GUARDIAN_DELTA_EXIT",
+                         "GUARDIAN_MOMENTUM_FLOOR", "GUARDIAN_DELTA_EXIT",
                          "TIMEOUT", "TIMEOUT_MOMENTUM")
     wins   = [t for t in trades if t["outcome"] == "WIN"
               or (t["outcome"] in guardian_outcomes and t["net_pnl"] > 0)]
