@@ -180,6 +180,7 @@ Lihat contoh kode di `METHODOLOGY.md § Aturan 3`.
 - **Jangan modifikasi file di `swint_tradev2` secara manual** — deployment via `tools/deploy_production.py`
 - **Metrik lama TIDAK VALID** — WR 65%+ ic32_regime_v2 dicabut karena H4 lookahead bias (2026-06-22). Baseline valid: lihat `reports/widyawardhana_model.md`
 - **Jangan tune parameter berdasarkan holdout** — holdout bukan development set. Lihat Aturan 1.
+- **DILARANG membuka atau membaca folder `archive/` tanpa permintaan eksplisit dari user.** Arsip berisi kode dan eksperimen lama yang sudah dinyatakan tidak valid, ter-inflasi, atau ditinggalkan. Membacanya tanpa alasan: (1) menguras token percuma, (2) berisiko mengimpor pola lama yang salah ke konteks aktif, (3) mencemari reasoning dengan metrik yang sudah dicabut. Jika perlu referensi dari arsip, user yang akan memintanya secara eksplisit.
 
 ## Penamaan Model — Standar Baku
 
