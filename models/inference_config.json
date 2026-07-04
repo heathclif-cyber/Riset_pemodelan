@@ -1,42 +1,76 @@
 {
-  "_snapshot_time": "2026-06-22 12:00:00",
-  "model_type": "ic32_regime_v2_parity",
-  "model_version": "ic32_regime_v2_parity",
-  "n_features": 33,
-  "note": "Deploy ic32_regime_v2_parity (2026-06-22): H4 lookahead fix (resample label geser +4h) + CVD real taker (buy-sell, bukan sign*vol proxy) + real LSR dari Binance Vision. Holdout jujur Apr-Jun22: WR 41.1% PF 0.60 (56 trades). Model lama v2 ter-inflasi lookahead H4 (WR 65% = artefak). Ini baseline bersih untuk iterasi improvement.",
+  "_snapshot_time": "2026-07-03 18:05:00",
+  "model_type": "ic32_regime_v6.1",
+  "model_version": "ic32_regime_v6.1",
+  "display_name": "fs38_28f",
+  "n_features": 38,
+  "note": "ic32_regime_v6.1 / fs38_28f: H4-closed + shift(4h) seragam, funding_rate fix, market-panel holdout fix (insiden mkt_* NaN 2026-07-04), TONUSDT->GRAMUSDT (rebrand 1:1). LGBM opt2_plus_trend (lgbm38f) + HMM 0.65/0.05 (hmm24/48) + Guardian guard_opt2_plus_trend_hmm (guard28f, no cross-model). LSTM OFF. Full-stack OOF: 4602 trades WR 66.8% PF 2.236 PnL $2327 MaxDD -22.30; sealed holdout OOS (1 Apr-3 Jul 2026, data fixed): 187 trades WR 58.8% PF 1.158 PnL $11.42 MaxDD -12.50. Rollback v6.0: snapshot 2026-07-03 11:50:45. | 2026-07-04: HMM delta 0.05->0.10 (sweep v6.1), guardian min_hold_bars 4->0 (validated no material diff).",
+  "monitor": {
+    "pairs": [
+      "BTCUSDT",
+      "SOLUSDT",
+      "ETHUSDT",
+      "BNBUSDT",
+      "XRPUSDT",
+      "DOGEUSDT",
+      "GRAMUSDT",
+      "ADAUSDT",
+      "TRXUSDT",
+      "1000SHIBUSDT",
+      "AVAXUSDT",
+      "LINKUSDT",
+      "DOTUSDT",
+      "SUIUSDT",
+      "POLUSDT",
+      "NEARUSDT",
+      "1000PEPEUSDT",
+      "TAOUSDT",
+      "ARBUSDT",
+      "HBARUSDT",
+      "ONDOUSDT"
+    ]
+  },
   "model_files": {
-    "features": "feats_lgbm_ic32_regime_v2_parity.json"
+    "features": "feats_lgbm_opt2_plus_trend.json"
   },
   "cascade": {
     "mode": "hard_consensus",
     "lstm_confirmation_enabled": false,
     "lstm_flat_review_enabled": false,
     "dynamic_threshold_enabled": false,
-    "lgbm_threshold_long": 0.75,
-    "lgbm_threshold_short": 0.70,
-    "confidence_threshold_entry": 0.70,
+    "lgbm_threshold_long": 0.65,
+    "lgbm_threshold_short": 0.65,
+    "confidence_threshold_entry": 0.5,
     "lstm_adjust_agree_boost": 0.05,
     "lstm_adjust_neutral_pen": 0.05,
     "lstm_adjust_opposite_pen": 0.65,
     "lstm_directional_review_threshold": 0.35,
     "lstm_no_veto_threshold": 0.5,
-    "note": "LGBM-murni: LSTM + FLIP + dynamic-threshold dimatikan agar arah & confidence == backtest v2 (pipeline/07). Param LSTM disimpan tapi tidak dipakai (lstm_confirmation_enabled=false)."
+    "note": "LGBM-murni: LSTM + FLIP + dynamic-threshold dimatikan."
   },
   "feature_engineering": {
-    "positioning_mode": "training_parity",
-    "note": "Harus sama dengan live data_service._get_positioning_mode()."
+    "positioning_mode": "live",
+    "note": "Diubah 2026-07-03 dari training_parity -- training (labeled/labeled_opt2) sudah pakai data asli Binance sejak lama, tapi live masih di-clip ke training_feature_standards.json (snapshot v1 2026-06-19, sudah usang). long_short_ratio ADA & non-null tapi nyaris konstan ~1.0 (fitur #6 terpenting, 5772 split) -- root cause OOS holdout jauh di bawah OOF. Verifikasi: tools/model/audit_feature_value_parity.py."
+  },
+  "lstm_daily_adjust": {
+    "enabled": false,
+    "alpha": 0.1,
+    "zone": 0.12,
+    "clip_lo": 0.5,
+    "clip_hi": 0.92,
+    "note": "DIMATIKAN — entry via HMM per-state gating."
   },
   "guardian": {
     "enabled": true,
-    "exit_threshold": 0.90,
-    "min_hold_bars": 2,
+    "exit_threshold": 0.65,
+    "min_hold_bars": 0,
     "activation_atr": 0,
     "partial_exit_ratio": 0.5,
     "momentum_floor_frac": 0.7,
-    "model_file": "guard_ic32_rv2_parity_guard_oof.pkl",
-    "scaler_file": "scaler_guard_ic32_rv2_parity_guard_oof.pkl",
-    "features_file": "feats_guard_ic32_rv2_parity_guard_oof.json",
-    "note": "ic32_rv2_parity_guard_oof: 30 feat, CV F1 macro 0.847, dilatih pada OOF trades parity (4812 trades, thr 0.75/0.70). Trailing floor 0.7."
+    "model_file": "guard_guard_opt2_plus_trend_hmm.pkl",
+    "scaler_file": "scaler_guard_guard_opt2_plus_trend_hmm.pkl",
+    "features_file": "feats_guard_guard_opt2_plus_trend_hmm.json",
+    "note": "guard28f (guard_opt2_plus_trend_hmm): 28 feat, NO cross-model. Param = config.py: exit_thr=0.65 min_hold=0 (2026-07-04: sweep 4 vs 0 no material diff) floor=0.70 activation=0."
   },
   "hmm": {
     "enabled": true,
@@ -46,13 +80,28 @@
       "enabled": false,
       "note": "Emergency brake nonaktif."
     },
-    "note": "ic32_regime_v2 thresholds: long=0.75 semua state, short=0.70 kecuali TRENDING_UP(3)=0.80. Match pipeline/07_holdout_ic32_regime_v2.py.",
+    "note": "Per-state HMM gating base=0.65 delta=0.10 (updated 2026-07-04, sweep v6.1). Identik pipeline/08f + 07c.",
     "per_state_thresholds": {
-      "0": [0.75, 0.70],
-      "1": [0.75, 0.70],
-      "2": [0.75, 0.70],
-      "3": [0.75, 0.80],
-      "-1": [0.75, 0.70]
+      "0": [
+        0.75,
+        0.55
+      ],
+      "1": [
+        0.7,
+        0.6
+      ],
+      "2": [
+        0.6,
+        0.7
+      ],
+      "3": [
+        0.55,
+        0.75
+      ],
+      "-1": [
+        0.65,
+        0.65
+      ]
     },
     "states": [
       "TRENDING_DOWN",
@@ -62,22 +111,15 @@
     ]
   },
   "inference": {
-    "confidence_full_size": 0.75,
-    "confidence_half_size": 0.70,
-    "confidence_threshold_entry": 0.70,
-    "seq_len": 72
+    "confidence_full_size": 0.5,
+    "confidence_half_size": 0.5,
+    "confidence_threshold_entry": 0.5,
+    "seq_len": 72,
+    "note": "Sizing uniform — modal penuh per entry."
   },
   "regime_alignment": {
     "enabled": false,
-    "note": "FLIP DIMATIKAN untuk parity v2 — backtest pipeline/07 tidak pakai FLIP. Arah murni dari LGBM + HMM per-state threshold.",
-    "ranging": {
-      "counter_trend_boost": 0.05,
-      "with_trend_penalty": 0.1
-    },
-    "trending": {
-      "counter_trend_penalty": 0.05,
-      "with_trend_boost": 0.1
-    }
+    "note": "FLIP dimatikan — arah dari LGBM + HMM threshold."
   },
   "trend_alignment": {
     "enabled": false,
@@ -85,20 +127,21 @@
   },
   "pyramiding": {
     "enabled": false,
-    "note": "DIMATIKAN untuk parity v2 — backtest pipeline/07 single-leg (tanpa scale-in). Aktifkan lagi hanya setelah tes live=riset selesai bila diinginkan."
+    "note": "Single-leg parity backtest."
   },
   "volatility_circuit_breaker": {
     "enabled": false,
     "atr_multiplier": 3,
     "lookback_bars": 24,
-    "note": "DIMATIKAN untuk parity v2 — backtest pipeline/07 tidak pakai VCB."
+    "note": "DIMATIKAN."
   },
   "structural_filter": {
     "breakout_tolerance_pct": 0.03,
-    "enabled": true,
+    "enabled": false,
     "max_swing_deviation_pct": 0.15,
     "require_entry_in_swing_range": true,
-    "swing_max_age_hours": 48
+    "swing_max_age_hours": 48,
+    "note": "DIMATIKAN — OOF sweep 2026-07-04: PF 2.108→2.287 tanpa structural+swing-fresh; selaras config.py TP_SL_STRUCTURAL_FILTER=False."
   },
   "rr_gate": {
     "enabled": true,
@@ -120,7 +163,7 @@
     "fee_per_side": 0.0004,
     "leverage_recommended": 5,
     "max_open_positions": 10,
-    "modal_per_trade": 5,
+    "modal_per_trade": 10,
     "slippage_per_side": 0.0005
   },
   "compound_strategy": {
@@ -134,5 +177,28 @@
     "withdraw_pct": 0.25,
     "note": "Compound live mulai Juni 2026."
   },
-  "trading_mode": "live"
+  "trading_mode": "live",
+  "scorecard": {
+    "oof": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 6328,
+      "wr_pct": 65.72,
+      "profit_factor": 2.364,
+      "pnl_usd": 3984.54,
+      "max_dd_usd": -27.21,
+      "methodology": "genuine_oof_rolling_8fold_purge20 + HMM 0.65/0.10 + Guardian guard28f min_hold=0"
+    },
+    "holdout_oos": {
+      "period": "2026-04-01 to 2026-07-02",
+      "trades": 308,
+      "wr_pct": 58.8,
+      "profit_factor": 1.264,
+      "pnl_usd": 32.94,
+      "max_dd_usd": -12.21,
+      "long_pf": 0.667,
+      "short_pf": 1.575,
+      "trades_detail_file": "oos_holdout_trades.json",
+      "note": "Holdout-test (bukan holdout tersegel). Post fix unit 1000SHIBUSDT/1000PEPEUSDT 2026-07-04."
+    }
+  }
 }
