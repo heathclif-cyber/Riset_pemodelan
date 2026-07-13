@@ -28,10 +28,11 @@ TARGET_REPO_DIR = r"E:\Widyawardhana_Capital\swint_tradev2"
 # Nama harus cocok dengan direktori di models/runs/
 # -------------------------------------------------------
 ACTIVE_STACK = {
-    "lgbm":     "opt2_plus_trend",                # lgbm38f — label Opsi 2 + trend_strength (fs38_28f)
-    "lstm":     "ic32_lstm_regime_v2",            # momentum LSTM tetap DISABLED (cascade)
-    "guardian": "guard_opt2_plus_trend_hmm",      # guard28f — no cross-model (tanpa hmm_regime_enc/lgbm_entry_conf/p_bull)
+    "lgbm":     "opt2_plus_trend_18coin_iso37f",       # lgbm37f 18-koin — takedown relative_strength_z (2026-07-10), gap live-vs-riset tak terjelaskan; OOS PF +8-10% vs opt2_plus_trend_18coin di semua kombinasi entry/regime_disable
+    "lstm":     "ic32_lstm_regime_v2",                 # momentum LSTM tetap DISABLED (cascade)
+    "guardian": "guard_opt2_plus_trend_hmm_18coin",    # guard28f_18coin — no cross-model, reuse (tidak retrain, tidak butuh relative_strength_z)
 }
+# Rollback cepat: kembalikan lgbm ke "opt2_plus_trend_18coin" (38f, pre-takedown).
 # Catatan ic32_regime_v3: daily LSTM `ic32_daily_lstm_17f_s30` TIDAK di-deploy sbg
 # model live (Opsi B). p_bull dihitung sisi-riset -> models/daily_pbull.parquet -> scp.
 # Live baca artefak via daily_pbull_service.py. Lihat tools/compute_daily_pbull.py.
@@ -99,6 +100,11 @@ for _fp in _glob.glob(os.path.join(SOURCE_REPO_DIR, "models", "hmm", "*_hmm.pkl"
 # lama — deploy model TIDAK menimpanya. Mencegah:
 #   * risk.modal_per_trade / leverage  ter-reset ke default Riset (insiden modal=10)
 #   * rr_gate.sl_trigger_mode          ikut terhapus (fitur exit sisi web-app)
+#   * limit_exit / cooldown           terhapus — kode & keputusan approve HANYA ada
+#                                      di swint_tradev2 (paper_trading.py, signal_filter.py),
+#                                      Riset tidak reproduce, jadi WAJIB dipreserve utuh
+#                                      (insiden ditemukan 2026-07-13: config Riset ketinggalan,
+#                                      nyaris ke-deploy ulang tanpa 2 fitur ini).
 # Format: dotted path. Hanya dipreserve bila path-nya ADA di config target.
 PRESERVE_KEYS = [
     "risk.modal_per_trade",
@@ -106,6 +112,8 @@ PRESERVE_KEYS = [
     "risk.max_open_positions",
     "risk.daily_loss_limit",
     "rr_gate.sl_trigger_mode",
+    "limit_exit",
+    "cooldown",
 ]
 
 # File yang di-merge (bukan copy buta) — dikecualikan dari cek kesetaraan ukuran.

@@ -1,37 +1,34 @@
 {
-  "_snapshot_time": "2026-07-03 18:05:00",
-  "model_type": "ic32_regime_v6.1",
-  "model_version": "ic32_regime_v6.1",
-  "display_name": "fs38_28f",
-  "n_features": 38,
-  "note": "ic32_regime_v6.1 / fs38_28f: H4-closed + shift(4h) seragam, funding_rate fix, market-panel holdout fix (insiden mkt_* NaN 2026-07-04), TONUSDT->GRAMUSDT (rebrand 1:1). LGBM opt2_plus_trend (lgbm38f) + HMM 0.65/0.05 (hmm24/48) + Guardian guard_opt2_plus_trend_hmm (guard28f, no cross-model). LSTM OFF. Full-stack OOF: 4602 trades WR 66.8% PF 2.236 PnL $2327 MaxDD -22.30; sealed holdout OOS (1 Apr-3 Jul 2026, data fixed): 187 trades WR 58.8% PF 1.158 PnL $11.42 MaxDD -12.50. Rollback v6.0: snapshot 2026-07-03 11:50:45. | 2026-07-04: HMM delta 0.05->0.10 (sweep v6.1), guardian min_hold_bars 4->0 (validated no material diff).",
+  "_snapshot_time": "2026-07-10 13:05:00",
+  "model_type": "ic32_regime_v6.4",
+  "model_version": "ic32_regime_v6.4",
+  "display_name": "fs37_18coin_spotconfirm",
+  "n_features": 37,
+  "note": "ic32_regime_v6.4: LGBM opt2_plus_trend_18coin_iso37f (lgbm37f, 18 koin, takedown relative_strength_z -- gap live-vs-riset tak terjelaskan, lihat memory feedback-feature-source-accountability) + spot-confirm fusion (live_spottrade, agree_boost=0.08/opposite_pen=0.35) + HMM 0.65/0.10 (hmm24/48) + regime-disable (block LONG di TRENDING_DOWN) + Guardian guard_opt2_plus_trend_hmm_18coin (guard28f_18coin, no cross-model, reused tanpa retrain). LSTM OFF. Universe tetap 18 koin (sama v6.3). OOS genuine 18-koin (2026-04-01 s.d. 2026-07-10, LGBM+HMM+regime-disable+Guardian, entry M15@HH:15): 278 trades WR 57.1% PF 1.816 PnL $73.57 MaxDD -7.58 Long PF 1.696 (vs v6.3 baseline 38f: PF 1.679 PnL $60.72 Long PF 1.167). Detail ablasi/OOF/OOS lengkap: EXPERIMENTS.md 2026-07-10. Rollback: v6.3 (opt2_plus_trend_18coin, 38f) -- ganti ACTIVE_STACK.lgbm balik, lihat models/backups/.",
   "monitor": {
     "pairs": [
       "BTCUSDT",
-      "SOLUSDT",
       "ETHUSDT",
       "BNBUSDT",
+      "SOLUSDT",
       "XRPUSDT",
-      "DOGEUSDT",
-      "GRAMUSDT",
       "ADAUSDT",
-      "TRXUSDT",
-      "1000SHIBUSDT",
+      "DOGEUSDT",
       "AVAXUSDT",
       "LINKUSDT",
       "DOTUSDT",
-      "SUIUSDT",
-      "POLUSDT",
+      "LTCUSDT",
+      "TRXUSDT",
+      "ATOMUSDT",
+      "UNIUSDT",
       "NEARUSDT",
-      "1000PEPEUSDT",
-      "TAOUSDT",
-      "ARBUSDT",
-      "HBARUSDT",
-      "ONDOUSDT"
+      "FILUSDT",
+      "ETCUSDT",
+      "BCHUSDT"
     ]
   },
   "model_files": {
-    "features": "feats_lgbm_opt2_plus_trend.json"
+    "features": "feats_lgbm_opt2_plus_trend_18coin_iso37f.json"
   },
   "cascade": {
     "mode": "hard_consensus",
@@ -46,11 +43,23 @@
     "lstm_adjust_opposite_pen": 0.65,
     "lstm_directional_review_threshold": 0.35,
     "lstm_no_veto_threshold": 0.5,
-    "note": "LGBM-murni: LSTM + FLIP + dynamic-threshold dimatikan."
+    "note": "LGBM-murni: LSTM + FLIP + dynamic-threshold dimatikan. Sama seperti v6.1."
+  },
+  "spot_confirm": {
+    "enabled": true,
+    "threshold": 0.60,
+    "agree_boost": 0.08,
+    "opposite_pen": 0.35,
+    "note": "BARU di v6.3. Fitur dipinjam dari live_spottrade (app terpisah, co-located VPS yang sama, localhost:8080/api/features/snapshot) -- skor LONG+SHORT sendiri pakai model f2_swing_w20_h84_thr060 (models/spottrade_confirm/). Fail-open: kalau API/model gagal, proba LGBM asli tidak berubah. Tervalidasi OOF+OOS Riset_pemodelan 2026-07-08."
+  },
+  "regime_disable": {
+    "enabled": true,
+    "block_long_in": ["TRENDING_DOWN"],
+    "note": "BARU di v6.3. OOF diagnostik: LONG di TRENDING_DOWN struktural buruk (PF 0.401). Dikonfirmasi arah sama di OOS genuine."
   },
   "feature_engineering": {
     "positioning_mode": "live",
-    "note": "Diubah 2026-07-03 dari training_parity -- training (labeled/labeled_opt2) sudah pakai data asli Binance sejak lama, tapi live masih di-clip ke training_feature_standards.json (snapshot v1 2026-06-19, sudah usang). long_short_ratio ADA & non-null tapi nyaris konstan ~1.0 (fitur #6 terpenting, 5772 split) -- root cause OOS holdout jauh di bawah OOF. Verifikasi: tools/model/audit_feature_value_parity.py."
+    "note": "Sama seperti v6.1. 6 koin baru (LTCUSDT/ATOMUSDT/UNIUSDT/FILUSDT/ETCUSDT/BCHUSDT) mulai fetch positioning 2026-07-09 -- histori masih pendek (~9 hari), akan makin lengkap seiring waktu."
   },
   "lstm_daily_adjust": {
     "enabled": false,
@@ -58,7 +67,7 @@
     "zone": 0.12,
     "clip_lo": 0.5,
     "clip_hi": 0.92,
-    "note": "DIMATIKAN — entry via HMM per-state gating."
+    "note": "DIMATIKAN — entry via HMM per-state gating. Sama seperti v6.1."
   },
   "guardian": {
     "enabled": true,
@@ -67,10 +76,21 @@
     "activation_atr": 0,
     "partial_exit_ratio": 0.5,
     "momentum_floor_frac": 0.7,
-    "model_file": "guard_guard_opt2_plus_trend_hmm.pkl",
-    "scaler_file": "scaler_guard_guard_opt2_plus_trend_hmm.pkl",
-    "features_file": "feats_guard_guard_opt2_plus_trend_hmm.json",
-    "note": "guard28f (guard_opt2_plus_trend_hmm): 28 feat, NO cross-model. Param = config.py: exit_thr=0.65 min_hold=0 (2026-07-04: sweep 4 vs 0 no material diff) floor=0.70 activation=0."
+    "model_file": "guard_guard_opt2_plus_trend_hmm_18coin.pkl",
+    "scaler_file": "scaler_guard_guard_opt2_plus_trend_hmm_18coin.pkl",
+    "features_file": "feats_guard_guard_opt2_plus_trend_hmm_18coin.json",
+    "note": "guard28f_18coin (guard_opt2_plus_trend_hmm_18coin): 28 feat, NO cross-model. Sample dari entry population STACK PENUH (LGBM+spot-confirm+HMM+regime-disable). Param sama v6.1: exit_thr=0.65 min_hold=0 floor=0.70 activation=0."
+  },
+  "limit_exit": {
+    "enabled": true,
+    "floor_tp_frac": 0.7,
+    "note": "AKTIF 2026-07-12. Guardian floor (post-TP momentum mode) SAJA -- scope sempit, tp_hit/guardian_exit/guardian_momentum_exit/time_exit TETAP MARKET seperti semula. Mekanisme ganti total dari trailing 0.7xMFE ke FIXED floor_tp_frac x TP_pnl (dari entry+TP, tidak ikut naik ngejar MFE lagi). Begitu TP tersentuh, langsung pasang STOP-LIMIT reduceOnly exchange-side di level itu (bukan polling reaktif) -- jaminan exit tidak lebih jelek dari level, dan tidak kena poll-lag 5menit. Dicancel otomatis kalau trade closed lewat jalur lain (SL/Guardian/time_exit). Validasi: OOF 18coin PF 2.042 PnL $2738 (vs baseline trailing PF 1.900 PnL $2429) TAPI OOS genuine hampir flat (PF 1.296 PnL $46.25 vs baseline PF 1.303 PnL $47.42) -- dipilih user meski OOS tidak jelas unggul, alasan psikologis (floor stabil, tidak kena kasus AVAX-style give-back). Lihat EXPERIMENTS.md 2026-07-12. Kode implementasi ada di swint_tradev2 (app/services/paper_trading.py::_place_floor_stop/_check_floor_stop_fill/_cancel_floor_stop + core/binance_trading_client.py::place_stop_limit), TIDAK ada versi riset -- section ini murni operasional utk mencegah deploy_model.py menghapusnya."
+  },
+  "cooldown": {
+    "enabled": true,
+    "profit_only": true,
+    "profit_hours": 1,
+    "note": "AKTIF 2026-07-13. Cooldown HANYA kalau trade terakhir (coin+direction) close PROFIT (net_pnl>0), apapun exit_reason-nya -- rugi/SL boleh re-entry tanpa jeda. Cegah re-entry cepat arah sama setelah profit-taking (kasus AVAX #364->#366). Field lama (tp_hit_hours/sl_hit_hours/time_exit_hours/default_hours) diabaikan selama profit_only=true. Validasi OOF 18coin: netral (PnL $2405->$2397, PF 1.952->1.957). Validasi OOS genuine: PnL $47.42->$54.59 (+15%), PF 1.303->1.367, MaxDD -8.11->-7.93 -- konsisten membaik di 1h/2h/3h, dipilih 1h (terbaik). Lihat EXPERIMENTS.md 2026-07-13. Kode implementasi ada di swint_tradev2 (app/services/paper_trading.py & app/services/signal_filter.py::_is_cooldown_active), TIDAK ada versi riset -- section ini murni operasional utk mencegah deploy_model.py menghapusnya."
   },
   "hmm": {
     "enabled": true,
@@ -78,30 +98,15 @@
     "n_states": 4,
     "controller": {
       "enabled": false,
-      "note": "Emergency brake nonaktif."
+      "note": "Emergency brake nonaktif. Sama seperti v6.1."
     },
-    "note": "Per-state HMM gating base=0.65 delta=0.10 (updated 2026-07-04, sweep v6.1). Identik pipeline/08f + 07c.",
+    "note": "Per-state HMM gating base=0.65 delta=0.10 -- IDENTIK v6.1, tidak berubah. models/hmm/{coin}_hmm.pkl utk 6 koin baru sudah di-fit via SSOT regime_hmm_holdout.py (2026-07-08/09).",
     "per_state_thresholds": {
-      "0": [
-        0.75,
-        0.55
-      ],
-      "1": [
-        0.7,
-        0.6
-      ],
-      "2": [
-        0.6,
-        0.7
-      ],
-      "3": [
-        0.55,
-        0.75
-      ],
-      "-1": [
-        0.65,
-        0.65
-      ]
+      "0": [0.75, 0.55],
+      "1": [0.7, 0.6],
+      "2": [0.6, 0.7],
+      "3": [0.55, 0.75],
+      "-1": [0.65, 0.65]
     },
     "states": [
       "TRENDING_DOWN",
@@ -115,25 +120,25 @@
     "confidence_half_size": 0.5,
     "confidence_threshold_entry": 0.5,
     "seq_len": 72,
-    "note": "Sizing uniform — modal penuh per entry."
+    "note": "Sizing uniform — modal penuh per entry. Sama seperti v6.1."
   },
   "regime_alignment": {
     "enabled": false,
-    "note": "FLIP dimatikan — arah dari LGBM + HMM threshold."
+    "note": "FLIP dimatikan — arah dari LGBM + HMM threshold. Sama seperti v6.1."
   },
   "trend_alignment": {
     "enabled": false,
-    "note": "Disabled."
+    "note": "Disabled. Sama seperti v6.1."
   },
   "pyramiding": {
     "enabled": false,
-    "note": "Single-leg parity backtest."
+    "note": "Single-leg parity backtest. Sama seperti v6.1."
   },
   "volatility_circuit_breaker": {
     "enabled": false,
     "atr_multiplier": 3,
     "lookback_bars": 24,
-    "note": "DIMATIKAN."
+    "note": "DIMATIKAN. Sama seperti v6.1."
   },
   "structural_filter": {
     "breakout_tolerance_pct": 0.03,
@@ -141,7 +146,7 @@
     "max_swing_deviation_pct": 0.15,
     "require_entry_in_swing_range": true,
     "swing_max_age_hours": 48,
-    "note": "DIMATIKAN — OOF sweep 2026-07-04: PF 2.108→2.287 tanpa structural+swing-fresh; selaras config.py TP_SL_STRUCTURAL_FILTER=False."
+    "note": "DIMATIKAN — sama seperti v6.1 (enforced dari config.py TP_SL_STRUCTURAL_FILTER)."
   },
   "rr_gate": {
     "enabled": true,
@@ -172,33 +177,34 @@
     "initial_trading_balance": 210,
     "live_from_month": "2026-06",
     "live_trades_only": true,
-    "max_slots": 21,
+    "max_slots": 18,
     "reinvest_pct": 0.75,
     "withdraw_pct": 0.25,
-    "note": "Compound live mulai Juni 2026."
+    "note": "max_slots disesuaikan ke 18 (jumlah koin v6.3). Compound live mulai Juni 2026 (tidak berubah)."
   },
   "trading_mode": "live",
   "scorecard": {
     "oof": {
       "period": "2020-01-01 to 2026-04-01",
-      "trades": 6328,
-      "wr_pct": 65.72,
-      "profit_factor": 2.364,
-      "pnl_usd": 3984.54,
-      "max_dd_usd": -27.21,
-      "methodology": "genuine_oof_rolling_8fold_purge20 + HMM 0.65/0.10 + Guardian guard28f min_hold=0"
+      "trades": 5742,
+      "wr_pct": 67.3,
+      "profit_factor": 2.088,
+      "pnl_usd": 2859.54,
+      "max_dd_usd": -24.08,
+      "methodology": "genuine_oof_rolling_8fold_purge20 (LGBM+spot-confirm) + HMM 0.65/0.10 + regime-disable + Guardian guard28f_18coin min_hold=0",
+      "caveat": "Angka dari baseline 38f (opt2_plus_trend_18coin, pre-takedown relative_strength_z) -- BELUM di-reproduce persis utk 37f (v6.4). Angka trade-level dgn Guardian semi in-sample (final model discore ke populasi sendiri) -- lihat EXPERIMENTS.md. Delta OOF Guardian jauh > delta OOS genuine (+1.135 vs +0.171 PF)."
     },
     "holdout_oos": {
-      "period": "2026-04-01 to 2026-07-02",
-      "trades": 308,
-      "wr_pct": 58.8,
-      "profit_factor": 1.264,
-      "pnl_usd": 32.94,
-      "max_dd_usd": -12.21,
-      "long_pf": 0.667,
-      "short_pf": 1.575,
+      "period": "2026-04-01 to 2026-07-10",
+      "trades": 278,
+      "wr_pct": 57.1,
+      "profit_factor": 1.816,
+      "pnl_usd": 73.57,
+      "max_dd_usd": -7.58,
+      "long_pf": 1.696,
+      "short_pf": 1.864,
       "trades_detail_file": "oos_holdout_trades.json",
-      "note": "Holdout-test (bukan holdout tersegel). Post fix unit 1000SHIBUSDT/1000PEPEUSDT 2026-07-04."
+      "note": "v6.4 (37f, takedown relative_strength_z), holdout-test genuine (bukan holdout tersegel), LGBM+HMM+regime-disable+Guardian, entry M15@HH:15 (belum termasuk simulasi spot-confirm -- backtest offline tidak bisa mereplikasi API real-time live_spottrade). vs v6.3 baseline 38f setara (265 trades, PF 1.679, PnL $60.72, Long PF 1.167): PF/PnL/MaxDD/LongPF semua membaik. Detail lengkap EXPERIMENTS.md 2026-07-10."
     }
   }
 }

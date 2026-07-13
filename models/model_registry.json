@@ -1,69 +1,85 @@
 {
-  "active": "ic32_regime_v2_parity",
-  "run_id": "ic32_regime_v2_parity",
-  "model_type": "ic32_regime_v2_parity",
-  "n_features": 33,
+  "active": "ic32_regime_v6.4",
+  "display_name": "fs37_18coin_spotconfirm",
+  "benchmark": "fs37_18coin_spotconfirm",
+  "run_id": "opt2_plus_trend_18coin_iso37f",
+  "model_type": "ic32_regime_v6.4",
+  "n_features": 37,
   "deployed_to_production": true,
-  "deployed_date": "2026-06-22",
-  "architecture": "LGBM 33f + HMM 4-state + Guardian OOF (LSTM disabled). H4-causal + CVD-real + LSR-real.",
-  "last_updated": "2026-06-22",
+  "deployed_date": "2026-07-10",
+  "architecture": "ic32_regime_v6.4 / fs37_18coin_spotconfirm: LGBM opt2_plus_trend_18coin_iso37f (lgbm37f, 18 koin, takedown relative_strength_z) + spot-confirm fusion (live_spottrade, agree_boost=0.08/opposite_pen=0.35) + HMM 4-state 0.65/0.10 (hmm24/48) + regime-disable (block LONG di TRENDING_DOWN) + Guardian guard_opt2_plus_trend_hmm_18coin (guard28f_18coin, NO cross-model, reused dari 2026-07-08, tidak retrain). LSTM OFF.",
+  "last_updated": "2026-07-13",
+  "deploy_note_v6.4": "Upgrade dari v6.3 (opt2_plus_trend_18coin, 38f): takedown fitur relative_strength_z -- gap live-vs-riset tak terjelaskan, lihat memory feedback-feature-source-accountability. Retrain isolated di universe 18-koin yang benar (koreksi dari percobaan pertama yang salah pakai 21-koin), genuine walk-forward purge sama metodologi production. OOS 18-koin (2026-04-01 s.d. 2026-07-10, entry M15@HH:15): 278 trades PF 1.816 PnL $73.57 MaxDD -7.58 LongPF 1.696 (vs v6.3 38f: 265 trades PF 1.679 PnL $60.72 LongPF 1.167). _snapshot_time deploy: 2026-07-10 13:05:00. Rollback v6.3: kembalikan lgbm ke opt2_plus_trend_18coin (38f) di ACTIVE_STACK. Detail lengkap: EXPERIMENTS.md 2026-07-10.",
+  "previous_active": "ic32_regime_v6.3",
+  "post_deploy_operational_note": "Dua perubahan operasional ditambahkan LANGSUNG di swint_tradev2 setelah deploy model ini, tidak mengubah model/n_features: cooldown profit-only 1h (AKTIF 2026-07-13) + guardian floor STOP-LIMIT fixed 0.7xTP (AKTIF 2026-07-12). Lihat inference_config.json.cooldown / .limit_exit.",
   "stack": {
     "lgbm": {
-      "run": "ic32_regime_v2_parity",
-      "features": "models/runs/ic32_regime_v2_parity/features.json",
-      "n_features": 33,
-      "base_threshold": {
-        "thr_long": 0.75,
-        "thr_short": 0.70,
-        "thr_short_trend_up": 0.80
-      }
+      "run": "opt2_plus_trend_18coin_iso37f",
+      "alias": "lgbm37f_18coin",
+      "features": "models/runs/opt2_plus_trend_18coin_iso37f/features.json",
+      "n_features": 37,
+      "label_source": "labeled_opt2 isolated 18-koin (pipeline/experiments/takedown_rsz_18coin/labeled_opt2/), takedown relative_strength_z dari opt2_plus_trend_18coin (38f baseline) -- genuine walk-forward, purge gap sama metodologi production"
     },
     "guardian": {
-      "run": "ic32_rv2_parity_guard_oof",
-      "features": 30,
-      "cv_f1_macro": 0.847,
-      "exit_threshold": 0.90,
-      "min_hold_bars": 2
+      "run": "guard_opt2_plus_trend_hmm_18coin",
+      "alias": "guard28f_18coin",
+      "features": 28,
+      "cv_f1_macro": 0.5724,
+      "cv_logloss": 0.3074,
+      "exit_threshold": 0.65,
+      "momentum_floor_frac": 0.7,
+      "min_hold_bars": 0,
+      "excluded_cross_model": [
+        "hmm_regime_enc",
+        "lgbm_entry_conf",
+        "p_bull"
+      ]
     },
     "lstm": {
       "run": "ic32_lstm_regime_v2",
-      "enabled": false,
-      "note": "Deployed tapi dinonaktifkan (lstm_confirmation_enabled: false)"
+      "enabled": false
     },
     "hmm": {
       "type": "per-coin",
+      "alias": "hmm24/48",
       "n_states": 4,
-      "path": "models/hmm/"
+      "vol_window": 24,
+      "mom_window": 48,
+      "path": "models/hmm/",
+      "delta": 0.1
+    },
+    "spot_confirm": {
+      "enabled": true,
+      "threshold": 0.6,
+      "agree_boost": 0.08,
+      "opposite_pen": 0.35,
+      "model": "f2_swing_w20_h84_thr060 (models/spottrade_confirm/)",
+      "source": "live_spottrade API (localhost:8080/api/features/snapshot), fail-open kalau API/model gagal"
+    },
+    "regime_disable": {
+      "enabled": true,
+      "block_long_in": ["TRENDING_DOWN"]
     }
   },
   "oof_scorecard": {
-    "period": "2020-01-01 to 2026-04-01 (purged CV OOF, TRAIN_CUTOFF=2026-04-01)",
-    "methodology": "genuine_oof_rolling_8fold_purge36",
-    "trades": 4812,
-    "wr_pct": 50.8,
-    "pnl_usd": 583.06,
-    "ppt_usd": 0.1212
+    "period": "2020-01-01 to 2026-04-01",
+    "methodology": "genuine_oof_rolling_8fold_purge20 (LGBM+spot-confirm) + HMM 0.65/0.10 + regime-disable + Guardian guard28f_18coin min_hold=0",
+    "trades": 5742,
+    "wr_pct": 67.3,
+    "profit_factor": 2.088,
+    "pnl_usd": 2859.54,
+    "max_dd_usd": -24.08,
+    "caveat": "Angka dari baseline 38f (opt2_plus_trend_18coin, pre-takedown relative_strength_z) -- belum di-reproduce persis utk 37f (v6.4). Lihat EXPERIMENTS.md 2026-07-10."
   },
-  "holdout_scorecard": {
-    "period": "2026-04-01 to 2026-06-22",
-    "status": "SEALED — dibuka sekali 2026-06-22",
-    "no_guardian": {
-      "trades": 56,
-      "wr_pct": 42.86,
-      "profit_factor": 0.796,
-      "pnl_usd": -3.28
-    },
-    "with_guardian": {
-      "trades": 56,
-      "wr_pct": 41.07,
-      "profit_factor": 0.599,
-      "pnl_usd": -5.34
-    }
-  },
-  "note": "Baseline bersih post-lookahead-fix. Model sebelumnya (ic32_regime_v2) ter-inflasi H4 lookahead, WR 65% tidak valid. Ini titik start jujur untuk improvement iteratif.",
-  "fixes_from_previous": [
-    "H4 lookahead: resample label +4h shift (cvd_slope_h4, ofi_h4_delta, cvd_div_h4)",
-    "CVD real: cumsum(buy_taker - sell_taker) identik live",
-    "LSR real: data.binance.vision daily metrics"
-  ]
+  "sealed_holdout_oos": {
+    "period": "2026-04-01 to 2026-07-10",
+    "note": "v6.4 (37f, takedown relative_strength_z), holdout-test genuine (bukan holdout tersegel), LGBM+HMM+regime-disable+Guardian, entry M15@HH:15 (belum termasuk simulasi spot-confirm real-time)",
+    "trades": 278,
+    "wr_pct": 57.1,
+    "profit_factor": 1.816,
+    "pnl_usd": 73.57,
+    "max_dd_usd": -7.58,
+    "long_pf": 1.696,
+    "short_pf": 1.864
+  }
 }
