@@ -28,9 +28,10 @@ TARGET_REPO_DIR = r"E:\Widyawardhana_Capital\swint_tradev2"
 # Nama harus cocok dengan direktori di models/runs/
 # -------------------------------------------------------
 ACTIVE_STACK = {
-    "lgbm":     "opt2_plus_trend_18coin_iso37f",       # lgbm37f 18-koin — takedown relative_strength_z (2026-07-10), gap live-vs-riset tak terjelaskan; OOS PF +8-10% vs opt2_plus_trend_18coin di semua kombinasi entry/regime_disable
-    "lstm":     "ic32_lstm_regime_v2",                 # momentum LSTM tetap DISABLED (cascade)
-    "guardian": "guard_opt2_plus_trend_hmm_18coin",    # guard28f_18coin — no cross-model, reuse (tidak retrain, tidak butuh relative_strength_z)
+    "lgbm":       "opt2_plus_trend_18coin_iso37f",     # lgbm37f 18-koin — takedown relative_strength_z (2026-07-10), gap live-vs-riset tak terjelaskan; OOS PF +8-10% vs opt2_plus_trend_18coin di semua kombinasi entry/regime_disable
+    "lstm":       "ic32_lstm_regime_v2",               # momentum LSTM tetap DISABLED (cascade)
+    "guardian":   "guard_opt2_plus_trend_hmm_18coin",  # guard28f_18coin — no cross-model, reuse (tidak retrain, tidak butuh relative_strength_z)
+    "lgbm_trend": "lgbm37f_trend",                     # regime_model_routing TRENDING_UP (state 3) — label triple-barrier ATR, fitur identik 37f. Insiden 2026-07-14: sempat ke-wipe diam-diam krn absen di sini, lihat EXPERIMENTS.md
 }
 # Rollback cepat: kembalikan lgbm ke "opt2_plus_trend_18coin" (38f, pre-takedown).
 # Catatan ic32_regime_v3: daily LSTM `ic32_daily_lstm_17f_s30` TIDAK di-deploy sbg
@@ -44,11 +45,13 @@ def _named(component, run_id, ext):
 _L  = ACTIVE_STACK["lgbm"]
 _LS = ACTIVE_STACK["lstm"]
 _G  = ACTIVE_STACK["guardian"]
+_LT = ACTIVE_STACK["lgbm_trend"]
 
 # File model, scaler, dan code yang akan disalin (source relative to SOURCE_REPO_DIR, target relative to TARGET_REPO_DIR)
 DEPLOY_MAPPING = {
     # 1. Models & Scalers — named by run_id agar traceable
     f"models/runs/{_L}/lgbm.pkl":                        _named("lgbm", _L, ".pkl"),
+    f"models/runs/{_LT}/lgbm.pkl":                        _named("lgbm", _LT, ".pkl"),
     f"models/runs/{_LS}/lstm_momentum.pt":               _named("lstm", _LS, ".pt"),
     f"models/runs/{_LS}/lstm_momentum_scaler.pkl":       _named("scaler_lstm", _LS, ".pkl"),
     f"models/runs/{_G}/guardian.pkl":                    _named("guard", _G, ".pkl"),
@@ -139,10 +142,11 @@ def _set_nested(d, dotted, value):
 
 def _build_models_section():
     """Buat `models` section di inference_config berdasarkan ACTIVE_STACK."""
-    L, LS, G = _L, _LS, _G
+    L, LS, G, LT = _L, _LS, _G, _LT
     return {
         "lgbm":             f"lgbm_{L}.pkl",
         "lgbm_features":    f"feats_lgbm_{L}.json",
+        "lgbm_trend":       f"lgbm_{LT}.pkl",
         "lstm":             f"lstm_{LS}.pt",
         "lstm_features":    f"feats_lstm_{LS}.json",
         "lstm_scaler":      f"scaler_lstm_{LS}.pkl",

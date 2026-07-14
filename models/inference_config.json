@@ -30,6 +30,11 @@
   "model_files": {
     "features": "feats_lgbm_opt2_plus_trend_18coin_iso37f.json"
   },
+  "regime_model_routing": {
+    "enabled": true,
+    "trend_states": [3],
+    "note": "AKTIF 2026-07-12 (commit swint 4938ddb), sempat ke-wipe tanpa sengaja oleh deploy_model.py krn tidak ada di source Riset (insiden ditemukan 2026-07-14, lihat EXPERIMENTS.md) -- dipulihkan ke SSOT ini spy deploy berikutnya tidak menghapusnya lagi. State HMM 3 (TRENDING_UP) pakai LGBM terpisah (lgbm_trend, models.lgbm_trend) hasil retrain khusus label triple-barrier ATR (RR 2.0/1.5) di bar TRENDING_UP/DOWN, fitur identik 37f. TRENDING_DOWN (state 0) TETAP pakai LGBM utama (opt2_plus_trend_18coin_iso37f) -- OOS Riset_pemodelan tunjukkan LGBM-trend rugi di TRENDING_DOWN (PF 0.984) tapi untung di TRENDING_UP (PF 1.332); RANGING (state 1/2) juga tetap LGBM utama. spot_confirm otomatis di-skip saat pakai LGBM-trend (miscalibrated). Tervalidasi OOF+OOS 18-koin: OOS narrow-routing WR 56.1% PF 1.303 PnL $47.19 vs baseline WR 54.8% PF 1.247 PnL $28.45. Detail: EXPERIMENTS.md 2026-07-12."
+  },
   "cascade": {
     "mode": "hard_consensus",
     "lstm_confirmation_enabled": false,
@@ -100,13 +105,13 @@
       "enabled": false,
       "note": "Emergency brake nonaktif. Sama seperti v6.1."
     },
-    "note": "Per-state HMM gating base=0.65 delta=0.10 -- IDENTIK v6.1, tidak berubah. models/hmm/{coin}_hmm.pkl utk 6 koin baru sudah di-fit via SSOT regime_hmm_holdout.py (2026-07-08/09).",
+    "note": "Per-state HMM gating base=0.70 delta=0.10 (NAIK dari base=0.65, 2026-07-13) + regime encoding causal filtering (bukan Viterbi) -- lihat EXPERIMENTS.md 2026-07-13 § re-tuning threshold. Viterbi lama = lookahead bias di reproduksi riset (state bar lama bisa 'intip' bar sesudahnya di window backtest yang terus diperpanjang) -- BUKAN cara live sungguhan ambil keputusan (live sudah causal real-time tiap re-decode), tapi angka backtest historis proyek ini sedikit ter-gelembung karenanya. Divalidasi OOS genuine (315->169 trade, PF 1.262->1.572 +25%, WR +6pp, PnL nyaris sama $30.34->$30.43, MaxDD -$6.93->-$6.38 membaik 8%): trade lebih sedikit tapi lebih efisien & risiko sedikit lebih kecil, untung total tidak berkurang. models/hmm/{coin}_hmm.pkl TIDAK berubah (fit sama persis, cuma cara decode/predict yang beda). PENTING: baru diterapkan di SSOT riset (pipeline/data/core/regime_hmm_holdout.py) -- swint_tradev2/app/services/data_service.py::_compute_hmm_regime() MASIH pakai predict_hmm (Viterbi) + base=0.65, BELUM disinkronkan ke live.",
     "per_state_thresholds": {
-      "0": [0.75, 0.55],
-      "1": [0.7, 0.6],
-      "2": [0.6, 0.7],
-      "3": [0.55, 0.75],
-      "-1": [0.65, 0.65]
+      "0": [0.80, 0.60],
+      "1": [0.75, 0.65],
+      "2": [0.65, 0.75],
+      "3": [0.60, 0.80],
+      "-1": [0.70, 0.70]
     },
     "states": [
       "TRENDING_DOWN",
