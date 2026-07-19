@@ -28,8 +28,11 @@ temp/
 vantage/
 vantage_test/
 
-# Data — 500MB+, terlalu besar untuk git
-data/
+# Data — 500MB+, terlalu besar untuk git (anchor ke root -- JANGAN hapus "/" depan,
+# tanpa anchor pattern ini juga ke-match folder KODE bernama "data" di path lain,
+# spt pipeline/data/ dan tools/data/ -- insiden 2026-07-19, keduanya tak pernah
+# ter-track sejak dibuat. Lihat EXPERIMENTS.md 2026-07-19.)
+/data/
 
 # Model binary — terlalu besar untuk git (semua subdirektori)
 **/*.pkl
