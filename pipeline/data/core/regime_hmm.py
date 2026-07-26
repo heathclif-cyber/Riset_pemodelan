@@ -118,8 +118,25 @@ def process_coin(
             return False
         logger.info(f"[{coin}] H4 bars: {len(df_h4)} | {df_h4.index.min().date()} - {df_h4.index.max().date()}")
 
-        # BTC cross-asset features (jika bukan BTC sendiri dan data tersedia)
-        btc_ctx = btc_h4 if (coin != "BTCUSDT" and btc_h4 is not None) else None
+        # BTC cross-asset features DIMATIKAN 2026-07-26 — SENGAJA, jangan dihidupkan
+        # lagi tanpa keputusan ulang.
+        #
+        # Sebelumnya blok ini mengoper `btc_h4` sehingga HMM OOF dilatih dgn 6 fitur
+        # (4 + btc_ret + btc_mom), sementara jalur SSOT holdout
+        # (`regime_hmm_holdout.py`, fit TANPA btc_h4) dan LIVE (bundle
+        # `models/hmm/*.pkl` & `live_dualbin_ft/models/hmm/*.pkl`, terverifikasi
+        # `n_features=4`) memakai 4 fitur. Akibatnya angka OOF & OOS dibangun di atas
+        # dua konfigurasi HMM berbeda, dan ambang entry dikalibrasi thd sebaran regime
+        # yang tidak pernah dihasilkan live.
+        #
+        # Terverifikasi numerik (dualbin, base .7562/.7508 delta .05, lev 10):
+        #   dgn btc_h4  -> OOF 14.342 trade / PF 1,650  (cocok artefak 23 Juli)
+        #   tanpa       -> OOF 14.497 trade / PF 1,588
+        #   holdout dgn btc_h4 -> OOS PF 1,241 / PnL $160,78 (turun 33,6% dari 1,382)
+        # Keputusan user 2026-07-26: samakan OOF ke sisi holdout+live (yaitu TANPA
+        # konteks), bukan sebaliknya — live tidak perlu diubah & angka OOS resmi tetap
+        # valid. Lihat EXPERIMENTS.md 2026-07-26 § "label regime OOF vs HOLDOUT".
+        btc_ctx = None
 
         # generate OOF regime labels (walk-forward, leak-free)
         regime_h4 = generate_oof_regime_labels(
@@ -235,7 +252,12 @@ def main():
                 # untuk holdout: fit model pada semua training data, predict holdout
                 df_h4_train = load_h4_from_processed(coin, cutoff=TRAIN_CUTOFF_DATE)
                 from core.regime import fit_hmm, predict_hmm
-                btc_ctx_hold = btc_h4 if (coin != "BTCUSDT" and btc_h4 is not None) else None
+                # Konteks BTC DIMATIKAN 2026-07-26, alasan sama dgn `process_coin`
+                # di atas: bundle HMM live & SSOT holdout terverifikasi 4 fitur, jadi
+                # jalur riset tidak boleh melatih 6 fitur. Blok ini tetap berbeda dari
+                # SSOT dalam 1 hal yg belum ditangani (masih Viterbi, bukan causal) —
+                # lihat catatan di atas blok ini.
+                btc_ctx_hold = None
                 model, _, state_map = fit_hmm(df_h4_train, n_states=args.n_states, n_iter=args.n_iter, btc_h4=btc_ctx_hold)
 
                 # load holdout processed
