@@ -363,3 +363,37 @@ if HOLDOUT_ALREADY_EVALUATED:
 
 *Metodologi ini mengikuti prinsip dari Advances in Financial Machine Learning (Lopez de Prado, 2018)
 dan best practices temporal cross-validation untuk time series.*
+### Gerbang D1 — Reproduksi baseline dulu, sebelum mengukur selisih apa pun
+
+**Sebelum membandingkan kandidat, harness harus mereproduksi angka artefak tercatat sampai
+cocok.** Kalau baseline belum cocok, setiap selisih yang diukur di atasnya tidak punya arti —
+bisa jadi itu cuma cacat reproduksi, bukan efek kandidat.
+
+Cara: jalankan konfigurasi produksi apa adanya, bandingkan ke artefak `models/runs/**/*.json`
+tercatat. Cocokkan **trades, WR, PF, dan PnL** (PnL setelah dinormalkan ke leverage yang sama —
+PF/WR/trades leverage-invariant, PnL berskala linear).
+
+Kalau meleset: **berhenti dan cari sebabnya.** Jangan lanjut sweep sambil "nanti dibereskan".
+
+> Insiden 2026-07-26: satu sesi menghabiskan hampir seluruh waktunya mengejar "selisih paritas
+> 3,8%" sambil terus menjalankan 30 konfigurasi sweep di atas baseline yang salah. Penyebabnya
+> ternyata satu flag fitur (`btc_h4`) yang lupa dioper ke pembangun label regime. Seluruh hasil
+> sweep itu terbuang. Pengecekan yang akan menangkapnya di langkah pertama: 1 simulasi.
+
+### Gerbang D2 — Uji stabilitas per periode di OOF, sebelum menyentuh holdout
+
+**Keunggulan kandidat harus KONSISTEN di seluruh sub-periode OOF.** Angka agregat bisa
+menyembunyikan kemerosotan kronologis, dan itu terlihat penuh tanpa menyentuh holdout.
+
+Aturan:
+1. Pecah OOF per tahun (atau per kuartal kalau datanya pendek), hitung metrik per periode.
+2. **Kalah di satu periode pun → tolak, jangan lanjut ke holdout.** Bukan "menang di mayoritas".
+3. **Periode terbaru ditimbang paling berat** — itu yang paling mirip kondisi live.
+4. **Curigai agregat yang ditopang periode bersampel kecil.** Periode dgn ratusan trade tidak
+   boleh menggerakkan keputusan atas puluhan ribu trade.
+
+> Insiden 2026-07-26: kandidat menang **+3,8% PF di OOF agregat**, lalu **kalah −6,6% di OOS**.
+> Uji per tahun menunjukkan kandidat sudah kalah di **2025 (−10,2%)** dan **2026 (−0,6%)**,
+> sementara agregat ditopang **2020 (+44,4% dari 190 trade saja)**. Kandidat menang 5 dari 7
+> tahun — tetap gagal. Ongkos uji ini: 5 menit.
+
