@@ -233,7 +233,85 @@ def fetch_all_macro():
     fetch_coingecko_global()
     fetch_fear_greed()
     fetch_etf_flow_dune()
+    fetch_etf_flow_yahoo()
     _mark_macro_fetched()
+
+
+# ─── ETF Flow Proxy (yfinance) — sumber data/macro/etf_flow_btc.parquet ─────
+# Dipakai engineer.py utk etf_gbtc_change_usd / etf_total_change_usd.
+# Formula identik dgn live swint_tradev2 app/services/data_service.py
+# _fetch_etf_flow() supaya paritas riset vs live terjaga. Fetcher lama
+# (pipeline/01d_fetch_macro_yfinance.py) sempat ke-archive 2026-06-20/22
+# tanpa pengganti di fetch_all_macro() -> file ini beku sejak 2026-06-08
+# sampai ditemukan & diperbaiki 2026-07-29.
+
+_ETF_FLOW_AUM_B = {
+    "IBIT": 48.0,   # BlackRock
+    "GBTC": 18.0,   # Grayscale
+    "FBTC": 10.0,   # Fidelity
+    "ARKB": 3.5,    # ARK/21Shares
+    "BITB": 3.0,    # Bitwise
+    "HODL": 1.8,    # VanEck
+    "BTCO": 1.3,    # Invesco
+    "EZBC": 0.7,    # Franklin Templeton
+    "BRRR": 0.6,    # Valkyrie
+    "BTCW": 0.4,    # WisdomTree
+}
+
+
+def fetch_etf_flow_yahoo():
+    """
+    Fetch BTC spot ETF daily flow proxy via yfinance (shares_est * price diff).
+    Overwrite penuh data/macro/etf_flow_btc.parquet tiap jalan -- yfinance
+    history(period="max") narik ulang seluruh histori, bukan cuma hari baru.
+    """
+    try:
+        import yfinance as yf
+    except ImportError:
+        print("  ETF Flow (yfinance): SKIP (package belum terinstall)")
+        return False
+
+    print(f"  --- ETF Flow (Yahoo Finance) ---")
+    dfs = []
+    for ticker, aum_b in _ETF_FLOW_AUM_B.items():
+        try:
+            hist = yf.Ticker(ticker).history(period="max")
+            if len(hist) == 0:
+                print(f"    {ticker}: no data, skip")
+                continue
+            latest_close = float(hist["Close"].iloc[-1])
+            if latest_close <= 0:
+                print(f"    {ticker}: invalid close, skip")
+                continue
+            shares_est = aum_b * 1e9 / latest_close
+            col = f"etf_{ticker.lower()}_flow"
+            hist[col] = (shares_est * hist["Close"].diff()).fillna(0.0)
+            dfs.append(hist[[col]])
+            print(f"    {ticker}: {len(hist)} bars, latest={hist.index[-1].date()}")
+        except Exception as e:
+            print(f"    {ticker} FAIL: {e}")
+        time.sleep(0.3)
+
+    if not dfs:
+        print("  ETF Flow (yfinance): FAIL semua ticker, file lama TIDAK ditimpa")
+        return False
+
+    flow_df = pd.concat(dfs, axis=1)
+    flow_df["etf_total_change_usd"] = flow_df.sum(axis=1)
+    if "etf_gbtc_flow" in flow_df.columns:
+        flow_df["etf_gbtc_change_usd"] = flow_df["etf_gbtc_flow"]
+
+    flow_df.index = pd.to_datetime(flow_df.index)
+    flow_df.index = (flow_df.index.tz_convert("UTC") if flow_df.index.tz is not None
+                      else flow_df.index.tz_localize("UTC"))
+    flow_df.index = flow_df.index.normalize()
+    flow_df = flow_df[~flow_df.index.duplicated(keep="last")]
+
+    etf_path = MACRO_DIR / "etf_flow_btc.parquet"
+    flow_df.to_parquet(etf_path)
+    print(f"  ETF Flow (yfinance): {len(flow_df)} baris, "
+          f"{flow_df.index[0].date()} -> {flow_df.index[-1].date()} -> {etf_path}")
+    return True
 
 
 # ─── Backfill Historical Macro Data ─────────────────────────────────────────
