@@ -1783,3 +1783,83 @@ krn file ini drift independen dari git di VPS). Diverifikasi post-deploy: `/api/
 
 **Rollback**: base=0,70, delta=0,10 (angka lama tersimpan di key arsip `*_pre_base065_2026_08_12`
 di kedua file SSOT).
+
+## 2026-08-12 — swint (ic32): tambah constraint eksekusi real (max_open_positions/daily_loss_limit) ke OOF+OOS -- MaxDD hampir 2x lipat
+
+**Pemicu.** User minta cek apakah KONFIGURASI OOF/OOS realistis diterapkan di live -- persis
+kekhawatiran insiden DualBin (PF riset 1,9 tidak terwujud di real), tapi fokus pada MEKANISME
+eksekusi, BUKAN perbandingan angka live historis (itu diminta terpisah sebelumnya & sudah
+dijawab). Audit kode eksekusi live (`swint_tradev2/app/services/execution.py`) menemukan 2
+constraint NYATA yang menggerbang setiap entry (`place_entry()`) tapi TIDAK PERNAH dimodelkan
+di simulasi manapun (`core/evaluator.py`, `model/eval/holdout_oos.py`,
+`run_oof_live_parity_check.py` -- dicek nol referensi):
+1. `max_open_positions=10` -- `Trade.query.filter_by(status="open", is_live=True).count()`,
+   cap GLOBAL lintas semua koin/arah (bukan per-koin). Backtest diam-diam asumsi modal tanpa
+   batas, bisa buka SEMUA sinyal 18 koin sekaligus.
+2. `daily_loss_limit=8` -- `_get_daily_loss_count()`: setelah 8 trade rugi (`pnl_net<0`)
+   closed hari ini (WITA, midnight-to-midnight), entry baru DITOLAK sisa hari itu. Backtest
+   terus trading tanpa jeda apa pun.
+
+(Temuan ke-3 dari audit yang sama, SL polling 5 menit tanpa exchange-side stop, TIDAK
+dikuantifikasi -- perlu data intrabar terpisah, di luar scope malam ini.)
+
+**Metode.** Fungsi baru `apply_portfolio_execution_limits()` (`core/evaluator.py`) -- filter
+POST-HOC: kumpulkan semua kandidat trade lintas-koin (sudah disimulasikan independen per-koin,
+punya `entry_time`/`exit_time`/`net_pnl`), urutkan kronologis, replay slot posisi terbuka via
+min-heap by `exit_time` + hitung ulang rugi harian WITA persis query live
+(`_get_daily_loss_count`). Kandidat yang ditolak TIDAK diganti kandidat lain (sama seperti
+live: sinyal hilang, bukan dicoba ulang). Smoke-test unit (2 skenario sintetis: cap posisi &
+cap rugi harian) lulus sebelum run penuh. Wired via flag baru `--portfolio-limits` di
+`model/eval/holdout_oos.py` (OOS) & `pipeline/model/run_oof_live_parity_check.py` (OOF, varian
+baru **E** = D + portfolio limits, D & varian A/B/C tetap ada sbg pembanding). Default values
+dari `config.LIVE_MAX_OPEN_POSITIONS=10` / `LIVE_DAILY_LOSS_LIMIT=8` (sudah ada di config.py
+sblm sesi ini, ternyata belum pernah dipakai di mana pun).
+
+**Hasil (stack live skrg, base HMM 0,65, exit live-parity + funding, MAE-aware @15x):**
+
+| | Trades | WR | PF | PnL | MaxDD | LongPF | ShortPF |
+|---|---|---|---|---|---|---|---|
+| OOF tanpa portfolio_limits | 5.365 | 62,4% | 1,712 | $6.253,27 | -$84,71 | 1,600 | 1,831 |
+| **OOF + portfolio_limits (real)** | **5.343** | **62,5%** | **1,721** | **$6.267,20** | **-$159,68** | **1,618** | **1,828** |
+| OOS tanpa portfolio_limits | 344 | 59,6% | 1,367 | $139,54 | -$33,21 | 0,851 | 1,585 |
+| **OOS + portfolio_limits (real)** | **333** | **59,5%** | **1,343** | **$129,94** | **-$62,17** | **0,837** | **1,555** |
+
+Cuma 8-22 kandidat trade ditolak (hampir semua krn `max_open_positions`, `daily_loss_limit`
+nyaris tak pernah kena -- 0/8 di OOS, 14/22 di OOF krn rentang 6 tahun jauh lebih panjang).
+Trade count/WR/PF/PnL nyaris tak berubah (<1% di OOS, <2% di OOF). **TAPI MaxDD naik ~88% di
+KEDUA dataset SECARA INDEPENDEN** -- OOF -84,71->-159,68, OOS -33,21->-62,17. Pola identik di
+6 tahun data latih maupun 4 bulan holdout yang belum pernah dilihat model -- bukan derau,
+struktural.
+
+**Interpretasi.** Membatasi posisi konkuren menghapus efek diversifikasi persis di saat paling
+dibutuhkan: periode sinyal padat/berkorelasi (biasanya pergerakan pasar serentak lintas koin) --
+kalau ada rentetan rugi di periode itu, dampaknya jadi lebih terkonsentrasi drpd yg diasumsikan
+backtest tanpa batas (yg bisa "menyebar" ke sebanyak-banyaknya koin). Efeknya nyaris seluruhnya
+di MaxDD (risiko), BUKAN return -- return (PF/WR/PnL) nyaris tidak terpengaruh krn sinyal yang
+ditolak jumlahnya kecil & tidak sistematis condong untung/rugi.
+
+**Bukan insiden spt DualBin** (PF tidak jatuh, model tidak "gagal diwujudkan") -- tapi
+**scorecard yang SEBELUMNYA jadi SSOT meremehkan risiko riil (MaxDD) ~2x lipat**. Signifikan
+utk keputusan ukuran modal/leverage, krn MaxDD adalah metrik yg dipakai menilai toleransi risiko.
+
+**Keputusan user**: adopsi angka portfolio_limits sbg SSOT baru ("environment riset harus
+masuk akal dan representatif live").
+
+**SSOT diupdate.** `model_registry.json.oof_scorecard` (native+funding, portfolio_limits ON) --
+lama diarsip `oof_scorecard_pre_portfolio_limits_2026_08_12`. `inference_config.json.scorecard.
+oof`/`scorecard.holdout_oos` (MAE-aware+funding, portfolio_limits ON) + `monthly` baru -- lama
+diarsip `*_pre_portfolio_limits_2026_08_12`. `_snapshot_time`/threshold/model **TIDAK berubah**
+-- murni perbaikan metodologi pengukuran (constraint eksekusi, bukan parameter model), sama
+kelasnya dgn perbaikan live-parity-exit 2026-08-11.
+
+**Artefak.** `core/evaluator.py` (+`apply_portfolio_execution_limits`); `model/eval/
+holdout_oos.py` (+`--portfolio-limits`/`--max-open-positions`/`--daily-loss-limit`);
+`pipeline/model/run_oof_live_parity_check.py` (+varian E, flag sama); trade-level CSV:
+`data/live_cache/oof_hmmbase065_E_trades.csv` (+`_funding.csv`),
+`data/live_cache/oos_hmmbase065_portfoliolimits_trades_funding.csv`;
+`models/runs/guard_opt2_plus_trend_hmm_18coin_clean/{oof_live_parity_check_hmmbase0.65.json,
+oos_holdout_full_scorecard.json,oos_holdout_h4closed_full.json}`.
+
+**Belum diselesaikan** (di luar scope malam ini, dicatat sbg utang): kuantifikasi slippage SL
+5-menit-polling (temuan ke-3 audit realisme eksekusi) -- butuh data intrabar M1/M5 utk estimasi
+realistis, belum ada di repo ini.

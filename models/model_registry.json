@@ -113,15 +113,15 @@
   },
   "oof_scorecard": {
     "period": "2020-01-01 to 2026-04-01",
-    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY (2026-08-11): floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
-    "trades": 5365,
+    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY (2026-08-11): floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Portfolio execution constraints PERSIS live (2026-08-12): max_open_positions=10, daily_loss_limit=8 (execution.py::place_entry, sebelumnya TIDAK PERNAH dimodelkan -- backtest diam-diam asumsi modal tanpa batas & tanpa circuit-breaker rugi harian). Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
+    "trades": 5343,
     "wr_pct": 63.6,
-    "profit_factor": 2.066,
-    "pnl_usd": 8122.78,
-    "max_dd_usd": -78.73,
-    "long_pf": 2.155,
-    "short_pf": 1.983,
-    "caveat": "PERBAIKAN 2026-08-12: base HMM diturunkan 0.70->0.65 (delta tetap 0.10) -- user pilih sadar trade-off setelah sweep 0.60/0.65/0.70 (lihat stack.hmm.base_change_note_2026_08_12). Trades naik 2837->5365 (+89%), PF turun 2.609->2.066 (-21%), PnL naik +46%, MaxDD lebih dalam -45.40->-78.73. Angka SEBELUM perubahan base ini (base 0.70, exit live-parity sama) diarsip di oof_scorecard_pre_base065_2026_08_12. Detail EXPERIMENTS.md 2026-08-12."
+    "profit_factor": 2.058,
+    "pnl_usd": 8023.13,
+    "max_dd_usd": -133.4,
+    "long_pf": 2.14,
+    "short_pf": 1.981,
+    "caveat": "PERBAIKAN 2026-08-12: max_open_positions=10 & daily_loss_limit=8 (persis execution.py::place_entry) ditambahkan ke simulasi -- SEBELUMNYA tidak pernah dimodelkan sama sekali di core/evaluator.py (backtest diam-diam asumsi modal tanpa batas & tanpa circuit-breaker rugi harian). Trades turun 5365->5343 (-0.4%), WR/PF/PnL nyaris tak berubah, TAPI MaxDD naik -78.73->-133.40 (+69%) -- efeknya nyaris seluruhnya di MaxDD, bukan return. Temuan sama di OOS (lihat inference_config.json.scorecard.holdout_oos), pola konsisten lintas 2 dataset independen. Angka SEBELUM constraint ini diarsip di oof_scorecard_pre_portfolio_limits_2026_08_12. Detail EXPERIMENTS.md 2026-08-12."
   },
   "oof_scorecard_pre_base065_2026_08_12": {
     "period": "2020-01-01 to 2026-04-01",
@@ -129,8 +129,8 @@
     "trades": 2837,
     "wr_pct": 67.2,
     "profit_factor": 2.609,
-    "pnl_usd": 5576.30,
-    "max_dd_usd": -45.40,
+    "pnl_usd": 5576.3,
+    "max_dd_usd": -45.4,
     "long_pf": 2.834,
     "short_pf": 2.426,
     "caveat": "ARSIP -- base HMM 0.70 (SEBELUM turun ke 0.65, 2026-08-12). Trade count (2837) TIDAK cocok dgn angka scorecard.oof yg terpasang inference_config.json sebelum 2026-08-11 (3339) -- sumber 3339 tidak berhasil direkonsiliasi, masih PERLU investigasi terpisah (utang lama, bukan spesifik ke perubahan base ini)."
@@ -298,5 +298,17 @@
     "caveat": "Keunggulan OOS terkonsentrasi Juni-Juli; April-Mei versi lama sedikit lebih baik (50-60 trade/bulan, blm cukup memisahkan perbaikan genuine dari kebetulan). OOF MENTAH (bukan MAE-aware) masih menunjukkan versi lama lebih aman -- MAE-aware dibobot lebih tinggi krn memodelkan leverage 15x yang benar-benar dipakai live. _clean belum pernah jalan di live sama sekali sblm deploy ini.",
     "rollback": "Kembalikan stack.guardian.run ke guard_opt2_plus_trend_hmm_18coin, models/inference_config.json guardian.*_file + scorecard ke arsip *_pre_clean_2026_07_29, jalankan ulang deploy_production.py. Artefak model lama TIDAK dihapus.",
     "detail": "EXPERIMENTS.md 2026-07-29 (multiple entries: confound spot-confirm, bug window HMM, tool MAE-aware, rencana deploy)."
+  },
+  "oof_scorecard_pre_portfolio_limits_2026_08_12": {
+    "period": "2020-01-01 to 2026-04-01",
+    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY (2026-08-11): floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
+    "trades": 5365,
+    "wr_pct": 63.6,
+    "profit_factor": 2.066,
+    "pnl_usd": 8122.78,
+    "max_dd_usd": -78.73,
+    "long_pf": 2.155,
+    "short_pf": 1.983,
+    "caveat": "ARSIP -- SEBELUM portfolio_limits (max_open_positions=10, daily_loss_limit=8) dimodelkan di simulasi (2026-08-12). Base HMM 0.65/delta 0.10 SAMA persis, cuma constraint eksekusi live yang ditambah. Digantikan oof_scorecard 2026-08-12."
   }
 }

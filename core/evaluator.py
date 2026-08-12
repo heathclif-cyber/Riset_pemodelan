@@ -15,6 +15,14 @@ import numpy as np
 import pandas as pd
 from typing import Optional
 
+try:
+    from tools.model.guardian_k5mom_inference import pre_tp_emergency_exit, tp_proximity
+except ImportError:
+    pre_tp_emergency_exit = None  # type: ignore
+    tp_proximity = None  # type: ignore
+
+from core.lgbm_score_guardian import LgbmScoreGuardParams, lgbm_score_exit
+
 from config import (
     TP_SL_HYBRID_MODE, TP_SL_SWING_FRESHNESS, TP_SL_STRUCTURAL_FILTER,
     TP_SL_RR_GATE_ENABLED, TP_SL_MIN_RR, TP_SL_MIN_TP, TP_SL_MAX_SL,
@@ -269,6 +277,8 @@ def _assemble_guardian_row(
     max_favorable_pnl: float,
     flow_momentum_3bar: float = 0.0,
     lgbm_entry_conf: float = 0.0,
+    lgbm_conf_now: float | None = None,
+    tp_phase: float | None = None,
 ) -> np.ndarray:
     """Build guardian feature row in feat_cols order (static snapshot + dynamic)."""
     pnl_pct = (current_price - entry_price) / entry_price
@@ -292,6 +302,8 @@ def _assemble_guardian_row(
     atr_pct = atr_val / entry_price if entry_price > 0 else 0.01
     mfe_atr_ratio = max_favorable_pnl / atr_pct if atr_pct > 0 else 0.0
 
+    lec = float(lgbm_entry_conf)
+    lcn = float(lgbm_conf_now) if lgbm_conf_now is not None else lec
     dynamic_vals = {
         "bars_held_norm": bars_held_norm,
         "current_pnl_pct": pnl_pct,
@@ -303,9 +315,14 @@ def _assemble_guardian_row(
         "cvd_slope_h4_delta_entry": float(cvd_cur - cvd_ent),
         "ofi_h4_delta_entry": float(ofi_cur - ofi_ent),
         "flow_momentum_3bar": float(flow_momentum_3bar),
-        "lgbm_entry_conf": float(lgbm_entry_conf),
+        "lgbm_entry_conf": lec,
+        "lgbm_conf_now": lcn,
+        "lgbm_conf_delta": lcn - lec,
+        "lgbm_conf_ratio": lcn / lec if lec > 0.001 else 1.0,
         "mfe_atr_ratio": float(mfe_atr_ratio),
     }
+    if tp_phase is not None:
+        dynamic_vals["tp_phase"] = float(tp_phase)
 
     row = np.zeros(len(feat_cols), dtype=np.float64)
     for i, col in enumerate(feat_cols):
@@ -432,6 +449,10 @@ def simulate_trades_swing(
     sl_trigger_mode:       str  = TP_SL_TRIGGER_MODE,      # #8
     sizing_mode:           str  = TP_SL_SIZING_MODE,       # #12
     cooldown_enabled:      bool = TP_SL_COOLDOWN_ENABLED,  # #15
+    # Cooldown profit-only: setelah trade close dengan net_pnl>0, skip entry N bar (1 bar = 1h).
+    # Kalau True, rule WIN/LOSS lama (2h/4h) diganti: hanya profit → +cooldown_profit_bars.
+    cooldown_profit_only:  bool = False,
+    cooldown_profit_bars:  int = 1,
     swing_sl_bumper_atr:   float = 0.5,                    # Bumper untuk mitigasi stop-hunt (0.5 ATR)
     structural_tolerance_pct: float = 0.04,                # Toleransi breakout filter struktural (4%)
     # ── NEW: Grup 1 — VolR Conditional & SL % Cap ──────────────────────────
@@ -443,6 +464,18 @@ def simulate_trades_swing(
     max_sl_pct_enabled:       bool = False,  # #17: enable SL % distance cap (1d)
     max_sl_pct:               float = 0.30,  # max SL = 30% dari entry
     min_sl_pct:               float = 0.0,   # #18: floor jarak SL (min % dari entry); 0 = off
+    # sh>price & sl<price sblm pakai swing (match live paper_trading.py). Default False:
+    # diuji 2026-07-12 (OOF 12,579 vs 5,415 trade; OOS 591 vs 303) -- kalau True, WR turun
+    # ~6-7pp & OOS MaxDD 3x lebih buruk (trade tambahan yg lolos krn fallback ATR net NEGATIF
+    # PnL). Toggle disimpan utk uji "match live literally", TAPI default TETAP perilaku lama
+    # (reject saat swing basi, bukan fallback ATR) krn empirically lebih baik. Lihat EXPERIMENTS.md.
+    swing_sidedness_check:  bool = False,
+    # Opsional: batasi kapan swing_sidedness_check aktif berdasar regime HMM per-bar.
+    # None = aktif semua bar (kalau swing_sidedness_check=True). Kalau diisi array kode
+    # regime + swing_sidedness_active_states, check cuma aktif di state itu (mis. TRENDING
+    # saja) -- di state lain, balik ke perilaku lama (tolak via RR gate, bukan fallback ATR).
+    swing_sidedness_regime_arr:    np.ndarray = None,
+    swing_sidedness_active_states: tuple = None,
     # ── NEW: Grup 3 — Swing Freshness ──────────────────────────────────────
     max_swing_deviation_pct:       float = 0.15,  # #19: max deviasi swing (3b)
     individual_swing_freshness:    bool = False,  # #20: cek freshness per swing (3c)
@@ -461,16 +494,55 @@ def simulate_trades_swing(
     guardian_activation_atr   = GUARDIAN_ACTIVATION_ATR,
     guardian_enabled          = GUARDIAN_ENABLED,
     guardian_momentum_floor_frac = GUARDIAN_MOMENTUM_FLOOR_FRAC,  # post-TP trailing floor
+    guardian_momentum_floor_tp_frac = 0.0,  # opsional: floor tambahan = frac x TP_pnl (jaminan
+    # minimum stabil, independen dari MFE). Floor final = max(floor_frac*mfe_pnl, tp_frac*tp_pnl)
+    # -- KECUALI guardian_floor_replace_with_tp=True (lihat bawah).
+    # Default 0.0 = OFF, perilaku identik sebelumnya. Lihat EXPERIMENTS.md 2026-07-12.
+    guardian_floor_replace_with_tp = False,  # True: floor JADI tp_frac*TP_pnl SAJA (fixed,
+    # tidak ikut MFE) -- guardian_momentum_floor_frac diabaikan total. Eksekusi live: exchange-side
+    # STOP-LIMIT dipasang begitu TP tersentuh, bukan trailing. Lihat EXPERIMENTS.md 2026-07-12.
     guardian_feat_cols        = None,   # full feature order for custom guardian models
     guardian_static_names     = None,   # static column names matching X_guardian
     flow_momentum_arr         = None,   # optional per-bar flow_momentum_3bar array
-    lgbm_conf_arr             = None,   # optional per-bar LGBM confidence (p2 LONG / p0 SHORT)
+    lgbm_conf_arr             = None,   # optional per-bar LGBM confidence at entry bar
+    lgbm_p0_arr               = None,   # hourly SHORT conf — for lgbm_conf_now features
+    lgbm_p2_arr               = None,   # hourly LONG conf — for lgbm_conf_now features
     # ── Guardian Delta mode (binary, delta features) ─────────────────────
     guardian_delta_raw        = None,   # dict {feat_name: np.ndarray}
     guardian_delta_feats      = None,   # list[str] — model's feature order
     guardian_mom_thresh       = 0.45,   # P(EXIT) to confirm exit AFTER TP
     guardian_def_thresh       = 0.70,   # P(EXIT) to cut early loss
     guardian_def_min_loss     = -0.010, # min pnl_pct before defense activates
+    guardian_binary_peak      = False,  # binary HOLD/EXIT — post-TP escort only
+    guardian_emergency_pre_tp = False,  # k5mom: pre-TP exit on LGBM conf collapse (darurat)
+    guardian_emergency_conf_delta       = -0.10,
+    guardian_emergency_conf_delta_near_tp = -0.16,
+    guardian_near_tp_proximity          = 0.85,
+    guardian_emergency_min_loss         = -0.004,
+    # ── Hybrid dual Guardian (pre-TP 3-class + post-TP binary peak) ───
+    guardian_hybrid_dual          = False,
+    guardian_pre_model            = None,
+    guardian_pre_scaler           = None,
+    guardian_peak_model           = None,
+    guardian_peak_scaler          = None,
+    guardian_pre_feat_cols        = None,
+    guardian_peak_feat_cols       = None,
+    guardian_pre_exit_threshold   = None,
+    guardian_pre_exit_min_pnl     = None,   # pre-TP EXIT only if cur_pnl >= this (L1 emergency bypass)
+    guardian_peak_exit_threshold  = None,
+    # ── LGBM score guardian (rule-based, no ML model) ─────────────────
+    guardian_lgbm_score_enabled   = False,
+    lgbm_score_min_hold_bars      = 2,
+    lgbm_score_activation_atr     = 0.5,
+    lgbm_score_wrong_entry_conf_delta = -0.12,
+    lgbm_score_wrong_entry_min_loss = -0.002,
+    lgbm_score_conf_dead_floor    = 0.42,
+    lgbm_score_profit_take_min_pnl = 0.008,
+    lgbm_score_profit_take_conf_delta = -0.08,
+    lgbm_score_near_tp_proximity  = 0.85,
+    lgbm_score_near_tp_conf_delta = -0.06,
+    lgbm_score_near_tp_min_pnl    = 0.004,
+    lgbm_score_profit_take_enabled = True,
     # ── Trailing Stop ─────────────────────────────────────────────────
     trailing_stop_enabled     = TRAILING_STOP_ENABLED,
     trailing_stop_atr         = TRAILING_STOP_ATR,
@@ -484,6 +556,14 @@ def simulate_trades_swing(
     pyramiding_max_per_coin: int = 1,
     pyramiding_same_dir:    bool = True,
     pyramiding_exit_mode:   str = "independent",  # independent | shared_sl_first | close_with_first | scale_in
+    # Gate tambahan khusus mode "scale_in": leg baru cuma boleh nambah kalau harga sudah
+    # bergerak MERUGIKAN posisi (dari VWAP saat ini) minimal sekian persen -- niatnya
+    # koreksi entry yang wrong-timing, bukan nambah ke posisi yang sudah untung. 0.0 = off.
+    pyramiding_min_adverse_pct: float = 0.0,
+    # Gate waktu (mode "scale_in" saja): leg baru cuma boleh nambah kalau sudah minimal N bar
+    # (1 bar = 1h) sejak leg TERAKHIR ditambahkan. 0 = off. Independen dari pyramiding_min_adverse_pct
+    # (gate harga) -- bisa dipakai bareng atau sendiri-sendiri.
+    pyramiding_min_bars_gap:  int = 0,
     entry_price_override     = None,  # np.ndarray — harga entry M15 per bar H1 (opsional)
 ) -> dict:
     """
@@ -512,6 +592,9 @@ def simulate_trades_swing(
     Semua tier melalui validasi R:R yang sama — skip trade jika gagal.
     """
     if pyramiding_enabled and pyramiding_exit_mode == "scale_in":
+        # NOTE: cuma dukung jalur Guardian "plain" (feat_cols+static_names) -- lihat
+        # docstring core/scale_in_sim.py. Kalau stack pakai hybrid/lgbm_score/binary_peak/
+        # delta/trailing_stop, porting dulu sebelum pakai mode ini.
         from core.scale_in_sim import run_scale_in_simulation
         return run_scale_in_simulation(
             y_pred=y_pred, close=close, high=high, low=low, atr=atr,
@@ -537,16 +620,17 @@ def simulate_trades_swing(
             guardian_min_hold_bars=guardian_min_hold_bars,
             guardian_activation_atr=guardian_activation_atr, guardian_enabled=guardian_enabled,
             guardian_feat_cols=guardian_feat_cols, guardian_static_names=guardian_static_names,
-            flow_momentum_arr=flow_momentum_arr,
-            guardian_delta_raw=guardian_delta_raw, guardian_delta_feats=guardian_delta_feats,
-            guardian_mom_thresh=guardian_mom_thresh, guardian_def_thresh=guardian_def_thresh,
-            guardian_def_min_loss=guardian_def_min_loss,
-            trailing_stop_enabled=trailing_stop_enabled, trailing_stop_atr=trailing_stop_atr,
-            trailing_stop_min_bars=trailing_stop_min_bars, min_sl_pct=min_sl_pct,
+            flow_momentum_arr=flow_momentum_arr, lgbm_conf_arr=lgbm_conf_arr,
+            guardian_momentum_floor_frac=guardian_momentum_floor_frac,
+            guardian_momentum_floor_tp_frac=guardian_momentum_floor_tp_frac,
+            guardian_floor_replace_with_tp=guardian_floor_replace_with_tp,
+            min_sl_pct=min_sl_pct,
             vcb_enabled=vcb_enabled, vcb_atr_multiplier=vcb_atr_multiplier,
             vcb_lookback_bars=vcb_lookback_bars,
             pyramiding_max_per_coin=pyramiding_max_per_coin,
             pyramiding_same_dir=pyramiding_same_dir,
+            pyramiding_min_adverse_pct=pyramiding_min_adverse_pct,
+            pyramiding_min_bars_gap=pyramiding_min_bars_gap,
             sizing_with_trend_half=sizing_with_trend_half, h4_trend=h4_trend,
             entry_price_override=entry_price_override,
         )
@@ -627,7 +711,20 @@ def simulate_trades_swing(
                     equity_curve.append(equity)
                     continue
 
+        # Swing valid hanya kalau posisinya masih masuk akal thd harga entry —
+        # swing high di ATAS & swing low di BAWAH price (kalau tidak, struktur H4
+        # basi/sudah ditembus; match live paper_trading.py::_calculate_tp_sl yg
+        # sudah validasi sh>entry & sl<entry sebelum pakai swing, fallback ke ATR
+        # kalau gagal — evaluator ini sebelumnya TIDAK validasi sisi, pakai swing
+        # basi apa adanya sehingga SL bisa jadi sangat lebar & RR gagal padahal
+        # live lolos via ATR fallback (fix 2026-07-12).
         use_swing = not np.isnan(sh_i) and not np.isnan(sl_i)
+        if use_swing and swing_sidedness_check:
+            _check_active = True
+            if swing_sidedness_regime_arr is not None and swing_sidedness_active_states is not None:
+                _check_active = int(swing_sidedness_regime_arr[i]) in swing_sidedness_active_states
+            if _check_active:
+                use_swing = sh_i > price and sl_i < price
 
         # ── #2 Swing Freshness Check ────────────────────────────────────
         if swing_freshness_check and use_swing:
@@ -731,8 +828,49 @@ def simulate_trades_swing(
                 sl_dist = sl_price - price
 
         # ── Guardian active flag (tidak override TP/SL — pakai swing H4 / ATR fallback)
-        guardian_active       = guardian_enabled and guardian_model is not None and X_guardian is not None
+        guardian_hybrid_active = (
+            guardian_hybrid_dual
+            and guardian_pre_model is not None
+            and guardian_peak_model is not None
+            and guardian_pre_scaler is not None
+            and guardian_peak_scaler is not None
+            and X_guardian is not None
+        )
+        guardian_lgbm_score_active = (
+            guardian_lgbm_score_enabled
+            and lgbm_conf_arr is not None
+            and lgbm_p0_arr is not None
+            and lgbm_p2_arr is not None
+        )
+        guardian_active = (
+            (guardian_enabled and guardian_model is not None and X_guardian is not None)
+            or guardian_hybrid_active
+            or guardian_lgbm_score_active
+        )
+        _lgbm_score_params = LgbmScoreGuardParams(
+            min_hold_bars=lgbm_score_min_hold_bars,
+            activation_atr=lgbm_score_activation_atr,
+            wrong_entry_conf_delta=lgbm_score_wrong_entry_conf_delta,
+            wrong_entry_min_loss=lgbm_score_wrong_entry_min_loss,
+            conf_dead_floor=lgbm_score_conf_dead_floor,
+            profit_take_min_pnl=lgbm_score_profit_take_min_pnl,
+            profit_take_conf_delta=lgbm_score_profit_take_conf_delta,
+            near_tp_proximity=lgbm_score_near_tp_proximity,
+            near_tp_conf_delta=lgbm_score_near_tp_conf_delta,
+            near_tp_min_pnl=lgbm_score_near_tp_min_pnl,
+            profit_take_enabled=lgbm_score_profit_take_enabled,
+        )
         guardian_delta_active = guardian_model is not None and guardian_delta_raw is not None and guardian_delta_feats is not None
+        _pre_exit_thr = (
+            guardian_pre_exit_threshold
+            if guardian_pre_exit_threshold is not None
+            else guardian_exit_threshold
+        )
+        _peak_exit_thr = (
+            guardian_peak_exit_threshold
+            if guardian_peak_exit_threshold is not None
+            else guardian_exit_threshold
+        )
 
         # Validasi R:R (GATE — gagal = trade di-skip)
         if TP_SL_RR_GATE_ENABLED:
@@ -810,6 +948,14 @@ def simulate_trades_swing(
                 raw_exit = sl_price
                 break
 
+            # tp_phase for guardian v5 (0=pre, 1=at first hit, 2=post) — before tp_touched flip
+            if tp_touched:
+                _tp_phase = 2.0
+            elif tp_hit:
+                _tp_phase = 1.0
+            else:
+                _tp_phase = 0.0
+
             # ── TP → momentum mode (match production) ──────────────────
             # TP tidak hard-close — trigger Guardian momentum (bypass gates)
             if tp_hit and not tp_touched and guardian_active:
@@ -822,40 +968,167 @@ def simulate_trades_swing(
             # Jaring pengaman: setelah lewat TP (momentum mode), bila give-back
             # menembus floor → exit walau Guardian belum memutuskan. Simetris
             # long/short (mfe_pnl & cur_pnl sudah per-arah).
-            if tp_touched and guardian_momentum_floor_frac > 0.0 and mfe_pnl > 0.0:
+            # Floor tambahan opsional (guardian_momentum_floor_tp_frac > 0): jaminan
+            # minimum stabil = tp_frac x TP_pnl, independen dari seberapa jauh MFE.
+            # Floor efektif = max(kedua patokan) -- MFE dekat TP -> patokan TP dominan
+            # (cegah give-back di bawah TP asli); MFE jauh melebihi TP -> patokan MFE
+            # tetap ambil alih (jangan capping untung di trade yang lari jauh).
+            if guardian_floor_replace_with_tp and tp_touched and guardian_momentum_floor_tp_frac > 0.0:
+                # Fixed floor = tp_frac x TP_pnl SAJA, tidak trailing ikut MFE (ganti total,
+                # bukan tambahan max()) -- parity eksekusi live: STOP-LIMIT dipasang sekali
+                # begitu TP tersentuh, level tetap sampai exit.
                 cur_pnl = (close[j] - price) / price if sig == LONG else (price - close[j]) / price
-                if cur_pnl < guardian_momentum_floor_frac * mfe_pnl:
+                tp_pnl = (tp_price - price) / price if sig == LONG else (price - tp_price) / price
+                floor_pnl = guardian_momentum_floor_tp_frac * tp_pnl
+                if cur_pnl < floor_pnl:
+                    outcome = "GUARDIAN_MOMENTUM_FLOOR"
+                    raw_exit = close[j]
+                    break
+            elif tp_touched and guardian_momentum_floor_frac > 0.0 and mfe_pnl > 0.0:
+                cur_pnl = (close[j] - price) / price if sig == LONG else (price - close[j]) / price
+                floor_pnl = guardian_momentum_floor_frac * mfe_pnl
+                if guardian_momentum_floor_tp_frac > 0.0:
+                    tp_pnl = (tp_price - price) / price if sig == LONG else (price - tp_price) / price
+                    floor_pnl = max(floor_pnl, guardian_momentum_floor_tp_frac * tp_pnl)
+                if cur_pnl < floor_pnl:
                     outcome = "GUARDIAN_MOMENTUM_FLOOR"
                     raw_exit = close[j]
                     break
 
-            # ── Guardian Multiclass (3-class: 0=HOLD, 1=PARTIAL, 2=FULL) ──
+            # ── Guardian exit (multiclass 3-class OR binary peak escort OR hybrid) ──
             # momentum_mode = tp_touched — bypasses min_hold + activation gates
             guardian_momentum = tp_touched
+            pre_tp_emergency_check = (
+                guardian_binary_peak
+                and guardian_emergency_pre_tp
+                and not tp_touched
+                and bars_held >= guardian_min_hold_bars
+            )
             if guardian_active and position_remaining > 0.5:
-                should_check = guardian_momentum or bars_held >= guardian_min_hold_bars
-                if should_check:
+                if guardian_lgbm_score_active:
+                    lec = float(lgbm_conf_arr[i]) if i < len(lgbm_conf_arr) else 0.0
+                    lcn = float(
+                        lgbm_p2_arr[j] if sig == LONG else lgbm_p0_arr[j]
+                    ) if j < len(lgbm_p0_arr) else None
+                    cur_pnl = (
+                        (close[j] - price) / price
+                        if sig == LONG
+                        else (price - close[j]) / price
+                    )
+                    price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else 0.0
+                    score_reason = lgbm_score_exit(
+                        direction_long=(sig == LONG),
+                        entry_price=price,
+                        current_price=close[j],
+                        tp_price=tp_price,
+                        entry_conf=lec,
+                        conf_now=lcn,
+                        cur_pnl_pct=cur_pnl,
+                        mfe_pnl_pct=mfe_pnl,
+                        bars_held=bars_held,
+                        tp_touched=tp_touched,
+                        price_moved_atr=price_moved_atr,
+                        params=_lgbm_score_params,
+                    )
+                    if score_reason:
+                        outcome = score_reason
+                        raw_exit = close[j]
+                        break
+                elif guardian_hybrid_active:
+                    should_check = guardian_momentum or bars_held >= guardian_min_hold_bars
+                else:
+                    should_check = guardian_momentum or pre_tp_emergency_check or (
+                        not guardian_binary_peak and bars_held >= guardian_min_hold_bars
+                    )
+                if not guardian_lgbm_score_active and should_check:
                     price_moved_atr = abs(close[j] - price) / atr_i if atr_i > 0 else float("inf")
-                    bypass_gates = guardian_momentum
-                    if bypass_gates or price_moved_atr >= guardian_activation_atr:
-                        # Build guardian feature vector: static + dynamic (+ delta)
+                    bypass_gates = guardian_momentum or pre_tp_emergency_check
+                    if guardian_hybrid_active:
+                        gate_ok = guardian_momentum or price_moved_atr >= guardian_activation_atr
+                    else:
+                        gate_ok = bypass_gates or (
+                            not guardian_binary_peak and price_moved_atr >= guardian_activation_atr
+                        )
+                    if gate_ok:
                         g_static_cur = X_guardian[j, :]
-                        g_static_ent = X_guardian[i, :]  # entry bar static
-                        if guardian_feat_cols and guardian_static_names:
-                            fm_val = 0.0
-                            if flow_momentum_arr is not None and j < len(flow_momentum_arr):
-                                fm_val = float(flow_momentum_arr[j])
-                            lec = float(lgbm_conf_arr[i]) if lgbm_conf_arr is not None and i < len(lgbm_conf_arr) else 0.0
+                        g_static_ent = X_guardian[i, :]
+                        fm_val = 0.0
+                        if flow_momentum_arr is not None and j < len(flow_momentum_arr):
+                            fm_val = float(flow_momentum_arr[j])
+                        lec = float(lgbm_conf_arr[i]) if lgbm_conf_arr is not None and i < len(lgbm_conf_arr) else 0.0
+                        lcn = None
+                        if lgbm_p0_arr is not None and lgbm_p2_arr is not None and j < len(lgbm_p0_arr):
+                            lcn = float(lgbm_p2_arr[j] if sig == LONG else lgbm_p0_arr[j])
+                        def _scaled_guard_row(feat_cols, scaler):
+                            if feat_cols and guardian_static_names:
+                                row = _assemble_guardian_row(
+                                    feat_cols, guardian_static_names,
+                                    g_static_cur, g_static_ent,
+                                    bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                                    flow_momentum_3bar=fm_val,
+                                    lgbm_entry_conf=lec,
+                                    lgbm_conf_now=lcn,
+                                    tp_phase=_tp_phase,
+                                )
+                                feat = row.reshape(1, -1)
+                            else:
+                                try:
+                                    from config import GUARDIAN_DELTA_MAP, GUARDIAN_EXTENDED_STATIC
+                                    _dmap = {
+                                        dname: GUARDIAN_EXTENDED_STATIC.index(src)
+                                        if src in GUARDIAN_EXTENDED_STATIC else None
+                                        for dname, src in GUARDIAN_DELTA_MAP.items()
+                                    }
+                                except Exception:
+                                    _dmap = None
+                                g_dynamic = _compute_guardian_dynamic(
+                                    bars_held, price, close[j], sig, atr_i, mfe_pnl,
+                                    g_static_cur, g_static_ent, _dmap,
+                                )
+                                feat = np.concatenate([g_static_cur, g_dynamic]).reshape(1, -1)
+                            return (feat - scaler.mean_) / scaler.scale_
+
+                        if guardian_hybrid_active:
+                            if tp_touched:
+                                peak_cols = guardian_peak_feat_cols or guardian_feat_cols
+                                g_feat_s = _scaled_guard_row(peak_cols, guardian_peak_scaler)
+                                p_exit = float(guardian_peak_model.predict_proba(g_feat_s)[0, 1])
+                                if p_exit >= _peak_exit_thr:
+                                    outcome = "GUARDIAN_MOMENTUM_EXIT"
+                                    raw_exit = close[j]
+                                    break
+                            elif bars_held >= guardian_min_hold_bars:
+                                pre_cols = guardian_pre_feat_cols or guardian_feat_cols
+                                g_feat_s = _scaled_guard_row(pre_cols, guardian_pre_scaler)
+                                g_proba = guardian_pre_model._Booster.predict(g_feat_s)[0]
+                                g_pred = int(g_proba.argmax())
+                                if g_pred == 2 and g_proba[2] >= _pre_exit_thr:
+                                    outcome = "GUARDIAN_PRE_EXIT"
+                                    raw_exit = close[j]
+                                    break
+                                if g_pred == 1 and g_proba[1] >= _pre_exit_thr and partial_bar is None:
+                                    partial_bar = j
+                                    partial_price = close[j]
+                                    pct_partial = (partial_price - price) / price
+                                    if sig == SHORT:
+                                        pct_partial = -pct_partial
+                                    gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
+                                    fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
+                                    partial_pnl = gross_partial - fee_partial
+                                    position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
+                        elif guardian_feat_cols and guardian_static_names:
                             g_row = _assemble_guardian_row(
                                 guardian_feat_cols, guardian_static_names,
                                 g_static_cur, g_static_ent,
                                 bars_held, price, close[j], sig, atr_i, mfe_pnl,
                                 flow_momentum_3bar=fm_val,
                                 lgbm_entry_conf=lec,
+                                lgbm_conf_now=lcn,
+                                tp_phase=_tp_phase,
                             )
                             g_feat = g_row.reshape(1, -1)
+                            g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
                         else:
-                            # Build delta_map: {delta_name: idx_in_static_array}
                             try:
                                 from config import GUARDIAN_DELTA_MAP, GUARDIAN_EXTENDED_STATIC
                                 _dmap = {
@@ -870,36 +1143,77 @@ def simulate_trades_swing(
                                 g_static_cur, g_static_ent, _dmap,
                             )
                             g_feat = np.concatenate([g_static_cur, g_dynamic]).reshape(1, -1)
-                        g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
-                        g_proba = guardian_model._Booster.predict(g_feat_s)[0]  # [p_hold, p_partial, p_full]
-                        g_pred = int(g_proba.argmax())
+                            g_feat_s = (g_feat - guardian_scaler.mean_) / guardian_scaler.scale_
 
-                        if g_pred == 2 and g_proba[2] >= guardian_exit_threshold:
-                            # FULL_EXIT — close entire remaining position
-                            if guardian_momentum:
-                                outcome = "GUARDIAN_MOMENTUM_EXIT"
-                            elif partial_bar is not None:
-                                outcome = "GUARDIAN_FULL"
-                            else:
-                                outcome = "GUARDIAN_EXIT"
-                            raw_exit = close[j]
-                            break
-                        elif g_pred == 1 and g_proba[1] >= guardian_exit_threshold and partial_bar is None:
-                            # PARTIAL_EXIT — close half, continue with rest
-                            if guardian_momentum:
-                                outcome = "GUARDIAN_MOMENTUM_PARTIAL"
-                            # (no break — continue scanning remaining position)
-                            partial_bar = j
-                            partial_price = close[j]
-                            # Calculate PnL for the exited half
-                            pct_partial = (partial_price - price) / price
-                            if sig == SHORT:
-                                pct_partial = -pct_partial
-                            gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
-                            fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
-                            partial_pnl = gross_partial - fee_partial
-                            position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
-                            # Continue scanning — do NOT break
+                        if guardian_hybrid_active:
+                            pass
+                        elif guardian_binary_peak:
+                            p_exit = float(guardian_model.predict_proba(g_feat_s)[0, 1])
+                            if tp_touched:
+                                if p_exit >= guardian_exit_threshold:
+                                    outcome = "GUARDIAN_MOMENTUM_EXIT"
+                                    raw_exit = close[j]
+                                    break
+                            elif (
+                                guardian_emergency_pre_tp
+                                and bars_held >= guardian_min_hold_bars
+                                and lcn is not None
+                            ):
+                                cur_pnl = (close[j] - price) / price if sig == LONG else (price - close[j]) / price
+                                prox = tp_proximity(sig == LONG, price, close[j], tp_price)
+                                cd = lcn - lec
+                                if pre_tp_emergency_exit(
+                                    conf_delta=cd,
+                                    proximity=prox,
+                                    p_exit=p_exit,
+                                    cur_pnl_pct=cur_pnl,
+                                    near_tp_proximity=guardian_near_tp_proximity,
+                                    conf_delta_normal=guardian_emergency_conf_delta,
+                                    conf_delta_near_tp=guardian_emergency_conf_delta_near_tp,
+                                    exit_threshold=guardian_exit_threshold,
+                                    min_loss_pct=guardian_emergency_min_loss,
+                                ):
+                                    outcome = "GUARDIAN_EMERGENCY_EXIT"
+                                    raw_exit = close[j]
+                                    break
+                        else:
+                            g_proba = guardian_model._Booster.predict(g_feat_s)[0]
+                            g_pred = int(g_proba.argmax())
+                            cur_pnl = (
+                                (close[j] - price) / price
+                                if sig == LONG
+                                else (price - close[j]) / price
+                            )
+                            _thr = guardian_exit_threshold if guardian_momentum else _pre_exit_thr
+
+                            def _pre_tp_exit_ok() -> bool:
+                                if guardian_momentum or guardian_pre_exit_min_pnl is None:
+                                    return True
+                                if cur_pnl <= -0.006:
+                                    return True
+                                return cur_pnl >= guardian_pre_exit_min_pnl
+
+                            if g_pred == 2 and g_proba[2] >= _thr and _pre_tp_exit_ok():
+                                if guardian_momentum:
+                                    outcome = "GUARDIAN_MOMENTUM_EXIT"
+                                elif partial_bar is not None:
+                                    outcome = "GUARDIAN_FULL"
+                                else:
+                                    outcome = "GUARDIAN_EXIT"
+                                raw_exit = close[j]
+                                break
+                            elif g_pred == 1 and g_proba[1] >= _thr and partial_bar is None:
+                                if guardian_momentum:
+                                    outcome = "GUARDIAN_MOMENTUM_PARTIAL"
+                                partial_bar = j
+                                partial_price = close[j]
+                                pct_partial = (partial_price - price) / price
+                                if sig == SHORT:
+                                    pct_partial = -pct_partial
+                                gross_partial = trade_modal * leverage * pct_partial * GUARDIAN_PARTIAL_EXIT_RATIO
+                                fee_partial = trade_modal * leverage * fee_per_side * GUARDIAN_PARTIAL_EXIT_RATIO
+                                partial_pnl = gross_partial - fee_partial
+                                position_remaining = 1.0 - GUARDIAN_PARTIAL_EXIT_RATIO
 
             # ── Guardian Delta (binary: HOLD=1 / EXIT=0) ─────────────────
             if guardian_delta_active and bars_held >= guardian_min_hold_bars and partial_bar is None:
@@ -1001,12 +1315,18 @@ def simulate_trades_swing(
         # ── #15 Cooldown ─────────────────────────────────────────────────
         if cooldown_enabled:
             exit_bar = j if outcome != "TIMEOUT" else end
-            if outcome == "WIN":
-                cooldown_until = exit_bar + 2   # tp_hit = 2h
-            elif outcome == "LOSS":
-                cooldown_until = exit_bar + 4   # sl_hit = 4h
+            if cooldown_profit_only:
+                # Hanya setelah close profit (net_pnl > 0) — covering WIN + guardian
+                # momentum/exit yang untung. Loss/SL: boleh re-entry tanpa jeda.
+                if net_pnl > 0:
+                    cooldown_until = exit_bar + max(0, int(cooldown_profit_bars))
             else:
-                cooldown_until = exit_bar + 2   # time_exit = 2h
+                if outcome == "WIN":
+                    cooldown_until = exit_bar + 2   # tp_hit = 2h
+                elif outcome == "LOSS":
+                    cooldown_until = exit_bar + 4   # sl_hit = 4h
+                else:
+                    cooldown_until = exit_bar + 2   # time_exit / guardian / timeout = 2h
 
     # ── Summary & Compatibility Mapping ───────────────────────────────────────
     if not trades:
@@ -1019,8 +1339,12 @@ def simulate_trades_swing(
         }
 
     guardian_outcomes = ("TRAILING_STOP", "GUARDIAN_EXIT", "GUARDIAN_FULL",
-                         "GUARDIAN_MOMENTUM_EXIT", "GUARDIAN_MOMENTUM_PARTIAL",
+                         "GUARDIAN_PRE_EXIT", "GUARDIAN_MOMENTUM_EXIT",
+                         "GUARDIAN_MOMENTUM_PARTIAL", "GUARDIAN_EMERGENCY_EXIT",
                          "GUARDIAN_MOMENTUM_FLOOR", "GUARDIAN_DELTA_EXIT",
+                         "LGBM_SCORE_CONF_DEAD", "LGBM_SCORE_WRONG_ENTRY",
+                         "LGBM_SCORE_TAKE_PROFIT", "LGBM_SCORE_TP_PROXIMITY",
+                         "LGBM_SCORE_MFE_GIVEBACK",
                          "TIMEOUT", "TIMEOUT_MOMENTUM")
     wins   = [t for t in trades if t["outcome"] == "WIN"
               or (t["outcome"] in guardian_outcomes and t["net_pnl"] > 0)]
@@ -1110,6 +1434,76 @@ def calc_consecutive_loss(pnl_per_trade: list) -> int:
         else:
             current = 0
     return max_streak
+
+
+# ─── Portfolio Execution Constraints (live parity) ───────────────────────────
+
+def apply_portfolio_execution_limits(
+    trades: list,
+    max_open_positions: int = 10,
+    daily_loss_limit: int = 8,
+    wita_offset_hours: int = 8,
+) -> tuple[list, list]:
+    """Filter kandidat trade (tiap koin sudah disimulasikan independen) supaya
+    patuh 2 constraint eksekusi live yang TIDAK PERNAH dimodelkan di
+    simulate_trades_swing() -- gate asli ada di swint_tradev2/app/services/
+    execution.py::place_entry():
+      a. max_open_positions -- Trade.query.filter_by(status="open", is_live=True).count()
+         >= max_pos -> entry ditolak (global lintas semua koin/arah, bukan per-koin).
+      b. daily_loss_limit -- jumlah trade rugi (pnl_net<0) yang closed_at hari ini
+         (WITA, midnight-to-midnight) >= limit -> entry ditolak sisa hari itu
+         (_get_daily_loss_count(), scope is_live=True).
+
+    simulate_trades_swing() men-simulasikan tiap koin SENDIRI-SENDIRI, tidak tahu
+    apa yang terjadi di koin lain -- jadi constraint ini diterapkan POST-HOC setelah
+    semua kandidat trade lintas-koin terkumpul: urutkan kronologis via entry_time,
+    replay slot posisi terbuka (min-heap by exit_time) + hitung ulang rugi harian
+    WITA persis query live. Kandidat yang ditolak TIDAK diganti kandidat lain (sama
+    seperti live: sinyal yang ditolak hilang, bukan dicoba ulang di bar berikutnya).
+
+    Return (accepted, rejected) -- trade dict butuh field "entry_time"/"exit_time"
+    (tz-aware UTC) dan "net_pnl" terisi (dari holdout_oos.evaluate_coin atau
+    run_oof_live_parity_check.py collect_trades).
+    """
+    import heapq
+
+    candidates = [
+        t for t in trades
+        if t.get("entry_time") is not None and t.get("exit_time") is not None
+    ]
+    candidates.sort(key=lambda t: t["entry_time"])
+
+    def _wita_date(ts):
+        return (pd.Timestamp(ts) + pd.Timedelta(hours=wita_offset_hours)).date()
+
+    open_heap: list = []   # [(exit_time, net_pnl), ...] min-heap by exit_time
+    daily_losses: dict = {}  # {wita_date: n_losses_closed}
+    accepted, rejected = [], []
+
+    for t in candidates:
+        entry_time = t["entry_time"]
+        # Bebaskan slot yang sudah closed sebelum entry kandidat ini, catat rugi
+        # harian dari CLOSED_AT-nya (persis _get_daily_loss_count, bukan opened_at).
+        while open_heap and open_heap[0][0] <= entry_time:
+            closed_exit_time, closed_pnl = heapq.heappop(open_heap)
+            if closed_pnl < 0:
+                d = _wita_date(closed_exit_time)
+                daily_losses[d] = daily_losses.get(d, 0) + 1
+
+        today = _wita_date(entry_time)
+        if daily_losses.get(today, 0) >= daily_loss_limit:
+            t["_reject_reason"] = "daily_loss_limit"
+            rejected.append(t)
+            continue
+        if len(open_heap) >= max_open_positions:
+            t["_reject_reason"] = "max_open_positions"
+            rejected.append(t)
+            continue
+
+        heapq.heappush(open_heap, (t["exit_time"], t.get("net_pnl", 0.0)))
+        accepted.append(t)
+
+    return accepted, rejected
 
 
 # ─── Trade Per Month ─────────────────────────────────────────────────────────
@@ -1355,6 +1749,12 @@ def full_trading_report(
     guardian_mom_thresh       = 0.45,
     guardian_def_thresh       = 0.70,
     guardian_def_min_loss     = -0.010,
+    guardian_binary_peak      = False,
+    guardian_emergency_pre_tp = False,
+    guardian_emergency_conf_delta       = -0.10,
+    guardian_emergency_conf_delta_near_tp = -0.16,
+    guardian_near_tp_proximity          = 0.85,
+    guardian_emergency_min_loss         = -0.004,
     trailing_stop_enabled     = TRAILING_STOP_ENABLED,
     trailing_stop_atr         = TRAILING_STOP_ATR,
     trailing_stop_min_bars    = TRAILING_STOP_MIN_BARS,
@@ -1422,6 +1822,12 @@ def full_trading_report(
                 guardian_mom_thresh=guardian_mom_thresh,
                 guardian_def_thresh=guardian_def_thresh,
                 guardian_def_min_loss=guardian_def_min_loss,
+                guardian_binary_peak=guardian_binary_peak,
+                guardian_emergency_pre_tp=guardian_emergency_pre_tp,
+                guardian_emergency_conf_delta=guardian_emergency_conf_delta,
+                guardian_emergency_conf_delta_near_tp=guardian_emergency_conf_delta_near_tp,
+                guardian_near_tp_proximity=guardian_near_tp_proximity,
+                guardian_emergency_min_loss=guardian_emergency_min_loss,
                 trailing_stop_enabled=trailing_stop_enabled,
                 trailing_stop_atr=trailing_stop_atr,
                 trailing_stop_min_bars=trailing_stop_min_bars,
