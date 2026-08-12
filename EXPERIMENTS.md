@@ -4,767 +4,21 @@
 > - Pre-2026-06-22: `archive/2026-06-22_cleanup/root_files/EXPERIMENTS_full_history.md`
 > - 2026-06-22 s.d. 2026-07-04: `archive/EXPERIMENTS_full_history_2026-07-08.md`
 > - 2026-07-08 s.d. 2026-07-12: `archive/EXPERIMENTS_full_history_2026-07-14.md`
+> - 2026-07-26 s.d. 2026-08-05: `archive/EXPERIMENTS_full_history_2026-08-06.md` (dipindah 2026-08-06 -- file utama sempat 9.786 baris/656KB, terlalu boros token)
 >
 > File ini cuma **index** (1 baris/eksperimen: tanggal — judul — status — link ke detail).
 > Dipecah 2026-07-08 karena versi lama (3269 baris) terlalu boros token untuk dibaca rutin.
 > **Entry BARU tulis lengkap di sini dulu** (pakai Template di bagian bawah) — baru dipadatkan
 > jadi 1 baris index + dipindah ke archive kalau file ini mulai membengkak lagi.
-
----
-
-## 2026-07-14 (lanjutan lagi) — Fix: dashboard /models tidak ikut update setelah deploy polos + 2 skrip riset baru (swing-basi rescue)
-
-**Status**: SELESAI, diverifikasi langsung di VPS.
-
-**Pemicu**: user cek `http://139.180.157.176:5000/models` setelah deploy "polos" — dashboard MASIH
-menampilkan angka lama (OOF 5.742 trade PF 2.088, OOS 278 trade PF 1.816), padahal config sudah
-diupdate. Root cause GANDA:
-1. **Salah desain saya sendiri**: angka baru ditambahkan sbg key SIBLING baru (`oof_polos_2026_07_14`
-   dkk), bukan menimpa key `scorecard.oof`/`scorecard.holdout_oos` yang ASLI dibaca dashboard
-   (`active_model_info.py`). Fix: SWAP — `oof`/`holdout_oos` sekarang isi angka polos (3.450 trade
-   PF 2.022 / 161 trade PF 1.680), angka lama dipindah ke `oof_pre_polos_2026_07_08`/
-   `holdout_oos_pre_polos_2026_07_08` sbg arsip. Sama di `model_registry.json`.
-2. **Bug independen, TIDAK terkait deploy hari ini**: `active_model_info.py` baris ~245 hardcode
-   string `"base 0.65/δ0.10"` di badge "Filter Chain" (HMM), bukan baca dinamis dari
-   `per_state_thresholds` — sudah salah sejak base naik ke 0.70 kemarin (07-13), baru ketahuan
-   sekarang. Fix: derive `base`/`delta` dari `per_state_thresholds["-1"]` & `["0"]`.
-
-**Deploy**: commit swint `0f05c01` (`app/services/active_model_info.py`), scp config. Ditambah ke
-`SWINT_NATIVE_CODE` (`tools/ops/deploy_production.py`) supaya ikut ter-track deploy berikutnya.
-Verifikasi langsung SSH ke VPS: `scorecard.oof`/`holdout_oos` = 3450/2.022 & 161/1.680, badge HMM
-= "base 0.70/δ0.10".
-
-**Pelajaran**: kalau update info scorecard krn deploy config baru, JANGAN tambah key baru di
-samping — TIMPA key yang dibaca dashboard, pindahkan angka lama ke key arsip bertanggal. Per
-instruksi user: "protokol saat deploy model baru, informasi itu di live juga harusnya ikut
-terupdate" — dicatat sbg kebiasaan wajib ke depan.
-
-### Riset baru (belum dites OOS, jangan dianggap final) — "swing-basi rescue"
-
-User tanya: model tanpa regime-routing gimana caranya tetap optimal saat momentum kuat tapi swing
-H4 sudah tidak ada/basi? Jawaban: **TIDAK ada mekanisme khusus** — dikonfirmasi baca kode
-`paper_trading.py::_calculate_tp_sl`, TP/SL dihitung fungsi yang SAMA utk model utama maupun
-`lgbm_trend` (routing cuma ganti model probabilitas, bukan cara TP/SL), jadi celah ini nyata &
-tidak tertutup oleh routing sama sekali.
-
-**Ukur skala celah** (`measure_swing_basi_gap.py`, scratchpad): dari 9.697 sinyal lolos threshold,
-32,4% (3.146) ditolak krn swing basi — TRENDING_UP paling parah (46,0% dari sinyal state ini,
-711 sinyal). 60,6% dari semua yg ditolak-basi ada di state TRENDING (UP+DOWN).
-
-**Ide baru diuji** (`pipeline/model/run_oof_swing_basi_rescue.py`): kalau sinyal ditolak krn swing
-basi DI STATE TRENDING_UP, cek `lgbm_trend` di bar yang sama sbg "opini kedua" — kalau setuju arah
-sama, izinkan masuk pakai ATR fallback murni. Beda dari fallback-ATR-buta (gagal 07-12) dan routing
-penuh (tidak bypass reject-swing-basi).
-
-Sweep ambang konfirmasi `lgbm_trend` (OOF, base=0.70/delta=0.10 utk model utama):
-
-| trend_thr | rescued | trades | WR | PF | PnL | MaxDD |
-|---|---|---|---|---|---|---|
-| *(baseline, tanpa rescue)* | — | 2.550 | 65,5% | 1,903 | $1.028,85 | -$19,98 |
-| 0,60/0,80 (sama ambang state 3) | 24 (3,4%) | 2.570 | 65,6% | 1,919 | $1.055,97 | -$19,98 |
-| 0,55/0,75 | 119 (16,7%) | 2.649 | 65,4% | 1,911 | $1.095,23 | -$19,98 |
-| 0,50/0,70 | 290 (40,8%) | 2.771 | 65,4% | 1,919 | $1.183,77 | -$19,98 |
-| **0,45/0,65** | 433 (60,9%) | 2.877 | 65,5% | **1,987** | $1.340,15 | -$23,69 |
-| **0,40/0,60** | 495 (69,6%) | 2.924 | 65,5% | **1,987** | **$1.382,94** | -$23,69 |
-| 0,35/0,55 | 509 (71,6%) | 2.935 | 65,3% | 1,977 | $1.382,30 | -$23,69 |
-
-Ambang 0,60/0,80 (sama dgn model utama) TERLALU KETAT (cuma 3,4% lolos, efek nyaris nol). Turunkan
-ke 0,40-0,45 -> WR STABIL (tidak rusak sama sekali) sambil PF naik +4,4%, PnL naik ~34%. Sinyal
-kuat trade yg diselamatkan memang berkualitas, bukan cuma nambah kuantitas.
-
-**PENTING — baseline 2.550 trade di tabel INI BUKAN angka resmi "polos" yang live** (yg resmi
-3.450 trade OOF). Beda krn skrip uji ini pre-filter LEBIH KETAT: tolak eksplisit SEMUA sinyal
-swing-basi sebelum simulasi, bukan biarkan mekanisme RR-gate bawaan yg sedikit lebih longgar
-menyaring. Perbandingan DI DALAM tabel ini (rescue vs tidak, metodologi sama) tetap valid & adil,
-tapi jangan disandingkan dgn angka 3.450 resmi.
-
-### OOS validasi — DITOLAK (OOF vs OOS bertentangan)
-
-Script: `pipeline/model/run_oos_swing_basi_rescue.py`. Sweep trend_thr (0,40/0,60) & (0,45/0,65)
-di window OOS genuine (2026-04-01 s.d. 2026-07-13 16:00 UTC):
-
-| | Trade | WR | PF | PnL | MaxDD |
-|---|---|---|---|---|---|
-| baseline "polos" (tanpa rescue) | 138 | 64,5% | 1,926 | $35,20 | -$6,64 |
-| + rescue (0,40/0,60 & 0,45/0,65, identik) | 147 (+9) | 62,6% | **1,734 (-0,192)** | $32,72 (-$2,48) | -$9,02 (lebih buruk) |
-
-**OOF bilang PF naik (+4,4%, +$354), OOS bilang PF turun (-10%).** Sampel OOS sangat kecil (cuma
-12 kandidat TRENDING_UP+swing-basi total di seluruh window OOS, 9-10 di-rescue) — tidak cukup utk
-jadi bukti kuat "idenya jelek", tapi CUKUP utk melanggar syarat baku proyek ini: OOF dan OOS harus
-SEPAKAT dulu sebelum dipertimbangkan lanjut (pola sama persis dgn penolakan HMM fast-react
-sebelumnya). **Keputusan: DITOLAK/disimpan dulu**, tidak lanjut ke implementasi kode live.
-
-**Rincian 12 kandidat** (dicek manual atas permintaan user, verifikasi long/short sudah benar
-dipertimbangkan): **SEMUA 12 kandidat arahnya LONG — nol kejadian SHORT** di window OOS ini.
-Jadi sisi SHORT dari mekanisme rescue ini belum pernah teruji sama sekali secara empiris (bukan
-bug — logika `confirmed = (is_long and trend_long) or (is_short and trend_short)` sudah simetris
-utk 2 arah, cuma kebetulan tidak ada kejadian SHORT muncul di periode ini). 2 dari 12 kandidat
-LONG TIDAK diselamatkan krn `lgbm_trend` justru condong SHORT di bar yg sama (BTCUSDT 2026-06-02,
-BCHUSDT 2026-06-15) — konfirmasi logika bekerja benar (menangkap disagreement asli, bukan rubber-stamp).
-
-### Belum
-- Kalau nanti window OOS lebih panjang tersedia (lebih banyak kejadian TRENDING_UP+swing-basi,
-  termasuk kasus SHORT), boleh diuji ulang. Untuk sekarang datanya tidak cukup mendukung lanjut.
-
----
-
-## 2026-07-14 (lanjutan) — DEPLOYED ke live: matikan regime-routing + regime-disable + spot-confirm ("polos")
-
-**Status**: LIVE, terverifikasi langsung di VPS. `/api/health` OK, `active_trades` tidak terganggu
-(0 posisi terbuka saat deploy).
-
-**Keputusan**: berdasarkan OOF+OOS di entry di bawah (dua uji beda sampel sepakat penuh), matikan
-`regime_model_routing`, `regime_disable`, `spot_confirm` — HMM cara baru base=0.70/delta=0.10
-TIDAK berubah (sudah benar dari deploy kemarin). Bukan retrain, murni toggle config.
-
-### Yang dikerjakan
-
-1. **Fix blocker sebelum deploy**: `tools/ops/deploy_model.py::PRESERVE_KEYS` sempat berisi
-   `regime_model_routing` & `regime_disable` (ditambah kemarin utk kasus BEDA — key hilang total
-   dari source). Kalau tidak dicabut, perubahan `enabled=false` hari ini akan DIAM-DIAM ditimpa
-   balik ke `true` oleh nilai lama di target saat deploy. Dicabut dari PRESERVE_KEYS (root cause
-   asli sudah dibereskan permanen dgn cara lain: block sekarang selalu ada penuh di source Riset).
-2. **3 saklar dimatikan** di `models/inference_config.json` (+ note masing-masing dgn alasan &
-   angka): `regime_model_routing.enabled`, `regime_disable.enabled`, `spot_confirm.enabled` semua
-   `true`→`false`. `lgbm_trend` model TETAP di-deploy (tidak dihapus, siap direaktivasi kalau nanti
-   direkalibrasi ulang thd HMM cara baru).
-3. **Fix dokumentasi basi**: note HMM di `inference_config.json`/`model_registry.json` masih bilang
-   "belum disinkronkan ke live" padahal sudah (commit 4b6ef26, 2026-07-13) — dibetulkan.
-4. **Rename display_name**: `fs37_18coin_spotconfirm` → `fs37_18coin_polos` (di `inference_config.json`
-   & `model_registry.json`) — cuma label UI (`app/templates/models.html`), tidak ada dependensi kode.
-5. **Scorecard OOF/OOS diupdate**: ditambah section baru `oof_polos_2026_07_14` /
-   `holdout_oos_polos_2026_07_14` (inference_config) dan `oof_scorecard_polos_2026_07_14` /
-   `sealed_holdout_oos_polos_2026_07_14` (model_registry) berisi angka setup yang SEKARANG live.
-   Section lama (dgn spot-confirm/regime-disable) DIBIARKAN sbg referensi historis, ditandai
-   caveat "sudah tidak mencerminkan setup live sekarang".
-6. **Audit sebelum deploy**: `verify_hmm_feature_parity.py` PASS (0 mismatch, 37/37 fitur ada).
-   `audit_feature_value_parity.py`: 1 FLAG (`coin_mkt_sync_24h`, std_ratio 0.036) — diinvestigasi
-   (lihat di bawah), disimpulkan bukan bug, lanjut deploy.
-
-### Investigasi flag `coin_mkt_sync_24h` (sebelum lanjut deploy)
-
-Fitur = `coin_ret_24h * mkt_ret_24h` (hasil kali, bukan nilai mentah) — kalau market lagi tenang,
-hasil kalinya mengecil KUADRATIK, jauh lebih ekstrem drpd fitur input tunggalnya. Buktinya:
-- `btc_ret_24h` (salah satu input serupa) std_ratio 0.258 — sudah OK (tidak ter-flag), turun dari
-  ter-flag kemarin. `btc_minus_mkt_24h` std_ratio 0.137 — juga sudah OK.
-- `coin_mkt_sync_24h` std_ratio 0.036 masih ter-flag krn efek kuadratik dari perkalian 2 fitur yg
-  sama-sama sedang kecil.
-- Cek 200 sinyal live terakhir (2026-07-13 23:16 - 2026-07-14 10:16 UTC): 200/200 nilai BEDA semua
-  (tidak macet di 1 angka), koin ekstrem gonta-ganti tiap jam (FILUSDT/UNIUSDT/ADAUSDT/SOLUSDT...) —
-  bukan pola strip/synthetic klasik (beda dari insiden `long_short_ratio` lama).
-- 2 dari 3 fitur terkait (`btc_ret_24h`, `btc_minus_mkt_24h`) sudah PULIH ke rentang normal sejak
-  kemarin ter-flag bareng — pola pemulihan bertahap ini konsisten dgn "market lagi tenang", BUKAN
-  bug yang macet permanen (bug strip akan tetap datar terus, tidak ikut pulih).
-
-**User tanya apakah fitur ini (turunan/perkalian) sebaiknya di-takedown krn "problematik".**
-Dicek importance gain di model: **peringkat 17 dari 37 fitur (2.83%)** — kontributor menengah yang
-nyata, lebih penting dari 20 fitur lain (whale_retail_divergence, vol_price_confirm, Fib levels,
-stochRSI, dst). **Rekomendasi: JANGAN ditakedown** — beda kasus dgn `relative_strength_z` (gap
-TAK TERJELASKAN, itu kriteria takedown wajib per [[feedback-feature-source-accountability]]); gap
-fitur ini SUDAH terjelaskan penuh (matematis + pola pemulihan), dan fiturnya kontributor nyata,
-bukan marginal. Kalau nanti mau ditakedown juga, itu perlu jalur formal (IC→ICIR→Stability→Marginal
-→ retrain ablasi), bukan keputusan sekali-jalan — dicatat sbg opsi terbuka, bukan dieksekusi.
-
-### Verifikasi pasca-deploy
-
-```
-/api/health: status=ok, scheduler_running=true, active_trades=0 (tidak ada posisi terganggu)
-SSH VPS langsung cek inference_config.json: regime_model_routing/regime_disable/spot_confirm
-  semua enabled=False, hmm.per_state_thresholds base=0.70/delta=0.10 (tidak berubah), 
-  display_name=fs37_18coin_polos, scorecard.oof_polos_2026_07_14/holdout_oos_polos_2026_07_14 ada.
-```
-
-Git push: tidak ada perubahan kode (`[INFO] Tidak ada perubahan kode — lewati commit`) — deploy ini
-murni config (scp), sesuai ekspektasi (tidak ada retrain/kode baru).
-
-### Belum / follow-up terbuka
-
-- Pantau performa live 1-2 minggu ke depan dgn setup baru ini sebelum evaluasi lanjut.
-- `regime_model_routing`/`spot_confirm` bisa direaktivasi nanti KALAU direkalibrasi ulang formal
-  thd HMM cara baru (bukan dipakai lagi begitu saja dgn angka kalibrasi lama).
-- Takedown `coin_mkt_sync_24h` (kalau mau dipertimbangkan lagi nanti): perlu IC→ICIR→Stability→
-  Marginal + retrain ablasi formal, BUKAN keputusan cepat.
-
----
-
-## 2026-07-14 — OOF: isolasi ulang regime-routing & spot-confirm di HMM cara baru (base 0.65 vs 0.70)
-
-**Status**: OOF selesai (walk-forward genuine, sampel besar 3-6 ribu trade/varian). OOS sampel
-kecil (dicatat sesi 07-13/14 sebelumnya) SEPAKAT arahnya. **Belum dieksekusi ke live** — menunggu
-keputusan user.
-
-**Pemicu**: lanjutan temuan kemarin (regime-model-routing narik turun performa begitu digabung
-HMM cara baru). User minta OOF khusus utk LGBM+HMM+Guardian+spot-confirm (tanpa
-regime-routing/regime-disable) di base 0.65 & 0.70, plus cek ulang alasan spot-confirm awalnya
-dipakai.
-
-**Script**: `pipeline/model/run_oof_full_stack_sweep.py` — ditambah flag `--no-routing`/
-`--no-disable`/`--no-spot`/`--tag` biar reusable per-kombinasi (sebelumnya hardcoded full-stack).
-
-### Hasil OOF (base=0.65 & 0.70, delta=0.10, TANPA regime-routing & TANPA regime-disable di semua baris)
-
-| Varian | Base | Trades | WR | PF | PnL | MaxDD |
-|---|---|---|---|---|---|---|
-| + spot-confirm | 0.65 | 5,258 | 65.2% | 1.779 | $2,013.15 | -$28.20 |
-| + spot-confirm | 0.70 | 3,120 | 66.7% | 1.954 | $1,382.28 | -$25.04 |
-| **polos (tanpa spot-confirm)** | 0.65 | 6,349 | 61.4% | 1.810 | $2,543.82 | -$36.22 |
-| **polos (tanpa spot-confirm)** | **0.70** | **3,450** | 62.9% | **2.022** | **$1,631.56** | **-$22.97** |
-
-Referensi (regime-routing+regime-disable+spot-confirm SEMUA nyala = versi live sekarang):
-- base 0.65: trades=4,803 WR=65.0% PF=1.770 PnL=$1,794.61 MaxDD=-$28.22
-- base 0.70: trades=2,755 WR=66.1% PF=1.886 PnL=$1,124.90 MaxDD=-$25.04
-
-**Kesimpulan OOF**: matikan regime-routing+regime-disable saja (spot-confirm tetap nyala) sudah
-menaikkan semua metrik vs live sekarang di base yang sama. Matikan spot-confirm JUGA menang PF &
-PnL lebih tinggi lagi di base 0.70 (PF 2.022 vs 1.954, PnL $1,631.56 vs $1,382.28) — trade-off:
-WR turun (62.9% vs 66.7%) tapi MaxDD malah membaik (-$22.97 vs -$25.04, lebih kecil).
-
-**Cocok dengan OOS** (sampel kecil, `run_oos_hmm_causal_vs_viterbi.py`, ditambah varian D/E/H biar
-matriks 2x2-nya sama persis dgn OOF di atas, semua TANPA regime-routing & regime-disable):
-
-| Varian | Base | Trades | WR | PF | PnL | MaxDD |
-|---|---|---|---|---|---|---|
-| + spot-confirm (E) | 0.65 | 280 | 59.6% | 1.197 | $21.82 | -$11.67 |
-| + spot-confirm (H) | 0.70 | 185 | 56.8% | 1.068 | $5.13 | -$8.83 |
-| **polos (D)** | 0.65 | 295 | 55.2% | 1.213 | $24.83 | -$14.32 |
-| **polos (C)** | **0.70** | **161** | **60.9%** | **1.680** | **$32.96** | **-$6.19** |
-
-Pola SAMA PERSIS dgn OOF: di base 0.70, spot-confirm menyeret PF turun drastis (1.680→1.068,
--36%) — malah lebih parah dari OOF (yang cuma turun ~3.5%, mungkin krn sampel OOS kecil +
-window terkini lebih sensitif). Di base 0.65 efeknya kecil & campuran (WR/MaxDD spot-confirm
-sedikit lebih baik, PF/PnL sedikit lebih jelek) — konsisten juga dgn OOF.
-
-**polos di base 0.70 (C) adalah SATU-SATUNYA skenario (dari 8 yang diuji OOS) yang menang di
-SEMUA metrik sekaligus.** Dua uji beda (OOF sampel besar 3-6 ribu trade, OOS sampel kecil 161-295
-trade) SEPAKAT arah: LGBM+HMM(cara baru, base 0.70)+Guardian polos (tanpa regime-routing,
-regime-disable, spot-confirm) adalah kombinasi terbaik yang sudah diuji sejauh ini.
-
-### Kenapa spot-confirm dulu disetujui (dicek ulang atas permintaan user)
-
-Disetujui 2026-07-08 (lihat entry "KANDIDAT DIKUNCI fs38_18coin_spotconfirm"): OOF PF naik
-1.17→1.33, OOS PF naik 1.05→1.13 — naik konsisten di OOF **dan** OOS, itu jadi dasar approve saat
-itu (metodologi sah). TAPI: benchmark itu pakai HMM cara lama + threshold 0.65/0.05, dan baru
-belakangan (2026-07-11/12) ketahuan spot-confirm punya bug indexing 1 jam (fixed 2026-07-12) —
-angka approval ASLI itu **tidak pernah dihitung ulang** pakai kode yang sudah difix. Jadi
-keputusan awal metodologinya sah waktu itu, tapi angkanya sendiri berpotensi bias & belum
-diverifikasi ulang sejak fix bug + sejak ganti ke HMM cara baru.
-
-**Follow-up terbuka**: spot-confirm butuh audit ulang formal (OOF+OOS, HMM cara baru, kode sudah
-difix) sebelum bisa disimpulkan "masih worth it" atau tidak — data hari ini justru condong ke
-arah TIDAK menambah nilai lagi di base 0.70 (lihat tabel di atas, per [[feedback-feature-source-accountability]]).
-
-### Belum
-- Keputusan final: live matikan regime-routing+regime-disable+spot-confirm semua (full-polos)
-  ATAU cuma regime-routing+regime-disable (tetap pakai spot-confirm) — user belum konfirmasi.
-- Kalau full-polos dipilih: perlu regenerasi `inference_config.json`/live (matikan 3 block
-  config) + audit parity fitur sebelum deploy, prosedur sama seperti deploy HMM kemarin.
-- Artefak: `models/runs/guard_opt2_plus_trend_hmm_18coin/oof_full_stack_sweep_lgbm_hmm_guard_spot.json`,
-  `...oof_full_stack_sweep_lgbm_hmm_guard_only.json`.
-
----
-
-## 2026-07-13 (lanjutan lagi lagi lagi) — DEPLOYED ke live: HMM causal filtering + base 0.70/delta 0.10
-
-**Status**: LIVE, terverifikasi. VPS `app_revision=4b6ef26`, health OK, feature check 18/18 koin OK,
-tidak ada error pasca-restart, `active_trades` lama tidak terganggu.
-
-### Ditemukan sebelum deploy — 2 isu tambahan (ditangani sebelum lanjut)
-
-1. **`coin_mkt_sync_24h` (dan sync-cols lain) hilang total di holdout-test** — ternyata ini
-   memang gap lama yang terdokumentasi (`pipeline/experiments/join_sync_features_holdout.py`,
-   root cause: `tools/ops/join_sync_features_incremental.py` cuma nge-patch training, tidak
-   pernah dijalankan utk holdout). Refresh data holdout-test pagi ini (fetch/clean/engineer)
-   TIDAK otomatis include langkah ini, jadi fitur ini diam-diam nol di SEMUA simulasi OOS sesi
-   ini sebelum ketahuan. **Fix**: jalankan `join_sync_features_holdout.py` (18/18 koin OK).
-   **Dampak**: baseline OOS produksi yang benar ternyata LEBIH BAGUS dari yang sempat dilaporkan
-   (PF 1.373 PnL $41.48, bukan PF 1.262 PnL $30.34) -- semua perbandingan causal 0.65-0.75 di atas
-   perlu dibaca dgn baseline yang sudah dikoreksi ini (lihat tabel final di bawah).
-2. **3 fitur BTC/market-wide ter-flag** di `audit_feature_value_parity.py` (`btc_ret_24h`,
-   `btc_minus_mkt_24h`, `coin_mkt_sync_24h`, std_ratio live/train < 0.1). Investigasi: pola nilai
-   live (range sempit, tidak macet di angka bulat) konsisten dgn "pasar memang lagi tenang di
-   200 sinyal terakhir", BUKAN pola strip/synthetic klasik (beda dari kasus `long_short_ratio`
-   lama). Fitur ini TIDAK disentuh oleh perubahan HMM sesi ini. **Keputusan user**: lanjut deploy
-   HMM-only, fitur ini diinvestigasi terpisah nanti (BELUM selesai, follow-up terbuka).
-
-### Scorecard final (dgn data lengkap, sync-fix + leak-fix, apples-to-apples)
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| Viterbi 0.65/0.10 (lama, data lengkap) | 303 | 56.4% | 1.373 | $41.48 | -$9.56 |
-| **Causal 0.70/0.10 (DEPLOYED)** | **159 (-47.5%)** | **61.0% (+4.6pp)** | **1.703 (+24.0%)** | **$33.27 (-19.8%)** | **-$5.60 (41.4% lebih baik)** |
-
-**Baca jujur**: ini trade-off nyata, BUKAN "menang telak" seperti sempat disangka di iterasi
-sebelumnya (sebelum sync-fix). User pilih trade less-often-but-better-quality (PF/WR/MaxDD
-semua naik signifikan) meski PnL total turun ~20% di window OOS ini (159 trade, sampel sedang).
-
-### Perubahan yang di-deploy
-
-1. **Riset** (`Riset_pemodelan`, commit lokal belum di-push ke git Riset -- reminder: commit
-   terpisah dari deploy production):
-   - `core/regime.py`: `predict_hmm_causal()` baru (forward filtering) + fix bocor `fillna(ret.std())`
-     -> `fillna(0.0)`. `generate_oof_regime_labels()` pakai causal di tiap fold.
-   - `pipeline/data/core/regime_hmm_holdout.py` (SSOT holdout): `predict_hmm` -> `predict_hmm_causal`.
-   - `pipeline/data/core/regime_hmm.py`: blok holdout vestigial dikasih peringatan (bukan SSOT).
-   - `tools/model/verify_hmm_feature_parity.py`: diupdate cek causal (bukan Viterbi) + feature
-     list diupdate ke `opt2_plus_trend_18coin_iso37f` (37f, sebelumnya rujuk model lama 38f).
-   - `data/holdout-test/labeled/*_regime_h1.parquet` + `models/hmm/*.pkl`: diregenerasi 18 koin.
-   - `models/inference_config.json`, `models/model_registry.json`: base 0.65->0.70, didokumentasikan.
-2. **Live** (`swint_tradev2`, commit `4b6ef26`, pushed ke `main`, VPS git pull sukses):
-   - `app/services/data_service.py::_compute_hmm_regime()`: `predict_hmm` -> `predict_hmm_causal`.
-   - `core/regime.py`, `core/features.py`: sync 1:1 dari Riset.
-   - `models/inference_config.json` (scp): per_state_thresholds base 0.70/delta 0.10.
-   - `models/hmm/*.pkl` (scp, 21 file termasuk legacy coins): isi sama (fit tidak berubah).
-   - Backup otomatis tersimpan: `models/backups/backup_20260713_191636/`.
-
-### Verifikasi pasca-deploy
-
-```
-app_revision: 4b6ef26
-status: ok, scheduler_running: true
-feature_monitor: {'total': 18, 'ok': 18, 'warning': 0, 'error': 0}
-active_trades: 1 (posisi lama tidak terganggu)
-```
-
-### Belum / follow-up terbuka
-
-- 3 fitur BTC/market-wide ter-flag (lihat di atas) -- investigasi terpisah, bukan blocker HMM.
-- Commit perubahan `core/regime.py` dkk ke git Riset_pemodelan (belum dilakukan sesi ini, cuma
-  deploy production yg jalan -- riset masih uncommitted working tree per kebiasaan sesi ini).
-- Pantau performa live 1-2 minggu ke depan sebelum menilai apakah trade-off (PF naik, PnL turun)
-  ini benar-benar sepadan di kondisi live sungguhan (sampel OOS 159 trade tergolong sedang).
-
----
-
-## 2026-07-13 (lanjutan lagi lagi) — DIPUTUSKAN: base 0.65->0.70 + causal filtering, DITERAPKAN ke SSOT riset (BELUM live)
-
-**Status**: DITERAPKAN di riset (SSOT + config), BELUM disinkron ke live/VPS -- itu keputusan
-terpisah, tunggu approval eksplisit lanjutan.
-
-User pilih kandidat **causal 0.70/0.10** dari sweep di atas sbg keputusan final.
-
-### Audit tambahan sebelum menerapkan (diminta user: "cek ulang apakah sudah tidak leakage")
-
-Ditemukan 1 bocor kecil LAGI di `core/regime.py::_build_hmm_features()`:
-`vol = ret.rolling(vol_window,...).std().fillna(ret.std())` -- fallback NaN pakai std SELURUH
-series yang dipass (termasuk observasi sesudah bar yang ditambal). Cuma ~5 bar pertama tiap
-window kena (porsi kecil), tapi tetap leakage. Fix: `.fillna(0.0)`, konsisten dgn `mom`/`vr` yang
-sudah begitu. **Angka berubah stlh fix**: causal_0.70_0.10 PnL turun dari $35.15 ke $30.43 (dari
-"menang di semua metrik" jadi "untung nyaris sama, tapi lebih efisien & risiko sedikit lebih
-kecil") -- bukti bocor kecil pun berpengaruh nyata ke kesimpulan, bukan cuma formalitas.
-
-### Perubahan yang DITERAPKAN (repo riset)
-
-1. `pipeline/data/core/regime_hmm_holdout.py` (SSOT holdout/live) -- ganti `predict_hmm`
-   (Viterbi) jadi `predict_hmm_causal`. `pipeline/data/core/regime_hmm.py` -- blok holdout
-   vestigial (bukan SSOT, beda 2 hal dari SSOT: Viterbi + pakai btc_h4) dikasih peringatan
-   jangan dipakai, tidak dihapus (backward-compat).
-2. Regenerasi `data/holdout-test/labeled/{coin}_regime_h1.parquet` + `models/hmm/{coin}_hmm.pkl`
-   utk 18 koin (`run_regime_holdout.py --all`) -- fit model IDENTIK (belum berubah), cuma cara
-   decode/predict yang beda. Verifikasi: DOTUSDT jam 07-12 05:00-23:00 (dulu 19/19 beda vs live)
-   sekarang cocok 15/19 dgn histori live -- bukti perbaikan nyata, meski belum sempurna.
-3. `models/inference_config.json` `hmm.per_state_thresholds` -- base 0.65->0.70 (delta tetap
-   0.10): state0 [0.80,0.60], state1 [0.75,0.65], state2 [0.65,0.75], state3 [0.60,0.80],
-   fallback [0.70,0.70]. Note lengkap ditambahkan menjelaskan alasan + status sinkron live.
-4. `models/model_registry.json` `stack.hmm` -- tambah field `base`, `decode_method`,
-   `decode_method_note`.
-
-### Angka final (OOS genuine, setelah fix bocor kedua)
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| Viterbi 0.65/0.10 (lama) | 315 | 55.9% | 1.262 | $30.34 | -$6.93 |
-| **Causal 0.70/0.10 (baru)** | **169 (-46%)** | **59.2% (+3.3pp)** | **1.572 (+25%)** | **$30.43 (nyaris sama)** | **-$6.38 (8% lebih baik)** |
-
-### BELUM dilakukan -- perlu keputusan terpisah
-
-- **`swint_tradev2/app/services/data_service.py::_compute_hmm_regime()`** MASIH import & pakai
-  `predict_hmm` (Viterbi) langsung, base masih 0.65 (di config live VPS, terpisah dari
-  `models/inference_config.json` riset). Live TIDAK ikut berubah dari sesi ini.
-- Deploy resmi (`deploy_production.py`, scp model+config ke VPS, restart) belum dijalankan --
-  butuh audit parity fitur (`audit_feature_value_parity.py`) + approval eksplisit terpisah
-  sebelum sentuh live, sesuai `tools/ops/CLAUDE.md`.
-- Sample OOS 169 trade tergolong sedang (bukan besar) -- worth dipantau lagi setelah data
-  makin panjang sebelum terlalu yakin.
-
----
-
-## 2026-07-13 (lanjutan lagi) — Re-tuning threshold HMM pakai regime causal — TIDAK ADA kandidat yang menang telak, keputusan trade-off
-
-**Status**: SELESAI. Tidak ada kandidat yang unggul di SEMUA metrik -- keputusan produksi diserahkan
-ke user (belum diubah).
-
-Follow-up dari straight-swap yang ditolak (entry di atas). User setuju lanjut: threshold
-`hmm.per_state_thresholds` disetel ULANG pakai regime causal (bukan Viterbi bocor), bukan cuma
-tempel cara baru ke pengaturan lama.
-
-### Sweep OOF (leak-free, causal filtering di tiap fold walk-forward)
-
-**Script baru**: `pipeline/model/run_oof_hmm_threshold_retune_causal.py`. `core/regime.py`
-`generate_oof_regime_labels()` diubah pakai `predict_hmm_causal()` (bukan `predict_hmm`
-Viterbi) di tiap fold -- OOF regime encoding sekarang juga leak-free, bukan cuma di sisi holdout.
-Grid base 0.55-0.80 x delta 0-0.15 (24 kombinasi, sama seperti sweep legacy).
-
-Topby PF: base=0.80/delta=0.00 (PF 2.80, tapi cuma 301 trade/6th/18koin -- sangat jarang),
-base=0.70/delta=0.05 (PF 2.094, 2469 trade), base=0.65/delta=0.05 (PF 1.872, 4984 trade).
-**Current prod (base=0.65/delta=0.10) dengan regime causal**: PF 1.799, trades 6364 (baseline
-pembanding, BUKAN yang tertinggi PF-nya -- pola sama seperti sweep original 2026-07-08: pilihan
-produksi selalu bukan PF tertinggi OOF, karena PF tertinggi = trade paling sedikit/rapuh).
-
-### Validasi OOS (data belum pernah dilihat training, 2026-04-01 s.d. 07-12/13, 315 trade baseline)
-
-**Script**: `pipeline/model/run_oos_hmm_causal_vs_viterbi.py` (extended, multi-kandidat).
-
-| Kandidat | trades | WR | PF | PnL | MaxDD |
-|---|---|---|---|---|---|
-| viterbi 0.65/0.10 (**prod saat ini**) | 315 | 55.9% | 1.262 | $30.34 | -$6.93 |
-| causal 0.65/0.10 (regime baru, threshold lama) | 306 (-2.9%) | 53.9% | 1.107 (-12.3%) | $13.07 (-57%) | -$12.52 (+81% lbh buruk) |
-| causal 0.65/0.05 | 225 (-28.6%) | 56.9% | 1.324 (+4.9%) | $26.15 (-14%) | -$11.89 (+72% lbh buruk) |
-| causal 0.70/0.05 | 122 (-61.3%) | 58.2% | 1.560 (+23.6%) | $23.62 (-22%) | -$7.51 (+8% lbh buruk) |
-| causal 0.75/0.05 | 55 (-82.5%) | 61.8% | 1.790 (+41.8%) | $15.47 (-49%) | **-$5.04 (27% LEBIH BAIK)** |
-
-**Baca**: pola jelas, bukan bug -- makin tinggi threshold (makin selektif), PF & WR makin bagus
-dan bahkan MaxDD ikut membaik di 0.75/0.05 (lebih baik dari prod!), TAPI jumlah trade jatuh
-drastis (sampai -82.5%) dan PnL total tetap lebih rendah dari prod di SEMUA kandidat -- lebih
-selektif = lebih jarang trading = untung total lebih kecil meski kualitas per-trade naik.
-**Tidak ada kandidat yang menang di SEMUA metrik sekaligus** dibanding prod. Sampel OOS juga
-kecil (315 turun ke 55 utk kandidat paling agresif) -- beda-beda ini indikatif, bukan konklusif.
-
-### Kesimpulan & rekomendasi
-
-1. **Regime Viterbi yang bocor (lookahead) MEMANG bikin angka OOF/OOS historis proyek ini sedikit
-   digelembungkan** -- causal filtering (jujur, leak-free) adalah cara evaluasi yang lebih benar
-   secara metodologi ke depan, terlepas dari keputusan threshold.
-2. **TAPI tidak ada bukti kuat utk ganti konfigurasi produksi** -- semua kandidat causal
-   menang di kualitas (PF/WR) tapi kalah di volume/total profit vs setup existing. Trade-off,
-   bukan free upgrade.
-3. **Rekomendasi**: TETAP pakai threshold+regime production existing (Viterbi 0.65/0.10) untuk
-   saat ini -- tidak cukup bukti utk pindah. `predict_hmm_causal()` disimpan di kode sbg metode
-   yang tersedia & lebih benar utk EVALUASI/backtest riset ke depan (hindari overclaim PF dari
-   lookahead), tapi TIDAK dipakai SSOT/live saat ini. Keputusan akhir threshold produksi
-   diserahkan ke user -- belum ada perubahan ke `models/inference_config.json`/deploy.
-
-Artefak: `models/runs/guard_opt2_plus_trend_hmm_18coin/hmm_threshold_sweep_causal_oof.csv`,
-`oos_hmm_causal_vs_viterbi.json`.
-
----
-
-## 2026-07-13 (lanjutan) — Implementasi HMM causal filtering (ganti Viterbi) — DITOLAK straight-swap, OOS turun
-
-**Status**: KODE DIBUAT & TERVALIDASI BENAR, TAPI PERFORMA OOS TURUN — jangan deploy tanpa re-tuning.
-User minta tindak lanjuti temuan `hmm_regime_enc` mismatch (entry di atas) dengan mengganti metode
-prediksi dari Viterbi ke causal filtering.
-
-### Implementasi
-`core/regime.py` — fungsi baru `predict_hmm_causal()` (forward filtering murni via
-`hmmlearn._hmmc.forward_log`, argmax alpha_t) sbg pengganti `predict_hmm()` (Viterbi,
-`model.predict()`) UNTUK use-case holdout/live (window terus bertambah panjang). `predict_hmm()`
-lama TIDAK dihapus — masih dipakai `generate_oof_regime_labels()` (tiap fold window TETAP,
-tidak pernah diperpanjang, jadi Viterbi di situ sudah stabil/aman).
-
-### Validasi kebenaran (sebelum lihat dampak performa)
-1. **Stabilitas** (properti inti yang dicari): predict causal atas prefix N vs prefix N+20 —
-   hasil utk 0..N-1 IDENTIK 100% (dites DOTUSDT). Viterbi tidak punya jaminan ini.
-2. **Sanity distribusi**: causal vs Viterbi state distribution DOTUSDT masuk akal (TRENDING_DOWN
-   53.7% vs 49.7%, tidak degenerate).
-3. **Magnitude vs Viterbi** (18 koin, window OOS Apr-Jul): causal beda 1.1%-13.1% dari Viterbi per
-   koin (rata2 ~8%) — BUKAN cuma di 3 koin yang ke-flag di audit (DOT/BCH/ADA), across-the-board.
-   Artinya switch ini reklasifikasi state utk sebagian besar sejarah, bukan cuma nge-fix 3 koin.
-
-### Dampak performa — OOS (18-koin, stack v6.4, H1-close entry, 2026-04-01 s.d. 2026-07-13)
-
-**Script**: `pipeline/model/run_oos_hmm_causal_vs_viterbi.py` (tidak overwrite artefak resmi
-`models/hmm/*.pkl`/`regime_h1.parquet` — regime causal dibangun in-memory utk perbandingan).
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| Viterbi (current) | 315 | 55.9% | **1.262** | $30.34 | -$6.93 |
-| Causal (baru) | 306 | 53.9% | 1.107 (-12.3%) | $13.07 (-57%) | -$12.52 (+81% lebih buruk) |
-
-**Baca**: causal filtering LEBIH BENAR secara matematis (stabil, tidak pernah lihat masa depan)
-TAPI performanya lebih jelek kalau langsung tukar tanpa re-tuning. Penyebab paling mungkin:
-`hmm.per_state_thresholds` (base=0.65, delta=0.10) dikalibrasi lewat sweep OOF pakai regime
-Viterbi -- begitu state encoding berubah (rata2 ~8% bar reklasifikasi), threshold yang sama
-tidak lagi cocok utk distribusi state yang baru. Bukan berarti causal "salah", tapi straight-swap
-tanpa re-tuning threshold jelas merugikan.
-
-### Keputusan
-**JANGAN deploy causal filtering apa adanya** — turun 12% PF, 57% PnL, MaxDD 81% lebih dalam di
-OOS. Kalau mau dikejar lebih jauh, perlu sweep ulang `hmm.per_state_thresholds` di OOF (bukan
-OOS) dgn regime causal, baru validasi OOS lagi -- effort besar & hasil belum tentu lebih baik dari
-Viterbi. Belum diputuskan/dieksekusi, tunggu keputusan user. `predict_hmm_causal()` disimpan di
-`core/regime.py` sbg opsi yang tersedia utk eksperimen lanjutan kapanpun, tidak dipakai SSOT saat ini.
-
----
-
-## 2026-07-13 — Audit sinyal live vs riset (refresh OOS + compare_oos_live_signals.py, 11-13 Juli)
-
-**Status**: SELESAI. **Koreksi penting atas laporan awal saya sendiri** — root cause 1 ternyata
-sudah fixed (bukan bug baru), root cause 2 genuinely ditemukan & dijelaskan (bukan bug kode,
-karakteristik struktural HMM Viterbi).
-
-### Alur
-1. Refresh `data/holdout-test/` penuh (fetch→clean→engineer→regime, `--all`, s.d. 2026-07-13) —
-   sebelumnya mentok 2026-07-12 11:00 UTC.
-2. `tools/ops/compare_oos_live_signals.py --start-date 2026-07-11 --end-date 2026-07-13`: 1022
-   sinyal live, 5379 baris fitur ter-flag (>5% beda), 5 sinyal beda arah, 0 unmatched.
-
-### Temuan 1 — `long_short_ratio`/`whale_retail_divergence` (6 koin baru): SUDAH FIXED, BUKAN bug aktif
-
-Laporan awal saya (ke user) SALAH menyimpulkan fix `d4d884e` (2026-07-12) belum tuntas. Setelah
-cek **distribusi waktu** baris ter-flag: SEMUA 260 baris `long_short_ratio` + 255 baris
-`whale_retail_divergence` (ATOM/ETC/BCH/LTC/FIL/UNI) berhenti tepat di **2026-07-12 11:16 UTC**
-— persis setelah commit `d4d884e` (2026-07-12 11:12 UTC). Nol baris ter-flag sesudah itu.
-Diverifikasi langsung: jalankan live code path (`InferenceDataService.prepare_latest_features`)
-di VPS via SSH utk ATOMUSDT sekarang → `last_LSR=1.6497` (real, bukan synthetic ~1.0).
-**Pelajaran metodologi**: kalau nemu gap, cek dulu distribusi WAKTU vs tanggal deploy fix
-terakhir sebelum simpulkan "belum fixed" — kalau tidak, gampang salah lapor false-positive
-dari data historis pra-fix yang kebetulan masuk rentang tanggal yang dipilih.
-
-### Temuan 2 — `hmm_regime_enc` mismatch (DOTUSDT 19 jam berturut-turut, BCH 7 jam, ADA 7 jam): STRUKTURAL, bukan bug kode
-
-Model `.pkl` byte-identical live vs riset (md5 match). Harga H4 juga cocok (close riset vs live
-selisih <0.5%). Root cause: `core/regime.py::predict_hmm()` pakai `model.predict(X)` (hmmlearn
-GaussianHMM) = **Viterbi decoding atas SELURUH sequence sekaligus** (global, bukan per-bar
-independen). Konsekuensi: state yang di-assign ke bar LAMA bisa BERUBAH kalau sequence
-diperpanjang dengan observasi BARU di re-decode berikutnya — sifat inheren Viterbi, bukan bug.
-Live decode terus-menerus dgn data s.d. "sekarang" (real-time); riset decode dgn cutoff snapshot
-refresh saya (s.d. 2026-07-13 00:00-01:00) — beda titik "as-of" ini cukup utk menggeser state
-bar2 dekat batas waktu retroaktif, meski observasi H4 mentahnya sama persis di kedua sisi.
-
-**Bukan bug yang bisa di-"fix" sederhana** — dua opsi kalau mau dibereskan struktural:
-1. **Terima sebagai noise wajar** dekat batas real-time (Recommended, effort rendah) — cocok
-   dgn fakta 5 sinyal beda-arah cuma 0.5% dari 1022 sinyal, dan HMM state cuma dipakai utk
-   threshold gating (bukan input LGBM 37f langsung).
-2. Ganti metodologi predict ke **filtering causal murni** (bukan Viterbi batch) supaya state
-   bar lama stabil selamanya — butuh retrain-adjacent validation (OOF/OOS ulang), scope besar,
-   BELUM diputuskan/dieksekusi, tunggu approval eksplisit terpisah.
-
-### Keputusan
-Tidak ada kode yang diubah sesi ini (temuan 1 sudah fixed sendiri sebelum sesi ini; temuan 2
-strukturaL, butuh keputusan user dulu). Direkomendasikan: opsi 1 (terima sbg noise near-boundary),
-dicatat di sini sbg baseline pemahaman utk audit berikutnya — jangan panik kalau `hmm_regime_enc`
-beda di beberapa jam terakhir sebelum cutoff reproduksi riset, itu ekspektasi Viterbi bukan bug.
-
----
-
-## 2026-07-13 — OOF: pyramiding max2 (scale_in) dengan gate WAKTU antar-leg (1/2/3/5/7/9 jam)
-
-**Status**: OOF COMPLETE (not deployed). **Kesimpulan: TIDAK cukup kuat, pyramiding TETAP CLOSED.**
-**Stack**: lgbm37f_18coin (`opt2_plus_trend_18coin_iso37f`) + HMM 0.65/0.10 + guard28f_18coin (`guard_opt2_plus_trend_hmm_18coin`, reuse), tanpa spot_confirm/regime_disable (fusion live-only).
-**Script baru**: `pipeline/model/run_oof_pyramiding_time_gap_sweep.py` (sweep `--gaps`).
-**Kode baru**: `core/scale_in_sim.py` param `pyramiding_min_bars_gap` (jeda minimum sejak leg TERAKHIR, bukan sejak entry awal) + thread ke `core/evaluator.py::simulate_trades_swing`.
-**Artifact**: `models/runs/guard_opt2_plus_trend_hmm_18coin/pyramiding_time_gap_sweep_oof.json`
-
-Konteks: pyramiding max2 dgn gate HARGA (rugi>=2.5%) sudah diuji tuntas & ditolak (PF 1.952->1.745
-tanpa gate, ~1.72 dgn gate). Eksperimen ini sudut BEDA: gate WAKTU (jam) minimum antar-leg, bukan harga.
-
-### Full OOF (2020-01-01 s.d. 2026-04-01, 5330 trade baseline)
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| A baseline (no pyramiding) | 5330 | 63.1% | **1.946** | $2356 | -$33.02 |
-| gap 1h | 5321 | 63.0% | 1.830 (-6.0%) | $2971 (+26%) | -$46.05 (+40% lebih buruk) |
-| gap 2h | 5326 | 62.9% | 1.834 (-5.8%) | $2831 (+20%) | -$42.84 (+30% lebih buruk) |
-| gap 3h | 5331 | 63.0% | 1.815 (-6.7%) | $2686 (+14%) | -$45.95 (+39% lebih buruk) |
-| gap 5h | 5331 | 63.2% | 1.802 (-7.4%) | $2503 (+6%) | -$42.66 (+29% lebih buruk) |
-| gap 7h | 5333 | 63.2% | 1.766 (-9.2%) | $2315 (-2%) | -$44.21 (+34% lebih buruk) |
-| gap 9h | 5340 | 63.4% | 1.767 (-9.2%) | $2247 (-5%) | -$43.56 (+32% lebih buruk) |
-
-**Baca**: di sampel besar (paling bisa dipercaya), gate waktu berapapun panjangnya TIDAK
-menyelamatkan pyramiding — PF selalu lebih rendah dari baseline, MaxDD selalu lebih buruk
-29-40%. Gap pendek (1-3h) malah PnL dolar mentah lebih tinggi (lebih banyak leg lolos, market
-sedang tren jadi nambah ke posisi untung menguntungkan secara nominal) tapi PF/risk-adjusted
-tetap kalah — pola yang sama persis dengan temuan gate harga sebelumnya: pyramiding di sistem
-ini "nambah ke winner", bukan "nolongin entry salah", apapun jenis gate-nya.
-
-### Pseudo-holdout (2025-10-01 s.d. 2026-04-01, 414 trade baseline — SEMI IN-SAMPLE utk Guardian, sampel kecil)
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| A baseline | 414 | 61.4% | 2.049 | $167.53 | -$8.13 |
-| gap 1h | 412 | 61.2% | 2.212 (+8.0%) | $258.97 (+55%) | -$10.78 (+33% lebih buruk) |
-| gap 2h | 413 | 62.0% | 2.202 (+7.5%) | $242.64 (+45%) | -$10.63 (+31% lebih buruk) |
-| gap 3h | 415 | 62.2% | 2.196 (+7.2%) | $230.54 (+38%) | -$8.37 (+3%, nyaris flat) |
-| gap 5h | 415 | 61.9% | 2.002 (-2.3%) | $186.97 (+12%) | -$8.37 (flat) |
-| gap 7h | 415 | 61.2% | 1.894 (-7.6%) | $169.99 (+1.5%) | -$9.08 (+12% lebih buruk) |
-| gap 9h | 414 | 61.4% | 1.868 (-8.8%) | $162.57 (-3%) | -$8.71 (+7% lebih buruk) |
-
-**Baca**: BERTOLAK BELAKANG dari full OOF — di window kecil & terbaru ini, gap pendek (1-3h)
-justru PF/WR/PnL semua membaik, MaxDD nyaris flat di gap 3h. Tapi ini window YANG SAMA dipakai
-melatih Guardian (semi in-sample, caveat yang sama berlaku di semua angka pseudo_holdout lain
-di proyek ini) dan sampelnya kecil (414 trade, cuma ~1-2 trade multi-leg per bulan). Pola umum
-di proyek ini: angka OOF/pseudo yang bagus SERING menyusut/berbalik di OOS genuine (lihat delta
-Guardian OOF +1.135 PF vs OOS genuine cuma +0.171-0.334 PF). Tidak cukup kuat untuk override
-kesimpulan full OOF tanpa uji OOS genuine — dan OOS butuh approval eksplisit user dulu.
-
-### Follow-up SAMA HARI — OOS genuine (holdout-test, 2026-04-01 s.d. 2026-07-12, 314 trade baseline)
-
-User minta ditindaklanjuti dengan OOS asli utk cek apakah sinyal positif pseudo-holdout di atas
-nyata. **Script baru**: `pipeline/model/run_oos_pyramiding_time_gap_sweep.py` (adaptasi
-`model/eval/holdout_oos.py::evaluate_coin`, entry H1-close, data `data/holdout-test/labeled/`).
-
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| A baseline | 314 | 55.1% | **1.248** | $28.68 | -$7.03 |
-| gap 1h | 311 | 54.3% | 1.096 (-12.2%) | $16.75 (-42%) | -$13.13 (+87% lebih buruk) |
-| gap 2h | 312 | 54.8% | 1.154 (-7.5%) | $24.60 (-14%) | -$13.03 (+85% lebih buruk) |
-| gap 3h | 314 | 54.8% | 1.099 (-11.9%) | $15.68 (-45%) | -$12.75 (+82% lebih buruk) |
-| gap 5h | 312 | 54.8% | 1.140 (-8.7%) | $20.58 (-28%) | -$11.90 (+69% lebih buruk) |
-| gap 7h | 314 | 55.7% | 1.098 (-12.0%) | $13.78 (-52%) | -$11.11 (+58% lebih buruk) |
-| gap 9h | 316 | 56.0% | 1.103 (-11.6%) | $13.90 (-52%) | -$11.11 (+58% lebih buruk) |
-
-**Baca — KONKLUSIF, sinyal pseudo-holdout TIDAK terkonfirmasi.** Di data yang genuinely belum
-pernah dilihat training (bukan window yang dipakai Guardian belajar), gap 1-3h yang tadinya
-kelihatan bagus di pseudo-holdout justru SEMUA gap (1-9h) lebih jelek dari baseline di PF & PnL,
-dan MaxDD 58-87% LEBIH DALAM. Ini persis pola yang diantisipasi: angka pseudo-holdout yang
-bagus adalah optimisme sampel kecil/semi in-sample, tidak generalisasi ke data baru.
-
-**Artifact**: `models/runs/guard_opt2_plus_trend_hmm_18coin/pyramiding_time_gap_sweep_oos.json`
-
-### Keputusan FINAL
-
-**Pyramiding CLOSED, ketiga sudut sudah diuji tuntas dgn hasil konsisten menolak**: (1) mode
-`independent` salah parity, (2) gate harga (rugi>=2.5%), (3) gate waktu (1-9h) — OOF besar DAN
-OOS genuine dua-duanya sepakat PF lebih rendah & MaxDD lebih buruk di semua varian. Tidak ada
-alasan lagi untuk mengulang eksperimen pyramiding tanpa temuan struktural baru (misal: arsitektur
-sizing berbeda, bukan cuma gate tambahan).
-
----
-
-## 2026-07-13 — Fix gap: config Riset tidak tahu soal cooldown/limit_exit live (nyaris ke-hapus saat deploy berikutnya)
-
-**Status**: APPLIED (config sync + safety net, tidak ada deploy ke VPS)
-**Trigger**: user minta cek "setup model terbaik dengan cooldown".
-
-Ditemukan: `models/inference_config.json` (Riset) draft v6.4 (belum commit) sudah include model 18-koin/37f,
-tapi TIDAK punya section `cooldown`/`limit_exit` sama sekali — dua fitur yang sudah live di swint_tradev2
-sejak 2026-07-12/13 (lihat [[project-guardian-floor-cooldown-deploy]]). Kode keduanya cuma ada di
-swint_tradev2 (`paper_trading.py`, `signal_filter.py`), tidak pernah direplikasi ke Riset. `PRESERVE_KEYS`
-di `tools/ops/deploy_model.py` juga tidak melindungi kedua key ini — kalau draft v6.4 di-commit lalu
-`deploy_production.py` dijalankan, config baru akan menimpa target dan MENGHAPUS cooldown+floor stop-limit
-dari production (regresi ke bug re-entry ala-AVAX yang baru diperbaiki).
-
-**Fix**:
-1. `models/inference_config.json` — tambah section `cooldown` (enabled/profit_only/profit_hours=1) dan
-   `limit_exit` (enabled/floor_tp_frac=0.7), nilai disalin persis dari mirror lokal swint_tradev2.
-2. `tools/ops/deploy_model.py` `PRESERVE_KEYS` — tambah `"limit_exit"` dan `"cooldown"` (whole-object preserve)
-   supaya config operasional ini tidak pernah ketimpa dari source Riset di deploy manapun ke depan.
-
-3. `models/model_registry.json` — diupdate penuh dari v6.1/38f (21-koin, stale sejak 2026-06-22 draft)
-   ke v6.4/37f (18-koin): `active`/`display_name`/`benchmark`/`architecture` ganti, `stack.lgbm` ->
-   `opt2_plus_trend_18coin_iso37f`, `stack.guardian` -> `guard_opt2_plus_trend_hmm_18coin` (cv_f1_macro/
-   cv_logloss dihitung ulang dari `guardian_cv_results.json` aktual, BUKAN dicopy dari guard28f lama),
-   tambah `stack.spot_confirm` + `stack.regime_disable` (komponen baru yang belum ada di schema lama),
-   `oof_scorecard`/`sealed_holdout_oos` disamakan dgn angka di `inference_config.json.scorecard`.
-   Ditambah field `post_deploy_operational_note` menjelaskan cooldown/limit_exit ditambahkan terpisah
-   setelah deploy model ini (tidak mengubah model/n_features).
-
-**Belum dibereskan** (di luar scope task ini): banner atas `CLAUDE.md` ("Production live: ic32_regime_v6
-/ fs38_28f, deploy 2026-07-03") juga masih menyebut stack lama — belum disamakan ke v6.4/fs37_18coin_spotconfirm.
-
----
-
-## 2026-07-12 — OOF: cooldown 1h after profit + pyramiding max2
-
-**Status**: OOF COMPLETE (not deployed)  
-**Stack**: `LGBM opt2_plus_trend + HMM + guard_opt2_plus_trend_hmm` (fs38_28f, guardian ON)  
-**Script**: `pipeline/model/run_oof_cooldown_pyramiding.py`  
-**Artifact**: `models/runs/guard_opt2_plus_trend_hmm/oof_cooldown_pyramiding.json`
-
-### Variants
-- **A** baseline: single pos, no cooldown  
-- **B** cooldown 1 bar (1h) only if `net_pnl > 0`  
-- **C** pyramiding max 2 same-dir  
-- **D** C+B  
-
-### Full OOF (→2026-04)
-| | trades | WR | PF | PnL | MaxDD |
-|--|--------|-----|-----|-----|-------|
-| A | 4522 | 66.0% | 2.35 | $2699 | $-26 |
-| B | 4481 | 66.1% | 2.37 | $2689 | $-26 (−0.4% PnL) |
-| C | 6374 | 66.2% | 2.35 | $3766 | $-40 (+40% PnL, DD+52%) |
-| D | 5037 | 60.3% | 1.81 | $2115 | $-42 (−22% PnL) |
-
-### Keputusan
-- **B** netral OOF → OK sebagai policy live anti re-entry pasca profit (AVAX case).  
-- **C** PnL naik, DD naik — jangan deploy tanpa risk budget.  
-- **D** tolak.  
-Belum enable di live `inference_config` / `signal_filter` (butuh approval).
-
----
-
-## Index Eksperimen (2026-06-22 s.d. 2026-07-04, kronologis per blok)
-
-- 2026-07-04 — Fix inference_config: structural_filter OFF di source deploy (bukan cuma live UI) — Status: **APPLIED** — `models/inference_config.json` (Riset + swint), `deploy_model.py` enforce dari `config.py` — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L7)
-- 2026-07-04 — OOF filter sweep: structural/swing-fresh OFF, HMM+RR only (selaras live) — Status: **APPLIED** — `config.py` `TP_SL_STRUCTURAL_FILTER=False`, `TP_SL_SWING_FRESHNESS=False` — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L24)
-- 2026-07-04 — Fix `trend_accel_4h` double-ATR + deploy v6.1.1 (threshold 0.65/0.10, min_hold=0) — Status: **DEPLOYED** — VPS `e299287` (git) + inference cache rebuild 2026-07-04T04:35Z — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L55)
-- 2026-07-04 — Deploy v6.1 / fs38_28f (H4-closed + GRAMUSDT) — Status: **DEPLOYED** — snapshot `2026-07-03 18:05:00 UTC`, VPS `ff37118`, rollback v6.0 snapshot `2026-07-03 11:50:45` — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L112)
-- 2026-07-03 — Refactor H4 closed + shift(4h) (seragamkan EMA/RSI/trend/swing) — Status: RETRAIN DONE — deploy v6.1 2026-07-04 — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L140)
-- 2026-07-01 — Guardian k5_mom **v7** (pnl_constrained_exit — SWEET SPOT TERCAPAI) — Status: OOF VALIDATED — lokal only, belum deploy VPS — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L197)
-- 2026-07-01 — Ringkasan: Guardian vs stack **k5_mom embedded** (kesalahan & hasil) — Status: COMPLETE — tidak ada kandidat sweet spot; tidak deploy — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L289)
-- 2026-07-01 — Audit momentum_v2 WR (trade-level forensics) — Status: COMPLETE — root cause identified — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L378)
-- 2026-07-01 — Guardian k5_mom v6 (fair ablation no p_bull, label_end fix) — Status: OOF VALIDATED — lokal only — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L435)
-- 2026-07-01 — Guardian k5_mom v5 retrain (Opsi A: TP-phase 3-class, no p_bull) — Status: OOF VALIDATED — lokal only, belum deploy VPS — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L466)
-- 2026-07-01 — Guardian k5_mom v3 retrain (3-class, no p_bull) — Status: OOF VALIDATED — lokal only, belum deploy VPS — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L501)
-- 2026-07-01 — Guardian momentum_v2 live parity re-sim — Status: OOF VALIDATED — tidak deploy — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L530)
-- 2026-06-30 — Guardian k5_mom v2 (binary peak escort) — Status: OOF VALIDATED — belum deploy — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L555)
-- 2026-06-27 — ic32.rv5.coin_fs.v1 — Status: IN_PROGRESS (masih aktif, lihat `pipeline/experiments/ic32_rv5_coin_fs/CLAUDE.md`) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L692)
-- Baseline Aktif — ic32_regime_v2_parity (Deployed 2026-06-22) — Status: PRODUCTION (saat itu) — baseline bersih untuk semua eksperimen berikutnya — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L761)
-- 2026-06-23 — Holdout: LGBM Parity + Guardian Momentum Escort v2 — Status: COMPLETED — HOLDOUT_EVALUATED=True, amplop dikunci — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L801)
-- 2026-06-24 — DEPLOY ic32_regime_v4 (LGBM + HMM gate 0.65/0.05 + Guardian v2) — Status: DEPLOYED ke production VPS (keputusan eksplisit user, override kriteria upgrade) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L862)
-- 2026-06-25 — Feature Selection: Stability Analysis + Ablation + Reduced Retrain (ic32.rv2.lgbm.24f) — Status: (lihat detail — superseded oleh opt2_plus_trend) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L891)
-- 2026-06-25 — WD tanpa Komponen L/S (WD = CVD z-score saja) — Status: (lihat detail) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1019)
-- 2026-06-23 — Holdout: LGBM + HMM Gate + Guardian v2 (base=0.74, delta=0.06) — Status: COMPLETED — HOLDOUT_EVALUATED=True, amplop dikunci — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1095)
-- 2026-06-23 — Daily LSTM v2: Binance-direct L/S + Automasi p_bull Harian — Status: (lihat detail — LSTM daily tidak dipakai di v6+) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1153)
-- 2026-06-23 — ic32_regime_v4: HMM-Gated Direction Threshold — Status: (lihat detail — superseded oleh HMM per-state v6) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1199)
-- 2026-06-24 — OOF: Guardian Momentum v2 Exit-Param Sweep di Stack v4 (HMM 0.65/0.05) — Status: COMPLETED — kesimpulan: **frontier PF jenuh, tidak ada upgrade** — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1322)
-- 2026-06-24 — MODEL BARU: Trade-Quality Sizing (volume-neutral payoff lift) — Status: COMPLETED (OOF) — sinyal nyata tapi lemah; PnL/PF naik tapi MaxDD memburuk → tidak deploy — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1388)
-- 2026-06-24 — Investigasi Lever RR: min_rr / Entry Timing / TP Extension — Status: (lihat detail — kesimpulan dipakai di v6 structural_filter OFF) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1513)
-- 2026-06-24 — Guardian Min-Gain Gate (Opsi A): Retrain dengan Patience Gate — Status: (lihat detail — superseded) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1586)
-- 2026-06-25 — Holdout 24 Juni 2026 WIB: ic32_regime_v4 (model live) — Status: COMPLETED — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1644)
-- 2026-07-02 — Ablation Dekorelasi Geometri + Prinsip No-Cross-Model-Features (37f/33f) — Status: DONE (OOF) — kandidat 33f layak lanjut fase threshold sweep — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1697)
-- 2026-07-03 — IC Test 6 Kandidat Fitur Baru + Marginal Test (basis 37f) — Status: DONE (OOF) — `ofi_z_score` lolos & bernilai tambah nyata; tidak memperbaiki bias short-saat-pump — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1749)
-- 2026-07-03 — Audit Leakage + Marginal Test di atas 33f (ofi_z_score, atr_percentile_h1, vol_spike_zscore) — Status: DONE — **leakage `vol_spike_zscore` terkonfirmasi** (dipakai di label-gen); `ofi_z_score`+`atr_percentile_h1` bersih — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1813)
-- 2026-07-03 — Otak-atik Kombinasi Dekorelasi Keluarga Geometri (basis 37f) — Status: DONE (OOF) — `v2` (keep 20x, buang 50x+Buy/Sell_Liq) terbaik, mengalahkan `v1`/33f — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1870)
-- 2026-07-03 — KOREKSI: Bug Threshold Flat 0.65 di Semua Script "Replay Insiden" — Status: DONE — angka drill-down sesi ini pakai threshold salah, tidak berdampak ke scorecard resmi — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L1965)
-- 2026-07-03 — Riset Fitur Regime-Adaptive (basis 35f-clean) — HASIL NEGATIF — Status: DONE — `trend_strength`/`no_demand` awalnya DITOLAK di basis ini, `wyckoff_phase` "tidak bersih" — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2017)
-- 2026-07-03 — Riset Fitur Leading Indicator Gen-2 (basis 35f-clean) — HASIL POSITIF — Status: DONE — `absorption_at_swing` lolos — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2089)
-- 2026-07-03 — Round 3: IC Test Pool Luas + hidden_divergence/ofi_momentum_ratio (DITOLAK) + Replay 30 Jun-2 Jul — Status: DONE — kandidat baru ditolak; 37f (35f-clean+absorption_at_swing+vwdp) tetap — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2154)
-- 2026-07-03 — Opsi 2: Redesain Label Struktural (gate momentum ofi_z_score, ganti vol_spike_zscore) — Status: DONE — hipotesis inti tervalidasi — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2232)
-- 2026-07-03 — Retest Fitur Gagal vs Label Baru: `trend_strength` Berhasil, Insiden Sempit Tetap Campur — Status: DONE — `trend_strength` terbukti genuinely membantu dgn label Opsi 2 — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2312)
-- 2026-07-03 — Threshold Sweep HMM + Uji HMM Fast-React (vol/mom window 6/12) — Status: DONE — kandidat final terpilih **opt2_plus_trend** — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2378)
-- 2026-07-03 — Skenario A: Monotone Constraints via One-vs-Rest (SHORT-vs-rest, LONG-vs-rest) — Status: DONE — constraint bekerja benar, OOF PnL naik — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2468)
-- 2026-07-03 — Skenario B: Validasi Fast-React HMM Skala Penuh — Status: DONE — **DITOLAK**, uji kecil sebelumnya (n=19) menyesatkan — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2553)
-- 2026-07-03 — Skenario C: Perbesar Radius Gate Momentum (ofi_z_score 1.5→1.2) — Status: DONE — **DITOLAK** (verdict user) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2600)
-- 2026-07-03 — Guardian Baru utk opt2_plus_trend + HMM (no cross-model features) — Status: DONE — full-stack OOF & pseudo-holdout membaik signifikan, proporsional — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2648)
-- 2026-07-03 — DEPLOY ic32_regime_v6 / fs38_28f ke Production — Status: DONE — live di VPS sejak 2026-07-03 07:49 UTC — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2721)
-- 2026-07-03 — Sweep guard28f `guardian_min_hold_bars`: 4 vs 0 — Status: DONE — tidak ada efek berarti, param 4 (kemudian diubah ke 0, lihat entry v6.1.1) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2763)
-- 2026-07-03 — LSTM Confirmation Cascade (v1 win/loss, v2 continuation magnitude) — Status: DONE — **KEDUA VARIAN DITOLAK** (AUC ~0.54, hampir acak) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2797)
-- 2026-07-03 — Rasa Penasaran: XGBoost & CatBoost vs LightGBM (algoritma entry) — Status: DONE — **DITOLAK**, LightGBM tetap terbaik — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2892)
-- 2026-07-03 — Ensemble Regime-Specialist LGBM (4 model per HMM state) — Status: DONE — **DITOLAK** — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L2938)
-- 2026-07-03 — Investigasi OOS Holdout Rugi (PF<1) — Root Cause + Fix `positioning_mode` — Status: DONE — **bug produksi ditemukan & diperbaiki** (LSR di-strip jadi konstan) — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L3025)
-- 2026-07-03 — UI Pemantauan Fitur Live (Feature Monitoring Dashboard) — Status: DONE — dideploy ke production — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L3099)
-- 2026-07-04 — DEPLOY ic32_regime_v6.1 (H4-closed + funding_rate + TON→GRAM) + INSIDEN market-panel holdout NaN — Status: DONE — v6.1 live di VPS, snapshot `2026-07-03 18:05:00 UTC` — [detail](archive/EXPERIMENTS_full_history_2026-07-08.md#L3167)
-
----
-
-## Index Eksperimen (2026-07-08 s.d. 2026-07-12, dipadatkan 2026-07-14)
-
-- 2026-07-08 — Insiden: Drift Tak Terdokumentasi 07-06 (partial-H4 + Guardian OFF) — Audit + Rollback ke v6.1 — Status: DONE — root cause ditemukan, production di-rollback ke v6.1 (verified), repo dibersihkan — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L8)
-- 2026-07-08 — KANDIDAT DIKUNCI: fs38_18coin_spotconfirm (18-koin + spot-confirm + regime-disable + Guardian) — Status: CANDIDATE dikunci sementara, bukan production — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L40)
-- 2026-07-09 — Investigasi fitur market-context (btc_ret_24h fade, R5 monotone, R1, coin_mkt_sync_24h) — Status: SELESAI diinvestigasi, v6.3 tetap live tanpa perubahan, R5 disimpan sbg kandidat riset — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L231)
-- 2026-07-10 — Audit parity live-vs-riset (trigger XRPUSDT SHORT@1.0911 salah arah) + fix — Status: SELESAI, 2 bug live DIFIX & DIDEPLOY, 1 fitur di-takedown dari feature set — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L300)
-- 2026-07-10 (lanjutan) — Jadwal live digeser HH:05→HH:15 + entry price M15 di OOF/OOS — Status: SELESAI, jadwal live sudah diubah — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L380)
-- 2026-07-10 (lanjutan lagi) — KOREKSI: takedown relative_strength_z diulang di universe 18-koin (bukan 21) — Status: SELESAI, koreksi kesalahan eksperimen sebelumnya — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L438)
-- 2026-07-10 (lanjutan lagi) — DEPLOY: ic32_regime_v6.4 (lgbm37f_18coin, takedown relative_strength_z) — Status: SELESAI, LIVE — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L516)
-- 2026-07-11/12 — Reproduksi OOS v6.4 vs live 11 Juli: 3 bug ditemukan & difix (2 penuh, 1 parsial) — Status: SELESAI utk tujuan reproduksi, 2 bug difix permanen — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L548)
-- 2026-07-12 — Sweep threshold HMM v6.4 (OOF) + FIX live: SL close-mode pakai harga intrabar, bukan candle settled — Status: sweep SELESAI + divalidasi OOS (kandidat ditolak), fix live SELESAI & DIDEPLOY — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L652)
-- 2026-07-12 (lanjutan) — Fix Bug 3 di source (spot-confirm indexing) + auto-refresh panel + config.py disamakan ke 18-koin — Status: SELESAI, ketiganya diterapkan — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L712)
-- 2026-07-12 (lanjutan lagi) — Audit trade-by-trade 12 Juli: 4 gap baru ditemukan (3 metodologi, 1 bug dicatat belum fix, 1 kebijakan bukan bug) — Status: semua ditemukan & didokumentasikan, fix Guardian (item C) SENGAJA DITUNDA — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L766)
-- 2026-07-12 (koreksi) — Item A di atas ("same-bar re-entry gap") SALAH — root cause asli: swing sidedness, bukan gap timing. Fix diuji OOF+OOS, DITOLAK — Status: SELESAI diinvestigasi, root cause asli ditemukan & diverifikasi — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L822)
-- 2026-07-12 (lanjutan) — Root cause kenapa "tolak swing basi" menang: cocok dgn label training model. Varian HMM-conditional diuji & KALAH. Fix DITERAPKAN ke live (lokal, BELUM deploy) — Status: root cause dikonfirmasi, varian granular diuji & ditolak — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L896)
-- 2026-07-12 (lanjutan) — Model baru `lgbm37f_trend` (label triple-barrier ATR, khusus TRENDING_UP): dibangun, diuji OOF+OOS, DIDEPLOY LIVE (regime_model_routing) — Status: SELESAI & LIVE — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L968)
-- 2026-07-12 (lanjutan) — Tool baru `compare_oos_live_signals.py` + fix `long_short_ratio` utk 6 koin baru (window-length-dependent bug) — Status: SELESAI & DIDEPLOY — [detail](archive/EXPERIMENTS_full_history_2026-07-14.md#L1080)
+>
+> **AMBANG ARSIP (wajib dicek proaktif, bukan tunggu ditegur user)**: kalau file ini lewat
+> **~2.500 baris atau ~150KB**, TIDAK ADA hook otomatis yg menegur (beda dgn MEMORY.md yg
+> punya hook) — jadi WAJIB `wc -l`/`wc -c` cek sendiri di awal sesi yg akan menulis eksperimen
+> baru ke sini. Kalau lewat ambang: pindah SEMUA entry lama (kecuali Template & sesi
+> aktif/hari berjalan) ke `archive/EXPERIMENTS_full_history_{tanggal-hari-ini}.md` (lossless,
+> verifikasi jumlah baris cocok), tambah 1 baris baru di daftar arsip di atas, dan cek/perbaiki
+> pointer di `EXPERIMENTS_INDEX.jsonl` yg mungkin jadi basi nunjuk ke entry yg baru dipindah.
+> Detail protokol: memori `feedback-efisiensi-file-log-proaktif`.
 
 ---
 
@@ -788,3 +42,1744 @@ Belum enable di live `inference_config` / `signal_filter` (butuh approval).
 ### Script
 - [script yang akan dijalankan]
 ```
+
+---
+
+## 2026-08-06 — Fase 107-110: `ExecutionSimulator` (paritas riset↔live) + ISOLASI Mode A/B/C — akar masalah sebenarnya BUKAN cek 5-menit, tapi HARGA FILL EXIT
+
+**Rencana disetujui (`RENCANA_PARITAS_EKSEKUSI_RISET_LIVE_20260805.md`, Opus).** Tahap 1-4: `ExecutionCfg` di `config.py` (flag `monitor_enabled`, `monitor_interval_min`, `entry_regate_at_market`, `exit_fill_at_market`, dst — semua default = perilaku live SEKARANG, tidak mengubah apa pun); `hitung_net_pnl()` diekstrak dari `paper_engine._finalize_trade` (byte-identik, diverifikasi via test parity 2.156-trade existing); `execution_sim.py`/`ExecutionSimulator` — mesin replay BARU yg memakai KODE LIVE ASLI (`position_monitor._alasan_exit`, `live_executor._entry_gate`) via import langsung, bukan duplikasi logika; `harness_eksekusi.py` (Riset_pemodelan) memanggil mesin yg sama utk OOF/holdout. Semua commit `live_dualbin_ft` worktree `real-money-execution`: `3d751b2`, `5a77e35`, `52ce481`, `656182c`.
+
+**Fase 107 (holdout, model takedown, harness baru).** Mode-1 (H1-only) tervalidasi PERSIS sama dgn Fase 105 (3.195 trade, PF 1,9238, PnL $1.518,17) — membuktikan harness benar. Mode-2 (harness PENUH: delay+regate+monitor+exit-fill-market, SEMUA REALISTIS spt live):
+
+| | Mode-1 (H1 saja) | Mode-2 (harness penuh, realistis) |
+|---|---:|---:|
+| Trades | 3.195 | 3.364 |
+| PF | 1,9238 | **0,7325** |
+| PnL | $1.518,17 | **-$649,00** |
+| entry_ditolak | - | 3,10% |
+
+Penurunan JAUH lebih parah dari perkiraan Fase 103/105 (yg cuma isolasi 1 mekanisme). Diverifikasi di Fase 108 (OOF W1/W2/W3, robustness) — pola SAMA konsisten di 3 window independen: W1 PF 0,6327/PnL -$1.257,55; W2 PF 0,7260/PnL -$774,58; W3 PF 0,6698/PnL -$981,50 (angka ini jadi BASELINE rujukan Fase 116 di bawah).
+
+**Fase 109 — isolasi Mode A/B/C (kunci diagnosis).** Utk cari mekanisme mana yg dominan:
+- Mode A (semua realistis, spt Fase 107 Mode-2): PF 0,7325 / PnL -$649
+- Mode B (HANYA cek-5-menit dimatikan, sisanya realistis): PF 0,7598 / PnL -$559 — **hampir tidak membaik**
+- Mode C (cek-5-menit MATI + harga fill exit dikembalikan ke level ideal bar H1, bukan harga pasar real): PF **1,8426** / PnL **+$1.402** — hampir balik ke baseline awal
+
+**Kesimpulan Fase 109 (memperbaiki hipotesis awal user sendiri, dgn bukti keras):** penyebab dominan BUKAN cek 5-menit (Mode B nyaris tak membantu), tapi HARGA FILL EXIT (real market price vs harga ideal bar) — Mode C sendirian mengembalikan hampir seluruh performa. Ini mengarahkan investigasi ke cara LABEL TRAINING dihitung, bukan cuma cara backtest mengukur.
+
+**Fase 110 — uji cepat mitigasi cek-SL (N-konfirmasi 1x/2x/3x, SL-only-H1).** Semua varian TIDAK membantu berarti (PnL -$3.070 s/d -$2.965, semua dlm derau) — mengonfirmasi ulang Fase 109: masalahnya bukan di cadence monitor.
+
+**Temuan tambahan (pembacaan kode, bukan pengukuran).** `core/features.py::swing_based_labeling` (label training SEMUA model entry DualBin, historis) py LOOK-AHEAD BIAS: `if h_arr[j] >= tp_long: outcome_long = "LONG"` — mengklaim WIN begitu wick masa depan MANAPUN menyentuh TP, tanpa model delay-deteksi/harga-fill realistis. Ini SECARA STRUKTURAL sama dgn bias yg baru diperbaiki di mesin backtest (idealisasi harga exit). Ditemukan tambahan: `paper_engine._finalize_trade` membukukan loss SL di `pos.sl_price` (level SL persis), bukan `close` bar yg benar2 menembusnya — bias optimis lain yg sama arahnya.
+
+**Fitur baru sekalian (permintaan user).** `execution.monitor_sl_enabled` (default `true`, TIDAK mengubah live) — kalau `false`, monitor 5-menit MENGABAIKAN sentuhan SL (SL hanya diputuskan via cek H1 close), TP tetap instan via monitor. Diimplementasi identik di `position_monitor.py` (live) & `execution_sim.py` (riset), TDD penuh. Commit `656182c`.
+
+**Keputusan.** Fokus pindah dari "perbaiki mekanisme eksekusi" ke "perbaiki cara label training dihitung" — lihat Fase 111-116 di bawah. Rencana lama (`RENCANA_PARITAS_EKSEKUSI...`) Tahap 5+ (re-baseline dgn mekanisme realistis) DITUNDA, kalah prioritas dari temuan leakage label.
+
+**Artefak.** `app/config.py` (`ExecutionCfg`), `app/services/execution_sim.py` (`ExecutionSimulator`, `simulasi_entry_paksa`), `app/services/paper_engine.py` (`hitung_net_pnl`), `app/services/position_monitor.py`, `app/services/scheduler.py` — semua `live_dualbin_ft` worktree `real-money-execution`. `pipeline/experiments/dualbin_universe/harness_eksekusi.py`, `fase107_harness_holdout_reproduksi.py`, `fase107b_diagnosa_selisih_trade_count.py`, `fase108_harness_oof_robustness.py`, `fase109_cek_cepat_monitor_off.py`, `fase110_uji_sl_konfirmasi_2x.py` (semua +log).
+
+---
+
+## 2026-08-06 — Fase 111-116: Label-by-Replay (anti-leakage) — Gerbang Oracle LOLOS, tapi OOF retrain DITOLAK di semua window
+
+**Rencana disetujui (`RENCANA_LABEL_ANTI_LEAKAGE_20260806.md`, Opus).** Alih-alih rule tangan (`swing_based_labeling`), label dihasilkan dari mesin eksekusi yg SAMA yg sudah divalidasi Fase 107-110: `simulasi_entry_paksa(coin, bars, i, arah, cfg, engine)` — paksa keputusan LONG/SHORT di bar `i`, replay jujur ke depan (delay+regate+monitor+fill market, via `ExecutionSimulator(..., ketat_m5=True)` — mode ketat baru: RAISE `M5TidakTersedia` kalau data M5 tak cukup, bukan diam2 fallback ke harga ideal), label = `net_pnl > 0`. Keputusan eksplisit user: label baru pakai `monitor_sl_enabled=False` (SL hanya via H1) — bukan berarti live diubah, ini asumsi label generation.
+
+**Fase 112 (benchmark).** 6,25 ms/kandidat — dipakai hitung biaya sebelum commit ke generasi penuh (bukan asumsi).
+
+**Fase 113 — Gerbang Oracle (W3, ~5 menit, tes murah-tapi-menentukan SEBELUM generasi penuh).** Kalau trader "tahu masa depan" (pilih top-k% kandidat via label jujur) tetap tidak profitable, seluruh rencana gugur di sini — hemat berhari-hari. Gerbang: top-5% selektivitas harus PF≥1,5 DAN PnL>0.
+
+| Metrik | Nilai |
+|---|---:|
+| PF (top-5%) | **inf** (nol trade rugi) |
+| PnL (top-5%) | **+$7.957** / 121 hari (~20 trade/hari) |
+| PnL ceiling (semua kandidat profitable) | $26.666 |
+| Entry ditolak (gate re-check harga pasar) | 53,19% (mengoreksi klaim Fase 106 lama 10,58% — bug timestamp: `ts+5menit` bukan `ts+1jam+5menit`; indeks bar H1 = waktu OPEN candle, bukan close) |
+
+**LOLOS spektakuler** → lanjut ke generasi label penuh.
+
+**Fase 114 (generasi label penuh).** 2024-04-01 s/d ~2026-07-29, 18 koin, `monitor_sl_enabled=False`, ketat_m5=True. 43,9 menit. Output: `data/training/label_eksekusi_jujur/{coin}_label.parquet` (`net_pnl_long/short`, `exit_channel_long/short`, `ditolak_long/short`).
+
+**Fase 115 (diagnosa label lama vs baru — gerbang kewarasan wajib sebelum retrain).**
+
+| | LONG | SHORT |
+|---|---:|---:|
+| positive_rate lama → baru | 0,0959 → 0,2719 | 0,1055 → 0,2678 |
+| Kesepakatan (lama vs baru) | 75,81% | 76,44% |
+| Cohen kappa | 0,2337 | 0,2562 |
+| Rata2 net_pnl jujur di label-1 LAMA | $0,65 | $0,62 |
+| Rata2 net_pnl jujur di label-1 BARU | $1,08 | $1,01 |
+| % bar label-1 LAMA yg simulasi jujurnya RUGI | 34,34% | 34,77% |
+
+Dua gerbang kewarasan (kesepakatan TIDAK boleh >95% [lolos, ~76%] & net_pnl baru HARUS lebih tinggi dari lama [lolos, +65-70%]) SAMA-SAMA LOLOS — label baru terbukti membawa informasi baru, bukan re-labeling kosmetik. Lebih dari 1/3 label "WIN" versi lama ternyata RUGI kalau dieksekusi jujur — bukti kuantitatif langsung dari leakage.
+
+**Fase 116 — retrain OOF, 2 arm terkunci × 3 window (W1/W2/W3), gerbang ABSOLUT (PF>1,00 DAN PnL>0 di SETIAP window, bukan "lebih baik dari baseline").** Arm A1 = target biner tanpa bobot; Arm A2 = `sample_weight=|net_pnl|`. Baseline rujukan = angka Fase 108 (model live, label lama, harness realistis).
+
+| Window | Arm | Trades | PF | PnL | Baseline (label lama) | Vonis |
+|---|---|---:|---:|---:|---:|---|
+| W1 | A1 | 3.606 | 0,6952 | -$1.009,52 | PF 0,6327 / -$1.257,55 | GAGAL gerbang absolut |
+| W1 | A2 | 840 | 0,6984 | -$236,09 | idem | GAGAL gerbang absolut |
+| W2 | A1 | 3.617 | 0,7327 | -$865,77 | PF 0,7260 / -$774,58 | GAGAL gerbang absolut |
+| W2 | A2 | 1.050 | 0,7222 | -$300,68 | idem | GAGAL gerbang absolut |
+| W3 | A1 | 3.732 | 0,7299 | -$853,04 | PF 0,6698 / -$981,50 | GAGAL gerbang absolut |
+| W3 | A2 | 1.240 | 0,7130 | -$311,69 | idem | GAGAL gerbang absolut |
+
+Catatan tambahan: AUC train arm A2 jelek (0,54-0,71, LONG di W2/W3 nyaris tebak-acak) vs A1 (0,90-0,91) — pembobotan `|net_pnl|` membuat pola arah jauh lebih sulit dipelajari, "menang" cuma krn lebih selektif (entry_ditolak 56-72 vs 23-29, trade jauh lebih sedikit).
+
+**VONIS: TOLAK KEDUA ARM. Tidak lanjut ke holdout tersegel.** Label anti-leakage TERBUKTI membantu (rugi mengecil di 5/6 perbandingan, arm A2 rugi turun 70-80%) — bug leakage nyata & perbaikannya bukan sia-sia — tapi TIDAK CUKUP membuat model entry `swing` ini profitable di bawah asumsi eksekusi jujur berdiri sendiri. PF mentok konsisten 0,69-0,73 di semua window kedua arm. Faktor lain (fitur entry, ambang keputusan, atau problem di exit/Guardian) masih menggerus performa.
+
+**Status live**: TETAP paper (atas perintah eksplisit user, bukan dampak temuan ini) sampai ada stack yg lolos gerbang jujur penuh (OOF absolut + holdout tersegel).
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase111_fetch_intrabar_m5_train.py`, `fase112_benchmark_simulasi_entry_paksa.py`, `fase113_gerbang_oracle_w3.py` (+`models/runs/dualbin_gerbang_oracle_w3_20260806/oracle_w3.parquet`), `fase114_label_eksekusi_jujur.py` (+`data/training/label_eksekusi_jujur/`), `fase115_diagnosa_label_lama_vs_baru.py` (+`models/runs/dualbin_diagnosa_label_lama_vs_baru_20260806.json`), `fase116_oof_retrain_label_jujur.py` (+`models/runs/dualbin_oof_retrain_label_jujur_20260806.json`). `app/services/execution_sim.py::simulasi_entry_paksa`, `M5TidakTersedia`.
+
+---
+
+## 2026-08-06 — Fase 117-119: mekanisme order (limit/exchange-stop) GAGAL, akar sesungguhnya = `breakeven_lock` memotong keputusan Guardian sendiri
+
+**Pemicu.** Setelah Fase 107-116 menunjukkan model live (`long22f_swing`/`short20f_swing`) rugi di bawah eksekusi jujur, user minta gali lebih dalam: (1) apakah ganti mekanisme order (limit alih-alih market) bisa mendekatkan ke performa idealisasi lama, (2) SL monitor 5-menit dicoret dari opsi ("jangan pakai SL monitor"), (3) akhirnya user memberi petunjuk kuat dari pengalaman live: "awal deploy performanya gak jelek-jelek amat... ada yang beberapa puluh persen loss tapi gak langsung SL, bisa berbalik TP... setelah perubahan-perubahan SL lebih cepat kena."
+
+**Fase 117 — entry via LIMIT order resting (1 jam) + TP via limit (wick M5), SL/Guardian tetap realistis.** Dites jujur pakai data M5 asli (bukan idealisasi) di holdout, model & window sama dgn Fase 109. Hasil: PF **0,6519** (LEBIH JELEK dari Mode A 0,7325). Kanal `monitor_sl` (622 trade) menyerap hampir semua rugi (-$1.983,17) sementara kanal `h1` (yg lolos dari SL cepat) UNTUNG (+$940,15). Penjelasan: order limit di entry kena **adverse selection** — sinyal momentum yg BENERAN bagus harganya lanjut jalan (limit gak pernah keisi, trade bagus HILANG), sementara sinyal yg harganya sempat balik dulu (baru limit keisi) justru tanda lemah/mau gagal. **Ide DITOLAK utk entry.**
+
+**Fase 118 — hapus jeda 5 menit KHUSUS exit-jalur-H1 (entry tetap 5 menit, krn OI/LSR butuh nunggu; exit TIDAK butuh OI/LSR, dicek langsung `guardian_features.json` 28 fitur, TIDAK ADA open_interest/long_short_ratio).** Hasil: PF 0,7598→0,7642 (+$14 doang). **Nyaris tidak membantu.** Root cause SESUNGGUHNYA (dibaca dari kode, bukan diukur): `paper_engine.py::_manage_bar` baris 378, `pos.raw_exit = pos.sl_price` -- versi "idealisasi" SELALU membukukan SL persis di level SL, PADAHAL syarat pemicunya `close_j <= sl_price` (candle bisa closed JAUH di bawah level itu). Overshoot ini TIDAK bisa dihindari kalau SL cuma dicek 1x/jam (baik App-side polling maupun order stop bursa asli MEMBUTUHKAN deteksi lebih cepat dari 1 jam utk menutup overshoot ini) -- user eksplisit menolak deteksi lebih cepat dari 1 jam apapun caranya, jadi PF idealisasi (1,84, "Mode C" Fase 109) DIKONFIRMASI TIDAK REALISTIS dicapai, bukan target yg valid.
+
+**Fase 119 — titik balik: uji apakah mekanisme Guardian yg BERUBAH (bukan cara eksekusi) yg jadi penyebab, sesuai intuisi user dari pengalaman live.** Bandingkan config Guardian ASLI (sblm 08-03: `momentum_floor_frac=0,30`, near-TP floor & breakeven-lock MATI) vs SEKARANG (`momentum_floor_frac=0,10` + near-TP floor ON + breakeven-lock ON), model & holdout & harness SAMA (SL monitor mati, sesuai keputusan user):
+
+| Config | Trade | PF | PnL |
+|---|---:|---:|---:|
+| A -- Asli (sblm 08-03) | 1.639 | 0,8824 | -$260,25 |
+| B -- + near-TP floor saja | 1.647 | 0,8671 | -$297,75 |
+| C -- + breakeven-lock saja | 3.143 | 0,7598 | -$558,53 |
+| D -- Sekarang (keduanya) | 3.143 | 0,7598 | -$558,53 (identik C -- near-TP floor jadi tak relevan lagi) |
+
+**Near-TP floor cuma nyumbang rugi kecil (-$37,50).** **Breakeven-lock adalah penyebab dominan**, TAPI bukan lewat "SL lebih cepat kena" -- SL biasa (`LOSS`) malah HAMPIR SAMA (520→506 trade, -$3,47→-$3,37/trade). Yang terjadi: breakeven-lock MEMOTONG DULUAN 82% dari semua trade SEBELUM Guardian sempat memutuskan sendiri (`GUARDIAN_EXIT`/`GUARDIAN_MOMENTUM_EXIT`, dulu rata2 +$1,44/+$3,34 per trade, kini tinggal 12+4 trade) -- breakeven-lock menguncinya di rata2 cuma +$0,52/trade, di 2.569 trade sekaligus. Bukan "mencegah rugi", tapi **memotong untung besar jadi untung kecil** secara masif. Jumlah trade juga hampir 2x lipat (1.639→3.143) krn posisi ditutup lebih cepat = slot koin lebih cepat bebas utk entry baru.
+
+**Catatan penting**: config ASLI (A) pun, diukur JUJUR (bukan idealisasi), SUDAH rugi (PF 0,88) -- ingatan user "awal deploy gak jelek amat" kemungkinan berdasar angka lama yg dihitung idealisasi (skrg terbukti optimistis), BUKAN bukti config asli itu profitable. Tapi perbandingan apples-to-apples (sama2 diukur jujur) tetap membuktikan breakeven-lock aktif MEMPERBURUK, bukan cuma tidak membantu -- padahal waktu deploy (`project-dualbin-guardian-breakeven-lock-deploy.md`) dia LOLOS OOF+OOS pakai metode LAMA (idealized `replay_arrays()`), metode yg SESI INI terbukti sistematis optimistis.
+
+**BELUM ada keputusan produksi** (matikan/tune ulang breakeven-lock) -- perlu dibahas dgn user dulu, keduanya (near-TP floor & breakeven-lock) tetap LIVE di config saat ini.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase117_mode_d_limit_order.py`, `fase118_mode_f_exit_tanpa_delay.py`, `fase119_dampak_floor_breakeven.py` (semua +log).
+
+---
+
+## 2026-08-06 — Fase 120-129: sweep ambang breakeven + lookback swing H4 -- kandidat 3/3 window BERKALI-KALI runtuh, akhir ketemu BUG FITUR yg membatalkan seluruh narasi lookback
+
+**Fase 120 -- sweep halus ambang `breakeven_lock_mfe_pct` (OOF, near-TP floor tetap ON).** Titik terbaik konsisten (kasar & halus): **mfe_pct=1,5% / buffer=3%** -- PF 0,9111/-$198,45 (holdout), jauh lebih baik dari 0,5% skrg (-$558,53) TAPI tetap rugi.
+
+**Fase 121 -- sweep selektivitas entry (TL/TS) di atas titik Fase 120.** TL=0,93/TS=0,90 tembus **PF 1,2271/+$48,85** (n=203, sampel kecil) -- KANDIDAT pertama malam ini yg untung, tapi ditemukan lewat **tuning di HOLDOUT** (kesalahan proses diakui eksplisit, lihat entri berikutnya).
+
+**Kesalahan proses diakui (sesi ini)**: Fase 120+121 dijalankan di HOLDOUT tersegel, padahal itu PENCARIAN parameter (bukan diagnosa) -- melanggar "jangan tune berdasarkan holdout". Diperbaiki: sisa investigasi (Fase 122+) dipindah SELURUHNYA ke OOF (W1/W2/W3), holdout tidak disentuh sampai kandidat final dikunci.
+
+**Fase 122 (OOF) -- B1/B2: benarkah SL kena krn market volatile lalu balik ke TP?** 1.434 trade kena SL biasa; 18,55% ($828 dari $6.094 total rugi SL) memang balik ke TP kalau dibiarkan -- MINORITAS. **B2 kebalikan dugaan**: kuartil volatilitas RENDAH justru paling sering balik ke TP (24,79%), kuartil TINGGI paling jarang (12,64%) & paling mahal per kejadian. "Lebarin SL pas volatile" TIDAK didukung data.
+
+**Fase 123 -- sweep `lookback` di `detect_h4_swing_points` (default 3), OOF, model+config SEKARANG.** 2,3,5,7,10 lalu 12,15,20,25,30: rugi mengecil TAJAM seiring lookback naik (3→2.923,70 rugi; 10→411,60 rugi total 3 window), plateau/berisik >15 (trade makin sedikit, 150-300/window). **[LIHAT KOREKSI BUG DI BAWAH -- kesimpulan ini TERCAMPUR bug fitur, jangan dipercaya mentah.]**
+
+**Fase 124 -- gabung lookback (15,20 dikunci user) x sweep breakeven.** lookback=20+breakeven=0%: W1 lolos (+$24), W2 nyaris lolos (-$4,87, PF 0,9852), W3 lolos kuat (+$173) -- PALING DEKAT 3/3 saat itu.
+
+**Fase 125 -- baseline LGBM MURNI tanpa Guardian sama sekali** (SL/TP/timeout doang, atas arahan user "sistematis, LGBM dulu"), sweep lookback(10,15,20) x max_hold(24,36,48,60): tidak ada kombinasi lolos 3/3; terbaik lookback=20/max_hold=24 (+$157,18, 2/3). Guardian (near-TP floor) terbukti nambah nilai di atas sinyal mentah (+$157 murni vs +$193-256 dgn Guardian).
+
+**Fase 126 -- Guardian ON + lookback=20 + max_hold=24 (kombinasi belum pernah dicoba).** **LOLOS 3/3 window OOF pertama kali malam ini**: W1 +$54,33, W2 +$19,70, W3 +$181,82, total +$255,85.
+
+**Fase 127 -- HOLDOUT SEKALI (sentuhan pertama), kandidat lookback=20+max_hold=24.** **GAGAL**: PF 0,9802/-$7,64 keseluruhan, 2/4 bulan gagal (Mei PF 0,52 terparah). User lalu menyoroti: **volume trade jatuh 91,6%** (29,56→2,49 trade/hari) -- sampel terlalu tipis utk dipercaya, kemungkinan besar penyebab OOF "lolos" tapi holdout gagal.
+
+**Fase 128 -- geser ke lookback moderat (3 default, 5,6,7,10,15), max_hold=24, scorecard lengkap (WR/PF/LONG-SHORT/peak/MaxDD).** lookback=5 & 7 (juga 6) lolos 3/3 window dgn volume lebih sehat (5,5-8/hari) -- lookback=5 kandidat terkuat: PF gab 1,0939, PnL +$449,66, MaxDD/peak rasio 57% (terbaik). **Pola LONG vs SHORT konsisten di SEMUA lookback**: LONG selalu PF<1 (beban), SHORT selalu PF>1,1 (kuat) -- temuan robust lintas-konfigurasi.
+
+**BUG DITEMUKAN sebelum holdout sentuhan kedua (audit atas permintaan eksplisit user "pastikan bebas leakage")**: `dist_liq_50x_long`/`dist_liq_50x_short` (2 dari 22/20 fitur model entry LONG/SHORT) dihitung dari `h4_swing_low*0,98`/`h4_swing_high*1,02` (rumus IDENTIK live, `app/core/features.py` baris 1863-1870, diverifikasi) -- **TIDAK PERNAH ikut dihitung ulang di Fase 123-128** saat lookback disweep, cuma `h4_swing_high`/`h4_swing_low` mentah yg diupdate. BUKAN leakage (tidak ada info masa depan dipakai), tapi inkonsistensi fitur-vs-label yg mengotori SEMUA hasil sejak Fase 123.
+
+**Fase 129 (dibatalkan sebelum jalan, terganti retest) -- setelah fix (`perbarui_fitur_turunan_swing`), OOF lookback=5 diulang: HASIL BERBALIK TOTAL.**
+
+| | Sebelum fix (fitur basi) | Sesudah fix (fitur benar) |
+|---|---|---|
+| W1 | Lolos, PF 1,02 | GAGAL, PF 0,8826, -$335,33 |
+| W2 | Lolos, PF 1,15 | GAGAL, PF 0,9292, -$187,90 |
+| W3 | Lolos, PF 1,13 | Lolos, PF 1,1497, +$321,95 |
+| Gabungan (4.506 trade) | PF 1,0939, **+$449,66** | PF 0,9737, **-$201,29** |
+
+**Kesimpulan kritis: seluruh narasi "lookback lebih panjang = lebih baik" (Fase 123-128) TERCAMPUR/kemungkinan besar SEBAGIAN BESAR ARTIFAK bug fitur ini, bukan sinyal asli murni.** Holdout sentuhan kedua (lookback=5) DIBATALKAN sebelum dijalankan -- tepat waktu, tidak jadi menyentuh holdout dgn evaluasi cacat. Ketemu SEBELUM holdout krn user eksplisit minta audit "leakage, fitur, environment masuk akal" sebelum lanjut -- kalau tidak diminta, hampir pasti kebablasan.
+
+**Fase 128 diulang PENUH dgn fitur benar (`perbarui_fitur_turunan_swing`), 7 nilai lookback (3,5,6,7,10,15,20), OOF W1/W2/W3, scorecard lengkap:**
+
+| Lookback | W1 | W2 | W3 | PF gabungan | PnL gabungan | Lolos 3/3? |
+|---|---|---|---|---:|---:|---|
+| 3 | GAGAL 0,964 | Lolos 1,125 | GAGAL 0,993 | 1,024 | +$191,74 | Tidak |
+| 5 | GAGAL 0,883 | GAGAL 0,929 | Lolos 1,150 | 0,974 | -$201,29 | Tidak |
+| 6 | GAGAL 0,895 | GAGAL 0,947 | Lolos 1,122 | 0,979 | -$155,84 | Tidak |
+| **7** | GAGAL 0,933 | Lolos 1,039 | Lolos 1,100 | **1,018** | **+$120,34** | Tidak |
+| 10 | GAGAL 0,927 | GAGAL 0,939 | Lolos 1,041 | 0,965 | -$214,76 | Tidak |
+| 15 | GAGAL 0,896 | GAGAL 0,848 | Lolos 1,070 | 0,931 | -$340,35 | Tidak |
+| 20 | GAGAL 0,914 | GAGAL 0,887 | GAGAL 0,982 | 0,926 | -$302,25 | Tidak |
+
+**TIDAK ADA lookback yg lolos gerbang absolut (untung di SEMUA window terpisah) setelah fitur dibetulkan.** Narasi "lookback lebih panjang = lebih baik" (Fase 123-128 versi lama) TERBUKTI sebagian besar artefak bug fitur -- pola aslinya jauh lebih berantakan: W1 HAMPIR SELALU gagal apapun lookback-nya, W3 hampir selalu lolos, W2 cuma lolos di 2/7 titik (lookback 3 & 7).
+
+**Temuan yg BERTAHAN, tidak terkait bug (terkonfirmasi tetap sama arah sebelum & sesudah fix):** LONG konsisten lemah (PF<1, kadang ekstrem -- lookback 15/20 di W2: PF LONG 0,54-0,55) di HAMPIR SEMUA window/lookback; SHORT konsisten kuat (PF>1,1) di HAMPIR SEMUA kombinasi. Ini sinyal ASLI (robust lintas-konfigurasi), bukan artefak -- kandidat paling menjanjikan utk digali lanjut, BUKAN lookback.
+
+**Keputusan penutup sesi**: lookback=7 (PF gabungan tertinggi di antara yg gagal, +$120,34) **TIDAK dipakai sbg kandidat deploy/holdout** -- eksplisit dikonfirmasi user sbg TITIK AWAL riset lanjutan saja (fokus asimetri LONG/SHORT), bukan validasi. Holdout TIDAK disentuh lagi malam ini (2 sentuhan sejauh ini: lookback=20 gagal Fase 127, lookback=5 dibatalkan sblm jalan Fase 129 krn bug fitur ketemu duluan).
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase120_sweep_breakeven_threshold.py`, `fase121_sweep_selektivitas_entry.py` (holdout, JANGAN dipakai acuan lagi), `fase122_diagnosa_sl_volatilitas_oof.py` (+`models/runs/dualbin_fase122_diagnosa_sl_oof.parquet`), `fase123_sweep_lookback_swing_h4.py` (KOTOR, bug fitur), `fase124_gabung_lookback_breakeven.py` (KOTOR), `fase125_lgbm_murni_tanpa_guardian.py` (KOTOR), `fase126_guardian_lookback20_maxhold24.py` (KOTOR), `fase127_holdout_final_lookback20_maxhold24.py` (KOTOR, tapi kesimpulan "gagal holdout" tetap berdiri terlepas bug krn arahnya sama/lebih buruk), `fase128_lookback_moderat_10_15.py` (versi FINAL sudah pakai `perbarui_fitur_turunan_swing` -- SSOT utk lanjutan), `fase129_holdout_final_lookback5_fitur_konsisten.py` (ditulis, TIDAK dijalankan -- template holdout kalau ada kandidat bersih nanti).
+
+**Fase 130-136 -- ronde kedua pencarian kandidat lb7 (lookback=7, PF gabungan 1,018 dari Fase 128), semua OOF-only, TIDAK ada holdout disentuh:**
+
+- **Fase 130** SHORT-only vs gabungan: SHORT-only total +$547,51 (2/3 window) vs gabungan +$120,34 (2/3), tapi SHORT-only bikin W1 LEBIH BURUK, bukan solusi bersih.
+- **Fase 131** lookback terpisah per arah (SHORT tetap 7, LONG disweep 3/5/7/10/15/20): terbaik LONG=10 (+$131,06), tetap 0/3 window -- W1 gagal di SEMUA 6 kombinasi.
+- **Fase 132** retrain Guardian khusus lb7 (12 bulan trajectory data, pipeline SSOT `train_guardian_with_oof`, simpan ke `models/runs/dualbin_guardian_lb7_20260806/` -- BUKAN timpa produksi): PF~0,84 PnL -$1.201,27, 0/3 window -- LEBIH BURUK dari Guardian lama (1,018/+$120,34). **CATATAN PENTING (ditemukan Fase C di bawah): retrain ini memuat fitur ETF (`etf_gbtc_change_usd`/`etf_total_change_usd`) LANGSUNG dari file TIER1 tanpa merge ETF asli -- kolom itu TERNYATA nol/placeholder total di TIER1 (lihat audit di bawah). Kesimpulan "lebih buruk krn data kurang" jadi TIDAK PASTI -- bisa juga krn Guardian dilatih seolah ETF selalu nol, padahal ablation sebelumnya (`project-dualbin-guardian-etf-real-fetch.md`) menunjukkan ETF asli > ETF nol. BELUM diulang dengan ETF asli.**
+- **Fase 133** LGBM standalone (tanpa Guardian) lb7: 12 bulan PnL -$1.137,05 (0/3); 4 tahun (kontaminasi LSR palsu Apr-Nov2021 belum diketahui saat itu) PnL -$857,32 (0/3, membaik tapi tetap gagal).
+- **Fase 134** SL/TP murni ATR (1,5x & 2,0x, simetris, tanpa swing) menggantikan label swing: label mendekati acak (positive_rate rerata 0,496, cuma 1,67% sampel >0,80) -- model benar mendeteksi tak ada sinyal, trade nyaris nol (24 & 16 trade total). **Ditutup: SL/TP murni ATR bukan arah yg layak**, kembali ke label berbasis swing.
+- **Fase 135** sweep swing berbasis H1 (bukan H4), lookback 10/15/20/30/40, latih 4 tahun: SEMUA GAGAL (0-1/3 window), terbaik lookback=10 di -$963,98 -- lebih buruk dari H4 lb7 (-$857,32). H4 tetap lebih baik dari H1 utk deteksi swing.
+- **Fase 136** diagnosa langsung AUC + feature importance LONG vs SHORT (lb7, latih 4 tahun, per-window): AUC val bagus utk keduanya (LONG 0,906-0,925, SHORT 0,931-0,943) -- **BUKAN masalah kurang sinyal**. Tapi gap AUC train-val LONG (+0,021 s/d +0,037, MEMBURUK tiap window) 2-6x lebih besar dari SHORT (+0,002 s/d +0,015, STABIL) -- **LONG overfit jauh lebih parah, makin parah di window terbaru (W3)**. Feature importance nyaris identik LONG/SHORT (top: `dist_liq_50x_*`, `ofi_z_score`, `log_ret_20`, `long_short_ratio`, `atr_percentile_h1`) -- bukan soal fitur beda, soal generalisasi.
+
+**Audit data sintetis (permintaan eksplisit user "cek fitur dominan bebas leakage... bukan data original Binance Vision") -- opsi C dari 3 opsi lanjutan (A: latih ulang jendela bersih, B: perbaiki overfitting LONG, C: audit fitur lain):**
+
+1. `long_short_ratio` (dicek sesi sebelumnya): PALSU/kosong 17/18 koin sebelum **2021-11-01** (BTC sejak Agu 2020) -- lihat `project-dualbin-longshortratio-fake-data-before-nov2021.md`.
+2. **`funding_rate`** (dipakai Guardian produksi): titik mulai data asli **PER KOIN BERBEDA-BEDA**, dari 2020-01 (BTC, LINK) sampai 2022-02 (BCH) -- BUKAN batas seragam spt LSR. Training window manapun yg pakai batas tunggal berisiko mencemari sebagian koin.
+3. **`open_interest`** (TIDAK dipakai LONG/SHORT/Guardian produksi saat ini): titik mulai 2020-01 (LTC/ETC/BCH) s/d **2022-01** utk 11/18 koin (ETH,BNB,SOL,XRP,ADA,DOGE,AVAX,LINK,DOT,TRX,NEAR). Aman krn tidak dipakai sekarang, tapi WAJIB dicek ulang kalau mau dipakai lagi di eksperimen fitur.
+4. **`etf_total_change_usd` / `etf_gbtc_change_usd`** (dipakai Guardian produksi): **NOL/placeholder total di file TIER1 utk SEMUA 18 koin, SEPANJANG histori** -- bukan "kurang panjang", tapi memang tidak pernah diisi data asli di file ini. Ini SESUAI desain (`core/features.py` baris ~2090-2100: `engineer_features()` zero-fill ETF sbg fallback, data ASLI di-overwrite belakangan oleh `DataService.compute_features_batch()` di live_dualbin_ft -- TIDAK pernah ditulis balik ke TIER1). **Konsekuensi: skrip riset APAPUN yg load fitur ETF langsung dari TIER1 (spt Fase 132 di atas) otomatis melatih dgn ETF=0 di SELURUH data, termasuk periode pasca-2024 yg sebetulnya ada data ETF asli.**
+5. `btc_dominance`, `fear_greed`: kolom mati, TIDAK dipakai model manapun (LONG/SHORT/Guardian saat ini), nol/placeholder total -- aman diabaikan.
+6. `ofi_z_score`, `ofi_h4_delta`, `ofi_raw`, `cvd`, `cvd_slope_h4` (fitur top-importance LONG & SHORT): **BERSIH**, data asli dari Jan-Okt 2020 tergantung koin -- jauh sebelum batas training manapun yg realistis. Ofi/CVD **bukan** sumber masalah LONG.
+
+**Fase 137 -- opsi A (setelah audit): ulang uji "4 tahun latih" TAPI jendela di-clamp supaya tidak pernah mundur sebelum 2021-11-01** (bukan 12 bulan bersih, bukan 4 tahun tercemar -- pakai SEMUA histori bersih yg tersedia, maks 48 bulan). LGBM standalone lb7, OOF W1/W2/W3:
+
+| Jendela | Lama latih | PF | PnL | LONG PF | SHORT PF |
+|---|---|---:|---:|---:|---:|
+| W1 | 41,0bln dari 2021-11-01 | 0,8653 | -$386,27 | 0,90 | 0,83 |
+| W2 | 45,0bln dari 2021-11-01 | 0,9111 | -$242,89 | 0,76 | 1,12 |
+| W3 | 48,0bln dari 2021-12-01 | 0,9672 | -$78,49 | 0,80 | 1,27 |
+| **Total** | | | **-$707,65** | | |
+
+Progresi PnL gabungan: 12bln bersih -$1.137,05 → 4th tercemar -$857,32 → 4th **bersih** -$707,65 -- **membaik monoton dgn data lebih bersih & lebih panjang**, mengkonfirmasi kontaminasi LSR memang sebagian menahan hasil. **Tetap gagal gerbang (0/3 window)**, tapi W3 nyaris impas (PF 0,9672). **Pola LONG/SHORT makin tajam**: LONG PF 0,76-0,90 di SEMUA window (masih beban), SHORT PF 0,83→1,12→1,27 (TREN NAIK, dua window terakhir sudah >1) -- makin menguatkan Fase 136: soal LONG overfitting, bukan window/data kotor.
+
+**Artefak lanjutan.** `fase130_short_only_vs_gabungan.py`, `fase131_lookback_terpisah_per_arah.py`, `fase132_retrain_guardian_lb7.py` (+`models/runs/dualbin_guardian_lb7_20260806/`, hasil DIRAGUKAN krn ETF nol, belum diulang), `fase133_cek_lgbm_standalone_lb7.py` (ada bug var `LOOKBACK` tak terdefinisi di versi tersimpan -- JANGAN dijalankan ulang apa adanya), `fase134_sl_atr_murni.py`, `fase135_sweep_swing_h1.py`, `fase136_diagnosa_long_lemah.py`, `fase137_lgbm_window_bersih.py` (SSOT terbaru utk standalone lb7 + jendela latih bersih).
+
+**Fase 138 -- Opsi B: grid LONG (regularisasi x jumlah fitur x panjang jendela latih), SHORT tetap.** 27 kombinasi (3 level regularisasi baseline/moderat/ketat x 3 level fitur full23/top12/top8 x 3 panjang jendela bersih_maks/12bln/6bln) x 3 window OOF = 81 fit LONG, replay gabungan LONG+SHORT penuh tiap kombinasi (bukan skor LONG terisolasi -- SHORT & LONG terkopel via aturan konflik margin).
+
+**Hasil: TIDAK ADA kombinasi yg lolos gerbang 3/3 -- maksimal 1/3 window (dua kombinasi lolos W3 SAJA, PF 1,01-1,03, tipis).** Bahkan di kedua kasus "lolos" itu, LONG sendiri PF masih 0,78-0,79 -- yg bikin gabungan lolos adalah SHORT (sudah kuat), bukan LONG membaik. LONG PF tetap 0,64-0,92 di SEMUA 81 kombinasi, semua window -- regularisasi & pengurangan fitur TIDAK memperbaikinya sama sekali.
+
+Temuan per sumbu:
+- **Regularisasi lebih ketat (num_leaves/max_depth/min_child_samples lebih kecil) TIDAK membantu, malah SEDIKIT LEBIH BURUK** di kebanyakan kombinasi fitur/jendela (mis. full23/bersih_maks: PnL total baseline -$822 vs moderat -$881 vs ketat -$899). LONG PF per-window juga nyaris tak bergerak (mis. W1: 0,88/0,88/0,88 di 3 level regularisasi) -- overfitting LONG BUKAN sekadar "model kelewat kompleks" dlm arti mekanis biasa.
+- **Kurangi fitur (23->12->8) TIDAK membantu** -- top12 kadang malah lebih buruk dari full23 (mis. baseline/12bln: full23 -$911 vs top12 **-$1.181** (terburuk di seluruh grid) vs top8 -$970).
+- **Jendela latih lebih pendek (6 bulan, data terbaru saja) SATU-SATUNYA sumbu yg konsisten membantu** -- hampir di semua kombinasi reg/fitur, 6bln > bersih_maks(sampai 48bln) > umumnya juga > 12bln (12bln sering JADI YG TERBURUK, bukan di tengah -- pola tak monoton, kemungkinan ada rentang buruk spesifik ~12 bulan ke belakang yg tercakup di jendela itu tapi ter-encer di jendela lbh pendek/lbh panjang). Kombinasi terbaik keseluruhan: `top12/6bln/baseline` PnL total -$677,58 (vs baseline Fase137 -$707,65 -- beda ~$30, DALAM lantai derau ±$80, BUKAN perbaikan nyata).
+
+**Kesimpulan: Opsi B (regularisasi, fitur, jendela latih -- pendekatan model-complexity klasik) GAGAL memperbaiki LONG.** Sinyal LONG tampaknya bukan soal model kelewat rumit menghafal noise, tapi lebih ke pola yg genuinely time-varying/regime-dependent (konsisten dgn indikasi "jendela lebih baru sedikit lebih baik" tapi efeknya kecil & tak cukup). Dibutuhkan pendekatan berbeda dari model-complexity tuning kalau mau lanjut ke LONG secara langsung.
+
+**Artefak.** `fase138_opsi_b_grid_long.py` (+`models/runs/dualbin_fase138_opsi_b_grid.parquet`, 81 baris hasil per kombinasi -- 2 bug kecil sempat ketemu & diperbaiki: unpacking `product()` salah jumlah variabel, kolom `high`/`low`/`atr_14_h1` sempat tak ikut ter-subset shg `bars_dari_panel` crash).
+
+**Fase 139 -- HOLDOUT (sentuhan ke-3 sesi ini), lb7 standalone (tanpa Guardian, config Fase137: latih 48bln di-clamp >=2021-11-01), atas permintaan eksplisit user MESKI OOF gagal 3/3.** Ditanya dulu via konfirmasi eksplisit sblm jalan (sesuai [[feedback-oof-gates-before-oos]]/[[no-oos-without-approval]]) -- user pilih tetap lanjut, murni sbg info tambahan, BUKAN validasi resmi.
+
+| Bulan | Trade | WR | PF | PnL | Status |
+|---|---:|---:|---:|---:|---|
+| 2026-04 | 444 | 60,6% | 1,3011 | +$149,10 | Lolos |
+| 2026-05 | 411 | 49,9% | 0,6258 | -$247,11 | **Gagal parah** |
+| 2026-06 | 291 | 55,3% | 1,0364 | +$16,42 | Lolos |
+| 2026-07 | 352 | 57,7% | 1,1475 | +$58,34 | Lolos |
+| **Total** | **1.498** | **55,9%** | **0,9884** | **-$23,24** | **Gagal (1/4 bulan)** |
+
+LONG: 679 trade, WR 54,5%, PF 0,9671, PnL -$30,41. SHORT: 819 trade, WR 57,1%, PF 1,0066, PnL +$7,17.
+Peak equity $186,81, MaxDD -$369,56.
+
+**Catatan penting**: PF total 0,9884 jauh lebih dekat ke impas drpd ketiga window OOF (0,87/0,91/0,97) -- dalam lantai derau ±0,02 yg sudah diukur sblmnya ([[feedback-ukur-lantai-derau-sebelum-menafsir]]), LONG holdout (PF 0,97) bahkan jauh lebih baik dari LONG OOF manapun (0,76-0,90). TAPI **gerbang keseluruhan tetap GAGAL** -- 1 bulan (Mei) sendirian rugi -$247 dan menyeret 3 bulan lain yg positif jadi total minus. Ini TIDAK mengubah kesimpulan: OOF sudah gagal 3/3 sblm holdout dijalankan, holdout cuma info tambahan spt yg disepakati di depan, BUKAN alasan meninjau ulang kelayakan lb7.
+
+**Breakdown per-bulan per-arah** (diminta user): Mei rugi di KEDUA sisi (LONG -$134, SHORT -$113) -- bulan itu buruk secara umum, bukan masalah LONG saja. Pola tiap bulan BERGANTIAN, bukan LONG selalu kalah: April LONG sangat kuat (PF 2,22, WR 66%) tapi SHORT rugi tipis; Juni kebalikannya (SHORT PF 1,51, LONG PF 0,75). Beda dgn pola OOF (LONG selalu lemah, SHORT selalu kuat, konsisten di 3 window) -- holdout menunjukkan gambaran lebih berantakan/bergantian. Dicatat sbg petunjuk BELUM digali, bukan kesimpulan baru (lihat [[feedback-protokol-evaluasi-berkelanjutan]]).
+
+**Artefak.** `fase139_holdout_lb7_standalone.py` (+`models/runs/dualbin_fase139_holdout_lb7_standalone_20260806.parquet`).
+
+---
+
+## 2026-08-06 — Audit lanjutan: bug fetch `funding_rate`, `dist_liq_50x_*` BUKAN order book, katalog Binance Vision
+
+**Pemicu.** User minta telusuri kenapa `funding_rate` kita punya gap vs Binance Vision (temuan sesi audit sebelumnya), sekalian audit semua fitur turunan lain -- khusus curiga `dist_liq_50x_long/short` ("harusnya dari order book, tebal bid/ask, support/resistance") dan `ofi_z_score`.
+
+**Bug `funding_rate` ditemukan (BELUM diperbaiki).** `core/fetchers.py::fetch_funding_rate()` incremental fetch cuma maju ke depan (`start_ms = max(start_ms, last_ms + step_ms)` begitu ada `existing`), tak pernah backfill mundur. Dicek langsung ke Binance Vision (S3 listing `data/futures/um/monthly/fundingRate/{coin}/`): data ASLI tersedia sejak listing tiap koin (BTC/XRP/BCH sejak 2020-01, DOT sejak 2020-08) -- jauh lebih awal dari TIER1 kita (XRP genuine baru 2021-08, BCH baru 2022-02, gap 19-25 bulan). Klines sudah termigrasi ke Vision (lengkap), funding_rate TIDAK. Beda dgn `long_short_ratio` yg REST-nya genuinely hard-limited 500 jam oleh Binance sendiri (bukan bug) -- funding_rate REST-nya sebenarnya BISA mundur jauh, cuma pipeline kita tak pernah memanfaatkannya.
+
+**`dist_liq_50x_long/short` dikonfirmasi BUKAN dari order book** (`core/features.py` baris 1898-1909, komentar source sendiri bilang "Liquidation Cascade Proxy"): `liq_50x_long = h4_swing_low*0,98`, `liq_50x_short = h4_swing_high*1,02` -- asumsi sembarang "leverage 50x = 2% gerak = liquidasi", dihitung dari swing candle H4 (bukan order book/likuidasi asli). Datanya sendiri aman (dari candle asli), tapi validitas konsep sbg "jarak ke likuidasi" lemah. Fitur ini importance #1 LONG (9,16%) dan #1 SHORT (9,87%) -- dampak potensial besar kalau diganti.
+
+**`ofi_z_score`/`cvd` dikonfirmasi**: dari `taker_buy_volume`/`taker_sell_volume` bawaan kline Binance (bukan endpoint terpisah) -- data ASLI & aman, tapi itu agregat volume transaksi, BUKAN kedalaman order book (beda konsep dari yg dicurigai user, tapi datanya sendiri tidak bermasalah).
+
+**Katalog Binance Vision dicek langsung** (S3 listing `data/futures/um/{daily,monthly}/`): tersedia klines, fundingRate, aggTrades, trades, bookTicker, markPriceKlines, indexPriceKlines, premiumIndexKlines (daily+monthly), plus bookDepth & metrics (CUMA daily). **TIDAK ADA arsip likuidasi historis** (`liquidationSnapshot`/`forceOrder`) di Vision utk USD-M futures -- data likuidasi asli cuma live via WebSocket, tak bisa ditarik mundur. `bookDepth` (order book asli, kandidat pengganti `dist_liq_50x_*`) baru tersedia sejak **2023-01-01** (BTCUSDT) -- jauh lebih pendek dari jendela latih yg dibutuhkan (2021/2022+).
+
+**Audit fitur turunan lain (top-15 LONG & SHORT)**: dari 26 fitur unik, cuma `long_short_ratio` yg genuinely bermasalah datanya (sudah diketahui). Sisanya semua dari candle Binance asli (OHLCV, panel lintas-koin, atau volume taker buy/sell) -- aman dari sisi provenance data, walau `dist_liq_50x_*` lemah secara konsep (bukan soal data palsu).
+
+**Status: BELUM ada perbaikan dieksekusi** -- user eksplisit minta `long_short_ratio` (batas Nov2021 sudah confirmed dinding Binance, tak bisa diperpanjang) dan `dist_liq_50x_long/short` (perlu pendekatan baru, opsi blm dievaluasi) diperbaiki. Rencana perbaikan BELUM ditulis/disetujui.
+
+**Artefak.** Tidak ada script baru (audit via WebFetch S3 listing langsung + baca kode `core/fetchers.py`/`core/features.py`). Memori baru: `project-dualbin-funding-rate-fetch-gap-bug.md`, `project-dualbin-dist-liq-proxy-not-orderbook.md`, `reference-binance-vision-data-catalog.md`.
+
+**Cek exchange lain utk long_short_ratio/OI lebih panjang (OKX, Bybit).** OKX (`rubik/stat/contracts/long-short-account-ratio-contract`, dicoba query langsung Jan2020/Jan2022/Jan2025) -- SEMUA kosong, cuma data terbaru yg keluar; retensi jauh lebih pendek dari Binance Vision. Bybit (`public.bybit.com`) -- arsip bulk publiknya cuma kline/premium_index/spot_index/trading/spot, TIDAK ADA kategori open interest/long-short ratio sama sekali. **Kesimpulan: tidak ada exchange dgn data posisi trader lebih panjang dari Binance** -- Des2021 tetap dinding final, tidak bisa diperpanjang dari sumber lain.
+
+**Cek ketersediaan macro (BTC dominance, stablecoin mcap, Fear&Greed) -- permintaan user.** `core/fetchers.py` SUDAH punya `fetch_btc_dominance()` (CoinGecko) & `fetch_fear_greed()` (Alternative.me), dan hasil fetch-nya ADA & bagus: `fear_greed.parquet` 2018-02-01 s/d 2026-08-03 (3.102 baris), `btc_dominance.parquet`/`fear_greed_index.parquet` 2020-01-01 s/d 2026-04-01 harian (2.283 baris, 0 NaN). **Tapi 0% terisi di TIER1** -- disimulasikan manual merge-nya (`_load()`+`ffill_macro()` dari `clean.py`), TERNYATA bekerja sempurna (54.736 baris, 100% non-null) saat dites langsung. Root cause: **staleness murni** -- `BTCUSDT_clean.parquet` mtime 1 Agustus, macro source mtime 2 Agustus (SETELAH clean.py terakhir jalan). Bukan bug kode, cuma pipeline `clean->engineer` belum di-run ulang sejak macro data itu ada. **Stablecoin market cap: TIDAK ADA fetcher sama sekali**, perlu ditulis baru kalau mau.
+
+---
+
+## 2026-08-06 — Eksekusi perbaikan (fear_greed, long_short_ratio, dist_liq_50x): SEBAGIAN, terhenti krn 2 temuan besar + krisis memori sistem
+
+**Konteks.** User setuju eksekusi 3 perbaikan sekaligus: (1) fear_greed + btc_dominance masuk TIER1, (2) tegakkan batas data asli `long_short_ratio`, (3) ganti `dist_liq_50x_long/short` pakai bookDepth asli (user pilih eksplisit: terima jendela latih lebih pendek 2023+ demi data order book sungguhan).
+
+**KRITIS #1 -- `btc_dominance_pct` ternyata HARDCODE PALSU** (`core/fetchers.py`, baris ~419 & ~350): `{2020:63.0, 2021:45.0, ...}.get(year, 55.0)` -- tabel tebakan per-tahun, BUKAN dihitung dari market cap sungguhan (endpoint historis CoinGecko utk total market cap butuh paket berbayar, dicek 401 Unauthorized). `btc_market_cap_usd` di kolom sebelah ITU asli. User pilih **skip btc_dominance dulu**, lanjut fear_greed (dikonfirmasi genuinely asli, tidak ada hardcode) + LSR + dist_liq.
+
+**Fear & Greed: re-fetch berhasil.** `fetch_fear_greed()` dipanggil ulang manual (start=2020-01-01, end=2026-08-06) -> `data/training/macro/fear_greed_index.parquet` sekarang 2.410 baris, cover training+holdout penuh.
+
+**`long_short_ratio`: TIDAK perlu enforcement kode tambahan** -- dicek langsung, kolom ini SUDAH genuine NaN (bukan placeholder 0/konstan) sblm batas Nov2021 di SEMUA koin dicek (ETHUSDT 16.036/16.036 baris pra-boundary = 100% NaN). Semua skrip riset malam ini SUDAH pakai `.notna()` filter yg otomatis benar. Ditambahkan `LSR_GENUINE_START = 2021-11-01` di `config.py` sbg dokumentasi eksplisit (bukan fix logika, krn logikanya sudah benar).
+
+**KRITIS #2 -- `data/training/labeled_opt2_tier1/` (dipakai SEMUA riset dualbin) BUKAN output `run_engineer.py --all`.** Regenerasi `clean.py --all` + `engineer.py --coins ...` yg dijalankan (setelah insiden memori di bawah) BENAR menghasilkan `fear_greed` 100% terisi -- tapi di `data/training/labeled/`, direktori BEDA. `labeled_opt2_tier1` ternyata hasil GRAFT PARSIAL dari `data/training/labeled_opt2/` (135 kolom dipertahankan apa adanya, cuma 3 kolom LSR di-timpa fresh via `pipeline/experiments/dualbin_entry_fitur/regen_tier1_columns.py`). Root cause bug 0%-terisi ditelusuri langkah-demi-langkah (engineer_features -> merge_market_panel -> augment_coin_sync -> ETF merge -> HMM merge -> cols_to_keep -> dropna, SEMUA benar & preserve fear_greed) sampai ketemu: skrip yg saya jalankan menulis ke `LABEL_DIR` (`data/training/labeled/`), BUKAN `labeled_opt2_tier1`. **`fear_greed` BELUM benar-benar masuk ke TIER1 yg dipakai riset dualbin** -- perlu skrip graft baru serupa `regen_tier1_columns.py`, BELUM ditulis.
+
+**Insiden memori sistem.** `engineer.py --all` (18 koin, `n_workers=cpu_count()-1` utk mode training -> ~11 worker paralel) gagal 13/18 koin dgn `MemoryError` -- physical memory tersisa 1,8GB/16GB, pagefile 457MB/46,7GB (99% penuh), akumulasi dari berjam-jam proses background sesi ini. User diberi 3 opsi (restart, coba bersihkan proses, tunda) -> jawab "lanjutkan saja". Diidentifikasi 11 proses python zombie (semua start ~22:50-22:51, cocok dgn command yg baru gagal) -> di-kill, ~4GB memori kembali (1,8GB->3,85GB free). Lanjut dgn batch kecil (`--coins` 3 koin sekaligus, bukan `--all`) -- BERHASIL utk 3 koin (BTC/ETH/BNB) di `labeled/`.
+
+**Status akhir**: fear_greed source data FIXED & lengkap. `labeled/` (3/18 koin) sudah benar tapi BUKAN direktori yg dipakai riset. `labeled_opt2_tier1` (yg dipakai riset) BELUM tersentuh sama sekali. `dist_liq_50x_long/short` via bookDepth BELUM dikerjakan (skema kolom sudah dicek & didokumentasikan: `timestamp,percentage,depth,notional`, ±5% dari mid-price, snapshot ~30 detik, histori BTCUSDT dari 2023-01-01 -- lihat `reference-binance-vision-bookdepth-schema.md`). `btc_dominance` SENGAJA di-skip (data sumbernya palsu).
+
+**Artefak.** `config.py` (+`LSR_GENUINE_START`), `data/training/macro/fear_greed_index.parquet` (diperbarui), `data/training/labeled/{BTC,ETH,BNB}USDT_features_v3.parquet` (fear_greed terisi, TAPI bukan dir yg dipakai riset). Memori baru: `project-dualbin-btc-dominance-hardcoded-fake.md`, `project-dualbin-tier1-three-parallel-datasets.md`, `reference-binance-vision-bookdepth-schema.md`.
+
+**Lanjutan (sama malam) -- graft `fear_greed` ke TIER1 yg BENAR, tuntas.** Setelah root cause dipahami (§ di atas): (1) `data/holdout-test/raw/macro/fear_greed_index.parquet` disalin dari training (sblmnya kosong total -- `clean.py --holdout-test` pakai `_SRC_DIR` beda dari training, tidak fallback), (2) `clean.py --all --holdout-test` di-run ulang -> holdout `processed/` sekarang punya `macro_fear_greed_index_fear_greed`, (3) ditulis `regen_tier1_fear_greed.py` + `regen_tier1_fear_greed_holdout.py` (pola identik `regen_tier1_columns.py`/`_holdout.py`, HANYA cangkok `fear_greed`, 137 kolom lain apa adanya). Dijalankan sekuensial (bukan paralel, aman memori) utk 18 koin kedua arah.
+
+**Hasil terverifikasi langsung**: training TIER1 `fear_greed` 0/946.413 (0%) -> 946.413/946.413 (100%). Holdout TIER1 0/51.444 (0%) -> 51.444/51.444 (100%). Dicek ulang manual baca file (bukan cuma self-report skrip): BTCUSDT training 54.723/54.723, holdout 2.858/2.858, jumlah kolom tetap 138 di kedua TIER1 (tidak ada kolom lain berubah).
+
+**Artefak lanjutan.** `pipeline/experiments/dualbin_entry_fitur/regen_tier1_fear_greed.py`, `regen_tier1_fear_greed_holdout.py`. `data/holdout-test/raw/macro/fear_greed_index.parquet` (baru). `data/training/labeled_opt2_tier1/*.parquet` + `data/holdout-test/labeled_tier1/*.parquet` (fear_greed sekarang asli, seluruh 18 koin, kedua arah).
+
+**Sisa kerja** (belum dikerjakan malam ini): `dist_liq_50x_long/short` via bookDepth asli (skema sudah dicek, fetch+desain+implementasi blm mulai), `btc_dominance` (sengaja ditunda, data sumber palsu).
+
+**Artefak lanjutan.** Tidak ada script baru. Memori baru: `project-dualbin-macro-data-stale-not-fetcher-bug.md`.
+
+---
+
+## 2026-08-06/07 — bookDepth asli (Binance Vision): fitur BARU (bukan overwrite dist_liq_50x), fetch 18 koin berjalan lama di background
+
+**Konteks.** User eksplisit setuju lanjut sendirian (akan tidur, "begitu ada token lanjutkan dan langsung training atas fitur perbaikan"). Auto-mode -- keputusan desain diambil sendiri, didokumentasikan di sini utk ditinjau, BUKAN dieksekusi ke holdout/produksi tanpa gerbang biasa.
+
+**Keputusan desain penting (BUKAN overwrite fitur produksi).** `dist_liq_50x_long/short` TETAP DIPERTAHANKAN apa adanya (masih dipakai model produksi `long23f_swing`/`short21f_swing` -- mengubahnya diam-diam = train-serve mismatch). Fitur BARU ditambahkan terpisah: `book_depth_support_z`, `book_depth_resistance_z`.
+
+**Formula** (setelah 2 iterasi desain, dites langsung di data BTC): (1) coba "wall distance" (bucket dgn marginal notional terbesar) -- HASIL TERLALU KASAR (cuma 5 nilai diskrit -5..-1/1..5, kebanyakan 1-2, tidak informatif). (2) **DIPILIH**: z-score notional depth di bucket -2%/+2% vs rolling 30 hari (720 bar H1) sendiri -- kontinu, well-distributed (mean~0, std~1,1, hampir semua nilai unik), causal (rolling backward-looking, `min_periods=48`). Dicek di sampel BTC 2023: 7.717 baris terisi sejauh fetch berjalan, distribusi sehat.
+
+**NaN genuine sebelum 2023-01-01** (bukan 0.0) -- ikuti pola `long_short_ratio` yg sudah benar malam ini, biar `.notna()` filter otomatis eksklusi periode tanpa bookDepth, bukan pipeline lain harus ingat batas tanggal manual.
+
+**Implementasi** (`pipeline/data/core/engineer.py`, setelah blok merge ETF): baca `data/training/bookdepth_h1/{coin}.parquet` (kalau ada), reindex ke `feat_df.index`, hitung z-score, tambah 2 kolom BARU ke `extra_cols` (bukan `FEATURE_COLS_V3` -- itu whitelist fitur produksi, sengaja tidak disentuh).
+
+**Fetcher baru** (`pipeline/experiments/dualbin_entry_fitur/fetch_bookdepth.py`): Binance Vision `daily/bookDepth/{coin}/` (2023-01-01 s/d skrg, cuma harian, TIDAK ADA versi bulanan). Per hari: unduh zip, resample snapshot ~30 detik -> H1 (ambil snapshot TERAKHIR sblm jam tutup, kausal), simpan 10 kolom notional per bucket (-5%..-1%,1%..5%) ke `data/training/bookdepth_h1/{coin}.parquet`. Resumable (skip hari yg sudah ada), checkpoint tiap 30 hari per koin. **Estimasi durasi total 18 koin: ~4,5-5 jam** (BTC 1 tahun ~4 menit, 18 koin x ~2,5 tahun). **DIJALANKAN DI BACKGROUND, MASIH BERJALAN saat entry ini ditulis** -- cek progres via `tail data/training/bookdepth_h1/*.parquet` mtime atau log proses.
+
+**Rencana lanjutan setelah fetch selesai** (BELUM dieksekusi): (1) graft `book_depth_support_z`/`book_depth_resistance_z` ke `labeled_opt2_tier1` + `labeled_tier1` (pola sama persis `regen_tier1_fear_greed.py`), (2) retrain LGBM LONG/SHORT research (OOF W1/W2/W3, BUKAN holdout) bandingkan: baseline (fitur skrg) vs +fear_greed vs +book_depth vs kombinasi, sesuai gerbang absolut yg sudah berlaku sepanjang sesi ini. HOLDOUT TETAP TIDAK DISENTUH tanpa kandidat lolos OOF 3/3 dulu (aturan tak berubah meski user sedang tidur).
+
+**Artefak.** `pipeline/experiments/dualbin_entry_fitur/fetch_bookdepth.py`, `pipeline/data/core/engineer.py` (+blok merge bookDepth), `data/training/bookdepth_h1/*.parquet` (sedang terisi).
+
+---
+
+## 2026-08-07 — bookDepth fetch selesai (326 menit) + graft ke TIER1, tuntas
+
+**Fetch selesai**: 18 koin, 2023-01-01 s/d 2026-08-06, total 326,2 menit (~5,4 jam). Ukuran total cuma ~55MB (disimpan ringkasan H1 10-kolom, bukan snapshot mentah 30-detik). Cakupan bagus: BTCUSDT 31.270 baris H1, ETCUSDT/BCHUSDT dst serupa, non-null ~99,97% dlm rentang tsb (celah kecil wajar dari hari fetch gagal/koneksi).
+
+**Graft ke TIER1** (`regen_tier1_bookdepth.py` + `_holdout.py`, pola identik `regen_tier1_fear_greed.py` -- HANYA cangkok `book_depth_support_z`/`book_depth_resistance_z`, `dist_liq_50x_long/short` & 138 kolom lain TETAP apa adanya, diverifikasi manual tidak berubah):
+
+| | Training TIER1 | Holdout TIER1 |
+|---|---:|---:|
+| Baris total | 946.413 | 51.444 |
+| `book_depth_support_z` kosong | 441.856 (46,7%) -- genuine NaN sblm 2023-01-01 | 0 (0,0%) -- holdout seluruhnya 2026, dlm cakupan |
+| `book_depth_resistance_z` kosong | 440.505 (46,5%) | 0 (0,0%) |
+| Total kolom | 140 (138 lama + 2 baru) | 140 |
+
+Terverifikasi langsung baca file (bukan cuma self-report skrip): BTCUSDT training 28.165/54.723 terisi, distribusi sehat (mean 0,09, std 1,09, rentang -5..5 stlh clip). `dist_liq_50x_long` BTCUSDT dicek sample -- nilai identik sblm/sesudah graft (tidak tersentuh, spt yg direncanakan).
+
+**Selanjutnya**: retrain OOF (`fase140_retrain_fear_greed_bookdepth.py`) -- lihat entri berikutnya.
+
+**Artefak.** `pipeline/experiments/dualbin_entry_fitur/regen_tier1_bookdepth.py`, `regen_tier1_bookdepth_holdout.py`.
+
+---
+
+## 2026-08-07 — Fase 140: retrain OOF baseline vs +fear_greed vs +book_depth vs +kombinasi -- SEMUA GAGAL, book_depth malah MEMPERBURUK
+
+**Hasil (lb7, OOF W1/W2/W3, gerbang absolut PF>1 & PnL>0 tiap window terpisah):**
+
+| Lengan | Total trade | Total PnL | W1 PF | W2 PF | W3 PF | Lolos? |
+|---|---:|---:|---:|---:|---:|---|
+| baseline | 4.349 | -$707,65 | 0,87 | 0,91 | 0,97 | 0/3 |
+| +fear_greed | 4.220 | -$678,67 | 0,86 | 0,94 | 0,95 | 0/3 |
+| +book_depth | 4.169 | -$899,02 | 0,85 | 0,89 | 0,93 | 0/3 |
+| +kombinasi | 3.936 | -$826,90 | 0,89 | 0,89 | 0,89 | 0/3 |
+
+**TIDAK ADA yg lolos.** `+fear_greed` sedikit lebih baik dari baseline (+$29) TAPI dalam lantai derau ±$80 yg sudah diukur sblmnya ([[feedback-ukur-lantai-derau-sebelum-menafsir]]) -- bukan perbaikan nyata. **`+book_depth` justru MEMPERBURUK** (-$899 vs -$708 baseline, PF turun di semua window) -- data order book ASLI (bukan proxy swing) TIDAK terbukti membantu, malah sedikit merugikan. `+kombinasi` juga lebih buruk dari baseline.
+
+**Breakdown LONG/SHORT (PF) per lengan:**
+
+| Lengan | LONG W1 | LONG W2 | LONG W3 | SHORT W1 | SHORT W2 | SHORT W3 |
+|---|---:|---:|---:|---:|---:|---:|
+| baseline | 0,90 | 0,76 | 0,80 | 0,83 | 1,12 | 1,27 |
+| +fear_greed | 0,90 | 0,79 | 0,77 | 0,83 | 1,15 | 1,22 |
+| +book_depth | 0,88 | 0,74 | 0,76 | 0,81 | 1,11 | 1,22 |
+| +kombinasi | 0,93 | 0,75 | 0,76 | 0,84 | 1,09 | 1,07 |
+
+Pola menarik: `+kombinasi` LONG W1 membaik (0,93 vs 0,90 baseline) tapi SHORT W3 rusak parah (1,07 vs 1,27 baseline) -- kombinasi fitur baru tampaknya menggeser trade-off LONG/SHORT, bukan perbaikan bersih di kedua sisi.
+
+**Kesimpulan**: fitur data-kualitas yg diperbaiki malam ini (fear_greed genuinely asli, book_depth genuinely order book asli -- BUKAN proxy) **TIDAK terbukti memperbaiki lb7**. `+fear_greed` netral (dlm derau), `+book_depth` sedikit merugikan. Ini KONSISTEN dgn kesimpulan Opsi A/B/C sebelumnya (data sintetis BUKAN akar masalah utama LONG lemah) -- akar masalahnya tetap overfitting/time-varying spt didiagnosa Fase 136, bukan kualitas data. `dist_liq_50x_long/short` (proxy swing) TIDAK diganti di produksi (tidak ada bukti order book asli lebih baik).
+
+**TIDAK ada tindakan lanjut malam ini** -- holdout TIDAK disentuh (0/3 gerbang OOF di semua lengan), produksi TIDAK diubah. Keputusan lanjutan (kalau ada) menunggu user.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase140_retrain_fear_greed_bookdepth.py` (+`models/runs/dualbin_fase140_fear_greed_bookdepth.parquet`).
+
+---
+
+## 2026-08-07 — Fase 141-142: kerangka 8-kategori fitur user (ADX/MACD/candle structure/interaksi) -- 1 kandidat menarik ditemukan, sedang diverifikasi
+
+**Konteks.** User beri kerangka lengkap 8-kategori fitur quant crypto (return/momentum, candle structure, trend, volatility, volume, derivatives, regime, time -- disimpan verbatim di memori `reference-quant-crypto-8category-feature-framework.md`). Dibandingkan ke 140 fitur existing: mayoritas sudah tercakup (kadang lebih canggih -- OFI/CVD utk order-flow, mkt_breadth/dispersion utk regime). Celah nyata yg dipilih utk dicoba (SEMUA dari OHLC yg sudah ada, TIDAK perlu fetch baru): ADX_14/+DI/-DI, MACD+signal+histogram, candle structure sederhana (body_ratio, wick_ratio, close_position, range_pct, gap_from_prev_close), atr_percent_h1 (blm ada versi H1, cuma H4 & percentile), risk_adjusted_momentum (interaksi log_ret_20/atr_percent_h1).
+
+**Fase 141 -- fit GABUNGAN (metodologi B2: fit gabungan -> baca importance -> ablation utk yg bukan nol), lb7, OOF W1/W2/W3:**
+
+| Lengan | Total PnL | Lolos? |
+|---|---:|---|
+| baseline | -$707,65 | Tidak |
+| +14 kandidat gabungan | -$702,49 | Tidak (beda ~$5, dalam derau) |
+
+**Feature importance kandidat baru (rata-rata LONG, 3 window):**
+
+| Fitur | Importance |
+|---|---:|
+| **atr_percent_h1** | **17,21%** (jauh di atas semua kandidat lain, bahkan di atas banyak fitur lama) |
+| adx_14 | 2,45% |
+| minus_di_14 | 1,92% |
+| macd | 1,89% |
+| macd_signal | 1,80% |
+| macd_histogram | 1,41% |
+| range_pct | 1,29% |
+| plus_di_14 | 0,99% |
+| risk_adjusted_momentum | 0,83% |
+| lower_wick_ratio / gap_from_prev_close / close_position / body_ratio / upper_wick_ratio | semua <0,5% |
+
+Total 14 kandidat = 31,76% dari total importance model -- TAPI PnL model gabungan HAMPIR SAMA dgn baseline (-$702 vs -$707). Ini pola klasik "menyerap importance tanpa menambah sinyal baru" -- dicurigai `atr_percent_h1` (atr/close mentah) cuma menggantikan peran `atr_percentile_h1` (sudah ada, rank-based) yg informasinya tumpang tindih, bukan sinyal baru asli. Candle structure (body/wick/gap) semua <0,5% -- dalam derau, TIDAK layak diablasi lanjut.
+
+**Fase 142 -- ablation OOF: `atr_percent_h1` sendirian vs grup trend (ADX+MACD gabungan), lb7:**
+
+| Lengan | W1 PF | W2 PF | W3 PF | Total PnL | Lolos? |
+|---|---:|---:|---:|---:|---|
+| baseline | 0,87 | 0,91 | 0,97 | -$707,65 | Tidak |
+| +atr_percent_h1 | 0,84 | **0,99** | 0,94 | **-$640,10** (+$67,55) | Tidak |
+| +trend (ADX+MACD) | 0,85 | 0,91 | 0,93 | -$870,12 (-$162,47) | Tidak |
+
+**`atr_percent_h1` sendirian**: perbaikan $67,55 -- angka terbesar malam ini dari satu fitur. TAPI dibedah per window: W1 memburuk (-$72), **W2 membaik BESAR (+$205, hampir tembus PF 1,0)**, W3 memburuk (-$65). Sama persis pola yg ditemukan pas `+fear_greed` semalam -- **1 window (W2) yg nge-drive semua perbaikan, 2 window lain malah lebih jelek.** Sesuai aturan "signifikan di 1 jendela = kandidat, bukan temuan" -- ini BUKAN efek konsisten, sama seperti fear_greed. Kemungkinan besar `atr_percent_h1` (atr mentah/close) memang tumpang tindih dgn `atr_percentile_h1` yg sudah ada (importance combined 17,2% tapi PnL gabungan nyaris sama dgn baseline di Fase 141 -- pola "menyerap importance tanpa nambah sinyal").
+
+**Grup trend (ADX+MACD)**: KONSISTEN memburuk di SEMUA 3 window (beda dari atr_percent_h1) -- ini justru bukti BERSIH melawan penggunaannya, bukan sekadar "tidak membantu".
+
+**Kesimpulan Fase 141-142 (kerangka 8-kategori fitur user)**: dari 14 kandidat yg dicoba (ADX/DI, MACD+signal+histogram, 6 fitur candle structure, atr_percent_h1, risk_adjusted_momentum) -- **TIDAK ADA yg lolos gerbang, dan tidak ada yg terbukti sbg perbaikan nyata setelah dicek konsistensi antar-window.** atr_percent_h1 punya angka $ terbesar tapi gagal uji konsistensi (sama seperti fear_greed sebelumnya); ADX+MACD malah terbukti konsisten merugikan; candle structure importance-nya dalam derau, tak layak diuji lanjut. Pola malam ini terus berulang: **setiap perbaikan/tambahan fitur yg dicoba (data sintetis, book_depth, fear_greed, ADX/MACD, candle structure) semuanya gagal memperbaiki lb7** -- memperkuat kesimpulan Fase 136 bahwa akar masalah LONG adalah overfitting/pola time-varying, bukan kekurangan fitur atau kualitas data.
+
+**TIDAK ada tindakan holdout/produksi** -- semua gagal gerbang OOF.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase141_kandidat_fitur_baru.py` (+`models/runs/dualbin_fase141_kandidat_fitur_baru.json`), `fase142_ablation_atr_percent_trend.py` (+`models/runs/dualbin_fase142_ablation.json`). Memori baru: `reference-quant-crypto-8category-feature-framework.md`.
+
+---
+
+## 2026-08-07 — Fase 143: analisis kalibrasi probabilitas — TEMUAN BARU, model overconfident parah di KEDUA sisi
+
+**Pemicu.** Setelah 14 kandidat fitur (Fase 141-142) semua gagal, user minta "evaluasi dan analisis lagi" -- bukan coba fitur baru lagi, tapi cari pola dari semua temuan malam ini. AUC LONG tinggi (0,90-0,93, Fase 136) tapi PF trading tetap <1 di HAMPIR SEMUA konfigurasi -- AUC ukur RANKING, bukan KALIBRASI probabilitas di ambang keputusan (TL=0,80/TS=0,75).
+
+**Metode**: latih model lb7 standar (fitur baseline, TANPA kandidat baru) per window W1/W2/W3, kumpulkan probabilitas prediksi di validation set, bucketkan 10 bin, bandingkan rata-rata probabilitas prediksi vs realisasi win rate LABEL asli per bin.
+
+**Hasil -- MISKALIBRASI PARAH, KEDUA SISI:**
+
+| Bin probabilitas | Rata2 prediksi | LONG realisasi WR | SHORT realisasi WR |
+|---|---:|---:|---:|
+| 0,80-0,85 | 82,8% | 27,6% | 29,2% |
+| 0,85-0,90 | 87,4% | 32,0% | 36,4% |
+| 0,90+ | 91,0% | **36,7%** | **45,8%** |
+| **Di atas ambang trading** | 85-86% | **30,7%** (n=22.659) | **32,6%** (n=22.248) |
+
+Model bilang "85-91% yakin" tapi realisasi cuma 27-46% -- gap konsisten -50 s/d -55 poin persentase di SEMUA bin tinggi, KEDUA arah (LONG & SHORT).
+
+**Analisis mendalam:**
+1. **Ini BUKAN penjelasan langsung kenapa LONG lemah** -- miskalibrasi menimpa KEDUA sisi dengan magnitude serupa (gap -0,55 LONG vs -0,52 SHORT rata2). Kalau ini akar masalah LONG spesifik, harusnya SHORT jauh lebih terkalibrasi -- tidak.
+2. **TAPI ada sinyal korobatif**: di bin PALING TINGGI (0,90+), gap LONG-SHORT justru MELEBAR (36,7% vs 45,8%, beda 9,1 poin) -- lebih besar dari gap di bin lain (~1-4 poin). Konsisten dgn temuan AUC/overfitting Fase 136 (LONG genuinely lebih lemah di ekor confidence tinggi), TAPI ini BUKAN penjelasan tunggal.
+3. **Kemungkinan penyebab miskalibrasi**: `scale_pos_weight` (dipakai tangani label imbalance ~10-27% positive rate) mendorong output probabilitas LightGBM ke ekstrem (dekat 0/1) demi pemisahan kelas lebih baik -- efek samping umum, TIDAK ada langkah kalibrasi ulang (Platt scaling/isotonic) di pipeline manapun yg dicek malam ini.
+4. **Implikasi operasional**: ambang trading (TL=0,80/TS=0,75) dipilih dgn asumsi angka mencerminkan peluang menang asli -- padahal "0,80" artinya realisasi cuma ~30%. Threshold saat ini mungkin BUKAN titik optimal krn dipilih di ruang probabilitas yg salah kalibrasi.
+
+**Arah baru yg BELUM pernah dicoba malam ini**: SEMUA percobaan sebelumnya (data sintetis, book_depth, ADX/MACD, candle structure) soal FITUR. Ini soal CARA MODEL MENGHASILKAN PROBABILITAS -- kategori masalah berbeda total. Kalibrasi ulang (Platt/isotonic) berpotensi memperbaiki SISTEM SECARA UMUM (bukan cuma LONG), tapi belum terbukti -- BELUM dieksekusi, sengaja BERHENTI di sini utk cek-in dgn user dulu (protokol: jangan lanjut eksperimen otonom tanpa lapor stlh temuan besar).
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase143_analisis_kalibrasi.py`.
+
+---
+
+## 2026-08-07 — Fase 144: sweep kalibrasi komprehensif (none/sigmoid/isotonic x 14 threshold) -- membantu LONG, MERUGIKAN SHORT, TETAP TIDAK LOLOS
+
+**Rancangan (biar tidak "mengintip" OOF saat pilih threshold):** tiap window training dipotong -- 3 bulan TERAKHIR jadi "irisan kalibrasi" (terpisah dari data fit model DAN dari OOF asli). Model dilatih di sisa training (sblm irisan). Kalibrasi (sigmoid/isotonic) di-fit HANYA dari irisan kalibrasi. Threshold (grid 0,15-0,80) DIPILIH via trade simulation HANYA di irisan kalibrasi (kriteria PnL, min 30 trade). Baru (metode+threshold) yg "terkunci" itu diterapkan ke OOF asli.
+
+**CATATAN METODOLOGI PENTING**: evaluasi Fase 144 pakai replay SATU SISI SEDERHANA (bukan `predict_dual`+aturan konflik margin+basi_reject+min_gap spt evaluasi resmi lb7 sepanjang malam) -- angka PF/PnL di sini **TIDAK bisa dibandingkan langsung** ke baseline -$707,65 yg dipakai di Fase 137-142. Perbandingan yg SAH cuma ANTAR metode kalibrasi DI DALAM fase ini (none vs sigmoid vs isotonic, kerangka sama).
+
+**Hasil LONG (standalone):**
+
+| Kalibrasi | W1 | W2 | W3 | Total PnL | Lolos? |
+|---|---|---|---|---:|---|
+| none (baseline) | trades=845, PF=0,93 | trades=945, PF=0,76 | trades=1088, PF=0,74 | -$1.118,66 | 0/3 |
+| sigmoid | trades=140, PF=0,81 | trades=959, PF=0,76 | trades=431, PF=0,79 | -$728,06 | 0/3 |
+| **isotonic** | **trades=28, PF=1,01 LOLOS** | trades=251, PF=0,80 | trades=1093, PF=0,74 | **-$637,24** | 1/3 (nyaris nol trade di window yg lolos) |
+
+**Hasil SHORT (standalone):**
+
+| Kalibrasi | W1 | W2 | W3 | Total PnL | Lolos? |
+|---|---|---|---|---:|---|
+| **none (baseline)** | trades=931, PF=0,80 | trades=787, PF=1,24 LOLOS | trades=861, PF=1,18 LOLOS | **+$195,23** | 2/3 |
+| sigmoid | trades=945, PF=0,81 | trades=188, PF=1,54 LOLOS | trades=580, PF=1,23 LOLOS | -$16,10 | 2/3 (tp volume anjlok) |
+| isotonic | trades=982, PF=0,79 | trades=120, PF=1,39 LOLOS | trades=689, PF=1,21 LOLOS | -$109,25 | 2/3 (tp volume anjlok) |
+
+**Analisis:**
+1. **Kalibrasi MEMBANTU LONG** -- isotonic memperbaiki total PnL dari -$1.119 (none) jadi -$637 (perbaikan ~$481), bahkan bikin 1 window "lolos" (tapi cuma 28 trade, PnL $0,77 -- lolos teknis, bukan bukti kuat). LONG masih GAGAL 2/3 window meski dgn kalibrasi terbaik.
+2. **Kalibrasi MERUGIKAN SHORT** -- baik sigmoid maupun isotonic membuat total PnL SHORT jadi NEGATIF (-$16 dan -$109) padahal versi TANPA kalibrasi (none) sudah POSITIF (+$195, 2/3 window lolos). Penyebabnya: threshold hasil kalibrasi terlalu konservatif utk SHORT, volume trade anjlok drastis di W2 (787->188 sigmoid, ->120 isotonic) walau PF per-trade yg tersisa lebih tinggi.
+3. **Konsisten dgn Fase 143**: miskalibrasi menimpa kedua sisi scr mentah, TAPI dampak PERBAIKANNYA asimetris -- LONG genuinely diuntungkan (raw threshold-nya memang memilih trade kualitas rendah), SHORT JUSTRU dirugikan (raw threshold 0,75 SHORT ternyata sudah cukup baik scr empiris meski "salah" scr probabilitas murni).
+4. **TIDAK ADA kombinasi yg lolos gerbang 3/3** utk kedua sisi manapun. Arah kalibrasi TIDAK menyelesaikan masalah lb7 secara keseluruhan, tapi memberi info baru: LONG & SHORT butuh PERLAKUAN BERBEDA (LONG mgkn perlu kalibrasi, SHORT jangan disentuh) -- bukan 1 resep sama utk keduanya.
+
+**Sisa kerja (BELUM dieksekusi)**: kalau mau lanjut, perlu re-evaluasi kombinasi "LONG isotonic-calibrated + SHORT tanpa kalibrasi (none/raw)" pakai ENGINE RESMI (predict_dual+margin conflict penuh, bukan replay sederhana single-sisi Fase 144 ini) sebelum bisa diklaim sbg kandidat -- BELUM dilakukan.
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase144_sweep_kalibrasi.py` (+`models/runs/dualbin_fase144_sweep_kalibrasi.json`).
+
+---
+
+## 2026-08-07 — Fase 145: kombinasi LONG-kalibrasi + SHORT-asli via mesin RESMI -- perbaikan TERBESAR malam ini ($393), TAPI threshold LONG TIDAK STABIL antar-window
+
+**Rancangan**: LONG dilatih di fit-slice (sblm irisan kalibrasi 3 bulan), dikalibrasi isotonic dari irisan kalibrasi, threshold LONG dipilih via grid search PnL DI IRISAN KALIBRASI SAJA (bukan diintip dari OOF). SHORT tetap standar (TS=0,75, latih penuh spt biasa, TANPA kalibrasi -- sesuai temuan Fase 144 bahwa kalibrasi merugikan SHORT). Kombinasi dievaluasi lewat MESIN RESMI (`predict_dual` rule=margin + `apply_basi_reject` + `apply_min_gap` + replay gabungan dgn aturan konflik) -- BUKAN replay sederhana Fase 144.
+
+**Hasil:**
+
+| Window | TL (dari kalibrasi) | Trade | PF | PnL | LONG (n, PF, $) | SHORT (n, PF, $) | Lolos? |
+|---|---:|---:|---:|---:|---|---|---|
+| W1 | 0,60 | 903 | 0,8485 | -$260,20 | n=22, PF=0,97, -$1 | n=881, PF=0,85, -$259 | Tidak |
+| W2 | 0,45 | 912 | **1,0832** | **+$144,57** | n=188, PF=0,81, -$90 | n=724, PF=1,19, +$235 | **LOLOS** |
+| W3 | 0,20 | 1.543 | 0,9236 | -$199,03 | n=953, PF=0,76, -$425 | n=590, PF=1,27, +$226 | Tidak |
+| **Total** | | **3.358** | | **-$314,65** | | | **0/3** |
+
+**Pembanding baseline (Fase 137, TL=0,80/TS=0,75 keduanya asli)**: PnL -$707,65, 0/3. **Perbaikan +$393 -- TERBESAR dari SEMUA percobaan malam ini** (lebih besar dari fear_greed +$29, atr_percent_h1 +$68). W2 bahkan LOLOS gerbang absolut sendirian.
+
+**TAPI ada masalah serius yg bikin ini TIDAK bisa langsung dipercaya**: threshold LONG hasil kalibrasi **SANGAT TIDAK STABIL** antar window -- 0,60 (W1) -> 0,45 (W2) -> 0,20 (W3). Ini bukan variasi kecil, itu rentang HAMPIR 3x lipat. Konsekuensinya jumlah trade LONG melonjak liar: 22 (W1) -> 188 (W2) -> 953 (W3). Di W3, threshold serendah 0,20 meloloskan 953 trade LONG kualitas rendah (PF 0,76, rugi -$425 SENDIRIAN) -- ini yg bikin W3 tetap gagal. Pola yg terlihat: **perbaikan total PnL kemungkinan besar bukan krn LONG jadi genuinely lebih akurat, tapi krn threshold tinggi (W1: 0,60) KEBETULAN membuat LONG nyaris "opt-out" (cuma 22 trade, nyaris breakeven) di window yg SHORT-nya jg lagi jelek** -- bukan LONG yg membaik, tapi LONG yg "diam" pas sedang tidak berguna.
+
+**Kesimpulan jujur**: pilihan threshold via irisan kalibrasi 3-bulan TIDAK STABIL/general -- kemungkinan overfitting ke idiosinkrasi tiap irisan kalibrasi spesifik, bukan menemukan titik operasi yg genuinely robust. Angka $393 real tapi TIDAK BOLEH ditafsirkan sbg "kalibrasi menyelesaikan masalah LONG" -- itu premature. Kalau mau lanjut, perlu threshold LONG yg LEBIH STABIL (mis. rata-rata/median dari beberapa irisan kalibrasi berbeda, bukan cuma 1 irisan 3-bulan per window) sblm bisa diklaim sbg kandidat kuat.
+
+**TIDAK ada tindakan holdout/produksi** (0/3 gerbang, apalagi dgn keraguan stabilitas threshold ini).
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase145_kombinasi_long_kalibrasi_short_asli.py`.
+
+---
+
+## 2026-08-07 — Fase 146: jawab "apakah ada overfitting?" -- YA, tapi bukan di tempat yg diduga
+
+**User tanya langsung setelah Fase 145. Dua uji: (1) kurva PnL-vs-threshold penuh di tiap irisan kalibrasi, (2) uji silang -- threshold "milik" 1 window dipaksa dites di 2 window lain.**
+
+**Kurva kalibrasi -- ternyata SEBAGIAN threshold yg "dipilih" Fase145 cuma "paling tidak rugi" dari kumpulan yg SEMUA rugi:**
+- **W1**: SEMUA 12 threshold (0,15-0,70) hasilnya NEGATIF di irisan kalibrasi -- bahkan **PF=0,000 di SEMUA titik (nol trade menang sama sekali)**. Threshold 0,60 "terpilih" cuma krn PALING SEDIKIT rugi (-$8,10), bukan krn benar-benar bagus.
+- **W2**: pola SEHAT -- PF naik konsisten seiring threshold naik (1,06 di 0,15 -> 2,78 di 0,50), PnL positif hampir semua titik. Ini SATU-SATUNYA irisan kalibrasi yg genuinely punya sinyal.
+- **W3**: mirip W1 -- 4 threshold pertama (0,15-0,30) SEMUA negatif (-$393 s/d -$422). Ada 1 titik menjanjikan (th=0,35, PF=1,98, PnL+$8,75) TAPI cuma 11 trade, DIBUANG krn di bawah syarat minimal 30 -- threshold 0,20 yg akhirnya "terpilih" cuma yg paling sedikit rugi dari kumpulan buruk.
+
+**Uji silang -- INI KUNCI TEMUANNYA:**
+
+| Threshold dari | Diuji di | PF | PnL | Lolos? |
+|---|---|---:|---:|---|
+| W1 (0,60) | W1 (asli) | 0,85 | -$260 | Gagal |
+| W1 (0,60) | W2 (asing) | **1,24** | **+$317** | **LOLOS** |
+| W1 (0,60) | W3 (asing) | **1,22** | **+$252** | **LOLOS** |
+| W2 (0,45) | W1 (asing) | 0,85 | -$276 | Gagal |
+| W2 (0,45) | W2 (asli) | 1,08 | +$145 | LOLOS |
+| W2 (0,45) | W3 (asing) | **1,22** | **+$252** | **LOLOS** |
+| W3 (0,20) | W1 (asing) | 0,89 | -$329 | Gagal |
+| W3 (0,20) | W2 (asing) | 0,92 | -$222 | Gagal |
+| W3 (0,20) | W3 (asli) | 0,92 | -$199 | Gagal |
+
+**Pola yg terungkap**: threshold TINGGI (0,45 atau 0,60) justru performanya SAMA BAGUSNYA -- bahkan LEBIH BAIK -- di window "asing" drpd di window "asalnya sendiri". Threshold 0,60 dari W1 GAGAL di W1 sendiri tapi LOLOS di W2 & W3. Threshold RENDAH (0,20 dari W3) gagal DI MANA PUN, termasuk di rumahnya sendiri.
+
+**Kesimpulan jujur soal overfitting:**
+1. **YA ada overfitting -- tapi di PROSES PEMILIHAN THRESHOLD PER-WINDOW, bukan di sinyal LONG itu sendiri.** Karena syarat minimal 30 trade, di W1 & W3 (irisan kalibrasi yg genuinely buruk) proses ini terpaksa memilih "yg paling tidak rugi" dari kumpulan yg semuanya rugi -- bukan menemukan sinyal asli. Threshold W3 (0,20) adalah PRODUK LANGSUNG dari overfitting ini: dipilih krn "OK" di kalibrasinya sendiri yg buruk, ternyata gagal di MANA PUN saat diuji.
+2. **TAPI ada sinyal ASLI yg tersembunyi**: threshold TINGGI & STABIL (0,45-0,60), diterapkan SERAGAM (bukan dipilih ulang tiap window), meloloskan **W2 & W3 secara konsisten** (2 dari 3 window) -- ini BUKAN kebetulan, terbukti dari 2 threshold berbeda (0,45 dan 0,60) sama-sama meloloskan W2 & W3.
+3. **W1 gagal di threshold BERAPAPUN yg dicoba** (0,20/0,45/0,60 semua gagal di W1) -- konsisten dgn pola yg sudah berulang kali ditemukan sepanjang malam sejak Fase128 ("W1 HAMPIR SELALU gagal apapun konfigurasinya"). Ini kelihatannya bukan soal threshold/kalibrasi sama sekali -- April-Juli 2025 tampaknya periode yg secara struktural buruk utk LONG, apapun caranya.
+
+**Rekomendasi yg lebih jujur & robust**: JANGAN pilih threshold ulang tiap window (itu yg overfitting). Pakai 1 threshold TETAP & TINGGI (0,45 atau 0,60) di SEMUA window -- hasilnya 2/3 window lolos scr KONSISTEN, lebih bisa dipercaya drpd hasil Fase145 yg re-select per window. Tapi TETAP 0/3 scr gerbang absolut krn W1 tak tertembus threshold apapun -- kemungkinan perlu didekati beda (bukan soal ambang), atau diterima sbg periode yg memang tak bisa ditembus dgn setup lb7 ini.
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase146_cek_overfitting_threshold.py` (+`models/runs/dualbin_fase146_cek_overfitting.json`).
+
+---
+
+## 2026-08-07 — Investigasi W1: KETEMU -- W1 gagal krn broad market BULL, bukan soal volatilitas
+
+**Pemicu.** Rekomendasi sblmnya: selidiki W1 (April-Juli 2025) scr khusus krn gagal di SEMUA konfigurasi sepanjang malam. User bilang "lanjutkan saja".
+
+**Cek kondisi pasar per window (18 koin, agregat):**
+
+| Window | Return rata2 | Return median | Koin naik | ATR percentile rata2 | trend_strength rata2 |
+|---|---:|---:|---:|---:|---:|
+| **W1** | **+25,3%** | +22,5% | **14/18 naik** | 0,506 | +0,244 |
+| W2 | -30,2% | -33,5% | 1/18 naik | 0,465 | -0,422 |
+| W3 | -28,6% | -31,4% | 1/18 naik | 0,416 | -0,536 |
+
+**Temuan (mengoreksi dugaan awal soal volatilitas)**: hipotesis pertama (W1 = volatilitas rendah, itu sebabnya) **TERBANTAH** -- ATR percentile W1 (0,506) justru PALING TINGGI dari ketiga window, bukan paling rendah. **Pembeda sebenarnya adalah ARAH PASAR**: **W1 = broad bull market murni** (14/18 koin naik rata2 +25%), **W2 & W3 = broad bear market** (nyaris semua koin turun, rata2 -29% s/d -30%).
+
+**Pola yg terungkap (KONTRA-INTUITIF)**: LONG performanya PALING BURUK justru di window yg pasarnya BENERAN naik (W1), dan SHORT performanya PALING BAIK di window yg pasarnya turun (W2/W3). Kalau logika naif "LONG untung kalau market naik" berlaku, harusnya kebalikannya.
+
+**Interpretasi**: ini menunjukkan masalahnya BUKAN "LONG secara umum lebih lemah dari SHORT", tapi lebih spesifik: **mekanisme entry berbasis swing (`swing_based_labeling`) kesulitan spesifik menangkap KENAIKAN BROAD-MARKET yg kuat & konsisten** -- kemungkinan krn di bull market yg solid, pullback ke swing low jarang & dangkal (sinyal entry LONG jarang muncul di titik yg genuinely bagus), beda dgn bear market yg triggernya (swing high utk SHORT) lebih jelas & sering muncul selama market memang lagi turun terus. Konsisten dgn hipotesis awal sesi ini (pergerakan turun kripto -- likuidasi, panic selling -- py pola lebih seragam/mekanis drpd pergerakan naik yg lebih beragam bentuknya).
+
+**Implikasi**: ini BUKAN sesuatu yg bisa ditambal cepat malam ini (butuh desain ulang mekanisme label/entry LONG scr spesifik, bukan sekadar fitur/threshold/kalibrasi -- SEMUA sudah dicoba malam ini & gagal, konsisten dgn temuan baru ini krn semuanya menyasar simtom bukan akar). Layak jadi topik sesi terpisah dgn kepala dingin: cara paling masuk akal adalah desain label/entry LONG yg BEDA utk kondisi broad-bull (bukan swing-based yg sama dgn SHORT).
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** Tidak ada script baru -- analisis langsung dari `data/training/labeled_opt2_tier1/*.parquet` (kolom close, atr_percentile_h1, trend_strength).
+
+---
+
+## 2026-08-08 — Fase 147+148: scorecard lengkap arsitektur "terbaik sementara" (OOF+OOS) -- LONG ternyata NYARIS MATI, bukan diperbaiki
+
+**Rancangan.** Arsitektur = LONG isotonic-calibrated dgn threshold TETAP 0,60 (bukan re-select per window, sesuai rekomendasi Fase146) + SHORT asli TS=0,75 (kalibrasi terbukti merugikan SHORT, Fase144). Mesin resmi `predict_dual`+`apply_basi_reject`+`apply_min_gap`. User minta scorecard LENGKAP (trades/WR/PF/PnL per LONG-SHORT + peak equity/MaxDD, bkn cuma ringkasan) utk OOF, lalu eksplisit setuju jalankan OOS/holdout jg "sbg info tambahan" (BUKAN validasi -- OOF sblmnya cuma 2/3, gerbang absolut blm lolos).
+
+**OOF (Fase147, 3 window Apr2025-Apr2026):**
+
+| Window | Trade | WR | PF | PnL | Peak | MaxDD | LONG (n/WR/PF/$) | SHORT (n/WR/PF/$) | Lolos? |
+|---|---:|---:|---:|---:|---:|---:|---|---|---|
+| W1 (bull) | 903 | 51,3% | 0,8485 | -$260,20 | $197 | -$548 | n=22, WR=50%, PF=0,97, -$1,41 | n=881, WR=51,3%, PF=0,845, -$258,79 | Gagal |
+| W2 (bear) | 759 | 56,5% | 1,2432 | +$317,41 | $317 | -$204 | n=1, WR=100%, PF=inf, +$5,07 | n=758, WR=56,5%, PF=1,239, +$312,34 | **LOLOS** |
+| W3 (bear) | 726 | 59,0% | 1,2170 | +$251,56 | $344 | -$178 | n=14, WR=57,1%, PF=1,122, +$5,57 | n=712, WR=59,0%, PF=1,221, +$245,99 | **LOLOS** |
+| **Total** | **2.388** | | | **+$308,78** | | | **37 trade LONG total (1,5%)** | **2.351 trade SHORT (98,5%)** | **2/3** |
+
+**Temuan kunci yg baru kelihatan lewat scorecard detail (tidak kelihatan di Fase145/146 yg cuma lihat PF/PnL agregat)**: threshold tetap 0,60 pada probabilitas LONG yg sudah dikalibrasi ternyata membuat LONG **nyaris tidak pernah entry** -- 37 trade dari 2.388 total (1,5%). "Perbaikan" PnL di W2/W3 HAMPIR SELURUHNYA dari SHORT, bukan LONG. ini bukan "LONG diperbaiki", ini "LONG dimatikan scr de-facto, SHORT (yg memang sudah tak disentuh) yg menopang".
+
+**OOS/Holdout (Fase148, 2026-04-01 s/d 2026-07-29, data BARU/tak pernah dilihat sama sekali):**
+
+Data latih LONG: 2022-04-01 s/d 2025-12-30 (n=591.551) + irisan kalibrasi 2026-01-01 s/d 2026-03-30 (n=38.232). Latih SHORT penuh: 2022-04-01 s/d 2026-03-30 (n=630.431).
+
+| Total | Trade | WR | PF | PnL | Peak | MaxDD | Status |
+|---|---:|---:|---:|---:|---:|---:|---|
+| Semua | 933 | 56,5% | 0,9796 | **-$26,29** | $64 | -$328 | GAGAL |
+| LONG | **0** | - | - | $0,00 | | | **NOL trade sama sekali** |
+| SHORT | 933 | 56,5% | 0,980 | -$26,29 | | | |
+
+Per bulan: Apr gagal (PF 0,85, -$62), Mei gagal (PF 0,74, -$98), Jun lolos (PF 1,43, +$95), Jul lolos (PF 1,15, +$40) -- 2/4 bulan, tak konsisten.
+
+**Kesimpulan jujur -- arsitektur ini TIDAK menyelesaikan apa-apa, cuma menyamarkan masalah:**
+1. **LONG resmi mati di holdout** (0 dari 933 trade) -- lebih ekstrem drpd OOF (masih ada 37). Threshold 0,60 pada skala probabilitas kalibrasi + data holdout yg belum pernah dilihat = LONG benar2 tak pernah cukup percaya diri utk masuk.
+2. **Karena LONG mati, hasil holdout = SHORT SENDIRIAN**. PF 0,98/-$26 di holdout ini **NYARIS IDENTIK** dgn baseline lb7 standalone holdout lama (Fase139: PF 0,9884/-$23,24) -- artinya seluruh rangkaian kalibrasi+threshold Fase143-147 TIDAK mengubah apapun scr substansial saat diuji di data benar2 baru. "Perbaikan +$393" yg terlihat di OOF (Fase145/147) kemungkinan besar cuma artefak dari window OOF spesifik yg dipakai, bukan perbaikan genuine yg generalize.
+3. **Menguatkan (bukan menggantikan) temuan W1 sebelumnya**: [[project-dualbin-w1-bull-market-long-failure]] sudah bilang mekanisme swing-entry LONG kesulitan di broad-bull. Temuan hari ini menambahkan: bahkan di luar W1, LONG terlalu lemah utk lolos threshold tinggi manapun yg genuinely robust -- "solusi" kalibrasi+threshold-tetap cuma geser masalah dari "LONG buruk" jadi "LONG dimatikan".
+
+**Rekomendasi**: arsitektur kalibrasi+threshold-tetap-0,60 ini **BUKAN kandidat** -- gerbang OOF tetap 2/3 (bukan 3/3) DAN OOS menunjukkan hasilnya = SHORT-only yg tak lebih baik dari baseline lama. Jalur kalibrasi/threshold utk LONG (Fase143-148) dianggap **SELESAI DIEKSPLORASI, tidak membuahkan kandidat lolos**. Kalau mau lanjut LONG, perlu kembali ke rekomendasi [[project-dualbin-w1-bull-market-long-failure]]: desain ulang label/entry LONG (bukan lagi threshold/kalibrasi), topik sesi terpisah.
+
+**TIDAK ada tindakan produksi** -- holdout ini murni informasi tambahan sesuai permintaan user, bukan validasi (OOF sudah gagal gerbang duluan).
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase147_oof_final_scorecard.py` (+`models/runs/dualbin_fase147_oof_final_scorecard.json`), `fase148_holdout_final_scorecard.py` (+`models/runs/dualbin_fase148_holdout_final_scorecard.json`).
+
+---
+
+## 2026-08-08 — Fase 149: mekanisme PERSIS kenapa LONG 0 trade di holdout -- ambang 0,60 = artefak ekor sempit, bukan sinyal
+
+**Pemicu.** User tanya langsung "kenapa tidak ada trade long?" setelah Fase148. Dijawab dgn angka, bukan dugaan -- reproduksi training LONG yg sama persis, cetak statistik kurva kalibrasi & probabilitas holdout mentah.
+
+**Irisan kalibrasi holdout (2026-01-01 s/d 2026-03-30, n=38.232):**
+- Win rate keseluruhan: 6,13% (LONG memang jarang & kebanyakan jelek di periode ini).
+- Win rate REALISASI per bucket raw-probability tertinggi: top10%=30,5%, top5%=32,3%, top1%=34,2%, **top0,1%=25,6%** (n=39 -- TURUN dari top1%, tanda klasik derau di sampel kecil, bukan pola asli).
+- Kurva isotonic MELOMPAT ke 1,0 di titik ekor tsb (segelintir sampel yg kebetulan semua menang) -- **inilah sumber angka "0,60" yg "terpilih" di Fase145/146**, murni keberuntungan statistik di sampel kecil, bukan sinyal asli.
+
+**Holdout (2026-04-01 s/d 2026-07-29, n=51.444):**
+- Raw probability LONG PALING TINGGI yg pernah dicapai model: 0,9351 -- **sedikit di bawah** zona ekor sempit tempat kurva kalibrasi melompat ke 1,0.
+- Karena tak masuk zona sempit itu, nilai kalibrasi tertinggi yg dicapai SELURUH holdout cuma **0,3812**.
+- Ambang tetap = 0,60. Krn 0,38 < 0,60, **0 dari 51.444 bar lolos** -- persis match dgn hasil Fase148 (0 trade LONG).
+
+**Kesimpulan**: rekomendasi Fase146 ("pakai ambang TETAP, bukan re-select per window") betul mengurangi 1 jenis overfitting (pemilihan ulang per-window), TAPI angka 0,60 itu sendiri ternyata SUMBERNYA rapuh -- produk kebetulan di ekor sempit 1 irisan kalibrasi spesifik, bukan titik operasi genuinely robust. Ini memperkuat (bukan mengubah) kesimpulan Fase147/148: jalur kalibrasi+threshold utk LONG sudah selesai dieksplorasi & tidak menghasilkan kandidat, krn masalahnya bukan di ANGKA ambang, tapi di sinyal LONG mentahnya yg genuinely lemah (win rate tak pernah tembus jauh di atas 30% bahkan di prediksi paling percaya diri sekalipun).
+
+**TIDAK ada tindakan produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase149_diagnosa_kenapa_long_nol.py`.
+
+---
+
+## 2026-08-08 — Fase 150: SHORT sendirian (LONG dimatikan total) -- KONFIRMASI: kalibrasi semalam TIDAK menambah nilai apapun
+
+**Pemicu.** User tanya "kalau short saja berapa oof dan oosnya?" -- dijalankan baseline SHORT MURNI (bukan LONG-diberi-ambang-tinggi-sampai-nyaris-mati spt Fase147/148, tapi LONG benar2 tak ada dlm keputusan), TS=0,75 asli tanpa kalibrasi, jendela training identik Fase147/148 spy apple-to-apple.
+
+**Hasil:**
+
+| | Trade | WR | PF | PnL | Status |
+|---|---:|---:|---:|---:|---|
+| OOF W1 | 881 | 51,3% | 0,8446 | -$259,66 | Gagal |
+| OOF W2 | 758 | 56,5% | 1,2393 | +$312,34 | **LOLOS** |
+| OOF W3 | 713 | 59,0% | 1,2274 | +$253,29 | **LOLOS** |
+| **OOF Total** | **2.352** | | | **+$305,97** | **2/3** |
+| **OOS/Holdout** | **933** | 56,5% | 0,9796 | **-$26,29** | Gagal |
+
+**Perbandingan ke Fase147/148 (LONG isotonic-calib + ambang tetap 0,60, bukan SHORT murni)**:
+- OOF: 2.388 trade/+$308,78 (Fase147) vs 2.352 trade/+$305,97 (Fase150) -- **selisih cuma $2,81**.
+- OOS: 933 trade/-$26,29 (Fase148) vs 933 trade/-$26,29 (Fase150) -- **IDENTIK sampai 2 desimal** (krn LONG memang 0 trade di holdout Fase148).
+
+**Kesimpulan**: ini konfirmasi paling bersih yg bisa didapat -- seluruh rangkaian kalibrasi Fase143-149 (semalam sampai pagi) secara matematis SAMA DENGAN SHORT-only baseline yg sudah ada sejak Fase137. Bukan "mendekati", tapi identik. Status lb7 SHORT-only tetap seperti sebelumnya: OOF 2/3 (W1 selalu gagal), OOS gagal (PF 0,98) -- BELUM ADA perbaikan apapun dari titik ini sejak awal sesi.
+
+**TIDAK ada tindakan produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase150_short_only_oof_oos.py`.
+
+---
+
+## 2026-08-08 — RENCANA (belum dieksekusi): sguardian, Guardian khusus SHORT utk lb7
+
+**Pemicu.** Entry lb7 tetap gagal gerbang (OOF 2/3, W1 selalu gagal -- masalah desain label
+entry, bukan threshold/kalibrasi, lihat Fase143-150). User usul arah baru: pecah Guardian
+(model exit) yg SAAT INI satu model gabungan LONG+SHORT, jadi model TERPISAH per-arah -- mulai
+dari SHORT (`sguardian`). Ini menyimpang dari aturan "selesaikan LGBM entry dulu sblm Guardian" --
+dikonfirmasi ke user, dijawab lanjut sadar (bukan LGBM dianggap selesai, tapi keputusan pindah
+fokus sementara). **Sumber populasi trade: lb7** (dipilih user meski saya rekomendasikan model
+live `short21f_swing` -- lb7 riset murni, BELUM tentu bisa dideploy langsung krn entry-nya sendiri
+blm lolos gerbang).
+
+**Riset arsitektur Guardian saat ini (dibaca langsung, `pipeline/experiments/guardian_reeval_
+2026-07-08/run_train_guardian_18coin.py` + `pipeline/model/core/train_guardian.py`):**
+- Sample training SUDAH py kolom `direction` (1.0=LONG/0.0=SHORT) sbg SALAH SATU dari ~28 fitur
+  -- model SAAT INI bukan buta arah, cuma arahnya dicampur jadi satu model.
+  P&L/MFE/drawdown SUDAH dinormalisasi searah profit (SHORT untung = angka positif, sama sprt
+  LONG) -- jadi memisah per-arah TIDAK perlu ubah rumus label/fitur P&L sama sekali.
+- Populasi generate: entry LGBM (opt2_plus_trend production, BUKAN lb7) -> `simulate_trades_swing`
+  -> per-trade, per-bar sample (HOLD/PARTIAL/EXIT via `_label_pnl_constrained`).
+- Training: `train_guardian_with_oof` -- purged K-fold pd posisi baris (BUKAN walk-forward
+  waktu antar-window) utk pilih iterasi/logloss internal. **Ini beda dari evaluasi FINAL** (yg
+  py masalah lantai derau, lihat [[project-dualbin-riset-guardian-tidak-layak]]) -- evaluasi
+  akhir masih perlu backtest PF/PnL terpisah, bukan cuma logloss CV internal.
+- Guardian lb7 yg SUDAH pernah dilatih (`models/runs/dualbin_guardian_lb7_20260806`) DIRAGUKAN
+  krn fitur ETF placeholder saat itu (blm diperbaiki) -- TIDAK dipakai sbg baseline apa adanya.
+
+**Rancangan (blm dieksekusi, tunggu konfirmasi akhir user):**
+
+1. **Populasi**: trade SHORT dari lb7 (lookback=7, max_hold=24, TS=0,75 raw -- persis resep
+   Fase150), di-generate ulang lintas 3 window OOF yg SUDAH established sesi ini (W1 Apr-Ags
+   2025, W2 Ags-Des 2025, W3 Des2025-Apr2026) -- otomatis dpt ~2.352 trade SHORT total, JAUH di
+   atas syarat lantai-derau lama (983 trade tak cukup; ini >2x lipat, tersebar 3 window
+   independen pula).
+2. **Fitur**: 28 fitur `guard28f` APA ADANYA, MINUS `direction` (selalu 0 utk populasi SHORT-only,
+   nol informasi) -> 27 fitur. **Sengaja TIDAK nambah fitur baru bersamaan** -- prinsip "satu
+   komponen dulu": isolasi dulu efek "model khusus arah", baru nanti (kalau ini menang) baru
+   eksplorasi fitur tambahan sbg langkah terpisah.
+3. **Label**: `_label_pnl_constrained` APA ADANYA, tak diubah.
+4. **Training WALK-FORWARD per window** (beda dari resep `guard28f` production yg cuma sekali
+   latih+purged-CV internal): sguardian window W_i dilatih dari trade SHORT SEBELUM W_i (rolling,
+   pola sama persis entry lb7), skor exit dipakai KHUSUS trade SHORT di W_i itu. Kasih 3 titik
+   ukur independen (bukan 1 angka gabungan) -- sejalan gerbang absolut yg sudah dipakai sepanjang
+   sesi ini.
+5. **3 lengan pembanding (populasi SAMA, bukan cuma 2)**, per [[feedback-ablation-samakan-populasi-latih]]:
+   - (a) TANPA Guardian sama sekali (fixed TP/SL/timeout) -- angka SUDAH ada, itu Fase150 apa
+     adanya, tinggal dipakai lagi.
+   - (b) Guardian GABUNGAN (LONG+SHORT dicampur, direction jadi fitur) dilatih ULANG bersih
+     khusus lb7 (BUKAN pakai `dualbin_guardian_lb7_20260806` yg lama/diragukan) -- baseline "exit
+     model biasa" yg adil.
+   - (c) **sguardian** (SHORT-only, 27 fitur) -- kandidat yg diuji.
+   Kalau (c) > (b) > (a): splitting per-arah genuinely nambah nilai. Kalau (c) ≈ (b): splitting
+   TIDAK menambah apa-apa, exit model gabungan sudah cukup (fitur `direction` sudah menangkap
+   semua yg perlu). Kalau (b) ≈ (a): exit model APAPUN tidak menambah nilai di lb7 -- beda topik,
+   balik ke entry.
+6. **Gerbang keputusan**: PF>1 & PnL>0 di SEMUA 3 window, sama seperti entry -- **CATATAN
+   PENTING**: exit yg lebih baik TIDAK BISA memperbaiki masalah ENTRY. W1 (bull market, entry
+   LONG/gate lemah) kemungkinan besar TETAP gagal apa pun Guardian-nya -- itu sudah didiagnosis
+   sbg masalah desain label ENTRY (lihat [[project-dualbin-w1-bull-market-long-failure]]), bukan
+   exit. Jangan berharap sguardian "menyelamatkan" W1.
+7. **Setelah SHORT tuntas** (menang/kalah/perlu iterasi lanjut) -- BARU mulai `lguardian` (LONG),
+   satu per satu, sesuai aturan sistematis yg sudah berlaku sepanjang sesi ini.
+
+**Belum diputuskan / perlu konfirmasi eksplisit user sblm eksekusi**: apakah lanjut latih (b) dan
+(c) sekarang, atau ada penyesuaian rancangan dulu.
+
+**TIDAK ada tindakan holdout/produksi direncanakan di tahap ini -- OOF dulu.**
+
+**UPDATE -- DIEKSEKUSI (2026-08-08).** Trajectory 12 bulan sblm W1 (2024-04-01→2025-04-01,
+n=157.032), 3.259 trade trajectory → 60.758 sampel (LONG=28.691, SHORT=32.067). Data ETF TIER1
+dicek dulu SEBELUM latih -- SUDAH asli (nunique 19-23/bulan, bukan placeholder nol), jadi arm (b)
+kali ini TIDAK kena masalah lama fase132 (guardian lb7 lama diragukan krn ETF nol).
+
+**Gotcha yg ketemu & DIPERBAIKI di skrip (bukan ubah fungsi SSOT bersama)**: kelas PARTIAL_EXIT
+sangat jarang di populasi SHORT-only (33/32.067 = 0,1%) -- 1 dari 8 fold purged kebagian validasi
+py kelas yg tak pernah muncul di training-nya, `LabelEncoder` LightGBM meledak
+(`ValueError: y contains previously unseen labels: [1]`). Fix: salinan LOKAL fungsi training
+(`train_guardian_robust` di skrip ini, BUKAN edit `train_guardian.py` SSOT) yg skip fold semacam
+itu -- selebihnya identik persis (hyperparameter/class-weight/purge/refit).
+
+**Hasil OOF (populasi entry SHORT-only identik ke Fase150, cuma exit policy beda):**
+
+| Lengan | Trade total | PnL total | Window lolos |
+|---|---:|---:|---:|
+| (a) Tanpa Guardian [Fase150] | 2.352 | +$305,97 | 2/3 |
+| (b) Guardian gabungan (LONG+SHORT, `direction` sbg fitur) | 5.527 | **-$1.502,38** | 0/3 |
+| (c) sguardian (SHORT-only, 27f tanpa `direction`) | 5.504 | **-$1.512,12** | 0/3 |
+
+**Temuan 1 (menjawab pertanyaan awal)**: (b) vs (c) HAMPIR IDENTIK (-$1.502 vs -$1.512, selisih
+$9,74 dari total >$1.500 rugi) -- pola SAMA PERSIS spt semua variasi kecil sepanjang sesi ini
+(lihat [[feedback-wajib-dua-jendela-penilaian]]). **Memisah Guardian per-arah TIDAK menambah
+nilai apa pun** dgn resep ini -- fitur `direction` di guardian gabungan sudah cukup menangkap
+info yg dibutuhkan, split tak memberi keunggulan.
+
+**Temuan 2 (jauh lebih besar & mengejutkan, TAPI BELUM BISA dipercaya penuh)**: KEDUA lengan
+Guardian jauh LEBIH BURUK drpd tanpa Guardian sama sekali -- PF turun dari >1 jadi ~0,6-0,7, DAN
+jumlah trade nyaris DOBEL (2.352 → ~5.500) meski hanya exit policy yg berubah (entry population
+SAMA). Diperiksa: PARTIAL_EXIT TIDAK dobel-hitung sbg trade terpisah (posisi tetap 1 baris,
+`partial_pnl` terlipat ke `net_pnl` final) -- BUKAN bug penghitungan.
+
+**Kecurigaan kuat (BELUM diverifikasi, jangan simpulkan "Guardian buruk" dulu)**: `exit_threshold`
+(0,55) + parameter Guardian lain yg dipakai evaluasi diambil APA ADANYA dari `config.json`
+produksi (`muat_cfg_live()`) -- angka itu di-tuning utk Guardian PRODUKSI LAMA (model beda,
+distribusi probabilitas beda), BUKAN utk 2 model BARU yg baru dilatih di sini. Ambang yg salah
+skala bisa bikin Guardian baru exit KELEWAT dini/sering -- otomatis menjelaskan DUA gejala
+sekaligus (trade lebih banyak krn turnover lebih cepat, PF anjlok krn exit prematur motong
+posisi yg akan profitable). Pola sama fase132 (guardian lb7 lama JUGA "lebih buruk", dulu
+disalahkan ke ETF placeholder -- ETF sekarang sudah dipastikan asli, jadi kalau masih buruk,
+threshold yg belum di-tuning kandidat kuat penyebabnya, bukan ETF lagi).
+
+**Belum diputuskan**: apakah lanjut tuning `exit_threshold` (+ param terkait) utk 2 model baru
+ini via irisan kalibrasi (pola sama entry threshold tuning Fase144-146) sblm menyimpulkan
+"Guardian tak berguna di lb7", ATAU terima temuan 1 (split per-arah tak berguna) sbg jawaban
+final & hentikan jalur Guardian di sini.
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase151_sguardian_vs_combined.py`.
+`models/runs/dualbin_guardian_lb7_combined_20260808/`, `models/runs/dualbin_sguardian_lb7_20260808/`.
+
+---
+
+## 2026-08-08 — Fase 152: sguardian, isolasi exit_threshold (near_tp/breakeven MATI), sweep OOF
+
+**Pemicu.** Fase151 curiga `exit_threshold=0,55` dkk (dari `config.json` produksi, di-tuning utk
+Guardian LAMA) menjelaskan kenapa KEDUA lengan Guardian lebih buruk drpd tanpa Guardian. Berhenti
+banding ke Guardian gabungan (Temuan 1 Fase151 sudah jawab: hampir identik ke sguardian) --
+fokus HANYA sguardian, model yg SUDAH terlatih (tidak dilatih ulang), sweep parameter EKSEKUSI.
+
+**Rancangan**: `near_tp_arm_frac`/`breakeven_lock_mfe_pct` dimatikan (0,0 = isolasi murni
+keputusan model sguardian sendiri), `exit_threshold` di-sweep 0,35→0,99 (10 titik) langsung di 3
+window OOF -- BUKAN kalibrasi terpisah (data M5 intrabar cuma ada Apr2025-Apr2026, PERSIS rentang
+OOF, tak ada ruang irisan kalibrasi sblm W1). Ditandai eksploratif, kurva PENUH dicetak.
+
+**Hasil (total PnL 3 window per ambang, populasi entry SHORT identik Fase150/151):**
+
+| Ambang | Total PnL | Window lolos |
+|---|---:|---:|
+| 0,35 | -$222,11 | 1/3 |
+| 0,55 | -$145,82 | 1/3 |
+| 0,65 | -$2,35 | 2/3 |
+| 0,75 | +$229,35 | 2/3 |
+| 0,85 | +$380,06 | 2/3 |
+| 0,90 | +$432,87 | 2/3 |
+| 0,95 | +$496,08 | 2/3 |
+| **0,99** | **+$510,77** | **2/3** |
+| Tanpa Guardian [Fase150] | +$305,97 | 2/3 |
+
+Kurva naik halus (bukan spike 1 titik), konsisten di ketiga window scr terpisah -- W1 tetap rugi
+tapi mengecil (-$259,66→-$216,55), W2/W3 membaik. W1 tetap gagal gerbang di SEMUA ambang (problem
+struktural bull market di entry, bukan Guardian, sudah terdiagnosis lama).
+
+**Masalah**: 0,99 adalah UJUNG grid yg diuji, bukan puncak di tengah -- kurva belum kelihatan
+mendatar/berbalik. User curiga ("agak kurang meyakinkan kenapa bisa 0,99"), minta training period
+LGBM SHORT + sguardian dipaparkan. Ditelusuri: entry SHORT dilatih ULANG per window (rolling 48
+bulan, dipotong 2021-11-01), tapi sguardian dilatih SEKALI dari trajectory 2024-04-01→2025-03-30
+lalu dipakai APA ADANYA di W1/W2/W3 -- utk W3, model "melihat" pola trade berumur 8-9 bulan.
+Asimetri ini (entry walk-forward, sguardian statis) belum ditandai eksplisit sblm ini.
+
+**TIDAK ada tindakan holdout/produksi. Lanjut ke Fase153 (cek OOS) sblm simpulkan apa pun.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase152_sguardian_threshold_sweep.py`.
+`models/runs/dualbin_fase152_sguardian_threshold_sweep.json` (grid 0,35-0,75),
+`models/runs/dualbin_fase152_sguardian_threshold_sweep_tinggi.json` (grid 0,80-0,99).
+
+---
+
+## 2026-08-08 — Fase 153: sguardian exit_threshold di OOS -- pola Fase152 TIDAK bertahan (negatif)
+
+**Pemicu.** User minta sweep 0,75 ke atas (kelipatan 0,05) langsung di OOS/holdout (2026-04-01 s/d
+2026-07-29), data yg BENAR-BENAR belum pernah dilihat sguardian maupun entry SHORT window
+manapun -- jawaban langsung atas kecurigaan "kurva 0,99 belum ketemu puncak, apa ini bertahan di
+data baru?". Model sguardian SAMA (tak dilatih ulang), entry SHORT dilatih 1x khusus OOS (rolling
+48 bulan: 2022-04-01→2026-03-30, sama pola Fase150). Grid diperluas sampai 1,00 (guardian nyaris
+mati total -- anchor pembanding langsung ke "tanpa Guardian").
+
+**Hasil:**
+
+| Ambang | Trade | WR | PF | PnL |
+|---|---:|---:|---:|---:|
+| 0,75 | 1.036 | 41,4% | 0,9627 | -$51,17 |
+| 0,80 | 1.011 | 40,8% | 0,9662 | -$46,33 |
+| 0,85 | 975 | 41,3% | 0,9595 | -$54,49 |
+| 0,90 | 958 | 41,5% | 0,9582 | -$55,94 |
+| 0,95 | 918 | 42,7% | 0,9675 | -$43,00 |
+| 1,00 (Guardian nyaris mati) | 855 | 45,3% | 0,9908 | -$11,70 |
+| Tanpa Guardian [Fase150 OOS] | 933 | 56,5% | 0,9796 | -$26,29 |
+
+**Kesimpulan -- pola OOF TIDAK bertahan, kecurigaan user TERBUKTI BENAR.** Di OOF, ambang tinggi
+jelas menang (kurva naik halus -$222→+$511). Di OOS, SEMUA ambang gagal gerbang (PF selalu <1),
+DAN polanya justru **kebalikan**: makin sering Guardian ikut campur (ambang rendah, 0,75-0,95),
+makin buruk hasilnya dibanding hampir tidak ikut campur sama sekali (1,00, paling dekat ke "tanpa
+Guardian"). Tidak ada titik ambang manapun yg mendekati keunggulan +$500 yg terlihat di OOF.
+
+**Penjelasan paling masuk akal**: sguardian dilatih SEKALI dari periode 2024-04-01→2025-03-30 dan
+TIDAK di-refresh -- saat dipakai ke OOS (mulai 2026-04-01), model itu sudah berumur ~13 bulan dari
+titik latihnya (lebih basi drpd saat dipakai ke W3 yg "cuma" 8-9 bulan). Pola yg tampak kuat di
+OOF kemungkinan besar spesifik ke rezim pasar 2025 yg dilihat model saat training, bukan sinyal
+exit yg genuinely bisa dipakai umum. Ini konsisten dgn asimetri yg sudah ditandai di Fase152 (entry
+walk-forward per window, sguardian statis) -- kali ini terbukti asimetri itu berakibat nyata.
+
+**Status jalur sguardian: NEGATIF/TIDAK LAYAK dgn resep saat ini.** Tidak direkomendasikan lanjut
+ke produksi dlm bentuk apa pun. Kalau mau dilanjutkan, perlu perubahan struktural (latih ULANG
+sguardian per window scr walk-forward, sama disiplin dgn entry SHORT-nya) -- bukan cuma sweep
+parameter eksekusi lagi, dan itu langkah besar yg butuh persetujuan eksplisit sblm dieksekusi.
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase153_sguardian_oos_threshold_sweep.py`.
+`models/runs/dualbin_fase153_sguardian_oos_threshold_sweep.json`.
+
+---
+
+## 2026-08-08 — Fase 154: sguardian v2 -- dibangun ulang dari 4 prinsip Guardian user (bukan resep lama)
+
+**Pemicu.** User curiga sguardian v1 (Fase151-153, gagal OOS) BUKAN krn parameter salah tapi krn
+prinsip Guardian-nya sendiri salah. Diminta bandingkan ke Guardian ic32 (`train_guardian.py`,
+"Momentum Escort v2") -- ternyata resep itu MILIK ic32, bukan dualbin (skrip sampel dualbin asli
+sudah HILANG, dicatat di fase6). User lalu menjelaskan 4 prinsip sendiri: (P1) Guardian hanya exit
+saat profit, (P2) trend berbalik->keluar tapi momentum kuat->tetap hold walau lewat TP, (P3) sentuh
+TP->partial 50% otomatis, (P4) sisa posisi tetap dikawal Guardian. Diminta bangun ulang dari sini,
+BUKAN dari resep lama manapun. Rencana penuh: `witty-dreaming-kahn.md` (Plan Mode, Opus).
+
+**Implementasi** (TDD penuh, `live_dualbin_ft` commit `937ba83`): 3 mekanisme baru di `_manage_bar`
+(`paper_engine.py`) + `GuardianCfg`, SEMUA default MATI (parity byte-for-byte `replay_arrays()`
+tetap hijau tanpa diubah, 34 test parity + 10 test baru lulus, suite penuh 448 lulus/1 gagal
+pra-eksisting tak terkait):
+- `tp_partial_frac` (P3) -- partial DETERMINISTIK persis saat TP tersentuh, pakai ulang mekanika
+  partial lama (`_apply_partial_exit`, diekstrak jadi fungsi bersama -- SATU rumus PnL).
+- `escort_after_partial` (P4) -- gate `position_remaining>0.5` diperluas `or escort_after_partial`,
+  memperbaiki bug lama: Guardian berhenti mengevaluasi posisi SELAMANYA setelah partial.
+- `exit_only_when_profit` (P1) -- keputusan EXIT model diabaikan kalau `current_pnl<=0`.
+
+**Metodologi**: sguardian v2 dilatih ULANG WALK-FORWARD per window (rolling 12 bulan trajectory,
+berhenti 36 jam sblm window mulai) -- BUKAN sekali latih spt v1, memperbaiki akar penyebab gagal
+OOS Fase153. Label 2-kelas fungsional (HOLD/EXIT) via `mom_strong` dari `cvd_momentum_adv` (P2).
+
+**Bug ditemukan & diperbaiki SEBELUM hasil final** (run pertama, 17:40-17:48, HARUS dibuang):
+melewati nilai label 1 sepenuhnya (HOLD=0, EXIT=2 langsung) merusak `LabelEncoder` internal
+sklearn -- mereindeks nilai yg ADA jadi kolom berurutan (0,2->kolom 0,1), TAPI `_manage_bar`
+membaca `_Booster.predict()` mentah (mengasumsikan indeks kolom == nilai label). Akibatnya
+keputusan EXIT mendarat di kolom "PARTIAL" dan DITOLAK DIAM-DIAM oleh `izinkan_partial=False` --
+P2 jadi TIDAK PERNAH benar2 tereksekusi, CV logloss meledak ke ~3,0 (bukti: log produksi "Guardian
+memilih PARTIAL p=0,99+ tapi jalur real-time tidak bisa eksekusi" muncul di HAMPIR SETIAP keputusan
+EXIT). Direproduksi & diverifikasi via isolasi `LGBMClassifier` 10 baris sblm memperbaiki. **Fix**:
+kembali ke 3-kelas utuh (kelas 1 diisi placeholder teknis dari aturan give-back v1, TIDAK PERNAH
+benar2 dieksekusi krn `izinkan_partial=False`) + `train_guardian_robust` lokal (skip fold CV kelas
+langka, sama pola v1) -- deviasi dari rencana ("tanpa salinan lokal"), perlu berdasar bukti
+empiris. CV logloss run kedua: 0,25-0,36 (waras, malah lebih baik dari v1 kombinasi 0,44-0,51).
+
+**Hasil OOF (headline exit_threshold=0,55, TIDAK dipilih dari kurva):**
+
+| Lengan | Trade | PnL total | Window lolos |
+|---|---:|---:|---:|
+| (a) Tanpa Guardian [Fase150] | 2.352 | +$305,97 | 2/3 |
+| (b) v2 + lantai lama (momentum_floor/near_tp/breakeven_lock config live APA ADANYA) | 4.542 | **-$1.234,66** | 0/3 |
+| (c) v2 murni model (lantai lama SEMUA mati, cuma 4 prinsip) | 2.278 | **+$342,57** | 2/3 |
+
+Per window (c) vs (a): W1 -$190,08 vs -$259,66 (+$69,58, tetap gagal gerbang -- problem entry bull
+market, bukan exit), W2 +$257,06 vs +$312,34 (**-$55,28**, lolos tapi lebih buruk), W3 +$275,58 vs
++$253,29 (+$22,29, lolos & sedikit lebih baik). **Arah TIDAK konsisten 3/3 window** (2 window
+membaik, 1 memburuk) -- persis pola yg [[feedback-wajib-dua-jendela-penilaian]] tandai sbg BUKAN
+edge stabil. Selisih total (+$36,60, ~12%) berada di bawah/dekat lantai derau ~$80 per-window yg
+sudah ditemukan sesi-sesi sebelumnya.
+
+**(b) gagal total** -- floor lama (momentum_floor_frac=0,1 dkk) di-tuning utk Guardian LAMA,
+"bentrok" dgn mekanisme baru (`tp_partial_frac`/`escort_after_partial`). Pelajaran: JANGAN campur
+parameter lama dgn model/mekanisme baru tanpa tuning ulang -- pola sama v1 Fase151.
+
+**Kurva diagnosa (c), TIDAK dipakai memilih ambang**: 0,35=$283,88 (=0,45) -> 0,55=$342,57 ->
+0,65=$529,14 -> 0,75=$559,23 -> **puncak 0,85=$578,64** -> 0,95=$500,14 (TURUN). Beda kualitatif
+dari Fase152 (v1): ada **puncak di TENGAH grid**, bukan naik terus sampai ujung -- pola lebih sehat
+(bukan "makin dekat mati makin baik"), TAPI ini baru observasi, BUKAN validasi ambang 0,85 (sama
+sekali belum diuji OOS, dan memilih dari kurva OOF persis kesalahan yg dihindari).
+
+**Kesimpulan jujur**: 4 prinsip user SEKARANG genuinely diimplementasikan & tereksekusi benar
+(dibuktikan lewat TDD + fix bug encoding) -- beda dari v1 yg diam-diam menyimpang dari prinsip
+manapun. Tapi edeknya di headline ambang KECIL & arahnya TIDAK konsisten antar window -- lebih
+jujur disebut "belum terbukti", bukan "menang" ataupun "kalah telak" spt v1. TIDAK direkomendasikan
+promosi ke OOS/produksi dari hasil ini saja.
+
+**TIDAK ada tindakan OOS/holdout/produksi -- butuh persetujuan terpisah.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase154_sguardian_v2_prinsip.py`.
+`models/runs/dualbin_sguardian_v2/{W1,W2,W3}_20260808/guardian/`. Kode mesin:
+`live_dualbin_ft` commit `937ba83` (`app/services/paper_engine.py`, `app/config.py`,
+`tests/test_guardian_v2_principles.py`).
+
+---
+
+## 2026-08-08 — Fase 155: sguardian v2 di OOS -- TIDAK reversal spt v1, tapi TETAP belum terbukti
+
+**Pemicu.** User minta cek OOS setelah lihat hasil Fase154 (OOF +$342,57 vs baseline +$305,97,
+arah tak konsisten). Metodologi SAMA PERSIS Fase154 (walk-forward): sguardian v2 dilatih ULANG
+khusus utk window OOS (trajectory 2025-04-01→2026-03-30, entry SHORT rolling 48bln berhenti
+2026-03-30) -- BUKAN reuse model W3. Cuma lengan (c) v2 murni model diuji (lengan (b) sudah
+terbukti gagal total di Fase154, tidak diulang).
+
+**Hasil (headline exit_threshold=0,55, TIDAK dipilih dari kurva):**
+
+| | Trade | WR | PF | PnL | Status |
+|---|---:|---:|---:|---:|---|
+| (c) v2 murni model | 910 | 57,7% | 0,9897 | **-$12,65** | Gagal (PF<1) |
+| Tanpa Guardian [Fase150 OOS] | 933 | 56,5% | 0,9796 | -$26,29 | Gagal |
+
+v2 GAGAL gerbang (PF 0,9897 < 1,00), tapi rugi LEBIH KECIL drpd baseline (-$12,65 vs -$26,29,
+selisih +$13,64) -- BUKAN kemenangan, tapi BUKAN pula reversal total spt v1 (v1 KALAH di SEMUA
+ambang OOS, sguardian v2 sedikit lebih baik drpd baseline di ambang headline).
+
+**Kurva diagnosa (TIDAK dipakai memilih ambang, cuma transparansi)**: 0,35/0,45 PF=1,0067
+PnL=+$8,25 (lolos gerbang), 0,55=-$12,65, 0,65=-$31,26 (terburuk), 0,75=-$8,09, 0,85 PF=1,0004
+PnL=+$0,44 (lolos tipis), 0,95 PF=1,0022 PnL=+$2,68 (lolos tipis). **Kurva BERGELOMBANG** (turun
+lalu naik lagi), bukan tren bersih naik/turun spt Fase152/153/154 -- tanda paling jelas bahwa
+seluruh rentang ini ada DI DALAM lantai derau, bukan sinyal sistematis.
+
+**Menghubungkan ke 4 window independen (W1/W2/W3 OOF + OOS)**: v2 mengalahkan baseline di 3/4
+(W1 +$69,58, W3 +$22,29, OOS +$13,64), kalah di 1/4 (W2 -$55,28). Mayoritas arah positif, TAPI
+semua selisih kecil (di bawah/dekat lantai derau ~$80/window) DAN tidak ada satu pun window yg
+menunjukkan efek besar & jelas. Beda kualitatif dari v1 (menang OOF DRAMATIS lalu kalah OOS
+DRAMATIS di SEMUA ambang) -- v2 dari awal tidak pernah mengklaim kemenangan besar.
+
+**Kesimpulan jujur**: sguardian v2 TIDAK menunjukkan reversal OOF->OOS yang menjatuhkan v1 --
+tapi efeknya di semua 4 window terlalu kecil & konsisten HANYA mayoritas (3/4, bukan 4/4) utk
+disebut edge terbukti. Status: **belum terbukti, condong netral-ke-sedikit-positif**, bukan
+kemenangan bersih. Tidak lolos gerbang PF>1 di OOS pada ambang headline manapun yg wajar (0,55).
+
+**TIDAK direkomendasikan promosi ke produksi.** Kalau mau dilanjutkan: perbesar sampel evaluasi
+(lebih banyak koin/periode) utk menurunkan lantai derau sebelum menafsir lebih jauh -- sweep
+ambang lagi TIDAK akan menjawab apa-apa selama semuanya ada di dalam derau. Juga diingat: P3
+(partial 50% di TP) MASIH belum bisa dieksekusi sungguhan di live (order `reduceOnly` sebagian) --
+promosi ke produksi tetap perlu proyek terpisah itu dulu, terlepas dari hasil riset ini.
+
+**TIDAK ada tindakan holdout/produksi lebih lanjut.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase155_sguardian_v2_oos.py`.
+`models/runs/dualbin_sguardian_v2/OOS_20260808/guardian/`,
+`models/runs/dualbin_fase155_sguardian_v2_oos.json`.
+
+---
+
+## 2026-08-08 — Fase 156: KOREKSI -- baseline Fase154/155 pakai mesin BEDA, v2 sebenarnya KALAH $175
+
+**Pemicu.** User minta pecah hasil per bulan. Membangunnya memaksa baseline "tanpa Guardian"
+dihitung ULANG lewat mesin yang SAMA dgn v2 (`ExecutionSimulator`) -- dan ketahuan baseline yang
+dipakai Fase154/155 (`BASELINE_A`, angka teks dari Fase150) itu dihasilkan `replay_gabungan()`,
+fungsi simulasi TULIS TANGAN TERPISAH (TP/SL/timeout sederhana, TANPA mekanika `ExecutionSimulator`
+penuh -- fill M5 intrabar, cek likuidasi, force-close `MAX_HOLDING_BARS`, dst). **Seluruh
+perbandingan "v2 menang 3/4 window" di Fase154/155 membandingkan DUA MESIN SIMULASI BERBEDA**,
+bukan cuma kebijakan exit yang beda -- pelanggaran [[feedback-ablation-samakan-populasi-latih]]
+versi lebih dasar (mesinnya sendiri beda, bukan cuma populasi).
+
+**Baseline dihitung ulang lewat `ExecutionSimulator` (mesin SAMA dgn v2, `exit_threshold=1,01` +
+SEMUA mekanisme guardian dimatikan -- "tanpa Guardian" yang genuinely apple-to-apple):**
+
+| | PnL total (Apr2025-Jul2026, 16 bulan) |
+|---|---:|
+| Tanpa Guardian [Fase150, mesin LAMA -- SALAH dibandingkan] | +$305,97 (OOF) + -$26,29 (OOS) = +$279,68 |
+| Tanpa Guardian [ExecutionSimulator, mesin SAMA -- BENAR] | **+$505,26** |
+| sguardian v2 murni model | +$329,92 |
+| **Selisih v2 vs baseline BENAR** | **-$175,33** |
+
+**v2 KALAH, bukan menang.** 10 dari 16 bulan v2 lebih buruk drpd baseline yang benar; kerugian
+terbesar Okt 2025 (-$119,56, satu bulan itu saja menyumbang 68% dari total selisih negatif).
+Trade v2 SELALU lebih banyak drpd baseline tiap bulan (Guardian ikut campur -> siklus posisi lebih
+cepat -> lebih banyak entry per periode, pola sama yg diamati Fase152/153) -- tapi PnL per-trade
+turun.
+
+**Kesimpulan REVISI: sguardian v2 TIDAK unggul dari baseline yang benar.** Kesimpulan "belum
+terbukti, condong netral-ke-sedikit-positif" di Fase154/155 DICABUT -- itu artefak salah
+membandingkan dua mesin simulasi. Dengan mesin yang sama, v2 kalah jelas ($175 dari $505, ~35%
+lebih buruk). **Status akhir: NEGATIF.** Tidak direkomendasikan promosi ke produksi maupun
+riset lanjutan tanpa desain baru.
+
+**Pelajaran metodologi**: kapan pun membandingkan kandidat ke "baseline"/"tanpa X", WAJIB hitung
+baseline itu lewat mesin evaluasi YANG SAMA PERSIS dgn kandidat -- jangan pinjam angka teks dari
+skrip lain walau judulnya "baseline resmi". Berlaku mundur ke Fase152/153 juga (baseline OOS
+Fase153 dari Fase150 kemungkinan sama-sama tercemar mesin beda, TAPI konklusi Fase153 (v1 gagal
+total OOS) sudah cukup ekstrem hingga koreksi ini TIDAK mengubah kesimpulan v1 -- v1 tetap NEGATIF).
+
+**TIDAK ada tindakan holdout/produksi.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase156_sguardian_v2_bulanan.py`.
+`models/runs/dualbin_fase156_sguardian_v2_bulanan.json`.
+
+---
+
+## 2026-08-08 — Fase 157 (Fase A rencana "untung tipis"): GERBANG GAGAL, tesis mati di data
+
+**Pemicu.** User usul arah baru pasca sguardian v2 NEGATIF: bukan menebak reversal, tapi kejar
+untung tipis (target ATR dekat) lalu cabut cepat (0-3 jam), Guardian cuma "mengawal arah". Rencana
+`witty-dreaming-kahn.md` (Plan Mode, Opus/Fable) menyusun 4 fase bergerbang (A=diagnostik murah
+tanpa retrain, B=ubah mesin eksekusi, C=retrain entry, D=sguardian pengawal). Fase A dieksekusi
+dulu -- SENGAJA murah, supaya tidak lanjut ke retrain kalau tesisnya sendiri sudah mati di data.
+
+**Metodologi**: 24.278 sinyal SHORT dari periode SEBELUM W1 (2024-04-01→2025-03-30, entry model
+resep identik Fase150/154, TIDAK mengintip OOF). Simulasi bracket ATR murni (TP/SL berbasis
+ATR di 8 kombinasi 0,5-1,5×ATR), aturan keluar sesuai keputusan user: kena TP/SL → keluar; bar≥3
+& untung → keluar ambil untung; bar≥3 & masih rugi → tahan (tak pernah dipaksa rugi krn waktu).
+
+**Run 1 (min_profit_frac=0,0, "untung sedikit pun cabut", versi literal permintaan user)**: SEMUA
+8 kombinasi PnL rata-rata NEGATIF (-0,12% s/d -0,15%/trade), walau beberapa win-rate kelihatan di
+atas ambang impas naif. Diverifikasi penyebabnya: aturan "cabut begitu untung > biaya" memotong
+kemenangan jadi RECEHAN (rata-rata kemenangan jauh di bawah TP penuh) sementara kerugian tetap
+jalan sampai SL penuh -- asimetri yang timpang. Bukti: bracket 1,0/0,7 WR=59,2% seharusnya hasilkan
++0,169%/trade kalau kemenangan genuinely sebesar TP penuh, tapi aktual -0,140%/trade.
+
+**Run 2 (Opsi 1, atas persetujuan user: cabut hanya kalau untung ≥ min_profit_frac × TP, bukan
+cuma "di atas biaya")**: 32 kombinasi (8 bracket × 4 fraksi 0,3/0,5/0,7/1,0) -- **SEMUA TETAP
+NEGATIF, 0/32 lolos**. Pola jelas & konsisten: (1) menaikkan `min_profit_frac` MEMBAIKKAN hasil
+di tiap bracket (mengonfirmasi diagnosis di atas -- makin lambat "cabut untung", makin baik), TAPI
+(2) bahkan di frac=1,0 (murni TP/SL/timeout, TANPA cabut-untung-dini sama sekali) **tetap negatif
+di SEMUA 8 bracket** (-0,077% s/d -0,135%/trade). (3) Pola arah bracket: makin LEBAR (1,5/1,5)
+makin MENDEKATI impas (-0,077%), makin TIPIS (0,5/0,5) makin RUGI (-0,135%) -- arahnya PERSIS
+KEBALIKAN dari tesis awal ("tipis lebih baik"). Data justru menunjuk balik ke arah sistem swing
+yang SUDAH ADA (TP jauh), bukan ke arah baru.
+
+**Kesimpulan**: **Gerbang A GAGAL total, bukan cuma "belum meyakinkan".** Bukan soal aturan
+keluarnya kurang tepat (sudah dicoba versi paling sabar sekalipun) -- di level fundamental,
+lintasan harga H1 pasca-entry SHORT tidak punya cukup edge di skala ATR-tipis utk menutup biaya
+transaksi, WALAU sinyal entry-nya sama. **Sesuai gerbang yang disepakati di rencana ("kalau tidak
+ada kombinasi yang lolos, BERHENTI -- tidak lanjut retrain"): jalur ini distop di Fase A.** Fase
+B/C/D (ubah mesin eksekusi, retrain entry+Guardian) TIDAK dijalankan -- akan sia-sia menghabiskan
+waktu retrain utk tesis yang sudah terbukti mati di data mentah.
+
+**SUSULAN (hari sama)**: user minta perluas grid ke bracket LEBAR (2,0/2,0 s/d 3,0/3,0 + varian
+asimetris 2,0/3,0 & 3,0/2,0), utk cek apa tren "makin lebar makin baik" (yg kelihatan di run
+sebelumnya, 0,5→1,5×ATR) berlanjut. **Jawabannya TIDAK** -- trennya BERBALIK setelah 1,5×ATR:
+
+| Bracket (frac=1,0, paling sabar) | PnL/trade | timeout% |
+|---|---:|---:|
+| 1,0 / 1,5 | -0,087% | 4,5% |
+| **1,5 / 1,5** | **-0,077%** | 9,6% |
+| 2,0 / 2,0 | -0,088% | 21,3% |
+| 2,5 / 2,5 | -0,096% | 33,0% |
+| 3,0 / 3,0 | -0,110% | 44,8% |
+| 2,0 / 3,0 (SL>TP) | -0,134% (terburuk) | 30,8% |
+| **3,0 / 2,0 (TP>SL)** | **-0,069% (terbaik)** | 33,9% |
+
+Titik paling ringan ada di sekitar **1,5/1,5 s/d 3,0/2,0** (-0,069% s/d -0,077%/trade) -- TETAP
+NEGATIF, cuma paling MENDEKATI impas. Lewat titik itu, `timeout%` melonjak tajam (9,6%→44,8%)
+krn `MAX_HOLD=24` jam terlalu pendek utk target sejauh 2,5-3×ATR -- hampir separuh trade di
+bracket 3,0/3,0 tidak pernah selesai secara alami, dipaksa tutup di harga apa adanya jam ke-24.
+Pola RR juga konsisten: TP>SL (3,0/2,0) SELALU lebih baik drpd SL>TP (2,0/3,0) di bobot yg sama.
+
+**Kesimpulan diperkuat**: sudah dijelajahi rentang PENUH 0,5-3,0×ATR (simetris & asimetris,
+agresif & sabar) -- TIDAK ADA satu pun titik yang positif. Bentuk kurvanya sendiri (lembah, bukan
+naik terus) menunjukkan ini eksplorasi yang SUDAH TUNTAS di ruang bracket ATR-murni, bukan
+berhenti prematur. Kesimpulan Gerbang A GAGAL semakin kokoh, bukan cuma dari 1 titik data.
+
+**Susulan ke-2 (hari sama)**: user usul "untung di atas 5%" + tanya kenapa tidak cek per-menit
+(kekhawatiran valid: simulasi sblm ini cuma cek harga PENUTUPAN H1, bisa melewatkan target yang
+sempat tersentuh lalu berbalik sebelum jam tutup). Diklarifikasi 5% = **untung AKUN** (bukan
+harga mentah) — dgn leverage 15x, itu cuma **0,333% pergerakan harga** (lebih tipis dari bracket
+manapun yg sudah diuji). Diperbaiki metodologi: pakai HIGH/LOW H1 (bukan cuma close) utk deteksi
+tersentuh — jauh lebih dekat ke "cek tiap menit" tanpa perlu data M5 baru (M5 cuma tersedia
+≥2025-04-01, akan mengintip OOF kalau dipakai di periode diagnostik ini).
+
+**Efek koreksi high/low pada grid ATR yg sudah ada**: ambang tersentuh JAUH lebih sering terdeteksi
+(untung ≥0,5×ATR dlm 3 jam: 41,6%→**63,3%**; rugi ≥0,6×ATR: 33,6%→**52,6%**) — TAPI PnL/trade
+malah SEDIKIT LEBIH NEGATIF di hampir semua bracket (mis. 1,5/1,5 frac=1,0: -0,077%→-0,0375%,
+justru membaik di titik ini; tapi 0,5/0,5: -0,135%→-0,186%, memburuk) — SL & TP sama-sama lebih
+sering tersentuh dgn deteksi lebih akurat, jadi bukan cuma satu sisi yg diuntungkan. Kesimpulan
+Gerbang A GAGAL TIDAK berubah dgn metodologi yg lebih akurat ini — bukan artefak under-sampling.
+
+**Target akun "5%" (0,333% harga), 3 lebar SL (3%/5%/8% akun), high/low H1:**
+
+| TP akun | SL akun | TP/SL harga | WR | PnL/trade | PnL$/trade (modal $10) |
+|---|---|---|---:|---:|---:|
+| 5% | 3% | 0,333%/0,200% | 25,8% | -0,243% | **-$0,364** |
+| 5% | 5% | 0,333%/0,333% | 38,7% | -0,256% | **-$0,384** |
+| 5% | 8% | 0,333%/0,533% | 53,4% | -0,251% | **-$0,377** |
+
+**SEMUA GAGAL, dan ini yang TERBURUK dari seluruh eksplorasi hari ini** (dibanding rentang
+-0,04% s/d -0,19% di bracket ATR 0,5-3,0×). Sesuai prediksi tren yang sudah ditemukan: target
+0,333% harga LEBIH TIPIS dari bracket tertipis manapun yg sudah diuji (0,5×ATR≈0,57%), dan
+tren "makin tipis makin rugi" berlanjut konsisten sampai ke titik paling ekstrem ini. `frac`
+(kesabaran cabut-untung) nyaris tak berpengaruh di sini krn target sangat tipis — hampir semua
+trade selesai lewat TP/SL murni dlm hitungan jam, bukan lewat aturan cabut-dini atau timeout.
+
+**Kesimpulan akhir (setelah 3 putaran uji hari ini)**: kekhawatiran metodologi user (cek per-menit)
+VALID dan sudah diperbaiki (high/low, bukan cuma close) — tapi TIDAK mengubah arah kesimpulan.
+Target berbasis leverage/akun yang tipis (spt "5% akun") justru PALING BURUK dari semua yang
+diuji. Edge (kalau ada) di populasi sinyal SHORT ini butuh KESABARAN (bracket lebar/jendela
+panjang), bukan kecepatan — mengarah balik ke filosofi sistem swing yang sudah ada, bukan menjauh
+darinya. Jalur "kejar untung cepat" ini sudah diuji habis dari berbagai sudut (agresif/sabar,
+tipis/lebar, ATR-relatif/akun-tetap, close/high-low) — rekomendasi: hentikan eksplorasi arah ini.
+
+**KOREKSI BESAR (susulan ke-3, hari sama)**: user tegur -- SEMUA simulasi di atas pakai target
+TETAP (bracket statis, TP/SL diset saat entry & tidak pernah berubah). Itu BUKAN "mengawal dan
+mengikuti arah" yang diminta sejak awal -- belum pernah diuji TRAILING STOP (SL mengikuti puncak,
+TANPA batas atas, keluar hanya kalau tren genuinely berbalik). Ditambahkan `simulasi_trailing()`:
+SL awal tetap sampai untung (MFE) capai `arm_atr`, lalu "bersenjata" -- SL berpindah mengikuti
+`trail_frac x MFE` (dikunci naik terus, tak pernah melonggar), posisi dibiarkan lari TANPA target
+atas, keluar kalau harga mundur menembus trailing atau MAX_HOLD habis.
+
+**HASIL PERTAMA POSITIF dari SELURUH eksplorasi hari ini (sguardian v1, v2, bracket tetap,
+trailing):**
+
+| Bersenjata | Trail (kunci dari puncak) | SL awal | WR | PnL/trade | PnL$/trade |
+|---|---|---|---:|---:|---:|
+| 0,3×ATR | 0,7×MFE | 0,7×ATR | 69,2% | **+0,0389%** | **+$0,0583** |
+| 0,3×ATR | 0,7×MFE | 1,0×ATR | 74,5% | **+0,0460%** | **+$0,0689** |
+
+Kombinasi lain (arm 0,5/0,8×ATR, atau trail 0,3/0,5×MFE) SEMUA tetap negatif -- pola jelas:
+**bersenjata CEPAT (0,3×ATR, jangan tunggu lama) + trailing LONGGAR (kunci cuma 70% dari puncak,
+kasih ruang 30% mundur)** yang berhasil. Trailing KETAT (kunci 30-50%) selalu kalah -- keluar
+kena noise/whipsaw sebelum tren sungguhan berkembang.
+
+**Status: KANDIDAT, BELUM DIVALIDASI.** Baru 1 populasi (pra-W1, 24.278 sinyal) -- WAJIB dicek
+di 3 window OOF independen ([[feedback-wajib-dua-jendela-penilaian]]) sebelum dipercaya sbg
+temuan nyata, BUKAN cuma cocok kebetulan di 1 periode. Ini langkah berikutnya, belum dieksekusi.
+
+**TIDAK ada tindakan holdout/produksi. TIDAK ada retrain/perubahan kode -- masih diagnostik murni.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase157_diag_untung_tipis.py`.
+
+---
+
+## 2026-08-08 — Fase B0 (Fase159): dua koreksi penting sebelum lanjut ke Fase B1
+
+**Bug ditemukan & diperbaiki**: `simulasi_trailing` versi awal meng-update MFE pakai `low[j]` DULU
+baru cek trailing-SL thd `high[j]` di BAR YANG SAMA -- artinya 1 bar boleh sekaligus "menetapkan
+puncak baru" DAN "keluar nyaris tepat di puncak itu", tidak realistis. Diperbaiki: cek exit dulu
+pakai status/MFE dari SEBELUM bar ini, baru update MFE untuk bar berikutnya. Efek: PnL/trade turun
+~25% (mis. pra-W1 trail=0,99: 0,2412%→0,1818%) tapi pola & kesimpulan arah TIDAK berubah.
+
+**Cek ujung grid (0,7→1,0, titik 1,0 = batas matematis literal)**: kurva **MENDATAR (plateau)**
+mendekati 1,0, BUKAN meledak -- pra-W1 trail=0,99→1,00 cuma naik 0,1818%→0,1881% (W2:
+0,1912%→0,1970%, W3: 0,1423%→0,1481%). Ini BEDA dari pola berbahaya sguardian v1 (naik terus tanpa
+tanda melambat) -- di sini genuinely mendekati asimtot, gerbang B0 LOLOS dengan syarat.
+
+**TEMUAN PENTING (bukan bug, tapi mengubah interpretasi)**: `bars_held_median = 2,0` -- **SAMA
+PERSIS di SEMUA trail_frac (0,70 s/d 1,00) dan SEMUA window**, begitu juga rincian alasan
+keluar (sl_awal%/trail%) IDENTIK persis di semua trail_frac. Artinya `trail_frac` di rentang ini
+TIDAK mengubah KAPAN posisi keluar (median tetap ~2 jam sejak entry) -- cuma mengubah harga
+persisnya (kunci lebih ketat = tangkap harga lebih dekat ke puncak dalam jendela ~2 jam yang
+sama). **Mekanismenya BUKAN "ikuti tren panjang" spt namanya** -- ini genuinely "tangkap gerakan
+awal, keluar dekat puncak lokal dlm ~2 jam", jauh lebih dekat ke ide "untung cepat" yang sudah
+dicoba sebelumnya (Fase157 bracket) -- bedanya di SINI berhasil krn menangkap HARGA TERBAIK (via
+peak-following) bukan target sembarang, bukan krn benar2 menahan tren lama.
+
+**Implikasi ke Fase B1**: parameter existing `near_tp_arm_frac`/`near_tp_lock_frac` bersenjata
+relatif JARAK-TP (bisa berjam-jam), BUKAN relatif ATR + horison pendek (~2 jam) spt temuan ini --
+perlu diverifikasi eksplisit apa parameter existing bisa mereplikasi perilaku "arm cepat, exit ~2
+jam kemudian dekat puncak" ini, atau apa horison waktunya secara struktural berbeda.
+
+**TIDAK ada tindakan holdout/produksi. TIDAK ada retrain/perubahan kode -- masih diagnostik murni.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase159_b0_grid_ujung.py`.
+
+---
+
+## 2026-08-08 — Fase 160: KOREKSI TOTAL -- trailing stop di M5 asli TERBALIK jadi negatif
+
+**Pemicu.** User minta "buka kemungkinan cek data tiap beberapa menit". Ditemukan lebih dulu:
+sistem SUDAH punya `position_monitor` polling 5 menit (`app/config.py` `ExecutionCfg.
+monitor_interval_min=5`, `monitor_enabled=True`), TAPI scope-nya `monitor_scope="sl_tp"` --
+logika Guardian/trailing MASIH cuma dievaluasi tiap jam (H1), tidak pernah di 5 menit. M5 asli
+kebetulan tersedia PERSIS di window OOF (2025-04-01→2026-03-31) -- tidak perlu data baru.
+
+**Metodologi**: mekanisme trailing SAMA PERSIS Fase159 (arm=0,3×ATR, SL awal=1,0×ATR, urutan
+cek-lalu-update yg sudah diperbaiki), cuma resolusi pengecekan diganti dari H1 high/low (per jam)
+jadi M5 asli (per 5 menit) -- data sungguhan, bukan pendekatan.
+
+**Hasil: TERBALIK TOTAL jadi NEGATIF di semua grid & semua window.**
+
+| Window | trail=0,99 (terbaik) | Lama ditahan (median) |
+|---|---:|---:|
+| W1 | -$0,089/trade | 25 menit |
+| W2 | -$0,021/trade | 25 menit |
+| W3 | -$0,062/trade | 30 menit |
+
+Lama ditahan anjlok dari **~2 jam** (Fase159, resolusi H1) jadi **25-30 menit** (M5 asli) --
+SEMUA titik grid (0,70 s/d 1,00) NEGATIF di SEMUA 3 window, tidak ada satu pun yang lolos.
+
+**Penjelasan**: temuan "trailing stop menang" di Fase157-159 adalah **artefak kekasaran
+pengecekan per-jam**, BUKAN edge sungguhan. Cek H1 (bahkan pakai high/low) tidak bisa bereaksi
+ke goyangan DALAM jam itu -- efeknya seperti "masa tenggang" 1 jam yang menyembunyikan noise
+jangka-pendek, membuat mekanisme kelihatan "menahan tren" padahal sebenarnya cuma tidak sempat
+bereaksi ke pembalikan cepat. Begitu dicek di resolusi sungguhan (5 menit, SAMA dgn yang akan
+dipakai kalau ini benar2 di-deploy lewat `position_monitor`), goyangan dalam 25-30 menit pertama
+ternyata cukup sering membalik & biaya transaksi memakan seluruh untungnya.
+
+**Konsekuensi**: **Fase B1 (sweep `near_tp_arm_frac`/`near_tp_lock_frac`/`momentum_floor_frac`
+existing) DIBATALKAN** -- tidak ada gunanya menyetel parameter produksi (yang notabene cuma
+dievaluasi tiap jam) untuk mereplikasi mekanisme yang justru TERBUKTI HANYA menang krn resolusi
+kasar. Ini juga BUKAN argumen "coba pasang di resolusi 5 menit sungguhan" -- sudah diuji LANGSUNG
+di resolusi itu (M5 asli), hasilnya negatif, bukan cuma didekati.
+
+**Status jalur trailing stop: NEGATIF, sudah diuji tuntas** (H1 approksimasi awal salah [bug
+same-bar], H1 diperbaiki [masih positif tapi ternyata artefak], M5 asli [negatif, jawaban
+final]). Menutup seluruh cabang eksplorasi hari ini (sguardian v1, v2, bracket tetap, target
+akun, trailing H1, trailing M5) — SEMUA berujung negatif atau tidak terbukti di resolusi yang
+realistis.
+
+**TIDAK ada tindakan holdout/produksi. TIDAK ada retrain/perubahan kode.**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase160_trailing_m5.py`.
+
+---
+
+## 2026-08-09 — Fase 161: peta target profit M5 sebelum LSTM
+
+**Tujuan.** Mengukur kelayakan target profit yang diusulkan user secara M5 nyata sebelum membuat label sequence LSTM. SHORT entry dibangun walk-forward seperti Fase158/160 pada tiga window OOF W1/W2/W3; tidak ada holdout, retrain production, atau deploy.
+
+**Hasil.** Pada leverage 15x, +5% margin ROI (= +0,333% harga) disentuh oleh 90,5–91,7% sinyal dalam median 0,5–0,67 jam; +10% (= +0,667% harga) 82,0–83,2% dalam 1,67–1,92 jam; +15% (= +1,0% harga) 73,7–75,3% dalam 3,0–3,5 jam. Sebaliknya target notional/harga: +2% hanya 52,9–55,0% (median 6,5–7,7 jam), +5% hanya 15,6–20,8% (11,7–15,1 jam), dan +10% hanya 1,3–3,8% (17,1–17,7 jam).
+
+**Keputusan gerbang.** +5% margin terlalu mudah/cepat untuk membedakan tren; +5–10% notional terlalu jarang dan lambat untuk klaim “cepat keluar”. Sesudah Fase160 menunjukkan trailing M5 negatif, LSTM **tidak** dilatih untuk meniru kebijakan itu. Tahap LSTM ditunda sampai ada desain exit M5 yang lolos baseline causal; tidak ada perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase161_peta_profit_threshold_m5.py`; `models/runs/dualbin_fase161_profit_threshold_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 162: TP-limit langsung 5–15% margin ROI di M5 juga NEGATIF
+
+**Pertanyaan user.** Bukan trailing: begitu trade dimulai, langsung pasang `reduce-only` take-profit limit pada +5–10% margin ROI. Ini diuji literal pada SHORT entry walk-forward yang sama, M5 nyata, maksimum tahan 24 jam, fee+slippage dua sisi, dan protective stop. Jika TP dan SL sama-sama disentuh dalam satu candle M5, SL diasumsikan lebih dahulu (konservatif karena urutan tick tidak tersedia).
+
+**Grid.** TP margin ROI 5/10/15% (pada 15x berarti gerak harga +0,333/+0,667/+1,000%) × SL 3/5/8% ROI. W1/W2/W3 OOF, tanpa holdout atau perubahan produksi.
+
+**Hasil.** Seluruh 27 cell (9 kombinasi × 3 window) negatif. Kombinasi paling ringan, TP=15%/SL=8%, masih W1=-0,1455%, W2=-0,1108%, W3=-0,1398% per trade. TP=5%/SL=8% mencatat win rate 62,6–65,2%, tetapi tetap -0,1481%/-0,1479%/-0,1705% per trade.
+
+**Mengapa.** Target +5% margin hanya +0,333% harga. Setelah fee+slippage dua sisi, kemenangan kecil itu tidak cukup menutup kerugian yang terjadi sebelum TP tercapai; melonggarkan SL memang menaikkan win rate, tetapi memperbesar kerugian saat kalah. Target 10–15% memberi payoff lebih besar, namun proporsi sinyal yang terkena stop terlebih dahulu naik menjadi sekitar 52–83% tergantung konfigurasi. Jadi ini bukan masalah trailing: direct TP-limit pun tidak memiliki edge net pada populasi entry saat ini.
+
+**Keputusan gerbang.** Jangan retrain LSTM untuk entry/exit ini sebelum ada baseline M5 yang positif. LSTM tidak boleh dipakai sebagai alasan untuk melewati kegagalan policy dasar. Tidak ada perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase162_tp_limit_m5.py`; `models/runs/dualbin_fase162_tp_limit_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 163: filter arah H4 memperbaiki, tetapi belum membentuk populasi trend-following yang layak
+
+**Tujuan.** Menjawab koreksi user bahwa strategi harus mengikuti tren saat itu, bukan memberi exit cepat pada semua sinyal SHORT. Exit M5 TP-limit identik Fase162 (TP 5/10/15% margin ROI, SL 8%); yang diubah HANYA populasi entry. Tiga populasi: raw LGBM; `h4_aligned` (trend_strength negatif, slope EMA21/EMA50 H4 negatif, harga di bawah EMA50 H4); dan `h4_breakdown_24h` (h4_aligned + close menembus low 24H sebelumnya, hanya sinyal pertama per 24 jam).
+
+**Hasil arah H4.** Dari 8.165/6.505/6.788 raw signal menjadi 482/995/1.174 sinyal. Hasil membaik, terutama TP15/SL8: W1 -0,1455% → -0,0602%, W2 -0,1108% → -0,0758%, W3 -0,1398% → -0,1224% per trade. Namun semua masih negatif; filter arah saja belum cukup menutup biaya M5.
+
+**Hasil breakout 24H.** Populasi hanya 3/7/9 trade di W1/W2/W3. Ada hasil positif pada W2/W3 untuk TP10/SL8 (+0,1438%/+0,2200%), tetapi sampel ini terlalu kecil untuk disebut edge atau menjadi data LSTM. W1 hanya 3 trade; tidak sah untuk tuning.
+
+**Keputusan gerbang.** Hipotesis utama benar sebagian: raw LGBM sebelumnya bukan populasi tren yang bersih, dan arah H4 membantu. Namun definisi breakout 24H terlalu jarang, sedangkan arah H4 tanpa breakout tetap negatif. Jangan melatih LSTM dari 19 trade breakout atau dari populasi h4_aligned yang masih rugi. Tahap berikut bila dilanjutkan harus mencari definisi *continuation* yang cukup sering (bukan breakout ekstrem) dan mengujinya dengan baseline M5 sebelum LSTM. Tidak ada perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase163_filter_trend_breakout_m5.py`; `models/runs/dualbin_fase163_filter_trend_breakout_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 164: cross-sectional momentum + regime BTC tidak konsisten, tidak lanjut trend-swing/LSTM
+
+**Tujuan.** Mencari alternatif trend-following yang tidak memberi TP cepat kepada semua sinyal: SHORT hanya pada koin relatif terlemah ketika BTC sendiri H4 turun. Entry per koin dideduplikasi (maksimum satu per 24 jam pada arus sama). Exit M5 TP/SL tetap Fase162 supaya perubahan hanya berasal dari filter arus.
+
+**Filter.** `cs24_bottom3_btc_down` = bottom-3 return 24H + BTC trend_strength/slope EMA21/slope EMA50/posisi EMA50 semuanya bearish. Varian `cs_combo` memakai ranking gabungan return 6H+24H. Dibandingkan dengan raw entry yang juga dideduplikasi.
+
+**Hasil.** Raw fresh tetap negatif di seluruh window. `cs24_bottom3_btc_down` sempat positif W1 pada TP10/SL8 +0,0581% dan TP15/SL8 +0,1629%, tetapi hanya 14 trade dan runtuh pada W2 (36 trade, -0,1800%/-0,1746%) serta W3 (47 trade, -0,1772%/-0,1913%). Varian combo negatif di semua window. Ini bukan edge lintas-window; W1 adalah kandidat sampel kecil yang tidak terkonfirmasi.
+
+**Keputusan gerbang.** Fase 164 GAGAL. Jangan lanjut Fase165 trend-swing maupun LSTM, karena alternatif entry trend yang diuji tidak positif konsisten. Tidak ada holdout, perubahan produksi, atau retrain production.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase164_cross_section_trend_m5.py`; `models/runs/dualbin_fase164_cross_section_trend_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 165: oracle trend-swing H4 gagal; LSTM continuation tidak dilanjutkan
+
+**Tujuan.** Mengikuti rekomendasi reset strategi: sebelum LSTM, uji apakah kandidat yang secara kausal sudah searah tren H4 memang mempunyai peluang dasar untuk swing. Kandidat LONG/SHORT dipilih saat trend_strength, slope EMA21 H4, slope EMA50 H4, dan posisi terhadap EMA50 H4 semuanya searah; satu kandidat per koin tiap 24 jam. Oracle hanya memberi LABEL masa depan (bukan strategi live): apakah +2% harga disentuh sebelum -1% harga, melalui M5 nyata, dalam 48/96 jam. TP dan SL dalam candle M5 sama diasumsikan SL dulu.
+
+**Hasil.** Gabungan LONG+SHORT TP sebelum SL hanya W1 29,6%/30,6% (48/96 jam), W2 32,7%/33,3%, dan W3 31,9%/32,7%, dari 444–480 kandidat per window. LONG 25,6–34,9%; SHORT 31,5–36,1%. Horizon lebih panjang nyaris tidak mengubah hasil karena banyak posisi sudah terkena -1% lebih dahulu.
+
+**Keputusan gerbang.** Dengan target +2%, stop -1%, dan biaya dua sisi, tingkat impas sekitar 39%; oracle 30–33% berada jauh di bawahnya. Ini berarti definisi trend H4 sederhana sendiri belum mengandung peluang yang cukup bahkan SEBELUM kesalahan prediksi LSTM. Jangan buat label/train LSTM continuation dari populasi ini; LSTM tidak dapat secara jujur memperbaiki base rate yang gagal tanpa bukti filter baru. Tidak ada holdout, perubahan produksi, atau deploy.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase165_oracle_trend_swing_m5.py`; `models/runs/dualbin_fase165_oracle_trend_swing_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 166A/B: event breakout trend menghasilkan baseline positif lintas-window
+
+**Tujuan.** Memperbaiki kesalahan formulasi sebelumnya: bukan sinyal berulang setiap jam, melainkan satu event trend-following yang dapat diperdagangkan. Aturan dibekukan sebelum run: arah H4 sejalan (trend_strength, slope EMA21/50, posisi EMA50), range H1 12 jam terkompresi <=80% median 72 jam sebelumnya, close H1 breakout range, dan volume >=1,2x rerata 24 jam. Satu event per arah/koin/24 jam. Entry hanya memakai informasi yang sudah selesai; M5 dipakai untuk replay exit nyata.
+
+**Eksekusi baseline.** Stop = sisi lawan range kompresi (risiko dibatasi 0,5–3,0% harga), TP = 2R, horizon maksimum 96 jam. Bila TP dan stop tersentuh dalam M5 yang sama, stop diasumsikan dahulu. Ini disebut oracle hanya karena hasil masa depan dipakai sebagai label kelanjutan berikutnya; replay bracket baseline-nya sendiri dapat dieksekusi secara kausal.
+
+| Window | Event | TP sebelum SL | PF | Net/trade |
+|---|---:|---:|---:|---:|
+| W1 | 244 | 36,1% | **1,023** | **+0,0323%** |
+| W2 | 225 | 36,9% | **1,045** | **+0,0596%** |
+| W3 | 271 | 43,2% | **1,380** | **+0,4376%** |
+
+Per arah: LONG positif di seluruh window (PF 1,118/1,226/1,313); SHORT negatif W1/W2 (PF 0,938/0,905) lalu kuat W3 (1,411). Karena itu baseline gabungan lolos sangat tipis di W1 dan belum layak dipromosikan, tetapi ini adalah **baseline pertama yang positif konsisten** setelah seluruh jalur raw-signal/scalp gagal.
+
+**Keputusan.** Jangan deploy dan jangan simpulkan edge matang: W1 masih dekat impas dan SHORT tidak konsisten. Namun jalur event breakout layak menjadi basis LSTM continuation, bukan entry lama. LSTM belum dilatih karena M5 label hanya tersedia mulai 2025-04-01; untuk train walk-forward W1 yang jujur diperlukan M5 pre-W1 atau sumber label eksekusi yang setara. Mengganti training dengan label H1 akan menciptakan train/eval mismatch, sehingga tidak dilakukan.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase166_event_breakout_oracle_m5.py`; `models/runs/dualbin_fase166_event_breakout_oracle_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 167: LSTM continuation tidak menambah nilai; baseline event tetap anchor
+
+**Data & protokol.** Histori M5 pre-W1 ternyata sudah tersedia (`m5_train_20240401_20250401`), sehingga dibuat 1.401 label event M5 2024-04..2026-04. LSTM kecil (sequence 48 H1) hanya membaca data sampai timestamp event dan memprediksi TP 2R sebelum stop struktural. Fitur: return 1/6H searah posisi, ATR%, ratio volume, trend_strength dan slope/posisi EMA H4 searah posisi. Per fold, label train dipurge 96 jam sebelum validasi. Baseline Fase166 dibekukan; ambang `p>=0,60` dipra-tetapkan, BUKAN dipilih dari OOF profit.
+
+| Window | Baseline PF / net-trade | LSTM p>=0,60 | Vonis |
+|---|---:|---:|---|
+| W1 | 1,033 / +0,0451% (243) | 0 event | gagal memilih |
+| W2 | 1,045 / +0,0596% (225) | PF 0,541 / -0,6318% (8) | merugikan |
+| W3 | 1,356 / +0,4148% (273) | PF 0,373 / -0,7099% (14) | merugikan |
+
+**Keputusan.** LSTM tidak memperbaiki event baseline dan tidak boleh dipakai/deploy. Tidak dilakukan threshold tuning setelah melihat hasil: setiap profit tunggal bukan anchor tuning. **Anchor yang berlaku** adalah baseline event Fase166 yang dibekukan; perubahan hanya boleh diterima jika meningkatkan PF/net-trade secara konsisten pada W1/W2/W3 dengan populasi dan biaya yang sama. Tidak ada holdout atau perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase167_lstm_event_continuation_oof.py`; `models/runs/dualbin_fase167_lstm_event_continuation_oof.json`.
+
+---
+
+## 2026-08-09 — Fase 168: hanya compression breakout lolos; Donchian/pullback ditolak
+
+**Protokol frozen.** Tiga keluarga event diuji dengan replay M5, TP 2R, stop struktural, 96 jam, biaya sama, dan LONG/SHORT terpisah: (1) compression breakout Fase166; (2) Donchian 24H breakout + volume; (3) pullback EMA21 lalu continuation. Ini pemilihan keluarga event, bukan sweep parameter.
+
+| Keluarga | W1 PF / net | W2 PF / net | W3 PF / net | Vonis |
+|---|---:|---:|---:|---|
+| Compression breakout | **1,023 / +0,0323%** | **1,045 / +0,0596%** | **1,380 / +0,4376%** | Lolos, anchor tetap |
+| Donchian24 breakout | 0,929 / -0,0951% | 1,084 / +0,1119% | 1,585 / +0,6105% | Ditolak: W1 negatif |
+| EMA21 pullback continuation | 0,920 / -0,0938% | 0,834 / -0,2062% | 0,914 / -0,0988% | Ditolak |
+
+**Keputusan.** Jangan gabungkan atau tune keluarga yang gagal untuk mengejar hasil W2/W3. Hanya compression breakout dilanjutkan ke audit jumlah koin/universe. Tidak ada holdout atau perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase168_event_family_oracle_m5.py`; `models/runs/dualbin_fase168_event_family_oracle_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 169: 18-koin LONG-only lolos; core-8 tidak konsisten
+
+**Tujuan.** Audit jumlah koin dan arah pada compression breakout frozen Fase166. Grup ditetapkan sebelum hasil: seluruh 18 koin long+short, seluruh 18 long-only, core-8 likuid long+short, core-8 long-only.
+
+| Universe | W1 PF / net | W2 PF / net | W3 PF / net | Vonis |
+|---|---:|---:|---:|---|
+| 18 both | 1,023 / +0,0323% | 1,045 / +0,0596% | 1,380 / +0,4376% | baseline lama |
+| **18 LONG-only** | **1,118 / +0,1443%** | **1,226 / +0,2841%** | **1,313 / +0,3437%** | Lolos konsisten |
+| Core-8 both | 1,052 / +0,0685% | 1,297 / +0,3669% | 1,679 / +0,7133% | Kandidat, belum dipilih karena jumlah koin berubah |
+| Core-8 LONG-only | 0,936 / -0,0813% | 2,134 / +1,0664% | 1,883 / +0,8423% | Ditolak: W1 negatif |
+
+**Keputusan.** Anchor kerja berikutnya adalah **compression breakout, 18 koin, LONG-only**. SHORT dikeluarkan dari jalur ini karena tidak stabil sebelumnya. Core-8 tidak dipromosikan meski hasil gabungan hijau; ini masih satu audit dan memerlukan konfirmasi terpisah, bukan alasan memilih universe sesudah melihat hasil. Tidak ada perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase169_universe_event_audit_m5.py`; `models/runs/dualbin_fase169_universe_event_audit_m5.json`.
+
+---
+
+## 2026-08-09 — Fase 170: LightGBM event ranking gagal konsistensi; ML ditutup
+
+**Protokol.** Event anchor Fase169 (18-koin LONG-only) dipakai tanpa perubahan exit. LightGBM membaca snapshot, mean, std, dan perubahan fitur sequence 48H. Tidak ada threshold yang dipilih dari profit: setiap window mengambil top 40% probabilitas prediksi, rasio partisipasi dibekukan sebelum run.
+
+| Window | Baseline PF / net (n) | LGBM top-40% PF / net (n) |
+|---|---:|---:|
+| W1 | 1,118 / +0,1443% (131) | 1,144 / +0,1784% (53) |
+| W2 | 1,226 / +0,2841% (104) | **0,851 / -0,2151% (42)** |
+| W3 | 1,313 / +0,3437% (90) | 1,390 / +0,3498% (36) |
+
+**Keputusan.** Ditolak. Perbaikan W1/W3 tidak boleh menutupi pembalikan W2. Bersama Fase167 (LSTM juga gagal), dua keluarga model ML tidak menambah nilai di atas rule anchor. Jangan lanjut TCN/LSTM/seed/threshold sweep; itu hanya mengejar hasil historis. Baseline rule tetap satu-satunya kandidat riset yang bertahan. Tidak ada holdout atau perubahan produksi.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase170_lgbm_long_event_rank_oof.py`; `models/runs/dualbin_fase170_lgbm_long_event_rank_oof.json`.
+
+---
+
+## 2026-08-09 — Fase 171: bootstrap menolak promosi anchor LONG-only
+
+**Tujuan.** Menguji apakah profit point-estimate anchor Fase169 (compression breakout, 18 koin, LONG-only) cukup stabil setelah dependensi event diperhitungkan. Tidak ada perubahan parameter, model, exit, atau universe.
+
+**Metodologi.** Cluster/block bootstrap sebanyak 3.000 kali pada unit `coin-month`, agar beberapa event dari koin dan bulan yang sama tidak diperlakukan sebagai observasi independen. Setiap replikasi menghitung kembali net return per trade dan profit factor; interval 95% persentil menjadi gerbang robustness.
+
+| Window | Cluster | Point estimate net / PF | 95% CI net | 95% CI PF |
+|---|---:|---:|---:|---:|
+| W1 | 53 | +0,1443% / 1,118 | -0,4577% s.d. +0,7512% | 0,690 s.d. 1,743 |
+| W2 | 51 | +0,2841% / 1,226 | -0,4156% s.d. +1,0190% | 0,731 s.d. 2,032 |
+| W3 | 44 | +0,3437% / 1,313 | -0,2012% s.d. +0,9256% | 0,849 s.d. 2,007 |
+
+**Keputusan.** Belum lolos. Ketiga interval mencakup net negatif dan PF di bawah 1, sehingga tiga point estimate hijau Fase169 belum merupakan bukti edge yang cukup kuat. Anchor dibekukan hanya sebagai **kandidat riset**, bukan sinyal untuk dipromosikan, dituning lagi, atau dideploy. Langkah yang sah berikutnya adalah evaluasi pada periode data benar-benar baru / paper-forward dengan aturan ini dibekukan; bukan mencoba parameter atau model tambahan pada data yang sama. Tidak ada holdout tersegel atau produksi disentuh.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase171_anchor_robustness.py`; `models/runs/dualbin_fase171_anchor_robustness.json`; manifest pembekuan `models/runs/dualbin_trend_event_long_candidate_frozen_20260809.json`; scorecard terkonsolidasi `models/runs/dualbin_trend_event_long_candidate_scorecard_20260809.json`.
+
+---
+
+## 2026-08-09 — Fase 172: paper-forward pasif kandidat trend-event dimulai
+
+**Tujuan.** Mengumpulkan bukti independen untuk kandidat beku `trend_event_long_18coin_v1_frozen_20260809`, tanpa order riil dan tanpa menyentuh model/config/DB produksi.
+
+**Protokol beku.** Monitor membaca public Binance USD-M pada candle tertutup: 18 koin, LONG-only; H4 trend positif (EMA7–50/ATR, slope EMA21, slope EMA50, harga vs EMA50), H1 compression 12 jam <=80% median 72 jam, breakout high range dengan volume >=1,2x rata-rata 24H. Stop = low range sebelumnya, hanya risiko 0,5–3%; target 2R; maksimum 96H; M5 replay, biaya+slippage, dan SL dulu jika TP+SL dalam M5 yang sama. Event disimpan sekali per koin/24H. Tidak ada API key ataupun fungsi pengiriman order dalam skrip.
+
+**Start snapshot.** 2026-08-09 01:46:20 UTC. Dry-run dan run resmi terhadap seluruh 18 koin berhasil; **0 event** memenuhi rule pada snapshot awal. Ini bukan hasil PnL dan bukan kegagalan: kandidat memang event-driven dan selektif. Scorecard awal: 0 closed/open, belum eligible.
+
+**Gerbang.** Periode tidak boleh dituning. Evaluasi paling cepat setelah >=4 bulan dan >=100 event closed; lalu wajib net positif serta lower CI bootstrap untuk net >0 dan PF >1. Sampai gerbang itu tercapai, status tetap `research_candidate_frozen_unconfirmed`, bukan paper model lama dan bukan produksi.
+
+**Operasional.** Task Scheduler lokal `RisetTrendEventPaperForward` aktif tiap jam pada menit 05 WITA (start 2026-08-09 10:05 WITA); batas eksekusi 10 menit, instance baru diabaikan jika run lama belum selesai. Ia hanya menjalankan skrip riset read-only ini, tanpa API key/order.
+
+**Artefak.** `pipeline/experiments/dualbin_universe/paper_forward_trend_event_long.py`; `models/runs/dualbin_trend_event_long_paper_forward_20260809/state.json`; `models/runs/dualbin_trend_event_long_paper_forward_20260809/scorecard.json`.
+
+---
+
+## 2026-08-09 — Fase 164: breakeven-lock diuji ULANG dgn metodologi BENAR -- KONFIRMASI: memperburuk di semua varian, semua window
+
+**Catatan penomoran.** Nomor fase 161-163 di atas dipakai sesi paralel lain (topik beda: target
+profit M5/LSTM) -- entri ini melompat ke 164 utk hindari tabrakan. Skrip riset entri ini bernama
+`fase161_breakeven_lock_oof_correct.py` (dibuat sebelum tabrakan nomor ketahuan), TIDAK diubah
+namanya -- isi & hasil skrip tidak terpengaruh, cuma label dokumentasi ini.
+
+**Pemicu.** User marah: performa live dualbin makin memburuk sejak awal deploy. Investigasi
+temukan `breakeven_lock_mfe_pct` (dideploy 2026-08-05) TERBUKTI memperburuk sehari kemudian
+(2026-08-06, fase119, metodologi jujur) tapi TAK PERNAH dimatikan -- 3 hari aktif tanpa keputusan.
+**Dimatikan di live** (config VPS, `breakeven_lock_mfe_pct: 0,005→0,0`, restart terverifikasi,
+DEPLOY_LOG.md). User minta: uji ulang dengan metodologi yang benar SEJAK AWAL (bukan cuma
+reproduksi temuan lama) -- apakah breakeven-lock genuinely tak bisa diselamatkan, atau cuma
+parameter lama yang salah?
+
+**Metodologi (3 koreksi dari sweep asli yg dulu keliru "menang")**: (1) `ExecutionSimulator` M5
+real, bukan `replay_arrays()` optimistis. (2) `execution.monitor_enabled=True` -- dicek LANGSUNG
+ke config VPS, monitor SL/TP 5-menit MEMANG aktif di live sekarang (default, tak ada override),
+BEDA dari fase119 yang mematikannya "sesuai keputusan user saat itu". (3) OOF 3 window (W1/W2/W3),
+BUKAN holdout tersegel -- entry LONG+SHORT dilatih ULANG per window (rolling 48bln,
+LSR_GENUINE_START). Baseline dihitung ULANG di mesin yang SAMA (pelajaran Fase156).
+
+**Hasil (total 3 window, gerbang PF>1 & PnL>0):**
+
+| Konfigurasi | Trade | PnL total | Window lolos |
+|---|---:|---:|---:|
+| **Mati (baseline)** | 4.703 | **-$648,87** | 0/3 |
+| Lama (nilai live 08-05, `mfe=0,005/buffer=0,03`) | 9.250 | -$2.895,78 | 0/3 |
+| mfe lebih tinggi (0,015), buffer sama | 5.530 | -$1.671,71 | 0/3 |
+| mfe lama, buffer lebih kecil (0,01) | 9.161 | -$2.790,59 | 0/3 |
+| mfe & buffer lebih tinggi (0,015/0,01) | 5.425 | -$1.364,84 | 0/3 |
+
+**Baseline (mati) MENANG di SEMUA 3 window secara terpisah**, bukan cuma total -- 4 varian
+breakeven-lock yang diuji (termasuk 2 titik BARU yang belum pernah dicoba) SEMUA lebih buruk,
+2,1x sampai 4,5x lipat kerugian baseline. Bukan soal parameter yang salah -- mekanismenya sendiri
+(mengunci SL begitu MFE nyentuh ambang) struktural merugikan di sistem ini, konsisten dgn root
+cause fase119 (memotong keputusan Guardian sendiri yang justru lebih baik).
+
+**Temuan tambahan (di luar scope breakeven-lock, PERLU DITINDAKLANJUTI TERPISAH)**: baseline
+(breakeven-lock mati) SENDIRI masih PF<1 di ketiga window (W1 0,88 / W2 0,91 / W3 0,97 -- membaik
+tapi belum lolos gerbang manapun). Ini kombinasi entry LONG+SHORT + Guardian produksi APA ADANYA
+(momentum_floor_frac=0,10, near_tp_arm=0,95/lock=0,20) diuji jujur dgn monitor 5-menit ON --
+BUKAN cuma soal breakeven-lock. Kemungkinan kontributor lain thd keluhan user "makin memburuk":
+`momentum_floor_frac` 0,30→0,10 (deploy sama 08-05), near-TP floor (08-03), atau entry model
+`long22f_swing`/`short20f_swing` (08-05) itu sendiri. **Belum diinvestigasi -- perlu sesi
+terpisah**, jangan simpulkan breakeven-lock sbg SATU-SATUNYA penyebab.
+
+**Kesimpulan: KONFIRMASI TUNTAS.** Mematikan `breakeven_lock_mfe_pct` di live (08-09) adalah
+keputusan yang benar dan divalidasi ulang dgn metodologi yang benar-benar jujur sejak awal --
+bukan cuma reproduksi temuan lama. Jangan coba tuning ulang breakeven-lock lagi tanpa perubahan
+desain (mis. jadi exchange-side resting order spt swint_tradev2, bukan polling in-loop -- lihat
+memory `reference-swint-floor-tp-exchange-side-order`).
+
+**TIDAK ada tindakan holdout/produksi lebih lanjut (holdout tersegel TIDAK disentuh).**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase161_breakeven_lock_oof_correct.py`.
+`models/runs/dualbin_fase161_breakeven_lock_oof_correct.json`.
+
+---
+
+## 2026-08-09 — Fase 166: sguardian v2 diuji ULANG dgn `monitor_enabled=True` -- BUKAN netral, TERBUKTI memperburuk
+
+**Catatan penomoran.** Skrip bernama `fase164_sguardian_v2_monitor_correct.py` (dibuat sebelum
+tabrakan nomor dgn sesi paralel ketahuan) -- entri log ini pakai 166 supaya tidak tabrakan dgn
+entri "Fase 164" (breakeven-lock) di atas maupun Fase165 sesi paralel.
+
+**Pemicu.** Ditemukan 2026-08-09: SEMUA skrip sguardian hari sebelumnya (Fase151-156) eksplisit
+`monitor_enabled=False` -- tidak cocok kondisi live (SL/TP dicek tiap 5 menit, bukan nunggu H1).
+Kesimpulan lama Fase156 ("belum terbukti, condong netral") jadi diragukan, sama seperti
+breakeven-lock & trailing stop yang terbalik begitu diuji dgn setting yg benar. User minta
+diuji ulang.
+
+**Metodologi.** `muat_cfg_live(monitor_enabled=True, monitor_scope="sl_tp")` -- cocok config VPS
+live sekarang. Guardian v2 (model sudah tersimpan dari Fase154, TIDAK dilatih ulang) vs baseline
+tanpa Guardian, keduanya dihitung ULANG di mesin (`ExecutionSimulator`) & window yang SAMA
+(`fase154`/`fase156` punya `cfg_baseline`/`cfg_lengan_c`, dipakai apa adanya). Entry SHORT
+dilatih ulang per window (murah, rolling 48bln, seed=42).
+
+**Hasil (3 window OOF, gerbang PF>1 & PnL>0):**
+
+| | W1 | W2 | W3 | Total |
+|---|---:|---:|---:|---:|
+| Tanpa Guardian (baseline) | -$293,78 (PF 0,82) | +$330,37 (PF 1,26) ✅ | +$166,32 (PF 1,15) ✅ | **+$202,92**, 2/3 lolos |
+| sguardian v2 (thr 0,55) | -$345,43 (PF 0,79) | +$231,31 (PF 1,19) ✅ | +$149,66 (PF 1,14) ✅ | **+$35,55**, 2/3 lolos |
+| Selisih (v2 − baseline) | -$51,65 | -$99,06 | -$16,66 | **-$167,37** |
+
+**Guardian v2 KALAH di SEMUA 3 window secara terpisah**, tidak cuma total -- bukan lagi "condong
+netral" (Fase156) begitu monitor 5-menit dihidupkan sesuai kondisi live nyata. Konsisten dgn pola
+breakeven-lock & trailing-H1 hari ini: metodologi lama (monitor mati / resolusi kasar) systematically
+melebih-lebihkan mekanisme tambahan yang reaktif terhadap harga.
+
+**Temuan sampingan (bug infra, bukan soal PF).** Log run memunculkan error berulang: *"Guardian
+memilih PARTIAL EXIT tapi jalur real-time tidak bisa mengeksekusinya ke bursa -- posisi DIBIARKAN
+UTUH"*. Artinya sebagian keputusan partial-exit Guardian v2 di simulasi ini TIDAK benar-benar
+tereksekusi (posisi dibiarkan utuh, cuma diawasi ulang) -- kalau Guardian v2 pernah didorong ke
+live, partial-exit perlu diimplementasikan sungguhan (reduceOnly sebagian) dulu, bukan
+diasumsikan jalan.
+
+**Keputusan gerbang.** Fase166 GAGAL (guardian v2 kalah di 3/3 window). Jangan pakai sguardian v2
+sbg tambahan live. Baseline (tanpa Guardian filter tambahan, cuma Guardian produksi apa adanya)
+tetap yang TERBAIK dari semua yang diuji ulang dgn metodologi benar hari ini -- tapi baseline
+itu sendiri masih GAGAL gerbang di W1 (PF 0,82), jadi "terbaik" di sini bukan berarti "lolos".
+
+**Sintesis lintas Fase160/161(164)/166 hari ini (metodologi monitor/resolusi benar, entry LONG+SHORT
++ Guardian produksi apa adanya sbg baseline bersama):** trailing stop (H1→M5), breakeven-lock, dan
+sguardian v2 SEMUA terbukti memperburuk begitu diuji jujur. Tidak ada satu pun mekanisme tambahan
+yang diuji hari ini yang mengalahkan baseline. Sinyal kuat: masalah "makin memburuk sejak deploy"
+yang dikeluhkan user kemungkinan besar BUKAN krn kurang mekanisme pengaman, tapi krn parameter
+Guardian produksi (momentum_floor_frac, near_tp_arm/lock) atau entry model itu sendiri -- **PR
+terbuka, belum diinvestigasi, sesi terpisah** (sama seperti dicatat di Fase164/breakeven-lock).
+
+**TIDAK ada tindakan holdout/produksi (OOF saja, model Guardian v2 tidak dilatih ulang).**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase164_sguardian_v2_monitor_correct.py`.
+
+---
+
+## 2026-08-09 — Fase 167 Tahap 1: parity config dualbin vs swint (`momentum_floor_frac`/`exit_threshold`/`near_tp`) -- TIDAK ADA yang lolos
+
+**Pemicu.** User menegaskan dualbin seharusnya "sama dengan swint, bedanya cuma 2 model LGBM
+LONG/SHORT terpisah". Dicek: dua repo **sengaja diisolasi total** (`live_dualbin_ft/CLAUDE.md`),
+bukan fork kode — tapi konsep arsitekturnya memang paralel, dan dualbin lebih muda (beberapa
+mekanisme swint belum pernah ada di dualbin). Rencana disetujui via Plan Mode (Opus) — uji tiap
+perbedaan config satu per satu dulu (Tahap 1, murah) sebelum port mekanisme baru (Tahap 2+).
+
+**Bug ketemu sebelum hasil valid.** Run pertama baseline TIDAK cocok Fase164 (-$2.895,78 alih-alih
+-$648,87) -- ternyata `config.json` worktree riset lokal (gitignored) masih `breakeven_lock_mfe_pct
+=0,005`, TIDAK PERNAH ter-update saat perbaikan 2026-08-09 dilakukan via SSH langsung ke VPS.
+Pola SSOT-drift yang sama seperti `feedback-ssot-drift-pattern`. **Diperbaiki**: config lokal
+disamakan (0,0), skrip dikeraskan supaya SEMUA lengan eksplisit set
+`breakeven_lock_mfe_pct/buffer_pct=0,0` (tidak bergantung diam-diam ke isi file). Rerun: baseline
+cocok persis (4.703 trade, PnL -$648,87, PF 0,88/0,91/0,97).
+
+**Hasil (3 window OOF, gerbang PF>1 & PnL>0, mengalahkan baseline ≥2/3 window):**
+
+| Lengan | Total PnL | vs baseline | W1 | W2 | W3 |
+|---|---:|---:|---:|---:|---:|
+| Baseline (live apa adanya) | -$648,87 | — | PF 0,881 | PF 0,911 | PF 0,966 |
+| 1a floor 0,10→0,70 (nilai swint) | -$746,74 | **-$97,87** | lebih buruk | lebih buruk | lebih buruk |
+| 1b exit_threshold 0,55→0,65 (swint) | -$632,24 | +$16,63 | lebih buruk | lebih baik (+$60,70) | ~flat |
+| 1c near_tp dimatikan (swint tak punya) | -$620,53 | +$28,34 | ~flat | ~flat | ~flat (semua +$2-17) |
+| 1d gabungan (mirip-swint) | -$745,38 | -$96,51 | lebih buruk | ~flat | lebih buruk |
+
+**1a (nilai floor SWINT SENDIRI, 0,70) KALAH konsisten di ketiga window** -- bukan cuma total.
+Floor yang lebih ketat (mengunci lebih banyak untung) yang bekerja baik di swint (TP/SL berbasis
+ATR, 2,0/1,5) ternyata memperburuk di dualbin (TP/SL berbasis swing, `tp_sl_balance_ratio=1,0`,
+TP jauh lebih jauh dari SL). Ini bukti awal bahwa **nilai parameter tidak bisa dipindah 1:1**
+antar dua struktur TP/SL yang berbeda, walau nama parameternya sama persis.
+
+1b & 1d ikut terseret jelek oleh komponen floor=0,70 di dalamnya. 1c (near_tp dimatikan total)
+efeknya nyaris nol di ketiga window (+$2 s.d. +$17) -- jauh di bawah lantai derau OOF dualbin
+(PnL ±8,1%, lihat `feedback-ukur-lantai-derau-sebelum-menafsir`), artinya near_tp_arm/lock yang
+sudah aktif di live (0,95/0,20) itu sendiri hampir tidak berpengaruh, bukan menang atau kalah.
+
+**Keputusan gerbang.** Tahap 1 TIDAK ADA yang lolos (0/4 lengan mengalahkan baseline ≥2/3 window
+dengan margin di atas derau). Baseline (live apa adanya) tetap terbaik dari semua yang diuji.
+Menegaskan lagi kesimpulan Fase164/166: bukan kurang mekanisme, PR akar masalah W1 (PF<1 di
+SEMUA konfigurasi yang dicoba) masih terbuka.
+
+**TIDAK ada tindakan holdout/produksi (OOF saja, config.json LOKAL riset yang dibetulkan, VPS
+tidak disentuh).**
+
+**Artefak.** `pipeline/experiments/dualbin_universe/fase167_parity_swint_config.py`;
+`models/runs/dualbin_fase167_parity_swint_config.json`.
+
+## 2026-08-11 — swint (ic32): scorecard OOF/OOS diperbaiki match exit mechanic live + funding cost ditambahkan
+
+**Pemicu.** User minta cek ulang scorecard OOF/OOS swint (ic32_regime_v6.4) krn insiden DualBin
+(evaluasi riset ternyata tidak menggambarkan live). Audit kode (bukan cuma baca dokumentasi)
+menemukan 2 mekanisme exit yang sudah LIVE sejak 12-13 Juli TAPI tidak pernah dioper ke
+`simulate_trades_swing()` di `run_oof_full_stack_sweep.py` / `model/eval/holdout_oos.py`:
+1. Guardian floor = FIXED 0,7xTP_pnl (STOP-LIMIT exchange-side begitu TP tersentuh) -- simulasi
+   diam2 masih pakai default lama trailing 0,7xMFE (`guardian_momentum_floor_frac`, param baru
+   `guardian_floor_replace_with_tp`/`guardian_momentum_floor_tp_frac` sudah ada di
+   `core/evaluator.py` sejak 12 Juli tapi tak pernah dioper scorecard resmi).
+2. Cooldown profit-only 1 jam (live sejak 13 Juli) -- `config.py.TP_SL_COOLDOWN_ENABLED=False`
+   default, tak pernah di-override di skrip scorecard resmi.
+
+Juga ditemukan: **funding-rate cost TIDAK PERNAH dihitung** di simulasi manapun (fee_per_side +
+slippage saja) -- funding cuma dipakai sbg fitur ML (`core/features.py`), bukan biaya. Di 15x
+leverage, hold sampai `MAX_HOLDING_BARS`=36 jam bisa lewat 4 settlement (00:00/08:00/16:00 UTC).
+
+**Metode.** Tambah flag `--live-parity-exit` opt-in ke `model/eval/holdout_oos.py` (non-breaking,
+default off = perilaku lama persis). Skrip baru `pipeline/model/run_oof_live_parity_check.py`
+(4 varian A/B/C/D) utk OOF. Tool baru `tools/model/funding_cost_overlay.py` (post-hoc, pakai data
+funding-rate ASLI `data/training/funding_rate/` & `data/holdout-test/raw/funding_rate/`, bukan
+re-run simulasi) -- konvensi Binance: funding positif = LONG bayar SHORT, notional=modal*leverage.
+
+**Sanity check OOS**: baseline reproduksi (exit lama, tanpa fix) = 167 trade, PF 1,611 -- **cocok
+persis** dgn angka yg sebelumnya tercatat di `inference_config.json`. Memvalidasi mesin simulasi
+konsisten.
+
+**Hasil (stack fs37_18coin_polos = live sekarang, exit PERSIS live + funding cost, MAE-aware @15x):**
+
+| | Trades | WR | PF | PnL | MaxDD | LongPF | ShortPF |
+|---|---|---|---|---|---|---|---|
+| OOF lama (trailing floor, no cooldown/funding) | 3.339* | 63,6% | 1,869 | $4.410,21 | -$63,57 | 1,728 | 1,985 |
+| **OOF baru (live-parity + funding)** | **2.837** | **65,7%** | **2,020** | **$4.279,35** | **-$65,56** | **1,869** | **2,167** |
+| OOS lama (trailing floor, no cooldown/funding) | 167 | 64,7% | 1,611 | $94,41 | -$26,89 | 0,530 | 1,967 |
+| **OOS baru (live-parity + funding)** | **163** | **64,4%** | **1,643** | **$98,58** | **-$25,15** | **0,535** | **2,012** |
+
+**Kesimpulan: BUKAN insiden spt DualBin.** Exit mechanic yang PERSIS live menghasilkan PF SEDIKIT
+LEBIH BAIK di kedua basis (OOF +0,151/+8%, OOS +0,032/+2%), bukan lebih buruk -- gap yg ditemukan
+tidak menyembunyikan performa yg lebih jelek. Dampak funding rate **negligible** (<0,2% dari PnL
+di kedua basis) -- ditambahkan demi kelengkapan akuntansi, bukan krn mengubah kesimpulan. Fee
+sendiri (0,04%/sisi) sudah fee-on-notional yg benar (scale dgn leverage), sudah tervalidasi lewat
+audit kode terpisah.
+
+**Temuan independen yg TIDAK hilang oleh perbaikan ini**: sisi LONG OOS tetap lemah (PF 0,530 ->
+0,535, nyaris tak berubah) -- konfirmasi ini masalah entry model/kondisi pasar, BUKAN artefak
+simulasi exit.
+
+**Belum terselesaikan**: trade count OOF baru (2.837) TIDAK cocok dgn angka OOF lama yg terpasang
+sebelumnya di `inference_config.json` (3.339) -- source 3.339 tidak berhasil direkonsiliasi ke
+skrip manapun (skrip baru + `run_oof_full_stack_sweep.py` konsisten hasilkan ~2.837-2.860, cocok
+dgn `model_registry.json.oof_scorecard` versi lama 2.858). Kemungkinan 3.339 dihitung dari
+kombinasi param/populasi berbeda yg tidak diketahui persis -- **perlu investigasi terpisah**
+sebelum dipercaya penuh. OOS TIDAK punya masalah ini (baseline reproduksi cocok persis).
+
+**SSOT diupdate**: `model_registry.json.oof_scorecard` + `inference_config.json.scorecard.oof`/
+`scorecard.holdout_oos` (dashboard live) -- angka lama diarsip di key `*_pre_live_parity_fix_2026_08_11`.
+Model/HMM/Guardian/threshold **TIDAK berubah** -- murni perbaikan metodologi pengukuran, bukan
+deploy baru, tidak perlu approval deploy terpisah.
+
+**Artefak.** `pipeline/model/run_oof_live_parity_check.py` (baru); `model/eval/holdout_oos.py`
+(+`--live-parity-exit`); `tools/model/funding_cost_overlay.py` (baru); trade-level CSV:
+`data/live_cache/oof_live_parity_D_trades_funding.csv`, `data/live_cache/oos_live_parity_D_trades_funding.csv`;
+`models/runs/guard_opt2_plus_trend_hmm_18coin_clean/{oof_live_parity_check.json,oos_holdout_full_scorecard.json}`.
+
+## 2026-08-12 — swint (ic32): HMM base threshold 0,70 -> 0,65 (delta tetap 0,10) -- DEPLOYED
+
+**Pemicu.** User tanya threshold dasar sebelum HMM (jawab: 0,70, dari `hmm.per_state_thresholds["-1"]`
+live). Lanjut tanya "bagaimana jika diturunkan tanpa regime itu jadi 0,65" -- ditemukan state "-1"
+itu sendiri INERT di backtest riset (tidak pernah direproduksi, cuma dipakai live sbg fallback), jadi
+pertanyaan direframe ke yang bermakna: turunkan BASE utk SEMUA 4 state regime (bukan cuma fallback).
+User setuju uji base=0,65, lalu minta tambah pembanding base=0,60.
+
+**Metode.** Reuse `--hmm-base`/`--hmm-delta` override (sudah ada dari kerja sebelumnya) di
+`pipeline/model/run_oof_live_parity_check.py` (varian D = live-parity: floor FIXED 0,7xTP + cooldown)
+dan `model/eval/holdout_oos.py --live-parity-exit`. Stack skrg = `fs37_18coin_polos` (`guard28f_18coin_clean`,
+window 18/36, MAE-aware @15x, funding cost). Delta tetap 0,10 (tidak diubah) -- hanya base yang digeser.
+3 titik dibandingkan: base 0,60 / 0,65 / 0,70 (baseline live sblm perubahan ini).
+
+**Hasil OOF (varian D, live-parity penuh, basis native/leverage-invariant, apples-to-apples):**
+
+| base | Trades | WR | PF | PnL | MaxDD | LongPF | ShortPF |
+|---|---|---|---|---|---|---|---|
+| 0,70 (lama) | 2.837 | 67,2% | 2,609 | $5.576,30 | -$45,40 | 2,834 | 2,426 |
+| **0,65 (baru)** | **5.365** | **63,6%** | **2,066** | **$8.122,78** | **-$78,73** | **2,155** | **1,983** |
+| 0,60 (ditolak) | 9.289 | 61,6% | 1,841 | $11.843,32 | -$109,44 | 1,917 | 1,766 |
+
+**Hasil OOS (holdout, live-parity penuh, MAE-aware @15x, funding -- angka final yg disimpan SSOT):**
+
+| base | Trades | WR | PF | PnL | MaxDD | LongPF | ShortPF |
+|---|---|---|---|---|---|---|---|
+| 0,70 (lama) | 163 | 64,4% | 1,643 | $98,58 | -$25,15 | 0,535 | 2,012 |
+| **0,65 (baru)** | **344** | **59,6%** | **1,367** | **$139,54** | **-$33,21** | **0,851** | **1,585** |
+| 0,60 (ditolak) | -- | -- | -- | $81,96 | -$62,80 | -- | -- |
+
+Pola di OOF vs OOS terbalik: makin base diturunkan, OOF (data latih) makin "membaik" (PF naik, trade
+makin banyak) TAPI OOS (data belum pernah dilihat) base=0,60 malah PALING JELEK (PnL & MaxDD) --
+ciri khas overfitting, bukan sinyal asli. Ini alasan utama 0,60 ditolak walau OOF-nya paling menarik.
+
+**Keputusan: base=0,65 DIPILIH, base=0,60 DITOLAK.** Pola klasik overfitting pada 0,60: OOF makin
+membaik seiring base diturunkan (lebih banyak trade, PF makin naik krn threshold makin longgar) TAPI
+OOS-nya justru MEMBURUK dibanding 0,65 (PnL lebih rendah, MaxDD jauh lebih dalam) -- sinyal base
+terlalu longgar mulai menangkap sinyal derau yang tidak generalize ke luar-sample. base=0,65 adalah
+titik tengah yang trade-off-nya user terima sadar: trades naik 163->344 (+111%), WR turun 64,4%->59,6%,
+PF turun 1,643->1,367 (-17%), PnL naik $98,58->$139,54 (+42%), MaxDD lebih dalam -$25,15->-$33,21 (+32%).
+LongPF justru MEMBAIK 0,535->0,851 (masih <1, LONG tetap net rugi tapi jauh kurang parah) -- ShortPF
+turun 2,012->1,585 (msh >1, net untung).
+
+**Audit wajib pre-deploy (`tools/model/verify_hmm_feature_parity.py`, `audit_feature_value_parity.py
+--run opt2_plus_trend_18coin_iso37f`):** 2 temuan, KEDUANYA pre-existing & tidak terkait perubahan ini
+(dicek ulang, tidak berubah krn base HMM) -- **perlu investigasi terpisah, tidak memblokir deploy ini**:
+1. ETHUSDT HMM classification mismatch (12/855 bar sejak 2026-06-24) -- terkait modifikasi lokal
+   belum di-commit di `core/regime.py` (120 baris, sudah ada sblm sesi ini mulai).
+2. Fitur `coin_mkt_sync_24h` nilainya abnormal flat di live vs training (std_ratio=0,0304) --
+   mengindikasikan ADAUSDT spesifik.
+
+**Dependensi dicek**: `regime_model_routing` & `regime_disable` sudah MATI (live "polos" sejak
+2026-07-14) -- perubahan base HMM tidak butuh re-validasi jalur itu.
+
+**SSOT diupdate & di-deploy.** `model_registry.json`: `stack.hmm.base` 0,70->0,65 +
+`oof_scorecard` (base=0,65 native: trades=5.365, WR=63,6%, PF=2,066, PnL=$8.122,78, MaxDD=-$78,73,
+LongPF=2,155, ShortPF=1,983); lama diarsip `oof_scorecard_pre_base065_2026_08_12`.
+`inference_config.json`: `hmm.per_state_thresholds` -> `{"0":[0.75,0.55],"1":[0.7,0.6],"2":[0.6,0.7],
+"3":[0.55,0.75],"-1":[0.65,0.65]}`; `scorecard.oof`/`scorecard.holdout_oos` (angka MAE-aware+funding
+di tabel atas) + `monthly` baru; lama diarsip `*_pre_base065_2026_08_12`; `_snapshot_time` ->
+"2026-08-12 01:06:35". Deploy ke VPS via merge surgical (pull live config dulu, replace HANYA key
+di atas, assert block `models`/`regime_model_routing`/`regime_disable`/`spot_confirm`/`limit_exit`/
+`cooldown`/`risk` live-only tetap utuh) -- SCP + `systemctl restart swint-trade` (bukan `update.sh`,
+krn file ini drift independen dari git di VPS). Diverifikasi post-deploy: `/api/health` sehat
+(`scheduler_running: true`), dashboard `/models` render threshold & catatan perubahan dgn benar.
+
+**Rollback**: base=0,70, delta=0,10 (angka lama tersimpan di key arsip `*_pre_base065_2026_08_12`
+di kedua file SSOT).

@@ -1,10 +1,10 @@
 {
-  "_snapshot_time": "2026-07-10 13:05:00",
+  "_snapshot_time": "2026-08-12 01:06:35",
   "model_type": "ic32_regime_v6.4",
   "model_version": "ic32_regime_v6.4",
-  "display_name": "fs37_18coin_spotconfirm",
+  "display_name": "fs37_18coin_polos",
   "n_features": 37,
-  "note": "ic32_regime_v6.4: LGBM opt2_plus_trend_18coin_iso37f (lgbm37f, 18 koin, takedown relative_strength_z -- gap live-vs-riset tak terjelaskan, lihat memory feedback-feature-source-accountability) + spot-confirm fusion (live_spottrade, agree_boost=0.08/opposite_pen=0.35) + HMM 0.65/0.10 (hmm24/48) + regime-disable (block LONG di TRENDING_DOWN) + Guardian guard_opt2_plus_trend_hmm_18coin (guard28f_18coin, no cross-model, reused tanpa retrain). LSTM OFF. Universe tetap 18 koin (sama v6.3). OOS genuine 18-koin (2026-04-01 s.d. 2026-07-10, LGBM+HMM+regime-disable+Guardian, entry M15@HH:15): 278 trades WR 57.1% PF 1.816 PnL $73.57 MaxDD -7.58 Long PF 1.696 (vs v6.3 baseline 38f: PF 1.679 PnL $60.72 Long PF 1.167). Detail ablasi/OOF/OOS lengkap: EXPERIMENTS.md 2026-07-10. Rollback: v6.3 (opt2_plus_trend_18coin, 38f) -- ganti ACTIVE_STACK.lgbm balik, lihat models/backups/.",
+  "note": "ic32_regime_v6.4: LGBM opt2_plus_trend_18coin_iso37f (lgbm37f, 18 koin, takedown relative_strength_z -- gap live-vs-riset tak terjelaskan, lihat memory feedback-feature-source-accountability) + HMM cara baru (predict_hmm_causal) base=0.70/delta=0.10 (hmm18/36, naik dari hmm24/48 2026-07-23) + Guardian guard_opt2_plus_trend_hmm_18coin (guard28f_18coin, no cross-model, reused tanpa retrain). LSTM OFF. spot-confirm, regime-disable, regime-model-routing SEMUA DIMATIKAN 2026-07-14 (sebelumnya nyala v6.3-v6.4, lihat block masing-masing utk alasan) -- disebut 'polos' krn cuma LGBM+HMM+Guardian, tanpa fusion/gating tambahan. Universe tetap 18 koin (sama v6.3). OOF+OOS genuine 2026-07-14 (LGBM+HMM base 0.70+Guardian, TANPA routing/disable/spot): OOF 3450 trades WR 62.9% PF 2.022 PnL $1631.56 MaxDD -$22.97; OOS 161 trades WR 60.9% PF 1.680 PnL $32.96 MaxDD -$6.19 -- satu-satunya dari 8 kombinasi diuji yang menang di SEMUA metrik OOS sekaligus. Detail: EXPERIMENTS.md 2026-07-14 (keputusan deploy) & 2026-07-10 (versi sebelumnya, lengkap dgn spot-confirm+regime-disable). Rollback ke versi dgn spot-confirm+regime-disable+routing nyala: set ketiga block enabled=true lagi (model tidak berubah, murni toggle).",
   "monitor": {
     "pairs": [
       "BTCUSDT",
@@ -31,9 +31,11 @@
     "features": "feats_lgbm_opt2_plus_trend_18coin_iso37f.json"
   },
   "regime_model_routing": {
-    "enabled": true,
-    "trend_states": [3],
-    "note": "AKTIF 2026-07-12 (commit swint 4938ddb), sempat ke-wipe tanpa sengaja oleh deploy_model.py krn tidak ada di source Riset (insiden ditemukan 2026-07-14, lihat EXPERIMENTS.md) -- dipulihkan ke SSOT ini spy deploy berikutnya tidak menghapusnya lagi. State HMM 3 (TRENDING_UP) pakai LGBM terpisah (lgbm_trend, models.lgbm_trend) hasil retrain khusus label triple-barrier ATR (RR 2.0/1.5) di bar TRENDING_UP/DOWN, fitur identik 37f. TRENDING_DOWN (state 0) TETAP pakai LGBM utama (opt2_plus_trend_18coin_iso37f) -- OOS Riset_pemodelan tunjukkan LGBM-trend rugi di TRENDING_DOWN (PF 0.984) tapi untung di TRENDING_UP (PF 1.332); RANGING (state 1/2) juga tetap LGBM utama. spot_confirm otomatis di-skip saat pakai LGBM-trend (miscalibrated). Tervalidasi OOF+OOS 18-koin: OOS narrow-routing WR 56.1% PF 1.303 PnL $47.19 vs baseline WR 54.8% PF 1.247 PnL $28.45. Detail: EXPERIMENTS.md 2026-07-12."
+    "enabled": false,
+    "trend_states": [
+      3
+    ],
+    "note": "DIMATIKAN 2026-07-14 (sebelumnya AKTIF sejak 2026-07-12, commit swint 4938ddb). Alasan: validasi awal (EXPERIMENTS.md 2026-07-12) pakai regime causal LAMA (Viterbi/base 0.65). Setelah HMM ganti cara baca pasar + threshold naik ke base 0.70 (2026-07-13), ~30% bar TRENDING_UP bergeser dari yang dipakai waktu routing divalidasi -- OOF+OOS ulang 2026-07-14 (LGBM+HMM+Guardian, base 0.70) nunjuk routing justru NARIK TURUN performa: OOS PF 1.680->1.084 kalau routing dinyalakan lagi (isolasi F di EXPERIMENTS.md). State HMM 3 (TRENDING_UP) sekarang TETAP pakai LGBM utama (opt2_plus_trend_18coin_iso37f), model lgbm_trend TIDAK dihapus dari deploy (masih tersedia kalau mau reaktivasi setelah re-kalibrasi ulang thd HMM cara baru). Detail: EXPERIMENTS.md 2026-07-14."
   },
   "cascade": {
     "mode": "hard_consensus",
@@ -51,16 +53,18 @@
     "note": "LGBM-murni: LSTM + FLIP + dynamic-threshold dimatikan. Sama seperti v6.1."
   },
   "spot_confirm": {
-    "enabled": true,
-    "threshold": 0.60,
+    "enabled": false,
+    "threshold": 0.6,
     "agree_boost": 0.08,
     "opposite_pen": 0.35,
-    "note": "BARU di v6.3. Fitur dipinjam dari live_spottrade (app terpisah, co-located VPS yang sama, localhost:8080/api/features/snapshot) -- skor LONG+SHORT sendiri pakai model f2_swing_w20_h84_thr060 (models/spottrade_confirm/). Fail-open: kalau API/model gagal, proba LGBM asli tidak berubah. Tervalidasi OOF+OOS Riset_pemodelan 2026-07-08."
+    "note": "DIMATIKAN 2026-07-14 (AKTIF sejak v6.3 2026-07-08). Approval awal (EXPERIMENTS.md 2026-07-08) sah waktu itu (OOF+OOS sama-sama naik), TAPI pakai HMM cara lama + threshold beda, dan angkanya tidak pernah dihitung ulang setelah bug indexing 1 jam di get_spot_confirm_h1 difix (2026-07-12). OOF+OOS ulang 2026-07-14 (LGBM+HMM cara baru base 0.70+Guardian, TANPA routing/disable): spot-confirm menyeret PF turun di base 0.70 (OOF 2.022->1.954, OOS 1.680->1.068) -- konsisten di 2 uji beda sampel. Follow-up terbuka: audit ulang formal spot-confirm (kode sudah difix, HMM cara baru) sebelum dipertimbangkan nyala lagi. Detail: EXPERIMENTS.md 2026-07-14."
   },
   "regime_disable": {
-    "enabled": true,
-    "block_long_in": ["TRENDING_DOWN"],
-    "note": "BARU di v6.3. OOF diagnostik: LONG di TRENDING_DOWN struktural buruk (PF 0.401). Dikonfirmasi arah sama di OOS genuine."
+    "enabled": false,
+    "block_long_in": [
+      "TRENDING_DOWN"
+    ],
+    "note": "DIMATIKAN 2026-07-14 (AKTIF sejak v6.3 2026-07-08). Threshold base=0.70 utk state TRENDING_DOWN sudah 0.80 (jauh lebih ketat dari 0.65 waktu regime-disable pertama disetujui) -- OOF+OOS 2026-07-14 nunjuk dampaknya sudah nyaris nol digabung threshold baru (isolasi B-vs-G di EXPERIMENTS.md, disable ON/OFF dgn routing+spot tetap nyala: OOS PF 1.016 vs 1.002, beda tipis), jadi dimatikan bareng spot-confirm/routing sbg bagian dari kombinasi 'polos' yang menang di semua metrik OOF+OOS. Detail: EXPERIMENTS.md 2026-07-14."
   },
   "feature_engineering": {
     "positioning_mode": "live",
@@ -81,10 +85,10 @@
     "activation_atr": 0,
     "partial_exit_ratio": 0.5,
     "momentum_floor_frac": 0.7,
-    "model_file": "guard_guard_opt2_plus_trend_hmm_18coin.pkl",
-    "scaler_file": "scaler_guard_guard_opt2_plus_trend_hmm_18coin.pkl",
-    "features_file": "feats_guard_guard_opt2_plus_trend_hmm_18coin.json",
-    "note": "guard28f_18coin (guard_opt2_plus_trend_hmm_18coin): 28 feat, NO cross-model. Sample dari entry population STACK PENUH (LGBM+spot-confirm+HMM+regime-disable). Param sama v6.1: exit_thr=0.65 min_hold=0 floor=0.70 activation=0."
+    "model_file": "guard_guard_opt2_plus_trend_hmm_18coin_clean.pkl",
+    "scaler_file": "scaler_guard_guard_opt2_plus_trend_hmm_18coin_clean.pkl",
+    "features_file": "feats_guard_guard_opt2_plus_trend_hmm_18coin_clean.json",
+    "note": "guard28f_18coin_clean (2026-07-29): 28 feat IDENTIK (urutan sama) dgn guard_opt2_plus_trend_hmm_18coin, TAPI entry population dilatih TANPA spot-confirm -- cocok dgn live 'polos' sejak 2026-07-14 (versi lama dilatih 2026-07-08 dgn spot-confirm era sebelum fix alignment 2026-07-12, train-serve mismatch). MAE-aware @15x: OOF PF 1.869 vs 1.771 lama, OOS PF 1.611 vs 1.573, MaxDD lebih dangkal di KEDUA basis. Param sama v6.1: exit_thr=0.65 min_hold=0 floor=0.70 activation=0. Rollback: guard_opt2_plus_trend_hmm_18coin. Detail: EXPERIMENTS.md 2026-07-29."
   },
   "limit_exit": {
     "enabled": true,
@@ -105,13 +109,30 @@
       "enabled": false,
       "note": "Emergency brake nonaktif. Sama seperti v6.1."
     },
-    "note": "Per-state HMM gating base=0.70 delta=0.10 (NAIK dari base=0.65, 2026-07-13) + regime encoding causal filtering (bukan Viterbi) -- lihat EXPERIMENTS.md 2026-07-13 § re-tuning threshold. Viterbi lama = lookahead bias di reproduksi riset (state bar lama bisa 'intip' bar sesudahnya di window backtest yang terus diperpanjang) -- BUKAN cara live sungguhan ambil keputusan (live sudah causal real-time tiap re-decode), tapi angka backtest historis proyek ini sedikit ter-gelembung karenanya. Divalidasi OOS genuine (315->169 trade, PF 1.262->1.572 +25%, WR +6pp, PnL nyaris sama $30.34->$30.43, MaxDD -$6.93->-$6.38 membaik 8%): trade lebih sedikit tapi lebih efisien & risiko sedikit lebih kecil, untung total tidak berkurang. models/hmm/{coin}_hmm.pkl TIDAK berubah (fit sama persis, cuma cara decode/predict yang beda). PENTING: baru diterapkan di SSOT riset (pipeline/data/core/regime_hmm_holdout.py) -- swint_tradev2/app/services/data_service.py::_compute_hmm_regime() MASIH pakai predict_hmm (Viterbi) + base=0.65, BELUM disinkronkan ke live.",
+    "note": "Per-state HMM gating base=0.70 delta=0.10 (NAIK dari base=0.65, 2026-07-13) + regime encoding cara baru (forward filtering / predict_hmm_causal, bukan Viterbi/model.predict lama) -- lihat EXPERIMENTS.md 2026-07-13 § re-tuning threshold. Cara lama (Viterbi) = lookahead bias di reproduksi riset (state bar lama bisa 'intip' bar sesudahnya di window backtest yang terus diperpanjang) -- BUKAN cara live sungguhan ambil keputusan (live sudah real-time tiap re-decode), tapi angka backtest historis proyek ini sedikit ter-gelembung karenanya. Divalidasi OOS genuine (315->169 trade, PF 1.262->1.572 +25%, WR +6pp, PnL nyaris sama $30.34->$30.43, MaxDD -$6.93->-$6.38 membaik 8%): trade lebih sedikit tapi lebih efisien & risiko sedikit lebih kecil, untung total tidak berkurang. models/hmm/{coin}_hmm.pkl TIDAK berubah (fit sama persis, cuma cara decode/predict yang beda). SUDAH disinkronkan ke live 2026-07-13 (swint_tradev2 commit 4b6ef26, data_service.py::_compute_hmm_regime() pakai predict_hmm_causal) -- terverifikasi app_revision cocok, feature_monitor 18/18 OK.",
+    "window_change_note_2026_07_23": "vol_window/mom_window 24/48 -> 18/36 (base=0.70/delta=0.10/decode_method/n_states TETAP, TIDAK ada field terpisah di sini krn window kini disimpan self-describing DI DALAM models/hmm/{coin}_hmm.pkl -- data_service.py baca dari bundle, bukan hardcode). Menang PF+WR+PnL OOF & OOS genuine (EXPERIMENTS.md 2026-07-22/23) -- 1 dari 4 bulan OOS (Juni) kalah dari window lama, efisiensi modal riil campuran. regime_model_routing/regime_disable tetap OFF, WAJIB dikalibrasi ulang dulu kalau diaktifkan lagi (bergantung klasifikasi HMM).",
+    "base_change_note_2026_08_12": "base 0.70->0.65 (delta TETAP 0.10). Sweep OOF+OOS 3 titik (0.60/0.65/0.70) di stack skrg (guard28f_18coin_clean, window 18/36, exit live-parity floor+cooldown+funding, MAE-aware 15x) -- 0.60 DITOLAK (OOF membaik tapi OOS memburuk, tanda overfitting: PnL OOS turun jadi $81.96, MaxDD 2.5x lebih dalam dari 0.70). 0.65 DIPILIH user sadar trade-off: OOF PF 2.020->1.712 (trades +89%, PnL +46%, MaxDD 34% lebih dalam), OOS PF 1.643->1.367 (trades +111%, PnL +42%, MaxDD 32% lebih dalam). LongPF OOS membaik 0.535->0.851 (masih <1). Detail EXPERIMENTS.md 2026-08-12.",
     "per_state_thresholds": {
-      "0": [0.80, 0.60],
-      "1": [0.75, 0.65],
-      "2": [0.65, 0.75],
-      "3": [0.60, 0.80],
-      "-1": [0.70, 0.70]
+      "0": [
+        0.75,
+        0.55
+      ],
+      "1": [
+        0.7,
+        0.6
+      ],
+      "2": [
+        0.6,
+        0.7
+      ],
+      "3": [
+        0.55,
+        0.75
+      ],
+      "-1": [
+        0.65,
+        0.65
+      ]
     },
     "states": [
       "TRENDING_DOWN",
@@ -171,10 +192,11 @@
   "risk": {
     "daily_loss_limit": 8,
     "fee_per_side": 0.0004,
-    "leverage_recommended": 5,
+    "leverage_recommended": 15,
     "max_open_positions": 10,
     "modal_per_trade": 10,
-    "slippage_per_side": 0.0005
+    "slippage_per_side": 0.0005,
+    "leverage_note": "Dinaikkan 10->15 2026-07-23 via API /api/inference-config/risk langsung di live (BUKAN lewat deploy_model.py -- key ini ada di PRESERVE_KEYS, sengaja tidak ikut sync deploy biasa supaya nilai operator/VPS tidak ketiban config riset). Nilai di sini cuma dokumentasi/konsistensi, TIDAK otomatis ke live. Analisis lengkap (OOF 2858 trade 6th + OOS 137 trade, MAE-aware, cek trade tembus likuidasi per level 5x/10x/15x/20x, lintas-validasi dgn preseden 5->10): EXPERIMENTS.md 2026-07-23. Riwayat: 5->10 2026-07-19 (EXPERIMENTS.md tgl sama)."
   },
   "compound_strategy": {
     "deploy_buffer": 0.85,
@@ -191,15 +213,231 @@
   "scorecard": {
     "oof": {
       "period": "2020-01-01 to 2026-04-01",
+      "trades": 5365,
+      "wr_pct": 62.4,
+      "profit_factor": 1.712,
+      "pnl_usd": 6253.27,
+      "max_dd_usd": -84.71,
+      "long_pf": 1.600,
+      "short_pf": 1.831,
+      "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 (TURUN dari 0.70, 2026-08-12) + Guardian guard28f_18coin_clean -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos'). Exit mechanic LIVE-PARITY: Guardian floor FIXED 0.7xTP_pnl + cooldown profit-only 1 jam + funding-rate cost. MAE-aware @15x.",
+      "caveat": "PERUBAHAN 2026-08-12: base HMM 0.70->0.65 (delta tetap 0.10) -- sweep 3 titik (0.60/0.65/0.70), 0.65 dipilih user sadar trade-off (0.60 ditolak krn overfitting, lihat oof_pre_base065_2026_08_12 & EXPERIMENTS.md). Trades naik 2.837->5.365 (+89%), WR turun 65.7%->62.4%, PF turun 2.020->1.712 (-15%), PnL naik ke $6.253 (+46%), MaxDD lebih dalam -65.56->-84.71 (+29%). Liquidasi MAE-aware naik 177->355. LongPF turun 1.869->1.600, ShortPF turun 2.167->1.831 -- LEBIH BANYAK trade dgn kualitas rata-rata lebih rendah, bukan perbaikan model. Detail lengkap EXPERIMENTS.md 2026-08-12."
+    },
+    "oof_pre_base065_2026_08_12": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 2837,
+      "wr_pct": 65.7,
+      "profit_factor": 2.020,
+      "pnl_usd": 4279.35,
+      "max_dd_usd": -65.56,
+      "long_pf": 1.869,
+      "short_pf": 2.167,
+      "caveat": "ARSIP -- base HMM 0.70 (SEBELUM turun ke 0.65, 2026-08-12). Exit mechanic live-parity (floor FIXED+cooldown+funding, MAE-aware 15x) SAMA dgn scorecard.oof skrg, cuma base HMM beda. Digantikan scorecard.oof 2026-08-12."
+    },
+    "oof_pre_live_parity_fix_2026_08_11": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 3339,
+      "wr_pct": 63.6,
+      "profit_factor": 1.869,
+      "pnl_usd": 4410.21,
+      "max_dd_usd": -63.57,
+      "long_pf": 1.728,
+      "short_pf": 1.985,
+      "caveat": "ARSIP -- exit mechanic simulasi lama (trailing floor 0.7xMFE, TANPA cooldown, TANPA funding cost) TIDAK match live (floor FIXED 0.7xTP + cooldown 1h). Digantikan scorecard.oof 2026-08-11. Trade count (3339) tidak berhasil direkonsiliasi ke skrip manapun, lihat caveat scorecard.oof."
+    },
+    "holdout_oos": {
+      "period": "2026-04-01 to 2026-07-28 16:00 UTC",
+      "trades": 344,
+      "wr_pct": 59.6,
+      "profit_factor": 1.367,
+      "pnl_usd": 139.54,
+      "max_dd_usd": -33.21,
+      "long_pf": 0.851,
+      "short_pf": 1.585,
+      "trades_detail_file": "oos_holdout_trades.json",
+      "methodology": "OOS genuine holdout, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 (TURUN dari 0.70, 2026-08-12) + Guardian guard28f_18coin_clean -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos'). Exit mechanic LIVE-PARITY (floor FIXED 0.7xTP + cooldown 1h profit-only) + overlay funding-rate cost. MAE-aware @15x leverage.",
+      "note": "PERUBAHAN 2026-08-12: base HMM 0.70->0.65 (delta tetap 0.10) -- sweep 3 titik (0.60/0.65/0.70), 0.65 dipilih sadar trade-off. Trades naik 163->344 (+111%), WR turun 64.4%->59.6%, PF turun 1.643->1.367 (-17%), PnL naik ke $139,54 (+42%), MaxDD lebih dalam -25.15->-33.21 (+32%). LongPF justru MEMBAIK 0.535->0.851 (masih <1, LONG tetap net rugi tapi kurang parah) -- ShortPF turun 2.012->1.585. 0.60 DITOLAK krn OOS-nya lebih jelek dari 0.65 & 0.70 sekaligus (PnL $81.96, MaxDD -$62.80) -- tanda overfitting, arsip di holdout_oos_pre_base065_2026_08_12 utk pembanding basis lama. Detail EXPERIMENTS.md 2026-08-12.",
+      "monthly": [
+        {
+          "month": "2026-04",
+          "trades": 70,
+          "wr_pct": 74.3,
+          "profit_factor": 3.782,
+          "pnl_usd": 99.16,
+          "max_dd_usd": -7.1802,
+          "long_pf": 9.999,
+          "short_pf": 3.29
+        },
+        {
+          "month": "2026-05",
+          "trades": 55,
+          "wr_pct": 43.6,
+          "profit_factor": 0.568,
+          "pnl_usd": -38.44,
+          "max_dd_usd": -42.7154,
+          "long_pf": 0.952,
+          "short_pf": 0.454
+        },
+        {
+          "month": "2026-06",
+          "trades": 95,
+          "wr_pct": 61.1,
+          "profit_factor": 1.352,
+          "pnl_usd": 43.89,
+          "max_dd_usd": -28.7848,
+          "long_pf": 0.738,
+          "short_pf": 1.883
+        },
+        {
+          "month": "2026-07",
+          "trades": 124,
+          "wr_pct": 57.3,
+          "profit_factor": 1.268,
+          "pnl_usd": 34.93,
+          "max_dd_usd": -18.7835,
+          "long_pf": 0.47,
+          "short_pf": 1.551
+        }
+      ]
+    },
+    "holdout_oos_pre_base065_2026_08_12": {
+      "period": "2026-04-01 to 2026-07-28 16:00 UTC",
+      "trades": 163,
+      "wr_pct": 64.4,
+      "profit_factor": 1.643,
+      "pnl_usd": 98.58,
+      "max_dd_usd": -25.15,
+      "long_pf": 0.535,
+      "short_pf": 2.012,
+      "caveat": "ARSIP -- base HMM 0.70 (SEBELUM turun ke 0.65, 2026-08-12). Exit mechanic live-parity SAMA dgn scorecard.holdout_oos skrg, cuma base HMM beda. Digantikan scorecard.holdout_oos 2026-08-12."
+    },
+    "holdout_oos_pre_live_parity_fix_2026_08_11": {
+      "period": "2026-04-01 to 2026-07-28 16:00 UTC",
+      "trades": 167,
+      "wr_pct": 64.7,
+      "profit_factor": 1.611,
+      "pnl_usd": 94.41,
+      "max_dd_usd": -26.89,
+      "long_pf": 0.53,
+      "short_pf": 1.967,
+      "trades_detail_file": "oos_holdout_trades.json",
+      "note": "ARSIP -- exit mechanic simulasi lama (trailing floor 0.7xMFE, TANPA cooldown, TANPA funding cost) TIDAK match live. Digantikan scorecard.holdout_oos 2026-08-11. Angka ini TERVERIFIKASI cocok persis dgn reproduksi ulang (baseline sanity-check), jadi arsip ini reliable sbg titik pembanding.",
+      "monthly_ref": [
+        {
+          "month": "2026-04",
+          "trades": 37,
+          "wr_pct": 78.4,
+          "profit_factor": 7.22,
+          "pnl_usd": 67.31,
+          "max_dd_usd": -3.2494,
+          "long_pf": 9.999,
+          "short_pf": 6.822
+        },
+        {
+          "month": "2026-05",
+          "trades": 19,
+          "wr_pct": 47.4,
+          "profit_factor": 0.507,
+          "pnl_usd": -9.42,
+          "max_dd_usd": -12.49,
+          "long_pf": 9.999,
+          "short_pf": 0.408
+        },
+        {
+          "month": "2026-06",
+          "trades": 50,
+          "wr_pct": 62.0,
+          "profit_factor": 1.228,
+          "pnl_usd": 15.29,
+          "max_dd_usd": -21.9914,
+          "long_pf": 0.371,
+          "short_pf": 1.935
+        },
+        {
+          "month": "2026-07",
+          "trades": 61,
+          "wr_pct": 63.9,
+          "profit_factor": 1.368,
+          "pnl_usd": 21.22,
+          "max_dd_usd": -9.5526,
+          "long_pf": 0.357,
+          "short_pf": 1.532
+        }
+      ]
+    },
+    "oof_pre_window1836_2026_07_23": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 2987,
+      "wr_pct": 64.6,
+      "profit_factor": 2.155,
+      "pnl_usd": 3217.54,
+      "max_dd_usd": -49.5,
+      "caveat": "ARSIP -- window HMM 24/48 (post label leak-fix 2026-07-22), digantikan hmm18/36 2026-07-23. Lihat scorecard.oof utk angka window baru yg live sekarang."
+    },
+    "holdout_oos_pre_window1836_2026_07_23": {
+      "period": "2026-04-01 to 2026-07-13 16:00 UTC",
+      "trades": 161,
+      "wr_pct": 60.9,
+      "profit_factor": 1.68,
+      "pnl_usd": 65.92,
+      "max_dd_usd": -12.38,
+      "long_pf": 1.059,
+      "short_pf": 1.836,
+      "note": "ARSIP -- window HMM 24/48 (live sebelum 2026-07-23). pnl_usd di sini dihitung ulang pakai leverage 10x saat ini (beda dari angka 32.96 yg pernah tercatat sebelumnya, itu masih pakai leverage 5x pra-2026-07-19 & tidak pernah diperbarui). Lihat scorecard.holdout_oos utk angka window baru.",
+      "monthly": [
+        {
+          "month": "2026-04",
+          "trades": 41,
+          "wr_pct": 75.6,
+          "profit_factor": 7.259,
+          "pnl_usd": 42.94,
+          "max_dd_usd": -1.91,
+          "long_pf": 9.999,
+          "short_pf": 7.002
+        },
+        {
+          "month": "2026-05",
+          "trades": 26,
+          "wr_pct": 30.8,
+          "profit_factor": 0.266,
+          "pnl_usd": -13.88,
+          "max_dd_usd": -13.7,
+          "long_pf": 9.999,
+          "short_pf": 0.249
+        },
+        {
+          "month": "2026-06",
+          "trades": 55,
+          "wr_pct": 63.6,
+          "profit_factor": 1.708,
+          "pnl_usd": 29.78,
+          "max_dd_usd": -8.15,
+          "long_pf": 1.014,
+          "short_pf": 1.978
+        },
+        {
+          "month": "2026-07",
+          "trades": 39,
+          "wr_pct": 61.5,
+          "profit_factor": 1.244,
+          "pnl_usd": 7.09,
+          "max_dd_usd": -8.11,
+          "long_pf": 0.856,
+          "short_pf": 1.381
+        }
+      ]
+    },
+    "oof_pre_polos_2026_07_08": {
+      "period": "2020-01-01 to 2026-04-01",
       "trades": 5742,
       "wr_pct": 67.3,
       "profit_factor": 2.088,
       "pnl_usd": 2859.54,
       "max_dd_usd": -24.08,
       "methodology": "genuine_oof_rolling_8fold_purge20 (LGBM+spot-confirm) + HMM 0.65/0.10 + regime-disable + Guardian guard28f_18coin min_hold=0",
-      "caveat": "Angka dari baseline 38f (opt2_plus_trend_18coin, pre-takedown relative_strength_z) -- BELUM di-reproduce persis utk 37f (v6.4). Angka trade-level dgn Guardian semi in-sample (final model discore ke populasi sendiri) -- lihat EXPERIMENTS.md. Delta OOF Guardian jauh > delta OOS genuine (+1.135 vs +0.171 PF)."
+      "caveat": "ARSIP -- setup ini (spot-confirm+regime-disable+routing nyala, HMM base 0.65 lama) SUDAH TIDAK LIVE sejak 2026-07-14, dibiarkan sbg referensi historis. Angka dari baseline 38f (opt2_plus_trend_18coin, pre-takedown relative_strength_z) -- BELUM di-reproduce persis utk 37f (v6.4). Angka trade-level dgn Guardian semi in-sample (final model discore ke populasi sendiri) -- lihat EXPERIMENTS.md. Delta OOF Guardian jauh > delta OOS genuine (+1.135 vs +0.171 PF)."
     },
-    "holdout_oos": {
+    "holdout_oos_pre_polos_2026_07_08": {
       "period": "2026-04-01 to 2026-07-10",
       "trades": 278,
       "wr_pct": 57.1,
@@ -208,8 +446,139 @@
       "max_dd_usd": -7.58,
       "long_pf": 1.696,
       "short_pf": 1.864,
+      "note": "ARSIP -- setup ini (spot-confirm+regime-disable+routing nyala, HMM base 0.65 lama) SUDAH TIDAK LIVE sejak 2026-07-14, dibiarkan sbg referensi historis. v6.4 (37f, takedown relative_strength_z), holdout-test genuine (bukan holdout tersegel), LGBM+HMM+regime-disable+Guardian, entry M15@HH:15 (belum termasuk simulasi spot-confirm -- backtest offline tidak bisa mereplikasi API real-time live_spottrade). vs v6.3 baseline 38f setara (265 trades, PF 1.679, PnL $60.72, Long PF 1.167): PF/PnL/MaxDD/LongPF semua membaik. Detail lengkap EXPERIMENTS.md 2026-07-10."
+    },
+    "oof_pre_15x_2026_07_23": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 2858,
+      "wr_pct": 66.0,
+      "profit_factor": 2.359,
+      "pnl_usd": 3247.8,
+      "max_dd_usd": -28.66,
+      "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.70/delta=0.10 + Guardian guard28f_18coin -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos').",
+      "caveat": "Setup 'polos' YANG SEKARANG LIVE (dideploy 2026-07-14, window HMM diupdate 24/48->18/36 2026-07-23). Angka window lama (24/48, post label-leak-fix) ada di scorecard.oof_pre_window1836_2026_07_23. Detail EXPERIMENTS.md 2026-07-22/23."
+    },
+    "holdout_oos_pre_15x_2026_07_23": {
+      "period": "2026-04-01 to 2026-07-13 16:00 UTC",
+      "trades": 137,
+      "wr_pct": 65.7,
+      "profit_factor": 1.764,
+      "pnl_usd": 65.66,
+      "max_dd_usd": -12.95,
+      "long_pf": 0.594,
+      "short_pf": 2.162,
       "trades_detail_file": "oos_holdout_trades.json",
-      "note": "v6.4 (37f, takedown relative_strength_z), holdout-test genuine (bukan holdout tersegel), LGBM+HMM+regime-disable+Guardian, entry M15@HH:15 (belum termasuk simulasi spot-confirm -- backtest offline tidak bisa mereplikasi API real-time live_spottrade). vs v6.3 baseline 38f setara (265 trades, PF 1.679, PnL $60.72, Long PF 1.167): PF/PnL/MaxDD/LongPF semua membaik. Detail lengkap EXPERIMENTS.md 2026-07-10."
+      "methodology": "OOS genuine holdout, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.70/delta=0.10 + Guardian guard28f_18coin -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos').",
+      "note": "Setup 'polos' YANG SEKARANG LIVE (dideploy 2026-07-14, window HMM diupdate 24/48->18/36 2026-07-23 -- menang PF+WR+PnL OOF & OOS vs window lama, tapi TIDAK menang telak di semua bulan: Juni 2026 KALAH dari window lama (PF 1.26 vs 1.71), didorong ambruknya sisi LONG bulan itu (WR 50%->27%). Detail EXPERIMENTS.md 2026-07-22/23. Angka window lama ada di scorecard.holdout_oos_pre_window1836_2026_07_23.",
+      "monthly": [
+        {
+          "month": "2026-04",
+          "trades": 36,
+          "wr_pct": 80.6,
+          "profit_factor": 8.419,
+          "pnl_usd": 51.82,
+          "max_dd_usd": -2.17,
+          "long_pf": 9.999,
+          "short_pf": 7.967
+        },
+        {
+          "month": "2026-05",
+          "trades": 19,
+          "wr_pct": 47.4,
+          "profit_factor": 0.594,
+          "pnl_usd": -5.17,
+          "max_dd_usd": -8.33,
+          "long_pf": 9.999,
+          "short_pf": 0.495
+        },
+        {
+          "month": "2026-06",
+          "trades": 50,
+          "wr_pct": 62.0,
+          "profit_factor": 1.261,
+          "pnl_usd": 11.64,
+          "max_dd_usd": -14.66,
+          "long_pf": 0.371,
+          "short_pf": 1.994
+        },
+        {
+          "month": "2026-07",
+          "trades": 32,
+          "wr_pct": 65.6,
+          "profit_factor": 1.342,
+          "pnl_usd": 7.37,
+          "max_dd_usd": -6.84,
+          "long_pf": 0.648,
+          "short_pf": 1.399
+        }
+      ]
+    },
+    "oof_pre_clean_2026_07_29": {
+      "period": "2020-01-01 to 2026-04-01",
+      "trades": 2858,
+      "wr_pct": 64.7,
+      "profit_factor": 1.849,
+      "pnl_usd": 3674.26,
+      "max_dd_usd": -80.25,
+      "long_pf": 1.796,
+      "short_pf": 1.898,
+      "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.70/delta=0.10 + Guardian guard28f_18coin -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos'). MAE-aware @15x leverage: trade dgn pergerakan harga lawan (MAE%) >= 100/15=6.667% selama masa hidup trade dianggap kena likuidasi paksa (PnL=-modal), sisanya PnL diskalakan linear dari basis 10x.",
+      "caveat": "PF headline (1.849) LEBIH RENDAH dari versi native-invariant (2.359, ada di oof_pre_15x_2026_07_23) BUKAN krn model memburuk -- murni ongkos leverage 15x: 181 dari 2858 trade (6.33%, ~13x/thn) kena likuidasi paksa MAE-aware, 42 di antaranya sebenarnya profit di 10x. Leverage dinaikkan 10->15 2026-07-23 (dari 5->10 2026-07-19). Analisis penuh + sweep 5/10/15/20x: EXPERIMENTS.md 2026-07-23, model_registry.json.leverage_change_2026_07_23."
+    },
+    "holdout_oos_pre_clean_2026_07_29": {
+      "period": "2026-04-01 to 2026-07-13 16:00 UTC",
+      "trades": 137,
+      "wr_pct": 65.7,
+      "profit_factor": 1.764,
+      "pnl_usd": 98.49,
+      "max_dd_usd": -19.42,
+      "long_pf": 0.594,
+      "short_pf": 2.162,
+      "trades_detail_file": "oos_holdout_trades.json",
+      "methodology": "OOS genuine holdout, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.70/delta=0.10 + Guardian guard28f_18coin -- TANPA regime-model-routing, TANPA regime-disable, TANPA spot-confirm ('polos'). MAE-aware @15x leverage (metodologi sama dgn scorecard.oof).",
+      "note": "PF (1.764) SAMA dgn versi native (holdout_oos_pre_15x_2026_07_23) krn OOS 3.5 bulan ini nol trade kena likuidasi sampai 15x (baru muncul di 20x, lihat leverage_change_2026_07_23) -- PnL/MaxDD naik proporsional (x1.5 dari basis 10x). JANGAN disimpulkan 15x \"aman\" dari OOS saja -- OOF 6 tahun (scorecard.oof) menunjukkan PF turun nyata krn periode OOS ini relatif tenang, tidak mencakup skenario volatil yg direpresentasikan OOF. Detail EXPERIMENTS.md 2026-07-23.",
+      "monthly": [
+        {
+          "month": "2026-04",
+          "trades": 36,
+          "wr_pct": 80.6,
+          "profit_factor": 8.419,
+          "pnl_usd": 77.72,
+          "max_dd_usd": -3.2495,
+          "long_pf": 9.999,
+          "short_pf": 7.967
+        },
+        {
+          "month": "2026-05",
+          "trades": 19,
+          "wr_pct": 47.4,
+          "profit_factor": 0.594,
+          "pnl_usd": -7.76,
+          "max_dd_usd": -12.4901,
+          "long_pf": 9.999,
+          "short_pf": 0.495
+        },
+        {
+          "month": "2026-06",
+          "trades": 50,
+          "wr_pct": 62.0,
+          "profit_factor": 1.261,
+          "pnl_usd": 17.46,
+          "max_dd_usd": -21.9914,
+          "long_pf": 0.371,
+          "short_pf": 1.994
+        },
+        {
+          "month": "2026-07",
+          "trades": 32,
+          "wr_pct": 65.6,
+          "profit_factor": 1.342,
+          "pnl_usd": 11.06,
+          "max_dd_usd": -10.2627,
+          "long_pf": 0.648,
+          "short_pf": 1.399
+        }
+      ]
     }
   }
 }
