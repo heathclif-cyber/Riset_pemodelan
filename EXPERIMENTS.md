@@ -2161,3 +2161,58 @@ run_oof_floor_frac_sweep.py` & `model/eval/holdout_oos.py` (+`--floor-intrabar`)
 
 **BELUM dikerjakan:** koreksi SSOT (`model_registry.json`, `inference_config.json`, dashboard VPS)
 ke angka model-benar -- menunggu keputusan user.
+
+## 2026-08-13 — Uji hipotesis drift (PF riil 0,68) + TEMUAN: paper TIDAK berjalan 14 hari
+
+**Pemicu.** User: "memang sebelumnya ada banyak drift sehingga hanya 0,68". Diuji apakah performa
+uang riil membaik seiring tiap perbaikan drift di-deploy. Sumber: DB live (`app.db`), 162 trade
+uang riil pada 18 koin model (subset apples-to-apples), 21 Mei - 29 Jul 2026.
+
+**Hasil -- argumen drift SEBAGIAN BESAR BENAR secara arah:**
+
+| Periode | n | WR | PF | PnL |
+|---|---|---|---|---|
+| s/d 02 Jul (sebelum fix nilai fitur) | 100 | 48,0% | 0,390 | -$28,24 |
+| 03-13 Jul (fix positioning_mode) | 42 | 38,1% | 0,469 | -$12,35 |
+| 14-22 Jul (stack polos, spot-confirm OFF) | 13 | 92,3% | 5,665 | +$5,69 |
+| 23-27 Jul (HMM 18/36 + lev 15x) | 6 | 83,3% | 5,522 | +$15,78 |
+| 28 Jul+ | 1 | 0% | 0,000 | -$6,63 |
+
+Digabung di batas 14 Jul (deploy stack polos): era buggy **PF 0,416** (n=142) vs era pasca-fix
+**PF 2,310** (n=20). **88% trade yang membentuk angka "0,68" berasal dari era buggy** -- jadi 0,68
+memang BUKAN ukuran stack sekarang, melainkan ukuran sistem yang saat itu punya bug terdokumentasi.
+
+**TAPI belum boleh disebut terbukti:**
+- CI95 PF era pasca-fix = **[0,456, 22,527]** (n=20) -- selebar itu, tidak menyimpulkan apa pun.
+- Uji tren waktu vs PnL per-trade: Spearman rho=+0,124, **p=0,116 TIDAK signifikan**.
+- Confound: era pra-14-Jul bukan cuma "buggy", tapi juga KONFIGURASI beda (v6.3, spot-confirm ON,
+  HMM 24/48, lev 10x). Tidak bisa dipisahkan bersih antara "bug diperbaiki" vs "config diganti".
+
+**TEMUAN OPERASIONAL PENTING (tak terduga): paper TIDAK berjalan selama 14 hari.**
+Sejak trading uang riil dimatikan 29 Jul, TIDAK ADA trade sama sekali -- padahal sinyal terus
+diproduksi (68 sinyal non-FLAT 31 Jul-11 Agu). Sebabnya: sinyal dgn `trade_enabled=False`
+**DITOLAK TOTAL**, tidak dijadikan paper. Padahal itu justru maksud fitur toggle ("saat disable
+tetap jalan model paper"). Batas perubahan perilaku persis terlihat di data:
+
+| tanggal | PAPER-ONLY | DITOLAK total |
+|---|---|---|
+| 31 Jul - 11 Agu | **0** | 68 |
+| **12 Agu** | **4** | 0 |
+
+Baru mulai bekerja **2026-08-12** -- efek samping perbaikan toggle LONG/SHORT yang dikerjakan
+2026-08-11. Artinya: selama 14 hari sistem diam total, **nol bukti baru terkumpul** untuk menguji
+hipotesis drift. Sekarang sudah jalan (4 sinyal paper 12 Agu, 1 jadi trade; sisanya kena RR_gate/
+tp_sl -- penolakan normal, bukan bug).
+
+**Konsekuensi.** Jalan untuk membuktikan hipotesis drift sekarang TERBUKA tapi butuh waktu: laju
+sinyal ~5/hari, jika ~30-50% jadi trade maka ~1,5-2,5 trade/hari -> perlu ~2-4 bulan untuk sampel
+yang bisa membedakan PF 1,3 dari 0,68 (lantai derau PF di n~330 = +-0,537).
+
+**Batasan yang harus disadari:** paper memvalidasi lapisan SINYAL (fitur, inference, pipeline data
+live) -- BUKAN lapisan eksekusi (fill nyata, slippage, perilaku bursa). Kalau paper nanti ~1,3
+tapi uang riil tetap jauh di bawah, sisa kesenjangan ada di eksekusi.
+
+**Rekomendasi:** biarkan paper mengumpulkan bukti; jangan nyalakan uang riil sampai sampel
+pasca-fix memadai. Tidak ada tindakan config yang perlu sekarang.
+
+**Artefak.** Analisis ad-hoc dari `app.db` live (bukan file ter-commit).
