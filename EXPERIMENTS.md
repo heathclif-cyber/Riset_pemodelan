@@ -2216,3 +2216,37 @@ tapi uang riil tetap jauh di bawah, sisa kesenjangan ada di eksekusi.
 pasca-fix memadai. Tidak ada tindakan config yang perlu sekarang.
 
 **Artefak.** Analisis ad-hoc dari `app.db` live (bukan file ter-commit).
+
+### Keputusan floor OFF (item #2): DITUNDA, dgn kriteria buka-ulang yang konkret
+
+**Temuan tambahan yang menentukan: ADA TIGA mekanik floor berbeda di sistem yang sama.**
+(`paper_trading.py:578-596`, `_place_floor_stop`, `core/evaluator.py`)
+
+| Jalur | Cara kerja | Harga exit |
+|---|---|---|
+| **Uang riil** (`is_live=True` + limit_exit ON + order terpasang) | STOP-LIMIT resting di bursa, trigger INTRABAR | **DI `floor_price`** |
+| **Paper** (`is_live=False` -> `live_has_exchange_stop=False`) | polling tiap 5 menit thd harga live | **di harga saat terdeteksi** (bisa di bawah floor) |
+| Backtest LAMA | cek di close H1 | di close H1 |
+| Backtest BARU (koreksi hari ini) | intrabar, cocok jalur uang riil | di `floor_price` |
+
+**Implikasi penting utk membaca data paper nanti:** scorecard yang baru dikoreksi memodelkan jalur
+UANG RIIL. Paper akan sedikit LEBIH BURUK pada komponen floor (jeda s/d 5 menit + exit di harga
+pasar, bukan di level). Jadi saat membandingkan hasil paper dgn scorecard, selisih pada ~10% trade
+ber-outcome `guardian_momentum_floor` adalah WAJAR, bukan tanda drift baru.
+
+**Putusan: floor tetap 0,70. Jangan adopsi OFF sekarang.** Alasan:
+1. OOS tidak bisa meresolusi (lantai derau +-0,537 vs efek +0,050). Bukti kuat cuma 1 jendela.
+2. Faktor operasional (menghapus satu-satunya order pelindung di bursa) baru relevan saat uang
+   riil menyala -- dan itu memang tujuan akhirnya.
+3. **Paper sekarang sudah jalan** (sejak 12 Agu) dan akan menghasilkan bukti KONDISI LIVE untuk
+   pertanyaan ini persis: seberapa sering floor benar-benar ter-trigger, dan berapa yang
+   ditinggalkan. Itu bukti yang lebih baik daripada menambah backtest.
+4. Mengubah config sekarang menambah variabel ke validasi drift yang baru saja dimulai.
+
+**Kriteria buka-ulang (supaya ini bukan penundaan tanpa ujung):** setelah paper mengumpulkan
+>=150 trade, cek dua hal -- (a) apakah PF paper mendekati scorecard terkoreksi (validasi drift);
+(b) berapa trade yang ditutup `guardian_momentum_floor` dan berapa pergerakan lanjut yang
+terlewat (ukur langsung, bukan simulasi). Kalau (a) lolos dan (b) menunjukkan floor mahal seperti
+dugaan OOF, barulah floor OFF punya bukti 2-jendela yang sah.
+
+**Tidak ada perubahan config.** Kandidat floor OFF tetap tercatat lengkap di entry sebelumnya.
