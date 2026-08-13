@@ -501,6 +501,15 @@ def simulate_trades_swing(
     guardian_floor_replace_with_tp = False,  # True: floor JADI tp_frac*TP_pnl SAJA (fixed,
     # tidak ikut MFE) -- guardian_momentum_floor_frac diabaikan total. Eksekusi live: exchange-side
     # STOP-LIMIT dipasang begitu TP tersentuh, bukan trailing. Lihat EXPERIMENTS.md 2026-07-12.
+    guardian_floor_intrabar = False,  # PARITY EKSEKUSI FLOOR (2026-08-13). False (default lama):
+    # floor dicek di CLOSE bar & exit di close[j] -- padahal live memasang STOP-LIMIT resting di
+    # bursa (paper_trading.py::_place_floor_stop, trigger=limit=floor_price) yang ter-trigger
+    # INTRABAR dan fill DI level floor. Model lama sistematis MEREMEHKAN floor: exit di close[j]
+    # yang menurut definisi sudah DI BAWAH floor (itu syarat trigger-nya). Bandingkan SL yang
+    # SUDAH dimodelkan benar (raw_exit = sl_price, bukan close). True = model floor seperti SL:
+    # trigger saat wick menyentuh floor_price, exit DI floor_price. Lihat memory
+    # `feedback-uji-resolusi-eksekusi-asli` -- mekanisme reaktif-waktu diuji di resolusi kasar
+    # bisa MEMBALIK arah kesimpulan, bukan sekadar kurang presisi.
     guardian_feat_cols        = None,   # full feature order for custom guardian models
     guardian_static_names     = None,   # static column names matching X_guardian
     flow_momentum_arr         = None,   # optional per-bar flow_momentum_3bar array
@@ -940,6 +949,27 @@ def simulate_trades_swing(
                 tp_hit = low[j] <= tp_price
                 sl_hit = (high[j] >= sl_price) if sl_trigger_mode == "highlow" else (close[j] >= sl_price)
 
+            # ── Floor INTRABAR (parity STOP-LIMIT exchange-side) ─────────────────
+            # Sengaja dicek SEBELUM SL: floor_price ada di sisi UNTUNG dari entry,
+            # sl_price di sisi RUGI -- bar yang menembus SL PASTI melewati floor lebih
+            # dulu, jadi order STOP-LIMIT yang resting di bursa ter-trigger duluan.
+            # Model lama (cek di close, di blok bawah) memberi kemenangan ke SL pada bar
+            # yang sama = bias KEDUA yang merugikan floor, di luar bias harga exit.
+            # Dilewati pada bar TP pertama tersentuh (tp_touched masih False di titik
+            # ini) -- realistis: order baru dipasang setelah TP terdeteksi.
+            if (guardian_floor_intrabar and guardian_floor_replace_with_tp
+                    and tp_touched and guardian_momentum_floor_tp_frac > 0.0):
+                if sig == LONG:
+                    _floor_lvl = price + guardian_momentum_floor_tp_frac * (tp_price - price)
+                    _floor_hit = low[j] <= _floor_lvl
+                else:
+                    _floor_lvl = price - guardian_momentum_floor_tp_frac * (price - tp_price)
+                    _floor_hit = high[j] >= _floor_lvl
+                if _floor_hit:
+                    outcome = "GUARDIAN_MOMENTUM_FLOOR"
+                    raw_exit = _floor_lvl
+                    break
+
             # ── SL hard exit ── trigger & exit price per sl_trigger_mode
             # "close"  : SL triggered saat close lewati SL → exit @ sl_price (stop order fill di SL)
             # "highlow": SL triggered saat wick sentuh SL → exit @ sl_price (bisa fill via stop order)
@@ -973,7 +1003,10 @@ def simulate_trades_swing(
             # Floor efektif = max(kedua patokan) -- MFE dekat TP -> patokan TP dominan
             # (cegah give-back di bawah TP asli); MFE jauh melebihi TP -> patokan MFE
             # tetap ambil alih (jangan capping untung di trade yang lari jauh).
-            if guardian_floor_replace_with_tp and tp_touched and guardian_momentum_floor_tp_frac > 0.0:
+            if (not guardian_floor_intrabar) and guardian_floor_replace_with_tp and tp_touched and guardian_momentum_floor_tp_frac > 0.0:
+                # MODEL LAMA (guardian_floor_intrabar=False): cek di CLOSE, exit di close[j].
+                # Dipertahankan supaya scorecard lama bisa direproduksi persis -- TAPI ini
+                # TIDAK match eksekusi live (lihat blok intrabar di atas + catatan parameter).
                 # Fixed floor = tp_frac x TP_pnl SAJA, tidak trailing ikut MFE (ganti total,
                 # bukan tambahan max()) -- parity eksekusi live: STOP-LIMIT dipasang sekali
                 # begitu TP tersentuh, level tetap sampai exit.

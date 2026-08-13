@@ -111,6 +111,10 @@ def main() -> int:
     ap.add_argument("--floor-fracs", default="0.5,0.6,0.7,0.8,0.9")
     ap.add_argument("--max-open-positions", type=int, default=None)
     ap.add_argument("--daily-loss-limit", type=int, default=None)
+    ap.add_argument("--floor-intrabar", action="store_true",
+                    help="Model floor SEPERTI EKSEKUSI LIVE: STOP-LIMIT resting di bursa -- "
+                         "trigger saat wick menyentuh floor_price, exit DI floor_price (bukan "
+                         "cek-di-close & exit-di-close seperti model lama yang meremehkan floor).")
     ap.add_argument("--export-trades", default=None,
                     help="Simpan trade ACCEPTED (post portfolio_limits, dgn mae_pct) ke CSV ini. "
                          "Cuma masuk akal kalau --floor-fracs berisi SATU nilai.")
@@ -138,7 +142,8 @@ def main() -> int:
             dict(guardian_momentum_floor_tp_frac=0.0, guardian_floor_replace_with_tp=False,
                  guardian_momentum_floor_frac=0.0)
             if floor_frac is None else
-            dict(guardian_momentum_floor_tp_frac=floor_frac, guardian_floor_replace_with_tp=True)
+            dict(guardian_momentum_floor_tp_frac=floor_frac, guardian_floor_replace_with_tp=True,
+                 guardian_floor_intrabar=args.floor_intrabar)
         )
         all_trades = []
         for coin, df in coin_data.items():

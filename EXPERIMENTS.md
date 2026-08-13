@@ -2076,3 +2076,88 @@ uang riil.
 **Artefak review.** `tools/model/_scratch_floor_noise_floor.py`;
 `data/live_cache/oos_floorfrac{01,02,03,05,06,07}_trades_detail.csv`,
 `data/live_cache/oos_floorOFF_trades_detail.csv`, `data/live_cache/oof_floorfrac07_trades.csv`.
+
+## 2026-08-13 — BIAS BARU DITEMUKAN: floor STOP-LIMIT dimodelkan SALAH di backtest (scorecard live overstated ~7% OOF)
+
+**Pemicu.** User bertanya: "memang pakai stop limit, bagaimana scorecard jika stop limit itu
+diaktifkan?" -- pertanyaan tepat sasaran. Ternyata backtest TIDAK PERNAH memodelkan floor
+sebagaimana ia benar-benar tereksekusi di live.
+
+**Ketidakcocokan (dibaca dari kode kedua sisi, bukan asumsi):**
+
+| | Live (`paper_trading.py::_place_floor_stop`) | Backtest LAMA (`core/evaluator.py`) |
+|---|---|---|
+| Bentuk | STOP-LIMIT resting di bursa, `trigger=limit=floor_price` | pengecekan in-loop |
+| Kapan trigger | **INTRABAR**, saat harga menyentuh level | hanya saat **CLOSE** bar |
+| Harga exit | **DI `floor_price`** | **DI `close[j]`** |
+| vs SL di bar sama | floor pasti duluan (floor di sisi untung, SL di sisi rugi) | SL menang (dicek lebih dulu) |
+
+`raw_exit = close[j]` itu menurut definisi SUDAH DI BAWAH floor (syarat trigger-nya `cur_pnl <
+floor_pnl`). Bandingkan **SL yang SUDAH benar** di file yang sama: `raw_exit = sl_price` (harga
+level, bukan close). Jadi dua stop order diperlakukan beda di satu simulator yang sama.
+
+**Perbaikan.** Param baru `guardian_floor_intrabar` (default False = perilaku lama, non-breaking,
+scorecard lama tetap bisa direproduksi -- diverifikasi regresi OOF PF 2,056/$8.014,24 & OOS PF
+1,350/$132,10 cocok PERSIS). True = model seperti live: trigger saat wick menyentuh `floor_price`,
+exit DI `floor_price`, dan dicek SEBELUM SL.
+
+**Hasil -- ARAH BERLAWANAN dari hipotesis awal.** Dugaan saya: model benar akan MENGUNTUNGKAN
+floor (fill di level, bukan di close yang lebih jelek). **SALAH.** Efek WAKTU jauh mengalahkan
+efek HARGA: order resting kena "sabet wick" -- ter-trigger oleh celupan sesaat yang sebenarnya
+pulih di bar yang sama, memotong pemenang lebih dini. Itu memang perilaku asli stop order.
+
+OOF native (base 0,65, portfolio_limits ON):
+
+| Varian | PF | PnL | MaxDD |
+|---|---|---|---|
+| floor 0,7 model LAMA (= dasar SSOT sekarang) | 2,056 | $8.014,24 | -$133,76 |
+| floor 0,7 model LIVE BENAR | **2,001** | **$7.623,97** | -$128,04 |
+| floor 0,2 model LIVE BENAR | 2,009 | $7.683,14 | -$132,09 |
+| floor OFF (tak terpengaruh) | 2,118 | $8.638,67 | -$134,07 |
+
+**Konsekuensi 1 -- SCORECARD LIVE SEKARANG OVERSTATED.** Angka SSOT dihitung dgn model floor yang
+salah. Basis MAE-aware+funding (metodologi SSOT):
+
+| | SSOT terpasang | Model floor BENAR | Selisih |
+|---|---|---|---|
+| OOF PF | 1,712* / 1,721 | **1,664** | -3,3% |
+| OOF PnL | $6.253 / $6.267 | **$5.810,33** | **-7,3%** |
+| OOS PF | 1,343 | **1,340** | -0,2% |
+| OOS PnL | $129,94 | **$127,70** | -1,7% |
+
+Kelas kesalahan SAMA dgn temuan portfolio_limits semalam: backtest memodelkan lingkungan eksekusi
+lebih ramah dari kenyataan. Dampak OOF nyata (-7,3% PnL), OOS kecil (-1,7%).
+
+**Konsekuensi 2 -- kandidat floor OFF jadi LEBIH kuat, bukan lebih lemah.** Pembanding yang adil
+(kedua-duanya model benar), basis MAE-aware+funding:
+
+| | OOF PF | OOF PnL | OOS PF | OOS PnL |
+|---|---|---|---|---|
+| floor 0,7 (live, model benar) | 1,664 | $5.810,33 | 1,340 | $127,70 |
+| floor OFF | **1,773** | **$6.849,97** | **1,390** | **$150,53** |
+| selisih | +0,109 | **+17,9%** | +0,050 | **+17,9%** |
+
+Semalam gap OOF cuma +$624 (model salah); sekarang **+$1.040 (+17,9%)**. Jadi "harga" yang dibayar
+untuk mempertahankan proteksi sisi-bursa itu ~18% PnL, bukan ~8% seperti dikira.
+
+**Konsekuensi 3 -- tuning floor_frac ternyata TIDAK relevan.** Dgn model benar, 0,2 (2,009) vs 0,7
+(2,001) nyaris identik. Yang penting cuma floor ADA vs TIDAK ADA, bukan angkanya. Rekomendasi
+"pilih 0,2 daripada OFF" di addendum sebelumnya dgn demikian kehilangan dasarnya -- 0,2 tidak lagi
+menangkap "82% keuntungan"; nyaris tidak menangkap apa pun.
+
+**Yang TIDAK berubah:** lantai derau OOS tetap +-0,537, jadi OOS tetap TIDAK BISA meresolusi
+selisih +0,050. Status floor OFF tetap: kuat di 1 jendela (OOF), jendela kedua tak berdaya.
+
+**Pelajaran metodologi.** Ini persis `feedback-uji-resolusi-eksekusi-asli`: mekanisme reaktif-waktu
+(stop order) yang diuji pada resolusi kasar bisa **MEMBALIK arah kesimpulan**, bukan sekadar kurang
+presisi. Hipotesis saya sendiri (model benar menguntungkan floor) terbalik setelah diukur. Aturan
+turunan: **setiap mekanisme exit yang di live berupa ORDER DI BURSA wajib dimodelkan sbg order
+(trigger intrabar + fill di level), bukan sbg pengecekan di close.** SL sudah benar sejak awal;
+floor terlewat 1 bulan (sejak 2026-07-12).
+
+**Artefak.** `core/evaluator.py` (+`guardian_floor_intrabar`); `pipeline/model/
+run_oof_floor_frac_sweep.py` & `model/eval/holdout_oos.py` (+`--floor-intrabar`);
+`data/live_cache/{oof,oos}_intrabar_ff07_trades.csv`.
+
+**BELUM dikerjakan:** koreksi SSOT (`model_registry.json`, `inference_config.json`, dashboard VPS)
+ke angka model-benar -- menunggu keputusan user.

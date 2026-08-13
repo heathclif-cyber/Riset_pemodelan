@@ -80,6 +80,7 @@ def evaluate_coin(
     entry_m15_dir: Path | None = None,
     live_parity_exit: bool = False,
     floor_frac: float | None = 0.7,
+    floor_intrabar: bool = False,
 ) -> list:
     feat_path = HOLDOUT_DIR / "labeled" / f"{coin}_features_v3.parquet"
     regime_path = HOLDOUT_DIR / "labeled" / f"{coin}_regime_h1.parquet"
@@ -196,6 +197,7 @@ def evaluate_coin(
             live_parity_kwargs.update(
                 guardian_momentum_floor_tp_frac=floor_frac,
                 guardian_floor_replace_with_tp=True,
+                guardian_floor_intrabar=floor_intrabar,
             )
 
     res = simulate_trades_swing(
@@ -318,6 +320,7 @@ def run(
     max_open_positions: int | None = None,
     daily_loss_limit: int | None = None,
     floor_frac: float | None = 0.7,
+    floor_intrabar: bool = False,
 ) -> Path:
     stack = load_stack(stack_name)
     lgbm_id = lgbm_run or stack.lgbm_run
@@ -361,6 +364,7 @@ def run(
         entry_m15_dir=Path(entry_m15_dir) if entry_m15_dir else None,
         live_parity_exit=live_parity_exit,
         floor_frac=floor_frac,
+        floor_intrabar=floor_intrabar,
     )
 
     print(f"\n{'='*65}")
@@ -511,6 +515,9 @@ def main() -> int:
     ap.add_argument("--floor-frac", default="0.7",
                     help="guardian_momentum_floor_tp_frac saat --live-parity-exit aktif "
                          "(default: 0.7, live skrg). 'off' = matikan floor total.")
+    ap.add_argument("--floor-intrabar", action="store_true",
+                    help="Model floor seperti eksekusi live (STOP-LIMIT resting: trigger saat "
+                         "wick sentuh floor_price, exit DI floor_price).")
     args = ap.parse_args()
     floor_frac = None if args.floor_frac.lower() == "off" else float(args.floor_frac)
     run(
@@ -527,6 +534,7 @@ def main() -> int:
         max_open_positions=args.max_open_positions,
         daily_loss_limit=args.daily_loss_limit,
         floor_frac=floor_frac,
+        floor_intrabar=args.floor_intrabar,
     )
     return 0
 
