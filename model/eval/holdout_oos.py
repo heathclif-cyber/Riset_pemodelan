@@ -79,6 +79,7 @@ def evaluate_coin(
     regime_disable_block_long_states: tuple = (),
     entry_m15_dir: Path | None = None,
     live_parity_exit: bool = False,
+    floor_frac: float | None = 0.7,
 ) -> list:
     feat_path = HOLDOUT_DIR / "labeled" / f"{coin}_features_v3.parquet"
     regime_path = HOLDOUT_DIR / "labeled" / f"{coin}_regime_h1.parquet"
@@ -179,12 +180,23 @@ def evaluate_coin(
     )
     if live_parity_exit:
         live_parity_kwargs.update(
-            guardian_momentum_floor_tp_frac=0.7,
-            guardian_floor_replace_with_tp=True,
             cooldown_enabled=True,
             cooldown_profit_only=True,
             cooldown_profit_bars=1,
         )
+        if floor_frac is None:
+            # Floor DIMATIKAN total -- setelah TP tersentuh, trade jalan terus TANPA
+            # jaring pengaman, murni sinyal exit Guardian lain / TIMEOUT.
+            live_parity_kwargs.update(
+                guardian_momentum_floor_tp_frac=0.0,
+                guardian_floor_replace_with_tp=False,
+                guardian_momentum_floor_frac=0.0,
+            )
+        else:
+            live_parity_kwargs.update(
+                guardian_momentum_floor_tp_frac=floor_frac,
+                guardian_floor_replace_with_tp=True,
+            )
 
     res = simulate_trades_swing(
         y_pred=y_pred,
@@ -305,6 +317,7 @@ def run(
     portfolio_limits: bool = False,
     max_open_positions: int | None = None,
     daily_loss_limit: int | None = None,
+    floor_frac: float | None = 0.7,
 ) -> Path:
     stack = load_stack(stack_name)
     lgbm_id = lgbm_run or stack.lgbm_run
@@ -347,6 +360,7 @@ def run(
         regime_disable_block_long_states=stack.regime_disable_block_long_states if stack.regime_disable_enabled else (),
         entry_m15_dir=Path(entry_m15_dir) if entry_m15_dir else None,
         live_parity_exit=live_parity_exit,
+        floor_frac=floor_frac,
     )
 
     print(f"\n{'='*65}")
@@ -494,7 +508,11 @@ def main() -> int:
                     help="Override cap posisi konkuren (default: config.LIVE_MAX_OPEN_POSITIONS=10).")
     ap.add_argument("--daily-loss-limit", type=int, default=None,
                     help="Override circuit-breaker rugi harian WITA (default: config.LIVE_DAILY_LOSS_LIMIT=8).")
+    ap.add_argument("--floor-frac", default="0.7",
+                    help="guardian_momentum_floor_tp_frac saat --live-parity-exit aktif "
+                         "(default: 0.7, live skrg). 'off' = matikan floor total.")
     args = ap.parse_args()
+    floor_frac = None if args.floor_frac.lower() == "off" else float(args.floor_frac)
     run(
         args.stack,
         end_date_wita=args.end_date,
@@ -508,6 +526,7 @@ def main() -> int:
         portfolio_limits=args.portfolio_limits,
         max_open_positions=args.max_open_positions,
         daily_loss_limit=args.daily_loss_limit,
+        floor_frac=floor_frac,
     )
     return 0
 

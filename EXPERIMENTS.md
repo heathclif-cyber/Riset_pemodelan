@@ -1863,3 +1863,143 @@ oos_holdout_full_scorecard.json,oos_holdout_h4closed_full.json}`.
 **Belum diselesaikan** (di luar scope malam ini, dicatat sbg utang): kuantifikasi slippage SL
 5-menit-polling (temuan ke-3 audit realisme eksekusi) -- butuh data intrabar M1/M5 utk estimasi
 realistis, belum ada di repo ini.
+
+## 2026-08-12 — REJECT: pyramiding max2 time-gap untuk LGBM37f + HMM 0,65 + Guardian clean (polos)
+
+**Tujuan.** Menaikkan utilisasi modal tanpa melonggarkan threshold entry. Uji scale-in leg ke-2
+arah sama dengan jeda minimum 1/2/4/8 jam, maksimum dua leg per koin.
+
+**Metode.** OOF genuine 2020-01-01 s.d. 2026-04-01 + pseudo-holdout internal
+2025-10-01 s.d. 2026-04-01. Evaluator diselaraskan dengan Guardian
+`guard_opt2_plus_trend_hmm_18coin_clean`, floor fixed 0,7xTP, cooldown profit-only 1 jam,
+dan constraint live global max 10 posisi/daily-loss 8. Tidak menjalankan atau men-tune holdout
+tersegel. Artefak: `pipeline/model/run_oof_pyramiding_time_gap_sweep.py` dan
+`models/runs/guard_opt2_plus_trend_hmm_18coin_clean/pyramiding_time_gap_sweep_oof_live_parity.json`.
+
+| Varian | OOF trade | PF | PnL | MaxDD | Delta MaxDD vs baseline |
+|---|---:|---:|---:|---:|---:|
+| Baseline single-leg | 5.258 | 2,129 | $8.190,84 | -$138,22 | — |
+| max2, gap 1j | 5.094 | 2,022 | $10.139,54 | -$228,46 | +65,3% |
+| max2, gap 2j | 5.092 | 2,034 | $9.729,08 | -$213,92 | +54,8% |
+| max2, gap 4j | 5.087 | 1,983 | $8.797,95 | -$191,10 | +38,3% |
+| max2, gap 8j | 5.091 | 1,949 | $7.913,67 | -$159,63 | +15,5% |
+
+**Keputusan.** REJECT/CLOSE opsi pyramiding time-gap. Semua varian menurunkan jumlah trade
+selesai ~3% (scale-in menggabungkan exposure, bukan menciptakan entry independen), tidak mencapai
+target utilisasi, dan tidak memenuhi kriteria PF (maksimum -5%) + MaxDD (maksimum +15%). Gap 1j
+memang kuat pada pseudo-holdout (PF 2,392 vs 2,176; PnL +43,5%; MaxDD membaik 6,8%), tetapi gagal
+robustness 6 tahun OOF sehingga tidak boleh dipromosikan. Angka ini hanya perbandingan internal
+karena overlay funding dan MAE-aware belum diterapkan ke varian pyramiding; kegagalan sudah jelas
+sebelum overlay tersebut, jadi tidak ada alasan melakukan simulasi tambahan/deploy.
+
+## 2026-08-13 — OOF candidate: second-tier near-miss sleeve 25% modal (belum validasi OOS/deploy)
+
+**Tujuan.** Tambah frekuensi tanpa mengubah atau melonggarkan core `LGBM37f + HMM causal
+0,65/0,10 + Guardian clean (polos)`. Sleeve hanya mengambil sinyal yang gagal ambang HMM core
+sebesar paling banyak band yang diuji; core tetap prioritas dan tidak mendapat perubahan threshold.
+
+**Metode.** Genuine OOF 2020-01-01 s.d. 2026-04-01, 18 koin. Band near-miss 0,02/0,03/0,05,
+modal sleeve 25% dari core. Simulator menggunakan fixed floor 0,7xTP, cooldown profit-only 1 jam,
+Guardian `guard_opt2_plus_trend_hmm_18coin_clean`, serta max 10 posisi dan daily-loss 8 persis
+live. Posisi sleeve tetap mengambil satu slot global; simulator tidak mengizinkan posisi kedua
+pada koin yang sama. **Tidak memakai holdout tersegel untuk memilih band.**
+
+| Band | Sleeve trade | PF sleeve | Trade gabungan | Delta trade | PF gabungan | MaxDD gabungan |
+|---|---:|---:|---:|---:|---:|---:|
+| Core saja | — | — | 5.343 | — | 2,056 | -$133,76 |
+| 0,02 | 1.928 | 1,774 | 6.696 | +25,3% | 2,033 | -$117,16 |
+| 0,03 | 2.934 | 1,678 | 7.455 | +39,5% | 1,999 | -$113,93 |
+| 0,05 | 5.059 | 1,636 | 9.091 | +70,2% | 1,963 | -$106,59 |
+
+**Interpretasi awal.** Semua band memenuhi gate OOF awal: sleeve PF >1,10, trade gabungan naik
+>=25%, PF gabungan turun <=5%, dan MaxDD tidak memburuk. Band **0,02** kandidat konservatif:
+frekuensi +25,3% (dari 2,74 menjadi ~3,44 trade/hari kalender) dengan PF hanya -1,1%. Band 0,05
+memaksimalkan volume tetapi PF turun -4,5%; tidak dipilih sebelum validasi lanjut. PnL gabungan
+lebih rendah daripada core dalam ketiga band karena sleeve kadang menduduki slot/koin sebelum
+sinyal core berikutnya; jadi alasan kandidat adalah utilisasi dan PF/DD, bukan kenaikan PnL mentah.
+
+**Batas bukti / keputusan.** Kandidat OOF saja, **BELUM** perubahan config/deploy dan belum layak
+diaktifkan. Funding overlay dan MAE-aware belum diterapkan pada sleeve; berikutnya hanya setelah
+keputusan user: validasi kandidat 0,02 pada OOS yang sudah tersedia sebagai evaluasi final,
+kemudian MAE-aware+funding dan audit konsentrasi per-koin/arah sebelum ada usulan paper/live.
+
+**Artefak.** `pipeline/model/run_oof_second_tier_sleeve.py`;
+`models/runs/guard_opt2_plus_trend_hmm_18coin_clean/second_tier_sleeve_oof_live_parity.json`.
+
+## 2026-08-13 — KANDIDAT: matikan Guardian momentum floor total (floor OFF) — lolos 2 jendela, MENUNGGU REVIEW OPUS/FABLE
+
+**Status: BELUM DIADOPSI, BELUM DIDEPLOY.** User setuju arah adopsi, tapi memilih review
+Opus/Fable dulu sesuai aturan "perubahan production wajib direncanakan model perencana".
+Entry ini = paket bukti untuk review itu.
+
+**Pemicu.** Insiden nyata FILUSDT 2026-08-12: Guardian exit 20:10 UTC @0,6880 (paper, SHORT),
+lalu candle 21:15 UTC anjlok ke low 0,6569 — untung ~6pp lebih besar terlewat. User tanya
+seberapa sering pola ini terjadi.
+
+**Langkah 1 — kuantifikasi "big-move terlewat"** (`tools/model/_scratch_guardian_missed_move.py`,
+6 tahun OOF, 3.424 trade Guardian-early-exit, threshold big-move 3%):
+
+| Jendela | Big-move TERLEWAT | Big-move TERHINDAR (floor menyelamatkan) |
+|---|---|---|
+| +6h | 17,8% | 17,3% |
+| **+12h** | **28,2%** | **30,0%** |
+| +24h | 39,6% | 44,3% |
+| +48h | 51,8% | 58,1% |
+
+Insiden FILUSDT BUKAN langka (~1 dari 4 kejadian), tapi hampir seimbang dgn kebalikannya —
+konsisten dgn Guardian sbg peredam variance, bukan penebak arah. Breakdown per-outcome:
+`GUARDIAN_MOMENTUM_FLOOR` (mekanisme yg kena di FILUSDT) rate terlewat **36,6%**, jelas lebih
+tinggi dari `GUARDIAN_EXIT` biasa (26,4%) — floor inilah tersangka utama, bukan Guardian umum.
+
+**Langkah 2 — sweep floor_frac** (`pipeline/model/run_oof_floor_frac_sweep.py`, baru):
+
+| floor_frac | OOF PF | OOF PnL | OOS PF | OOS PnL | OOS MaxDD |
+|---|---|---|---|---|---|
+| 0,50 | 2,090 | $8.287,58 | 1,300 | $114,09 | -$62,48 |
+| 0,60 | 2,064 | $8.076,66 | 1,338 | $127,63 | -$61,73 |
+| 0,70 (live) | 2,056 | $8.014,24 | 1,350 | $132,10 | -$60,12 |
+| 0,80 | 2,026 | $7.812,37 | — | — | — |
+| 0,90 | 2,011 | $7.696,52 | — | — | — |
+
+**Melonggarkan floor (0,5/0,6) DITOLAK** — pola overfitting klasik yg sama dgn base HMM 0,60:
+menang OOF, KALAH OOS di semua metrik. Rate terlewat/terhindar nyaris TIDAK berubah lintas
+floor_frac (27,6-28,7% vs 29,7-30,0%) — hipotesis awal "floor longgar kurangi kasus FILUSDT"
+TIDAK TERBUKTI; pergerakan pasca-exit ditentukan pasar, bukan posisi floor.
+
+**Langkah 3 — floor OFF total** (beda dari floor longgar: `guardian_floor_replace_with_tp=False`
++ `guardian_momentum_floor_frac=0.0`, jadi TIDAK ADA jaring pengaman pasca-TP sama sekali;
+exit murni dari sinyal probabilitas Guardian / TIMEOUT). Angka final MAE-aware @15x + funding
++ portfolio_limits (metodologi PERSIS sama dgn SSOT saat ini):
+
+| | OOF Trades | OOF PF | OOF PnL | OOF MaxDD | OOS Trades | OOS PF | OOS PnL | OOS MaxDD |
+|---|---|---|---|---|---|---|---|---|
+| **Floor OFF** | 5.277 | **1,773** | **$6.849,97** | -$159,98 | 329 | **1,390** | **$150,53** | **-$51,27** |
+| 0,70 (live) | 5.343 | 1,721 | $6.253,27 | -$159,68 | 333 | 1,343 | $139,54 | -$62,17 |
+
+**Menang di 2 jendela sekaligus, di SEMUA metrik utama** — OOF PF +3,0% PnL +9,3% MaxDD netral
+($0,30 beda, derau); OOS PF +3,5% PnL +15,9% **MaxDD 17,5% LEBIH DANGKAL**. Ini satu-satunya
+kandidat malam ini yg lolos gerbang 2-jendela (base 0,60 gagal, floor 0,5/0,6 gagal).
+
+**Cek risiko ekor** (kekhawatiran: tanpa floor, posisi "lari" bisa rugi besar): 10 kerugian
+terbesar OOS varian floor-OFF SEMUANYA `LOSS` (SL biasa), bukan Guardian-exit-lalu-berbalik.
+Terburuk -$13,36 — wajar utk SL hit @15x, tidak ada pola bahaya baru.
+
+**Kenapa belum diadopsi meski angkanya lolos:** ini perubahan ARSITEKTUR eksekusi (hapus total
+jaring pengaman mekanis, sepenuhnya percaya model probabilitas Guardian), bukan geser parameter.
+Sampel OOS 329 trade / 4 bulan — lantai derau utk sistem ini belum diukur spesifik (bandingkan
+disiplin dualbin: `feedback-ukur-lantai-derau-sebelum-menafsir`). Butuh keputusan model
+perencana, bukan cuma "angka menang".
+
+**Pertanyaan terbuka utk review Opus/Fable:**
+1. Apakah selisih PF +0,047 OOS (1,343->1,390) di atas lantai derau utk n=329? Belum diukur.
+2. Live saat ini floor = STOP-LIMIT exchange-side ASLI (resting order, bukan polling). Matikan
+   floor = hapus satu-satunya order pelindung sisi-bursa yg ada — sisa exit semuanya polling
+   5 menit (lihat catatan `check_positions.py`: TIDAK ADA SL exchange-side). Trade-off
+   operasional ini TIDAK terwakili di backtest manapun.
+3. Perlu window OOS ketiga (mis. potong holdout jadi 2 sub-periode) sebelum promosi?
+
+**Artefak.** `pipeline/model/run_oof_floor_frac_sweep.py` (baru, dukung `off`);
+`tools/model/_scratch_guardian_missed_move.py` (baru); `model/eval/holdout_oos.py`
+(+`--floor-frac`, dukung `off`); `data/live_cache/{oof,oos}_floorOFF_final.json`,
+`data/live_cache/oof_floorOFF_trades.csv`, `data/live_cache/guardian_missed_move_analysis.csv`,
+`data/live_cache/floor_frac_sweep_result.csv`.
