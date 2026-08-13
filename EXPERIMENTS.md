@@ -2003,3 +2003,76 @@ perencana, bukan cuma "angka menang".
 (+`--floor-frac`, dukung `off`); `data/live_cache/{oof,oos}_floorOFF_final.json`,
 `data/live_cache/oof_floorOFF_trades.csv`, `data/live_cache/guardian_missed_move_analysis.csv`,
 `data/live_cache/floor_frac_sweep_result.csv`.
+
+### ADDENDUM review Opus 2026-08-13 — KOREKSI: klaim "lolos gerbang 2-jendela" TIDAK VALID
+
+Menjawab 3 pertanyaan terbuka di atas. **Klaim utama entry ini dikoreksi**, sesuai disiplin
+`feedback-correctness-over-favorable-numbers` (perbaiki catatan walau melemahkan kandidat yang
+user inginkan).
+
+**Pertanyaan #1 (lantai derau) — TERJAWAB, dan menggugurkan klaim OOS.**
+`tools/model/_scratch_floor_noise_floor.py` (bootstrap 20.000x, seed 42):
+
+| Uji | Hasil |
+|---|---|
+| **Lantai derau PF OOS (n=329)** | **+-0,537** |
+| Selisih PF OOS teramati (OFF - 0,7) | +0,047 -- **11x DI BAWAH lantai derau** |
+| P(OFF > 0,7) dari bootstrap | 0,563 (nyaris lempar koin) |
+| Berpasangan OOS (n=328, cocok per coin+entry_time) | +$0,043/trade, CI95 [-$0,040, +$0,130], **p=0,31 TIDAK SIGNIFIKAN** |
+| Trade yang exit-nya benar-benar berubah di OOS | **cuma 37** -- 20 lebih baik vs 17 lebih buruk |
+
+Seluruh rentang PF OOS lintas SEMUA varian floor (1,300 s.d. 1,397 = rentang 0,097) **5,5x lebih
+sempit dari lantai derau**. Artinya peringkat OOS mana pun (termasuk "OFF menang") adalah DERAU,
+bukan temuan. "Menang di 2 jendela" **tidak terbukti** -- yang benar: menang di 1 jendela (OOF),
+dan jendela kedua (OOS) TIDAK PUNYA DAYA untuk mengonfirmasi maupun membantah.
+
+**TAPI efeknya kemungkinan besar NYATA -- OOF berpasangan sangat kuat** (n=5.263 cocok, 6 tahun):
++$0,128/trade, CI95 [+$0,089, +$0,169], **p<0,0001**. Dari 541 trade yang exit-nya berubah:
+**350 lebih baik vs 191 lebih buruk** (65:35, arah konsisten). Total +$674,77. Lolos koreksi
+multi-perbandingan dgn mudah. CI OOS [-0,040, +0,130] JUSTRU MEMUAT titik-estimasi OOF (+0,128) --
+OOS tidak membantah, cuma terlalu kecil (37 trade terdampak) untuk meresolusi efek sebesar itu.
+
+**Pertanyaan #2 (order pelindung sisi-bursa) — lebih bernuansa dari dugaan awal.**
+Baca `paper_trading.py:578-601` + `check_positions.py`: floor STOP-LIMIT (`_place_floor_stop`)
+cuma dipasang SETELAH TP tersentuh. Untuk SELURUH masa hidup pra-TP setiap trade, **sudah TIDAK
+ADA proteksi sisi-bursa sama sekali** (terdokumentasi, risiko yang sudah diterima user sadar --
+memory `project-no-exchange-side-stop-loss`). Jadi mematikan floor BUKAN "menghapus satu-satunya
+jaring pengaman untuk semua trade", melainkan menghapusnya untuk subset pasca-TP saja (posisi
+yang sudah UNTUNG). Marginal, tapi tetap penurunan: `floor_tp_frac=0` melewati SELURUH blok itu,
+jadi tidak ada resting order MAUPUN polling floor. Bukti langsung risiko ini nyata: server
+**macet total malam ini** (butuh restart manual, ~1 jam+).
+
+**Pertanyaan #3 (lubang sweep) — DITEMUKAN & DIISI.** Rentang 0,1-0,3 tak pernah diuji:
+
+| floor_frac | OOF PF | OOF PnL | OOS PF | OOS PnL | OOS MaxDD | Resting order di bursa? |
+|---|---|---|---|---|---|---|
+| OFF | 2,118 | $8.638,67 | 1,397 | $152,66 | -$49,20 | **TIDAK** |
+| 0,10 | 2,105 | $8.483,26 | 1,340 | $131,35 | -$54,64 | YA |
+| 0,20 | 2,107 | $8.455,59 | 1,336 | $129,59 | -$54,64 | YA |
+| 0,30 | 2,106 | $8.428,94 | 1,330 | $126,28 | -$55,92 | YA |
+| 0,50 | 2,090 | $8.287,58 | 1,300 | $114,09 | -$62,48 | YA |
+| 0,70 (live) | 2,056 | $8.014,24 | 1,350 | $132,10 | -$60,12 | YA |
+
+floor 0,1-0,3 menangkap **~82% keuntungan PF OOF** dari OFF (2,056->2,107 vs 2,056->2,118) sambil
+TETAP memasang STOP-LIMIT di bursa. Di OOS ketiganya sedikit di bawah 0,70 -- tapi seperti di
+atas, SEMUA selisih OOS ada di dalam derau, jadi itu bukan bukti apa pun.
+
+**PUTUSAN REVIEW: JANGAN adopsi sekarang** (bukan karena buktinya jelek):
+1. Bukti OOF kuat & kemungkinan nyata, TAPI satu-satunya jendela luar-sampel yang ada tidak bisa
+   mengonfirmasi. Aturan `feedback-wajib-dua-jendela-penilaian`: signifikan di 1 jendela =
+   KANDIDAT, bukan temuan. Status kandidat TIDAK naik hanya karena arah OOS kebetulan searah.
+2. Nilai efek ~+$112/thn di sizing sekarang (~8% PnL). Bukan nol, tapi kecil dibanding
+   **kesenjangan yang belum terselesaikan: backtest PF ~1,4-1,6 vs rekam jejak uang riil PF 0,68**
+   (162 trade, 18 koin, periode sama). Menyetel exit demi +8% sementara diskrepansi ~2x di sistem
+   yang sama belum dibongkar = menyetel hal yang salah lebih dulu.
+3. Trading uang riil sedang MATI. Tidak ada urgensi mengubah mekanisme risiko sekarang.
+
+**Kalau nanti tetap mau maju**, urutan yang disarankan: (a) bongkar dulu kesenjangan backtest vs
+uang-riil (`tools/ops/compare_oos_live_signals.py`); (b) kalau tetap mau longgar, **pilih
+floor_frac 0,2, bukan OFF** -- ~82% keuntungan OOF, resting order di bursa TETAP ADA, dan MaxDD
+OOS lebih dangkal dari 0,70 (-$54,64 vs -$60,12); (c) jendela OOS ketiga / paper-forward sebelum
+uang riil.
+
+**Artefak review.** `tools/model/_scratch_floor_noise_floor.py`;
+`data/live_cache/oos_floorfrac{01,02,03,05,06,07}_trades_detail.csv`,
+`data/live_cache/oos_floorOFF_trades_detail.csv`, `data/live_cache/oof_floorfrac07_trades.csv`.
