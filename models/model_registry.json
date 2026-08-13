@@ -113,15 +113,15 @@
   },
   "oof_scorecard": {
     "period": "2020-01-01 to 2026-04-01",
-    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY (2026-08-11): floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Portfolio execution constraints PERSIS live (2026-08-12): max_open_positions=10, daily_loss_limit=8 (execution.py::place_entry, sebelumnya TIDAK PERNAH dimodelkan -- backtest diam-diam asumsi modal tanpa batas & tanpa circuit-breaker rugi harian). Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
-    "trades": 5343,
-    "wr_pct": 63.6,
-    "profit_factor": 2.058,
-    "pnl_usd": 8023.13,
-    "max_dd_usd": -133.4,
-    "long_pf": 2.14,
-    "short_pf": 1.981,
-    "caveat": "PERBAIKAN 2026-08-12: max_open_positions=10 & daily_loss_limit=8 (persis execution.py::place_entry) ditambahkan ke simulasi -- SEBELUMNYA tidak pernah dimodelkan sama sekali di core/evaluator.py (backtest diam-diam asumsi modal tanpa batas & tanpa circuit-breaker rugi harian). Trades turun 5365->5343 (-0.4%), WR/PF/PnL nyaris tak berubah, TAPI MaxDD naik -78.73->-133.40 (+69%) -- efeknya nyaris seluruhnya di MaxDD, bukan return. Temuan sama di OOS (lihat inference_config.json.scorecard.holdout_oos), pola konsisten lintas 2 dataset independen. Angka SEBELUM constraint ini diarsip di oof_scorecard_pre_portfolio_limits_2026_08_12. Detail EXPERIMENTS.md 2026-08-12."
+    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY: floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Portfolio execution constraints PERSIS live: max_open_positions=10, daily_loss_limit=8. FLOOR DIMODELKAN SBG ORDER (2026-08-13, guardian_floor_intrabar=True): trigger saat wick menyentuh floor_price, fill DI floor_price, dicek sebelum SL -- persis STOP-LIMIT resting yang dipasang paper_trading.py::_place_floor_stop. Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
+    "trades": 5362,
+    "wr_pct": 64.1,
+    "profit_factor": 2.003,
+    "pnl_usd": 7638.82,
+    "max_dd_usd": -127.68,
+    "long_pf": 2.091,
+    "short_pf": 1.921,
+    "caveat": "KOREKSI 2026-08-13: floor STOP-LIMIT sebelumnya dimodelkan SALAH (cek di close bar, exit di close[j]) -- padahal close[j] menurut definisi sudah DI BAWAH floor (itu syarat trigger-nya), dan live memasang order resting yang ter-trigger INTRABAR & fill DI level. SL di simulator yang sama SUDAH benar sejak awal (exit di sl_price); floor terlewat sejak 2026-07-12. Efek: PnL turun $8.023->$7.639 (-4.8%), PF 2.058->2.003 -- model lama TERLALU OPTIMIS krn membiarkan posisi selamat dari celupan intrabar yang di live sudah kena order. Arah ini BERLAWANAN dgn hipotesis awal (dikira fill-di-level akan menguntungkan floor); efek waktu (order kena sabet wick) mengalahkan efek harga. Angka SEBELUM koreksi diarsip di oof_scorecard_pre_floor_intrabar_2026_08_13. Detail EXPERIMENTS.md 2026-08-13."
   },
   "oof_scorecard_pre_base065_2026_08_12": {
     "period": "2020-01-01 to 2026-04-01",
@@ -310,5 +310,17 @@
     "long_pf": 2.155,
     "short_pf": 1.983,
     "caveat": "ARSIP -- SEBELUM portfolio_limits (max_open_positions=10, daily_loss_limit=8) dimodelkan di simulasi (2026-08-12). Base HMM 0.65/delta 0.10 SAMA persis, cuma constraint eksekusi live yang ditambah. Digantikan oof_scorecard 2026-08-12."
+  },
+  "oof_scorecard_pre_floor_intrabar_2026_08_13": {
+    "period": "2020-01-01 to 2026-04-01",
+    "methodology": "genuine_oof_rolling_8fold_purge20, LGBM opt2_plus_trend_18coin_iso37f + HMM hmm18/36 base=0.65/delta=0.10 + Guardian guard28f_18coin_clean -- TANPA regime-model-routing/regime-disable/spot-confirm ('polos'). Exit mechanic LIVE-PARITY (2026-08-11): floor FIXED 0.7xTP + cooldown 1h profit-only + funding-rate cost. Portfolio execution constraints PERSIS live (2026-08-12): max_open_positions=10, daily_loss_limit=8 (execution.py::place_entry, sebelumnya TIDAK PERNAH dimodelkan -- backtest diam-diam asumsi modal tanpa batas & tanpa circuit-breaker rugi harian). Native/leverage-invariant basis (bukan MAE-aware -- lihat inference_config.json.scorecard.oof utk versi MAE-aware @15x).",
+    "trades": 5343,
+    "wr_pct": 63.6,
+    "profit_factor": 2.058,
+    "pnl_usd": 8023.13,
+    "max_dd_usd": -133.4,
+    "long_pf": 2.14,
+    "short_pf": 1.981,
+    "caveat": "ARSIP -- SEBELUM koreksi model floor STOP-LIMIT (2026-08-13). Angka ini memodelkan floor sbg pengecekan di CLOSE bar & exit di close[j]; live sebenarnya memasang STOP-LIMIT resting di bursa yang ter-trigger INTRABAR & fill DI floor_price. Model lama TERLALU OPTIMIS (posisi selamat dari celupan intrabar yang di live sudah menutup order). Digantikan oof_scorecard 2026-08-13."
   }
 }
